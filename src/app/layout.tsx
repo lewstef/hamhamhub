@@ -52,10 +52,6 @@ export default async function RootLayout({
     if (pathname !== "/initialization") {
       redirect("/initialization");
     }
-  } else {
-    if (pathname === "/initialization") {
-      redirect("/");
-    }
   }
 
   const session = await auth();

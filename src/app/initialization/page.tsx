@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useEffect } from "react";
 import { createAdminAction } from "@/app/actions/initialization";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff, ShieldAlert, Sparkles, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { PasswordStrength } from "@/components/password-strength";
 
 export default function InitializationPage() {
+  const router = useRouter();
   const [state, action, isPending] = useActionState(createAdminAction, null);
 
   const [password, setPassword] = useState("");
@@ -18,6 +21,16 @@ export default function InitializationPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const passwordsMatch = password === confirmPassword;
+
+  useEffect(() => {
+    if (state?.success) {
+      const timer = setTimeout(() => {
+        router.refresh();
+        window.location.href = "/backoffice";
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [state?.success, router]);
   const isSubmitDisabled =
     isPending ||
     !passwordsMatch ||
@@ -40,10 +53,10 @@ export default function InitializationPage() {
           </div>
           <div className="pt-2">
             <Link
-              href="/"
+              href="/backoffice"
               className={buttonVariants({ className: "w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/10 transition-all duration-200" })}
             >
-              Go to Home Page
+              Go to Backoffice
             </Link>
           </div>
         </Card>
@@ -126,6 +139,7 @@ export default function InitializationPage() {
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
+                <PasswordStrength password={password} />
                 {password !== "" && password.length < 6 && (
                   <p className="text-[10px] text-destructive font-medium">
                     Password must be at least 6 characters.

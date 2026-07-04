@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { PasswordStrength } from "@/components/password-strength";
 
 interface Organization {
   id: string;
@@ -168,6 +169,7 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                       {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
+                  <PasswordStrength password={passwordVal} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="confirmPassword" className="text-xs font-bold uppercase tracking-wider">Confirm New Password</Label>

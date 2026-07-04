@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Plus, X, Trash2, Pencil, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { PasswordStrength } from "@/components/password-strength";
 
 interface Employee {
   id: string;
@@ -185,6 +186,7 @@ export function EmployeesTable({ staffList }: EmployeesTableProps) {
                         {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                       </button>
                     </div>
+                    <PasswordStrength password={passwordVal} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="confirmPassword" className="text-xs font-bold uppercase tracking-wider">Confirm Password</Label>

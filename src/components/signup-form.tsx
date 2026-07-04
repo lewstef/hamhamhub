@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { PasswordStrength } from "@/components/password-strength";
 
 export function SignupForm() {
   const router = useRouter();
   const [roleType, setRoleType] = useState<"user" | "staff">("user");
+  const [passwordVal, setPasswordVal] = useState("");
   const [state, formAction, isPending] = useActionState(signUpAction, null);
 
   useEffect(() => {
@@ -141,9 +143,12 @@ export function SignupForm() {
               type="password"
               placeholder="••••••••"
               required
+              value={passwordVal}
+              onChange={(e) => setPasswordVal(e.target.value)}
               disabled={isPending || state?.success}
               className="bg-zinc-900/50 border-zinc-800 focus:border-orange-500 focus:ring-orange-500 text-zinc-100 placeholder:text-zinc-600"
             />
+            <PasswordStrength password={passwordVal} />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">

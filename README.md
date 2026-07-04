@@ -49,6 +49,8 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Persistent User Theme**: Toggle theme changes via the top-header switcher. Settings sync directly to the database user record (`users.theme`), completely avoiding flash layout mismatches or cookies.
 - **Collapsible Sidebar Tree**: Fully responsive sidebar with collapsible navigation groups, active route tracking, and real-time menu search filtering.
 - **Credential Protection**: All creation popups include `Confirm Password` fields with client-side match checking and `Eye`/`EyeOff` visibility toggles.
+- **Password Strength Indicator**: Renders a premium, real-time client-side validation widget on all forms where passwords are set or modified. It checks for length (min 6 characters), numbers, uppercase letters, and special symbols, updating visual segmented color-coded bars and checklists dynamically.
+- **Setup Auto-Redirection**: Clears layout caches and automatically routes the administrator to the backoffice portal (/backoffice) upon completing first-time platform setup.
 
 ---
 
