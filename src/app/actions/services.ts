@@ -8,6 +8,20 @@ import { revalidatePath } from "next/cache";
 import { getOrganizationCategories } from "./organizations";
 import { getServiceTypesAction } from "./service-types";
 
+/**
+ * Registers one or more service types under a specific organization category.
+ * Accepts multiple service names via `formData.getAll("name")` (multi-value field).
+ * Validates that each name matches a known service type and rejects duplicates
+ * already registered under the same category.
+ *
+ * @param formData.name                 - One or more service type names (multi-value, required)
+ * @param formData.organizationCategory - Must be a valid category ID (required)
+ *
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` if fields are missing, a name is not a valid service type,
+ *                              a name is already registered for this category, or DB failure
+ * @sideEffect Revalidates `/backoffice/services`
+ */
 export async function createServiceAction(prevState: unknown, formData: FormData) {
   const names = formData.getAll("name") as string[];
   const organizationCategory = formData.get("organizationCategory") as string;
@@ -62,6 +76,15 @@ export async function createServiceAction(prevState: unknown, formData: FormData
   }
 }
 
+/**
+ * Permanently removes a service registration by its database ID.
+ *
+ * @param formData.id - Service record ID to delete (required)
+ *
+ * @returns `{ success: true }` on successful deletion
+ * @returns `{ error: string }` if ID is missing or DB failure
+ * @sideEffect Revalidates `/backoffice/services`
+ */
 export async function deleteServiceAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
 

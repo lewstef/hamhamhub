@@ -69,9 +69,38 @@ The backoffice system integrates completely dynamic configuration layers for bus
 - Custom names and descriptions for service templates (Obedience training, Boarding, Walking, etc.) are managed in the database `service_types` table.
 - Admin can modify names and descriptions through an edit popup, instantly propagating updates to page views and validation rules.
 
+### C. Services Directory (`/backoffice/services`)
+- Services are organized in a card grid grouped by organization category.
+- Each category card has an **"Add Service Type"** button that opens a context-aware modal titled **"Add Service Types to {Category Name}"**.
+- The organization category is **locked** in the modal — it is pre-set by the card clicked and cannot be changed, preventing accidental cross-category assignments.
+- Already-registered service types display a "Registered" badge and cannot be re-selected.
+
 ---
 
-## 5. Commands & Verification
+## 5. Server Action Documentation
+
+All server actions in `src/app/actions/` are documented with JSDoc comments directly above each function, covering:
+
+- **Input parameters** — `formData` field names, types, and whether they are required
+- **Return shapes** — `{ success: true }` on success, `{ error: string }` on failure
+- **Side effects** — which Next.js cache paths are revalidated
+- **Redirect behaviour** — actions that issue server-side redirects note that they never return on success and re-throw `NEXT_REDIRECT` errors
+- **Security guards** — role restrictions and idempotency checks are explicitly documented
+
+### Action files
+| File | Exported Actions |
+| :--- | :--- |
+| `actions/auth.ts` | `signUpAction`, `loginAction`, `updateUserThemeAction` |
+| `actions/initialization.ts` | `createAdminAction` |
+| `actions/employees.ts` | `createEmployeeAction`, `updateEmployeeAction`, `changeEmployeePasswordAction`, `deleteEmployeeAction` |
+| `actions/users.ts` | `createUserAction`, `updateUserAction`, `changeUserPasswordAction`, `deleteUserAction` |
+| `actions/organizations.ts` | `getOrganizationCategories`, `createOrganizationCategoryAction`, `updateOrganizationCategoryAction`, `deleteOrganizationCategoryAction`, `createOrganizationAction`, `updateOrganizationAction`, `changeOrganizationPasswordAction`, `deleteOrganizationAction` |
+| `actions/services.ts` | `createServiceAction`, `deleteServiceAction` |
+| `actions/service-types.ts` | `getServiceTypesAction`, `updateServiceTypeAction` |
+
+---
+
+## 6. Commands & Verification
 
 ### Running Locally
 ```bash
@@ -83,7 +112,20 @@ npm run build
 ```
 
 ### Running Unit Tests
-Execute the unit test suites to verify server action constraints, security boundaries, and theme integrations:
+Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
+# Run all tests (187 tests across 20 test files)
 npm run test
+
+# Run with coverage report
+npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
+
+### Test Coverage Summary
+| Area | Files Covered |
+| :--- | :--- |
+| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types` |
+| Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form` |
+| Config & utilities | `config/service-types`, `lib/utils` |
+| Hooks | `use-mobile` |

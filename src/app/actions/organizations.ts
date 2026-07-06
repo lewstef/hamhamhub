@@ -7,6 +7,14 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Returns all organization categories from the database.
+ * If the table is empty on first call, seeds it with 4 default categories
+ * (NGO, Dog Kennel, Dog service provider, Official Cynological Association)
+ * before returning.
+ *
+ * @returns Array of `{ id, name, description }` objects
+ */
 export async function getOrganizationCategories() {
   let list = await db.select().from(organizationCategories);
   if (list.length === 0) {
@@ -22,6 +30,17 @@ export async function getOrganizationCategories() {
   return list;
 }
 
+/**
+ * Creates a new organization category.
+ * The `id` is auto-derived from the name (lowercased, slugified).
+ *
+ * @param formData.name        - Category display name (required, must produce a non-empty slug)
+ * @param formData.description - Optional description text
+ *
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` if name is missing, slug is invalid, or the category already exists
+ * @sideEffect Revalidates `/backoffice/organizations`
+ */
 export async function createOrganizationCategoryAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
@@ -65,6 +84,18 @@ export async function createOrganizationCategoryAction(prevState: unknown, formD
   }
 }
 
+/**
+ * Updates the name and description of an existing organization category.
+ * The `id` is immutable — only display fields are changed.
+ *
+ * @param formData.id          - Existing category ID (required)
+ * @param formData.name        - New display name (required)
+ * @param formData.description - New description (optional, clears to null if empty)
+ *
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` on missing fields or DB failure
+ * @sideEffect Revalidates `/backoffice/organizations`
+ */
 export async function updateOrganizationCategoryAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
@@ -91,6 +122,16 @@ export async function updateOrganizationCategoryAction(prevState: unknown, formD
   }
 }
 
+/**
+ * Deletes an organization category by ID.
+ * Refuses deletion if any organization account is currently assigned to this category.
+ *
+ * @param formData.id - Category ID to delete (required)
+ *
+ * @returns `{ success: true }` on successful deletion
+ * @returns `{ error: string }` if ID is missing, category is in use, or DB failure
+ * @sideEffect Revalidates `/backoffice/organizations`
+ */
 export async function deleteOrganizationCategoryAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   if (!id) {
@@ -118,6 +159,19 @@ export async function deleteOrganizationCategoryAction(prevState: unknown, formD
   }
 }
 
+/**
+ * Creates a new organization account (role = "organization").
+ * Validates that the given category is a known organization category.
+ *
+ * @param formData.name                 - Organization display name (required)
+ * @param formData.email                - Unique login email (required)
+ * @param formData.password             - Min 6 characters (required)
+ * @param formData.organizationCategory - Must be a valid category ID (required)
+ *
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` on missing fields, duplicate email, invalid category, or DB failure
+ * @sideEffect Revalidates `/backoffice/organizations`
+ */
 export async function createOrganizationAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -167,6 +221,20 @@ export async function createOrganizationAction(prevState: unknown, formData: For
   }
 }
 
+/**
+ * Updates profile fields for an existing organization account.
+ * Does not change password or role.
+ *
+ * @param formData.id                   - Organization user ID (required)
+ * @param formData.name                 - New display name (required)
+ * @param formData.email                - New unique email (required)
+ * @param formData.organizationCategory - Must be a valid category ID (required)
+ *
+ * @returns `{ error: string }` on validation or DB failure
+ * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/organizations`
+ * @throws Re-throws Next.js NEXT_REDIRECT errors.
+ * @sideEffect Revalidates `/backoffice/organizations`
+ */
 export async function updateOrganizationAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
@@ -219,6 +287,18 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
   }
 }
 
+/**
+ * Changes the password for an existing organization account.
+ *
+ * @param formData.id              - Organization user ID (required)
+ * @param formData.password        - New password, min 6 characters (required)
+ * @param formData.confirmPassword - Must match `password` exactly (required)
+ *
+ * @returns `{ error: string }` on validation or DB failure
+ * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/organizations`
+ * @throws Re-throws Next.js NEXT_REDIRECT errors.
+ * @sideEffect Revalidates `/backoffice/organizations`
+ */
 export async function changeOrganizationPasswordAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const password = formData.get("password") as string;
@@ -262,6 +342,16 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
   }
 }
 
+/**
+ * Permanently deletes an organization account.
+ * Includes a role guard — only accounts with role "organization" can be deleted.
+ *
+ * @param formData.id - Organization user ID to delete (required)
+ *
+ * @returns `{ success: true }` on successful deletion
+ * @returns `{ error: string }` if ID is missing, account not found, wrong role, or DB failure
+ * @sideEffect Revalidates `/backoffice/organizations`
+ */
 export async function deleteOrganizationAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
 

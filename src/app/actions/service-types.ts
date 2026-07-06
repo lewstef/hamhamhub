@@ -6,6 +6,17 @@ import { serviceTypesList, ServiceType } from "@/config/service-types";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Returns the full list of service types, merging DB overrides with static config.
+ *
+ * On first call, if the `serviceTypes` table is empty, seeds it with all entries
+ * from `src/config/service-types.ts`. Subsequent calls read from the DB.
+ *
+ * The returned objects always contain the full static config (applicableTo, fields, etc.)
+ * with `name` and `description` overridden by whatever is stored in the DB.
+ *
+ * @returns Array of `ServiceType` objects (id, name, description, applicableTo, fields)
+ */
 export async function getServiceTypesAction(): Promise<ServiceType[]> {
   let dbList = await db.select().from(serviceTypes);
   if (dbList.length === 0) {
@@ -29,6 +40,19 @@ export async function getServiceTypesAction(): Promise<ServiceType[]> {
   });
 }
 
+/**
+ * Updates the display name and description of a service type in the database.
+ * The `id` is immutable — only the editable display fields are changed.
+ * Revalidates both the service types page and the services directory.
+ *
+ * @param formData.id          - Service type ID to update (required)
+ * @param formData.name        - New display name, must be non-empty (required)
+ * @param formData.description - New description, must be non-empty (required)
+ *
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` on missing/empty fields or DB failure
+ * @sideEffect Revalidates `/backoffice/services/types` and `/backoffice/services`
+ */
 export async function updateServiceTypeAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;

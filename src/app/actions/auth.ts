@@ -7,6 +7,25 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 
+/**
+ * Registers a new user or staff account.
+ *
+ * User registration (roleType !== "staff"):
+ * @param formData.name     - Display name (required)
+ * @param formData.email    - Unique login email (required)
+ * @param formData.password - Min 6 characters (required)
+ * @param formData.roleType - Must be absent or any value other than "staff" to register as user
+ *
+ * Staff registration (roleType === "staff"):
+ * @param formData.name     - Display name (required)
+ * @param formData.username - Unique username (required)
+ * @param formData.password - Min 6 characters (required)
+ * @param formData.role     - "employee" | "admin" (required)
+ * @param formData.roleType - Must be "staff"
+ *
+ * @returns `{ success: true }` on successful registration
+ * @returns `{ error: string }` on validation failure or duplicate email/username
+ */
 export async function signUpAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
   const password = formData.get("password") as string;
@@ -89,6 +108,17 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
   }
 }
 
+/**
+ * Authenticates a user or staff member via NextAuth Credentials provider.
+ *
+ * @param formData.identifier - Email address (for users/organizations) or username (for staff)
+ * @param formData.password   - Account password (required)
+ * @param formData.loginType  - "user" redirects to /dashboard; "staff" redirects to /backoffice
+ *
+ * @returns `{ error: string }` on invalid credentials or missing fields
+ * @returns Never returns on success — issues a server-side `redirect()` to the target path.
+ * @throws Re-throws Next.js NEXT_REDIRECT errors so the framework can handle navigation.
+ */
 export async function loginAction(prevState: unknown, formData: FormData) {
   const identifier = formData.get("identifier") as string; // Email or Username
   const password = formData.get("password") as string;
@@ -135,6 +165,15 @@ export async function loginAction(prevState: unknown, formData: FormData) {
   }
 }
 
+/**
+ * Persists the authenticated user's preferred UI theme to the database.
+ * Requires an active session — returns an error if the user is not logged in.
+ *
+ * @param theme - "light" | "dark"
+ *
+ * @returns `{ success: true }` on successful update
+ * @returns `{ error: string }` if unauthenticated, theme value is invalid, or DB update fails
+ */
 export async function updateUserThemeAction(theme: "light" | "dark") {
   const session = await auth();
   if (!session?.user?.id) {

@@ -238,7 +238,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                     className="h-7 px-2 text-xs font-semibold flex items-center gap-1 cursor-pointer"
                     onClick={() => handleAddService(category.id)}
                   >
-                    + Add
+                    Add Service Type
                   </Button>
                   <Sparkles className="size-4 text-primary/70 animate-pulse" />
                 </div>
@@ -301,9 +301,14 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
               <X className="size-4" />
             </button>
             <CardHeader className="px-6 pt-6 pb-4 border-b border-border">
-              <CardTitle className="text-lg font-bold">Create Master Service</CardTitle>
+              <CardTitle className="text-lg font-bold">
+                Add Service Types to{" "}
+                <span className="text-primary">
+                  {organizationCategoryList.find((c) => c.id === formOrgCategory)?.name ?? formOrgCategory}
+                </span>
+              </CardTitle>
               <CardDescription className="text-xs mt-1">
-                Define and allocate services to a specific category.
+                Select one or more service types to register under this category. Already-registered types are locked.
               </CardDescription>
             </CardHeader>
             <form ref={formRef} action={formAction}>
@@ -372,25 +377,21 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                     </div>
                   </div>
 
+                  {/* Read-only locked category indicator */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="organizationCategory" className="text-xs font-bold uppercase tracking-wider">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Organization Category
                     </Label>
-                    <select
-                      id="organizationCategory"
-                      name="organizationCategory"
-                      value={formOrgCategory}
-                      onChange={(e) => setFormOrgCategory(e.target.value)}
-                      required
-                      disabled={isAnyPending}
-                      className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-                    >
-                      {organizationCategoryList.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
+                    {/* Hidden input so the value is still submitted with the form */}
+                    <input type="hidden" name="organizationCategory" value={formOrgCategory} />
+                    <div className="flex items-center gap-2 h-8 px-3 rounded-lg border border-border bg-muted/40 text-sm font-medium text-foreground select-none">
+                      <span className="flex-1 truncate">
+                        {organizationCategoryList.find((c) => c.id === formOrgCategory)?.name ?? formOrgCategory}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted border border-border/60 px-1.5 py-0.5 rounded-full shrink-0">
+                        Locked
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">

@@ -6,6 +6,23 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
+/**
+ * One-time platform initialization — creates the primary admin account.
+ * This action is idempotent-safe: it checks for an existing admin and returns
+ * an error rather than creating a duplicate.
+ *
+ * The created account always has:
+ *   - username: "admin"
+ *   - name: "Platform Administrator"
+ *   - role: "admin"
+ *
+ * @param formData.password        - Min 6 characters (required)
+ * @param formData.confirmPassword - Must match `password` exactly (required)
+ *
+ * @returns `{ success: true }` on successful initialization
+ * @returns `{ error: string }` if passwords are missing/mismatched, admin already exists, or DB failure
+ * @sideEffect Revalidates `/`
+ */
 export async function createAdminAction(prevState: unknown, formData: FormData) {
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;

@@ -7,6 +7,17 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Creates a new end-user account (role = "user").
+ *
+ * @param formData.name     - Display name (required)
+ * @param formData.email    - Unique login email (required)
+ * @param formData.password - Min 6 characters (required)
+ *
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` on missing fields, duplicate email, or DB failure
+ * @sideEffect Revalidates `/backoffice/users`
+ */
 export async function createUserAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -48,6 +59,20 @@ export async function createUserAction(prevState: unknown, formData: FormData) {
   }
 }
 
+/**
+ * Updates the name and email of an existing end-user account.
+ * Does not change password or role.
+ * Uniqueness check for email excludes the account being edited.
+ *
+ * @param formData.id    - Existing user ID (required)
+ * @param formData.name  - New display name (required)
+ * @param formData.email - New unique email (required)
+ *
+ * @returns `{ error: string }` on validation or DB failure
+ * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/users`
+ * @throws Re-throws Next.js NEXT_REDIRECT errors.
+ * @sideEffect Revalidates `/backoffice/users`
+ */
 export async function updateUserAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
@@ -92,6 +117,18 @@ export async function updateUserAction(prevState: unknown, formData: FormData) {
   }
 }
 
+/**
+ * Changes the password for an existing end-user account.
+ *
+ * @param formData.id              - User ID (required)
+ * @param formData.password        - New password, min 6 characters (required)
+ * @param formData.confirmPassword - Must match `password` exactly (required)
+ *
+ * @returns `{ error: string }` on validation or DB failure
+ * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/users`
+ * @throws Re-throws Next.js NEXT_REDIRECT errors.
+ * @sideEffect Revalidates `/backoffice/users`
+ */
 export async function changeUserPasswordAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const password = formData.get("password") as string;
@@ -135,6 +172,16 @@ export async function changeUserPasswordAction(prevState: unknown, formData: For
   }
 }
 
+/**
+ * Permanently deletes an end-user account.
+ * Includes a role guard — only accounts with role "user" can be deleted via this action.
+ *
+ * @param formData.id - User ID to delete (required)
+ *
+ * @returns `{ success: true }` on successful deletion
+ * @returns `{ error: string }` if ID is missing, user not found, wrong role, or DB failure
+ * @sideEffect Revalidates `/backoffice/users`
+ */
 export async function deleteUserAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
 

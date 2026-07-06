@@ -7,6 +7,20 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Creates a new staff account (role = "employee" | "admin").
+ * Both username and email must be globally unique.
+ *
+ * @param formData.name     - Display name (required)
+ * @param formData.username - Unique username for login (required)
+ * @param formData.email    - Unique email address (required)
+ * @param formData.password - Min 6 characters (required)
+ * @param formData.role     - "employee" | "admin" (required)
+ *
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` on missing fields, duplicate username/email, invalid role, or DB failure
+ * @sideEffect Revalidates `/backoffice/employees`
+ */
 export async function createEmployeeAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
   const username = formData.get("username") as string;
@@ -68,6 +82,21 @@ export async function createEmployeeAction(prevState: unknown, formData: FormDat
   }
 }
 
+/**
+ * Updates profile fields for an existing staff account.
+ * Uniqueness checks exclude the account being edited (via `ne(users.id, id)`).
+ *
+ * @param formData.id       - Existing user ID (required)
+ * @param formData.name     - New display name (required)
+ * @param formData.username - New unique username (required)
+ * @param formData.email    - New unique email (required)
+ * @param formData.role     - "employee" | "admin" (required)
+ *
+ * @returns `{ error: string }` on validation or DB failure
+ * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/employees`
+ * @throws Re-throws Next.js NEXT_REDIRECT errors.
+ * @sideEffect Revalidates `/backoffice/employees`
+ */
 export async function updateEmployeeAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
@@ -132,6 +161,18 @@ export async function updateEmployeeAction(prevState: unknown, formData: FormDat
   }
 }
 
+/**
+ * Changes the password for an existing staff account.
+ *
+ * @param formData.id              - Staff user ID (required)
+ * @param formData.password        - New password, min 6 characters (required)
+ * @param formData.confirmPassword - Must match `password` exactly (required)
+ *
+ * @returns `{ error: string }` on validation or DB failure
+ * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/employees`
+ * @throws Re-throws Next.js NEXT_REDIRECT errors.
+ * @sideEffect Revalidates `/backoffice/employees`
+ */
 export async function changeEmployeePasswordAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const password = formData.get("password") as string;
@@ -175,6 +216,16 @@ export async function changeEmployeePasswordAction(prevState: unknown, formData:
   }
 }
 
+/**
+ * Permanently deletes a staff account.
+ * Guards against deleting the primary "admin" username — that account is protected.
+ *
+ * @param formData.id - Staff user ID to delete (required)
+ *
+ * @returns `{ success: true }` on successful deletion
+ * @returns `{ error: string }` if ID is missing, employee not found, or the "admin" guard triggers
+ * @sideEffect Revalidates `/backoffice/employees`
+ */
 export async function deleteEmployeeAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
 
