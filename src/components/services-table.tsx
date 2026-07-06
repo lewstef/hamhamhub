@@ -100,10 +100,13 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Reset new selections when switching category to avoid duplicate registrations
+  // Set selections to currently registered services when switching category or when serviceList changes
   useEffect(() => {
-    setSelectedServiceNames([]);
-  }, [formOrgCategory]);
+    const registered = serviceList
+      .filter((s) => s.organizationCategory === formOrgCategory)
+      .map((s) => s.name);
+    setSelectedServiceNames(registered);
+  }, [formOrgCategory, serviceList]);
 
   // Close form on successful creation
   useEffect(() => {
@@ -111,7 +114,6 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
       const timer = setTimeout(() => {
         setShowForm(false);
         formRef.current?.reset();
-        setSelectedServiceNames([]);
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -131,13 +133,17 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
   const isAnyPending = isPending || deletePending;
 
   const handleAddService = (category?: string) => {
-    setFormOrgCategory(
-      category ||
-        (selectedTypeFilter !== "all"
-          ? selectedTypeFilter
-          : organizationCategoryList[0]?.id || "dog_service_provider")
-    );
-    setSelectedServiceNames([]);
+    const nextCategory = category ||
+      (selectedTypeFilter !== "all"
+        ? selectedTypeFilter
+        : organizationCategoryList[0]?.id || "dog_service_provider");
+    setFormOrgCategory(nextCategory);
+
+    // Initialize selections to match the category's registered services
+    const registered = serviceList
+      .filter((s) => s.organizationCategory === nextCategory)
+      .map((s) => s.name);
+    setSelectedServiceNames(registered);
     setShowForm(true);
   };
 
@@ -331,39 +337,32 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                       {serviceTypeList.map((st) => {
-                        const isAlreadyRegistered = registeredNamesForCategory.includes(st.name);
-                        const isSelected = selectedServiceNames.includes(st.name) || isAlreadyRegistered;
+                        const isSelected = selectedServiceNames.includes(st.name);
                         const details = getServiceDetails(st.name);
                         return (
                           <button
                             type="button"
                             key={st.id}
-                            disabled={isAlreadyRegistered}
                             onClick={() => {
-                              if (isAlreadyRegistered) return;
                               if (selectedServiceNames.includes(st.name)) {
                                 setSelectedServiceNames(selectedServiceNames.filter((n) => n !== st.name));
                               } else {
                                 setSelectedServiceNames([...selectedServiceNames, st.name]);
                               }
                             }}
-                            className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all hover:shadow-sm ${
-                              isAlreadyRegistered
-                                ? "bg-emerald-500/5 border-emerald-500/20 opacity-85 cursor-not-allowed"
-                                : isSelected
-                                ? "bg-primary/5 border-primary ring-2 ring-primary/20 cursor-pointer"
-                                : "bg-card border-border hover:bg-muted/30 cursor-pointer"
+                            className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all hover:shadow-sm cursor-pointer ${
+                              isSelected
+                                ? "bg-primary/5 border-primary ring-2 ring-primary/20"
+                                : "bg-card border-border hover:bg-muted/30"
                             }`}
                           >
-                            <div className={`p-2 rounded-lg shrink-0 ${isAlreadyRegistered ? "bg-emerald-500/10 text-emerald-600" : isSelected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                            <div className={`p-2 rounded-lg shrink-0 ${isSelected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                               {details.icon}
                             </div>
                             <div className="space-y-1 min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <span className="font-bold text-xs text-foreground truncate">{st.name}</span>
-                                {isAlreadyRegistered ? (
-                                  <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full shrink-0">Registered</span>
-                                ) : isSelected ? (
+                                {isSelected ? (
                                   <Check className="size-3 text-primary shrink-0" />
                                 ) : null}
                               </div>
@@ -403,7 +402,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isAnyPending || selectedServiceNames.length === 0}>
+                  <Button type="submit" disabled={isAnyPending}>
                     {isAnyPending ? "Saving..." : "Save Service"}
                   </Button>
                 </div>

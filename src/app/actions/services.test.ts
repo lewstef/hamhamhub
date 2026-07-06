@@ -99,13 +99,13 @@ describe("Service Server Actions", () => {
   });
 
   describe("createServiceAction", () => {
-    it("should return error if required fields are missing", async () => {
+    it("should return error if organization category is missing", async () => {
       const formData = new FormData();
       formData.append("name", "Dog boarding");
       // missing organizationCategory
 
       const result = await createServiceAction(null, formData);
-      expect(result).toEqual({ error: "All fields are required" });
+      expect(result).toEqual({ error: "Organization Category is required" });
     });
 
     it("should return error if organization category is invalid", async () => {
@@ -117,18 +117,27 @@ describe("Service Server Actions", () => {
       expect(result).toEqual({ error: "A valid Organization Category is required" });
     });
 
-    it("should return error if service is already registered under this category", async () => {
+    it("should delete deselected services and insert new services", async () => {
       const formData = new FormData();
-      formData.append("name", "Dog boarding");
+      formData.append("name", "Dog boarding"); // kept (already registered)
+      formData.append("name", "Dog walking");  // newly selected
+      // "Dog training" (originally registered) is deselected
       formData.append("organizationCategory", "dog_kennel");
 
-      // Mock duplicate search to return an existing service
-      mockSelect.mockResolvedValueOnce([{ id: "existing-service" }]);
+      // Mock current services in DB: "Dog boarding" and "Dog training"
+      mockSelect.mockResolvedValueOnce([
+        { id: "s1", name: "Dog boarding", organizationCategory: "dog_kennel" },
+        { id: "s2", name: "Dog training", organizationCategory: "dog_kennel" },
+      ]);
+      mockDelete.mockResolvedValueOnce(1);
+      mockInsert.mockResolvedValueOnce({ id: "new-service-id" });
 
       const result = await createServiceAction(null, formData);
 
-      expect(mockSelect).toHaveBeenCalled();
-      expect(result).toEqual({ error: 'Service "Dog boarding" is already registered under this category.' });
+      expect(mockDelete).toHaveBeenCalled();
+      expect(mockInsert).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
+      expect(result).toEqual({ success: true });
     });
 
     it("should successfully create service and return success", async () => {
@@ -136,7 +145,7 @@ describe("Service Server Actions", () => {
       formData.append("name", "Dog boarding");
       formData.append("organizationCategory", "dog_kennel");
 
-      // Mock duplicate search to return empty, and insert to resolve
+      // Mock current services in DB to be empty
       mockSelect.mockResolvedValueOnce([]);
       mockInsert.mockResolvedValueOnce({ id: "new-service-id" });
 
@@ -153,10 +162,8 @@ describe("Service Server Actions", () => {
       formData.append("name", "Dog walking");
       formData.append("organizationCategory", "dog_kennel");
 
-      // Mock duplicate search calls to return empty
-      mockSelect
-        .mockResolvedValueOnce([]) // for Dog boarding
-        .mockResolvedValueOnce([]); // for Dog walking
+      // Mock current services in DB to be empty
+      mockSelect.mockResolvedValueOnce([]);
       mockInsert.mockResolvedValue({ id: "new-service-id" });
 
       const result = await createServiceAction(null, formData);

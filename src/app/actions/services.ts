@@ -26,11 +26,17 @@ export async function createServiceAction(prevState: unknown, formData: FormData
   const names = formData.getAll("name") as string[];
   const organizationCategory = formData.get("organizationCategory") as string;
 
-  if (!names || names.length === 0 || !organizationCategory) {
-    return { error: "All fields are required" };
+  if (!organizationCategory) {
+    return { error: "Organization Category is required" };
   }
 
   try {
+    const list = await getOrganizationCategories();
+    const validCategories = list.map((t) => t.id);
+    if (!validCategories.includes(organizationCategory)) {
+      return { error: "A valid Organization Category is required" };
+    }
+
     const serviceTypeList = await getServiceTypesAction();
     const validServiceNames = serviceTypeList.map((st) => st.name);
     for (const name of names) {
@@ -39,29 +45,23 @@ export async function createServiceAction(prevState: unknown, formData: FormData
       }
     }
 
-    const list = await getOrganizationCategories();
-    const validCategories = list.map((t) => t.id);
-    if (!validCategories.includes(organizationCategory)) {
-      return { error: "A valid Organization Category is required" };
+    // Get current registered services for this category
+    const currentServices = await db
+      .select()
+      .from(services)
+      .where(eq(services.organizationCategory, organizationCategory));
+
+    const currentNames = currentServices.map((s) => s.name);
+
+    // Delete deselected services
+    const toDelete = currentServices.filter((s) => !names.includes(s.name));
+    for (const s of toDelete) {
+      await db.delete(services).where(eq(services.id, s.id));
     }
 
-    // Check for duplicates
-    for (const name of names) {
-      const existing = await db
-        .select()
-        .from(services)
-        .where(
-          and(
-            eq(services.name, name),
-            eq(services.organizationCategory, organizationCategory)
-          )
-        );
-      if (existing.length > 0) {
-        return { error: `Service "${name}" is already registered under this category.` };
-      }
-    }
-
-    for (const name of names) {
+    // Insert new services
+    const toInsert = names.filter((name) => !currentNames.includes(name));
+    for (const name of toInsert) {
       await db.insert(services).values({
         name,
         organizationCategory,

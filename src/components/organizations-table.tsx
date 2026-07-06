@@ -424,15 +424,13 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
               <div className="overflow-x-auto w-full">
                 <table className="w-full text-left border-collapse table-fixed">
                   <colgroup>
+                    <col className="w-[50%]" />
                     <col className="w-[25%]" />
-                    <col className="w-[45%]" />
-                    <col className="w-[15%]" />
-                    <col className="w-[15%]" />
+                    <col className="w-[25%]" />
                   </colgroup>
                   <thead>
                     <tr className="bg-muted/30 border-b border-border/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                       <th scope="col" className="px-5 py-3.5 font-bold">Category Name</th>
-                      <th scope="col" className="px-5 py-3.5 font-bold">Description</th>
                       <th scope="col" className="px-5 py-3.5 font-bold">Category ID</th>
                       <th scope="col" className="px-5 py-3.5 font-bold text-right">Actions</th>
                     </tr>
@@ -440,7 +438,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                   <tbody className="divide-y divide-border text-[13px] text-foreground">
                     {filteredCategories.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-5 py-12 text-center text-muted-foreground font-medium bg-muted/5">
+                        <td colSpan={3} className="px-5 py-12 text-center text-muted-foreground font-medium bg-muted/5">
                           No categories found.
                         </td>
                       </tr>
@@ -450,11 +448,6 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                           <td className="px-5 py-3 max-w-0">
                             <span title={category.name} className="block truncate font-semibold text-foreground">
                               {category.name}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 max-w-0">
-                            <span title={category.description ?? undefined} className="block truncate text-muted-foreground text-xs font-medium">
-                              {category.description || "—"}
                             </span>
                           </td>
                           <td className="px-5 py-3 max-w-0">
@@ -486,7 +479,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                                 className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground cursor-pointer rounded-lg transition-colors"
                                 title="Delete Category"
                               >
-                                <Trash2 className="size-3.5" />
+                                  <Trash2 className="size-3.5" />
                               </Button>
                             </form>
                           </td>
