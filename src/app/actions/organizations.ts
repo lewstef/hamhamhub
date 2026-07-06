@@ -11,10 +11,10 @@ export async function getOrganizationCategories() {
   let list = await db.select().from(organizationCategories);
   if (list.length === 0) {
     const defaults = [
-      { id: "ngo", name: "NGO" },
-      { id: "dog_kennel", name: "Dog Kennel" },
-      { id: "dog_service_provider", name: "Dog service provider" },
-      { id: "cynological_association", name: "Official Cynological Association" },
+      { id: "ngo", name: "NGO", description: "Non-governmental organizations working for animal welfare." },
+      { id: "dog_kennel", name: "Dog Kennel", description: "Professional kennels offering boarding, breeding, and care services." },
+      { id: "dog_service_provider", name: "Dog service provider", description: "Independent dog trainers, walkers, and groomers." },
+      { id: "cynological_association", name: "Official Cynological Association", description: "National Cynological Association supervising breed standards and official registries." },
     ];
     await db.insert(organizationCategories).values(defaults);
     list = await db.select().from(organizationCategories);
@@ -24,6 +24,7 @@ export async function getOrganizationCategories() {
 
 export async function createOrganizationCategoryAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
+  const description = formData.get("description") as string;
   if (!name || name.trim() === "") {
     return { error: "Organization category name is required." };
   }
@@ -53,12 +54,39 @@ export async function createOrganizationCategoryAction(prevState: unknown, formD
     await db.insert(organizationCategories).values({
       id,
       name: name.trim(),
+      description: description?.trim() || null,
     });
 
     revalidatePath("/backoffice/organizations");
     return { success: true };
   } catch (error) {
     console.error("Failed to create organization category:", error);
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+export async function updateOrganizationCategoryAction(prevState: unknown, formData: FormData) {
+  const id = formData.get("id") as string;
+  const name = formData.get("name") as string;
+  const description = formData.get("description") as string;
+
+  if (!id || !name || name.trim() === "") {
+    return { error: "Organization category name is required." };
+  }
+
+  try {
+    await db
+      .update(organizationCategories)
+      .set({
+        name: name.trim(),
+        description: description?.trim() || null,
+      })
+      .where(eq(organizationCategories.id, id));
+
+    revalidatePath("/backoffice/organizations");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update organization category:", error);
     return { error: "Something went wrong. Please try again." };
   }
 }

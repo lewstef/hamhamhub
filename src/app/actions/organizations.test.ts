@@ -4,6 +4,9 @@ import {
   updateOrganizationAction,
   changeOrganizationPasswordAction,
   deleteOrganizationAction,
+  createOrganizationCategoryAction,
+  updateOrganizationCategoryAction,
+  deleteOrganizationCategoryAction,
 } from "./organizations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -13,6 +16,7 @@ process.env.DATABASE_URL = "postgres://dummy:dummy@localhost:5432/dummy";
 
 // Declare mocks that we can control in tests
 const mockSelect = vi.fn();
+const mockCategorySelect = vi.fn();
 const mockInsert = vi.fn();
 const mockUpdate = vi.fn();
 const mockDelete = vi.fn();
@@ -24,28 +28,39 @@ vi.mock("@/auth", () => ({
 }));
 
 vi.mock("@/db", () => {
-  const chain = {
-    from: vi.fn().mockImplementation((table) => {
-      const tableName = table?.[Symbol.for("drizzle:Name")];
-      if (tableName === "organization_categories") {
-        return Promise.resolve([
-          { id: "ngo", name: "NGO" },
-          { id: "dog_kennel", name: "Dog Kennel" },
-          { id: "dog_service_provider", name: "Dog service provider" },
-          { id: "cynological_association", name: "Official Cynological Association" },
-        ]);
-      }
-      return chain;
-    }),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockImplementation(() => {
-      return mockSelect();
-    }),
-    values: vi.fn().mockImplementation(() => {
-      return mockInsert();
-    }),
-  };
+  let lastTable = "";
+  const chain: any = {};
+
+  chain.from = vi.fn().mockImplementation((table) => {
+    lastTable = table?.[Symbol.for("drizzle:Name")] || "";
+    return chain;
+  });
+  chain.where = vi.fn().mockImplementation(() => {
+    return chain;
+  });
+  chain.orderBy = vi.fn().mockImplementation(() => {
+    return chain;
+  });
+  chain.limit = vi.fn().mockImplementation(() => {
+    return chain;
+  });
+  chain.values = vi.fn().mockImplementation(() => {
+    return mockInsert();
+  });
+  chain.then = vi.fn().mockImplementation((onfulfilled) => {
+    if (lastTable === "organization_categories") {
+      const categories = [
+        { id: "ngo", name: "NGO", description: "NGO Description" },
+        { id: "dog_kennel", name: "Dog Kennel", description: "Dog Kennel Description" },
+        { id: "dog_service_provider", name: "Dog service provider", description: "Dog service provider Description" },
+        { id: "cynological_association", name: "Official Cynological Association", description: "Official Cynological Association Description" },
+      ];
+      const customVal = mockCategorySelect();
+      const val = customVal !== undefined ? customVal : categories;
+      return Promise.resolve(val).then(onfulfilled);
+    }
+    return Promise.resolve(mockSelect()).then(onfulfilled);
+  });
 
   const db = {
     select: vi.fn().mockReturnValue(chain),
@@ -88,6 +103,39 @@ vi.mock("bcryptjs", () => ({
 describe("Organization Server Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCategorySelect.mockReturnValue(undefined);
+  });
+
+  describe("Category Management Actions", () => {
+    it("should create category with name and description", async () => {
+      const formData = new FormData();
+      formData.append("name", "New Category");
+      formData.append("description", "A custom description here");
+
+      mockCategorySelect.mockReturnValueOnce([]); // no existing category duplicate
+      mockInsert.mockResolvedValueOnce({ id: "new_category" });
+
+      const result = await createOrganizationCategoryAction(null, formData);
+
+      expect(mockInsert).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should update category name and description", async () => {
+      const formData = new FormData();
+      formData.append("id", "ngo");
+      formData.append("name", "Updated NGO");
+      formData.append("description", "Updated description text");
+
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await updateOrganizationCategoryAction(null, formData);
+
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
+      expect(result).toEqual({ success: true });
+    });
   });
 
   describe("createOrganizationAction", () => {

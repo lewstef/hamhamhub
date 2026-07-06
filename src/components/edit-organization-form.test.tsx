@@ -18,10 +18,10 @@ describe("EditOrganizationForm Component", () => {
     organizationCategory: "ngo",
   };
   const dummyOrganizationCategoryList = [
-    { id: "ngo", name: "NGO" },
-    { id: "dog_kennel", name: "Dog Kennel" },
-    { id: "dog_service_provider", name: "Dog service provider" },
-    { id: "cynological_association", name: "Official Cynological Association" },
+    { id: "ngo", name: "NGO", description: "NGO Description" },
+    { id: "dog_kennel", name: "Dog Kennel", description: "Dog Kennel Description" },
+    { id: "dog_service_provider", name: "Dog service provider", description: "Dog service provider Description" },
+    { id: "cynological_association", name: "Official Cynological Association", description: "Official Cynological Association Description" },
   ];
 
   it("should render with prefilled organization values on the General tab", () => {

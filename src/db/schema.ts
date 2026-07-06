@@ -3,6 +3,7 @@ import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 export const organizationCategories = pgTable("organization_categories", {
   id: text("id").primaryKey(), // Sluggified name, e.g. "ngo", "dog_kennel"
   name: text("name").notNull(),
+  description: text("description"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -26,5 +27,12 @@ export const services = pgTable("services", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   organizationCategory: text("organization_category").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const serviceTypes = pgTable("service_types", {
+  id: text("id").primaryKey(), // e.g., "dog_training"
+  name: text("name").notNull(),
+  description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

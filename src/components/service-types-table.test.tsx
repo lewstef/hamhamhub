@@ -1,12 +1,24 @@
 // @vitest-environment happy-dom
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 import { ServiceTypesTable } from "./service-types-table";
 
+// Mock the server action
+vi.mock("@/app/actions/service-types", () => ({
+  updateServiceTypeAction: vi.fn(),
+}));
+
 describe("ServiceTypesTable Component", () => {
+  const dummyServiceTypesList = [
+    { id: "dog_training", name: "Dog training", description: "Behavioral training", applicableTo: [], fields: [] },
+    { id: "dog_boarding", name: "Dog boarding", description: "Overnight stays", applicableTo: [], fields: [] },
+    { id: "sport_dog_training", name: "Sport dog training", description: "Advanced training", applicableTo: [], fields: [] },
+    { id: "dog_walking", name: "Dog walking", description: "Daily exercise walks", applicableTo: [], fields: [] },
+  ];
+
   it("should render all static service types on initialization", () => {
-    render(<ServiceTypesTable />);
+    render(<ServiceTypesTable serviceTypesList={dummyServiceTypesList} />);
 
     // Verify all core service types exist in the document
     expect(screen.getByText("Dog training")).toBeDefined();
@@ -16,7 +28,7 @@ describe("ServiceTypesTable Component", () => {
   });
 
   it("should filter service types based on search input (case insensitive)", () => {
-    render(<ServiceTypesTable />);
+    render(<ServiceTypesTable serviceTypesList={dummyServiceTypesList} />);
 
     const searchInput = screen.getByPlaceholderText("Search service types...");
     
@@ -32,7 +44,7 @@ describe("ServiceTypesTable Component", () => {
   });
 
   it("should display a warning/empty message when no matching results are found", () => {
-    render(<ServiceTypesTable />);
+    render(<ServiceTypesTable serviceTypesList={dummyServiceTypesList} />);
 
     const searchInput = screen.getByPlaceholderText("Search service types...");
 

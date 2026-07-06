@@ -50,11 +50,28 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Collapsible Sidebar Tree**: Fully responsive sidebar with collapsible navigation groups, active route tracking, and real-time menu search filtering.
 - **Credential Protection**: All creation popups include `Confirm Password` fields with client-side match checking and `Eye`/`EyeOff` visibility toggles.
 - **Password Strength Indicator**: Renders a premium, real-time client-side validation widget on all forms where passwords are set or modified. It checks for length (min 6 characters), numbers, uppercase letters, and special symbols, updating visual segmented color-coded bars and checklists dynamically.
-- **Setup Auto-Redirection**: Clears layout caches and automatically routes the administrator to the backoffice portal (/backoffice) upon completing first-time platform setup.
+- **Setup Auto-Redirection**: Automatically routes the administrator to the backoffice portal (/backoffice) upon completing first-time platform setup. Direct access to `/initialization` is strictly blocked and redirected to `/backoffice` once the platform has been initialized.
+- **Tactile Service Toggle Cards**: Replaced standard multi-select fields with a visual option grid. Users can toggle multiple services. Existing category services are displayed as checkmarked and disabled with a "Registered" indicator to prevent duplicate allocations.
 
 ---
 
-## 4. Commands & Verification
+## 4. Dynamic Categories & Service Types
+
+The backoffice system integrates completely dynamic configuration layers for business categorization and service templates:
+
+### A. Organization Categories (`/backoffice/organizations`)
+- Organization Categories are dynamically queryable from the database.
+- Admin can search, create, and customize categories.
+- Includes **Category Edit Modals** to update category names and descriptions.
+- Dynamic color badges represent distinct category types (e.g. green for NGO, blue for Kennel, purple for Association, indigo for Provider).
+
+### B. Service Types Configuration (`/backoffice/services/types`)
+- Custom names and descriptions for service templates (Obedience training, Boarding, Walking, etc.) are managed in the database `service_types` table.
+- Admin can modify names and descriptions through an edit popup, instantly propagating updates to page views and validation rules.
+
+---
+
+## 5. Commands & Verification
 
 ### Running Locally
 ```bash

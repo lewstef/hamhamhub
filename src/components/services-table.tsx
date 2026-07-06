@@ -6,7 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { X, Trash2, ChevronRight, Sparkles } from "lucide-react";
+import { X, Trash2, ChevronRight, Sparkles, GraduationCap, Home, Activity, Footprints, Check, Search } from "lucide-react";
+
+interface FormField {
+  name: string;
+  label: string;
+  type: "text" | "number" | "select" | "checkbox" | "textarea";
+  suffix?: string;
+  options?: string[];
+  placeholder?: string;
+  required?: boolean;
+}
+
+interface ServiceType {
+  id: string;
+  name: string;
+  description: string;
+  applicableTo: string[];
+  fields: FormField[];
+}
 
 interface Service {
   id: string;
@@ -22,9 +40,48 @@ interface OrganizationCategory {
 interface ServicesTableProps {
   serviceList: Service[];
   organizationCategoryList: OrganizationCategory[];
+  serviceTypeList: ServiceType[];
 }
 
-export function ServicesTable({ serviceList, organizationCategoryList }: ServicesTableProps) {
+// Maps service names to visual icons, descriptions and accent colors
+const getServiceDetails = (name: string) => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("training") && normalized.includes("sport")) {
+    return {
+      description: "Advanced canine sports, agility, and competition coaching.",
+      icon: <Activity className="size-4 text-purple-500" />,
+      colorClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20",
+    };
+  }
+  if (normalized.includes("training")) {
+    return {
+      description: "Obedience lessons, behavioral coaching, and socialization.",
+      icon: <GraduationCap className="size-4 text-emerald-500" />,
+      colorClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+    };
+  }
+  if (normalized.includes("boarding") || normalized.includes("kennel")) {
+    return {
+      description: "Overnight lodging, meals, and secure room accommodations.",
+      icon: <Home className="size-4 text-blue-500" />,
+      colorClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20",
+    };
+  }
+  if (normalized.includes("walking")) {
+    return {
+      description: "Outdoor exercise runs, safety walks, and park adventures.",
+      icon: <Footprints className="size-4 text-amber-500" />,
+      colorClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+    };
+  }
+  return {
+    description: "General dog services and master allocations.",
+    icon: <Sparkles className="size-4 text-slate-500" />,
+    colorClass: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20",
+  };
+};
+
+export function ServicesTable({ serviceList, organizationCategoryList, serviceTypeList }: ServicesTableProps) {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("all");
@@ -32,6 +89,9 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
     organizationCategoryList[0]?.id || "dog_service_provider"
   );
   
+  // Custom multi-select state (holds newly selected services)
+  const [selectedServiceNames, setSelectedServiceNames] = useState<string[]>([]);
+
   const [state, formAction, isPending] = useActionState(createServiceAction, null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -40,12 +100,18 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Reset new selections when switching category to avoid duplicate registrations
+  useEffect(() => {
+    setSelectedServiceNames([]);
+  }, [formOrgCategory]);
+
   // Close form on successful creation
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
         setShowForm(false);
         formRef.current?.reset();
+        setSelectedServiceNames([]);
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -71,6 +137,7 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
           ? selectedTypeFilter
           : organizationCategoryList[0]?.id || "dog_service_provider")
     );
+    setSelectedServiceNames([]);
     setShowForm(true);
   };
 
@@ -86,6 +153,11 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
   for (const category of organizationCategoryList) {
     grouped[category.id] = filteredServices.filter((s) => s.organizationCategory === category.id);
   }
+
+  // Get service names already registered for currently selected category
+  const registeredNamesForCategory = serviceList
+    .filter((s) => s.organizationCategory === formOrgCategory)
+    .map((s) => s.name);
 
   return (
     <div className="space-y-6">
@@ -105,12 +177,15 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
       {/* Filters Bar */}
       <div className="flex flex-col sm:flex-row gap-4 items-center bg-card p-4 rounded-xl border border-border">
         <div className="flex-1 w-full">
-          <Input
-            placeholder="Search services by name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-md w-full"
-          />
+          <div className="relative w-full max-w-md group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Input
+              placeholder="Search services by name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 w-full"
+            />
+          </div>
         </div>
         <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
           <button
@@ -175,28 +250,38 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
                   </p>
                 ) : (
                   <div className="divide-y divide-border/60">
-                    {categoryServices.map((s) => (
-                      <div
-                        key={s.id}
-                        className="py-3 flex items-center justify-between group/item hover:bg-muted/20 px-2 -mx-2 rounded-lg transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <ChevronRight className="size-3 text-primary/70" />
-                          <span className="text-sm font-medium text-foreground">{s.name}</span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive text-muted-foreground focus:opacity-100"
-                          onClick={() => {
-                            setDeleteTargetId(s.id);
-                            setShowDeleteConfirm(true);
-                          }}
+                    {categoryServices.map((s) => {
+                      const details = getServiceDetails(s.name);
+                      return (
+                        <div
+                          key={s.id}
+                          className="py-3 flex items-start justify-between group/item hover:bg-muted/20 px-3 -mx-3 rounded-xl transition-all"
                         >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
-                    ))}
+                          <div className="flex gap-3 items-start min-w-0 flex-1">
+                            <div className={`p-2 rounded-lg shrink-0 ${details.colorClass.split(" ")[0]} border border-border/40`}>
+                              {details.icon}
+                            </div>
+                            <div className="space-y-0.5 min-w-0">
+                              <span className="text-sm font-semibold text-foreground block truncate">{s.name}</span>
+                              <span className="text-[11px] text-muted-foreground line-clamp-1 leading-normal">
+                                {details.description}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive text-muted-foreground focus:opacity-100 shrink-0 ml-2"
+                            onClick={() => {
+                              setDeleteTargetId(s.id);
+                              setShowDeleteConfirm(true);
+                            }}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -208,7 +293,7 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
       {/* Create Service Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="relative w-full max-w-md shadow-2xl">
+          <Card className="relative w-full max-w-lg shadow-2xl">
             <button
               onClick={() => setShowForm(false)}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
@@ -218,10 +303,15 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
             <CardHeader className="px-6 pt-6 pb-4 border-b border-border">
               <CardTitle className="text-lg font-bold">Create Master Service</CardTitle>
               <CardDescription className="text-xs mt-1">
-                Define a new service and allocate it to a specific category.
+                Define and allocate services to a specific category.
               </CardDescription>
             </CardHeader>
             <form ref={formRef} action={formAction}>
+              {/* Hidden Inputs for Form Submission (Submit only new selections) */}
+              {selectedServiceNames.map((name) => (
+                <input key={name} type="hidden" name="name" value={name} />
+              ))}
+              
               <CardContent className="p-6 space-y-4">
                 {state?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
@@ -229,19 +319,59 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
                   </div>
                 )}
                 <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider">
-                      Service Name
+                  {/* Custom Multi-Select Grid */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Select Services (Toggle one or more)
                     </Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      placeholder="e.g., Dog Boarding, Pedigree Registration"
-                      required
-                      disabled={isAnyPending}
-                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {serviceTypeList.map((st) => {
+                        const isAlreadyRegistered = registeredNamesForCategory.includes(st.name);
+                        const isSelected = selectedServiceNames.includes(st.name) || isAlreadyRegistered;
+                        const details = getServiceDetails(st.name);
+                        return (
+                          <button
+                            type="button"
+                            key={st.id}
+                            disabled={isAlreadyRegistered}
+                            onClick={() => {
+                              if (isAlreadyRegistered) return;
+                              if (selectedServiceNames.includes(st.name)) {
+                                setSelectedServiceNames(selectedServiceNames.filter((n) => n !== st.name));
+                              } else {
+                                setSelectedServiceNames([...selectedServiceNames, st.name]);
+                              }
+                            }}
+                            className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all hover:shadow-sm ${
+                              isAlreadyRegistered
+                                ? "bg-emerald-500/5 border-emerald-500/20 opacity-85 cursor-not-allowed"
+                                : isSelected
+                                ? "bg-primary/5 border-primary ring-2 ring-primary/20 cursor-pointer"
+                                : "bg-card border-border hover:bg-muted/30 cursor-pointer"
+                            }`}
+                          >
+                            <div className={`p-2 rounded-lg shrink-0 ${isAlreadyRegistered ? "bg-emerald-500/10 text-emerald-600" : isSelected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                              {details.icon}
+                            </div>
+                            <div className="space-y-1 min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 justify-between">
+                                <span className="font-bold text-xs text-foreground truncate">{st.name}</span>
+                                {isAlreadyRegistered ? (
+                                  <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full shrink-0">Registered</span>
+                                ) : isSelected ? (
+                                  <Check className="size-3 text-primary shrink-0" />
+                                ) : null}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground leading-normal line-clamp-2">
+                                {st.description}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
+
                   <div className="space-y-1.5">
                     <Label htmlFor="organizationCategory" className="text-xs font-bold uppercase tracking-wider">
                       Organization Category
@@ -272,7 +402,7 @@ export function ServicesTable({ serviceList, organizationCategoryList }: Service
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isAnyPending}>
+                  <Button type="submit" disabled={isAnyPending || selectedServiceNames.length === 0}>
                     {isAnyPending ? "Saving..." : "Save Service"}
                   </Button>
                 </div>

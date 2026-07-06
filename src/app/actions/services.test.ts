@@ -20,16 +20,24 @@ vi.mock("@/auth", () => ({
   signOut: vi.fn(),
 }));
 
+vi.mock("./service-types", () => ({
+  getServiceTypesAction: vi.fn(async () => [
+    { id: "dog_training", name: "Dog training", description: "Desc", applicableTo: [], fields: [] },
+    { id: "dog_boarding", name: "Dog boarding", description: "Desc", applicableTo: [], fields: [] },
+    { id: "dog_walking", name: "Dog walking", description: "Desc", applicableTo: [], fields: [] },
+  ]),
+}));
+
 vi.mock("@/db", () => {
   const chain = {
     from: vi.fn().mockImplementation((table) => {
       const tableName = table?.[Symbol.for("drizzle:Name")];
       if (tableName === "organization_categories") {
         return Promise.resolve([
-          { id: "ngo", name: "NGO" },
-          { id: "dog_kennel", name: "Dog Kennel" },
-          { id: "dog_service_provider", name: "Dog service provider" },
-          { id: "cynological_association", name: "Official Cynological Association" },
+          { id: "ngo", name: "NGO", description: "NGO Description" },
+          { id: "dog_kennel", name: "Dog Kennel", description: "Dog Kennel Description" },
+          { id: "dog_service_provider", name: "Dog service provider", description: "Dog service provider Description" },
+          { id: "cynological_association", name: "Official Cynological Association", description: "Official Cynological Association Description" },
         ]);
       }
       return chain;
@@ -41,6 +49,9 @@ vi.mock("@/db", () => {
     }),
     values: vi.fn().mockImplementation(() => {
       return mockInsert();
+    }),
+    then: vi.fn().mockImplementation((onfulfilled) => {
+      return Promise.resolve(mockSelect()).then(onfulfilled);
     }),
   };
 
@@ -90,7 +101,7 @@ describe("Service Server Actions", () => {
   describe("createServiceAction", () => {
     it("should return error if required fields are missing", async () => {
       const formData = new FormData();
-      formData.append("name", "Dog Boarding");
+      formData.append("name", "Dog boarding");
       // missing organizationCategory
 
       const result = await createServiceAction(null, formData);
@@ -99,23 +110,58 @@ describe("Service Server Actions", () => {
 
     it("should return error if organization category is invalid", async () => {
       const formData = new FormData();
-      formData.append("name", "Dog Boarding");
+      formData.append("name", "Dog boarding");
       formData.append("organizationCategory", "invalid_category");
 
       const result = await createServiceAction(null, formData);
       expect(result).toEqual({ error: "A valid Organization Category is required" });
     });
 
-    it("should successfully create service and return success", async () => {
+    it("should return error if service is already registered under this category", async () => {
       const formData = new FormData();
-      formData.append("name", "Dog Boarding");
+      formData.append("name", "Dog boarding");
       formData.append("organizationCategory", "dog_kennel");
 
+      // Mock duplicate search to return an existing service
+      mockSelect.mockResolvedValueOnce([{ id: "existing-service" }]);
+
+      const result = await createServiceAction(null, formData);
+
+      expect(mockSelect).toHaveBeenCalled();
+      expect(result).toEqual({ error: 'Service "Dog boarding" is already registered under this category.' });
+    });
+
+    it("should successfully create service and return success", async () => {
+      const formData = new FormData();
+      formData.append("name", "Dog boarding");
+      formData.append("organizationCategory", "dog_kennel");
+
+      // Mock duplicate search to return empty, and insert to resolve
+      mockSelect.mockResolvedValueOnce([]);
       mockInsert.mockResolvedValueOnce({ id: "new-service-id" });
 
       const result = await createServiceAction(null, formData);
 
       expect(mockInsert).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should successfully create multiple services and return success", async () => {
+      const formData = new FormData();
+      formData.append("name", "Dog boarding");
+      formData.append("name", "Dog walking");
+      formData.append("organizationCategory", "dog_kennel");
+
+      // Mock duplicate search calls to return empty
+      mockSelect
+        .mockResolvedValueOnce([]) // for Dog boarding
+        .mockResolvedValueOnce([]); // for Dog walking
+      mockInsert.mockResolvedValue({ id: "new-service-id" });
+
+      const result = await createServiceAction(null, formData);
+
+      expect(mockInsert).toHaveBeenCalledTimes(2);
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
       expect(result).toEqual({ success: true });
     });

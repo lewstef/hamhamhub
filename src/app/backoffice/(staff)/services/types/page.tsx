@@ -1,10 +1,12 @@
 import { ServiceTypesTable } from "@/components/service-types-table";
+import { getServiceTypesAction } from "@/app/actions/service-types";
 
 export const metadata = {
   title: "Service Types - Backoffice",
-  description: "Static service types configured directly in code.",
+  description: "Configure name and descriptions for service types.",
 };
 
-export default function ServiceTypesPage() {
-  return <ServiceTypesTable />;
+export default async function ServiceTypesPage() {
+  const serviceTypesList = await getServiceTypesAction();
+  return <ServiceTypesTable serviceTypesList={serviceTypesList} />;
 }
