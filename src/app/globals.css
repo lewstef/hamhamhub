@@ -127,6 +127,12 @@
   html {
     @apply font-sans;
   }
+  select, option {
+    @apply bg-background text-foreground;
+  }
+  .dark select {
+    color-scheme: dark;
+  }
 }
 
 @keyframes float-slow {

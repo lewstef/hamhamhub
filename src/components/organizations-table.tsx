@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useActionState, useRef, useEffect } from "react";
-import { createOrganizationAction, deleteOrganizationAction } from "@/app/actions/organizations";
+import {
+  createOrganizationAction,
+  deleteOrganizationAction,
+  createOrganizationCategoryAction,
+  deleteOrganizationCategoryAction,
+} from "@/app/actions/organizations";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,21 +19,34 @@ interface Organization {
   id: string;
   name: string;
   email: string | null;
-  organizationType: "dog_service_provider" | "dog_kennel" | "cynological_association" | "ngo" | null;
+  organizationCategory: string | null;
   createdAt: Date;
+}
+
+interface OrganizationCategory {
+  id: string;
+  name: string;
 }
 
 interface OrganizationsTableProps {
   organizationList: Organization[];
+  organizationCategoryList: OrganizationCategory[];
 }
 
-export function OrganizationsTable({ organizationList }: OrganizationsTableProps) {
+export function OrganizationsTable({ organizationList, organizationCategoryList }: OrganizationsTableProps) {
+  const [activeTab, setActiveTab] = useState<"list" | "types">("list");
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
+  
   const [state, formAction, isPending] = useActionState(createOrganizationAction, null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Organization Category actions
+  const [categoryState, categoryFormAction, isCategoryPending] = useActionState(createOrganizationCategoryAction, null);
+  const [deleteCategoryState, deleteCategoryAction, isDeleteCategoryPending] = useActionState(deleteOrganizationCategoryAction, null);
+  const categoryFormRef = useRef<HTMLFormElement>(null);
 
   // Password matching and visibility toggle states
   const [showPassword, setShowPassword] = useState(false);
@@ -55,6 +73,13 @@ export function OrganizationsTable({ organizationList }: OrganizationsTableProps
       return () => clearTimeout(timer);
     }
   }, [state]);
+
+  // Reset category creation form on success
+  useEffect(() => {
+    if (categoryState?.success) {
+      categoryFormRef.current?.reset();
+    }
+  }, [categoryState]);
 
   // Close delete confirm on successful deletion
   useEffect(() => {
@@ -96,24 +121,275 @@ export function OrganizationsTable({ organizationList }: OrganizationsTableProps
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Organizations</h1>
         </div>
-        <div className="flex-1">
-          <Input
-            placeholder="Search organizations..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="max-w-sm"
-          />
-        </div>
-        <div className="shrink-0">
-          <Button onClick={() => setShowForm(true)} className="gap-2">
-            <Plus className="size-4" />
-            Create Organization
-          </Button>
-        </div>
+        {activeTab === "list" && (
+          <>
+            <div className="flex-1">
+              <Input
+                placeholder="Search organizations..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="max-w-sm"
+              />
+            </div>
+            <div className="shrink-0">
+              <Button onClick={() => setShowForm(true)} className="gap-2 cursor-pointer">
+                <Plus className="size-4" />
+                Create Organization
+              </Button>
+            </div>
+          </>
+        )}
       </div>
+
+      {/* Tabs Navigation */}
+      <div className="border-b border-border flex gap-6 text-sm mb-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab("list")}
+          className={`pb-2 px-1 focus:outline-none transition-all cursor-pointer font-semibold ${
+            activeTab === "list"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Organizations
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("types")}
+          className={`pb-2 px-1 focus:outline-none transition-all cursor-pointer font-semibold ${
+            activeTab === "types"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Organization categories
+        </button>
+      </div>
+
+      {/* List Tab Content */}
+      {activeTab === "list" && (
+        <>
+          {/* Organizations Table */}
+          <Card className="overflow-hidden py-0">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <colgroup>
+                    <col className="w-[25%]" />
+                    <col className="w-[25%]" />
+                    <col className="w-[20%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[15%]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-muted/50 border-b border-border text-xs font-semibold text-muted-foreground tracking-wider">
+                      <th scope="col" className="px-4 py-2.5 font-semibold">Name</th>
+                      <th scope="col" className="px-4 py-2.5 font-semibold">Email Address</th>
+                      <th scope="col" className="px-4 py-2.5 font-semibold">Organization Category</th>
+                      <th scope="col" className="px-4 py-2.5 font-semibold">Joined Date</th>
+                      <th scope="col" className="px-4 py-2.5 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border text-[13px] text-foreground">
+                    {filteredOrganizations.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground font-medium">
+                          No organization accounts found.
+                        </td>
+                      </tr>
+                    ) : (
+                      pagedOrganizations.map((o) => (
+                        <tr key={o.id} className="hover:bg-muted/40 transition-colors">
+                          <td className="px-4 py-3.5 max-w-0">
+                            <span title={o.name} className="block truncate font-medium">
+                              {o.name}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 max-w-0">
+                            <span title={o.email ?? undefined} className="block truncate text-muted-foreground font-mono text-xs">
+                              {o.email || "—"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 max-w-0">
+                            <span className="text-muted-foreground text-xs">
+                              {organizationCategoryList.find((t) => t.id === o.organizationCategory)?.name || o.organizationCategory || "—"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className="text-muted-foreground text-xs">
+                              {new Date(o.createdAt).toLocaleDateString()}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-right space-x-1">
+                            <Link
+                              href={`/backoffice/organizations/edit/${o.id}`}
+                              className={buttonVariants({ variant: "outline", size: "icon-sm" })}
+                            >
+                              <Pencil className="size-3" />
+                            </Link>
+                            <Button
+                              variant="destructive"
+                              size="icon-sm"
+                              type="button"
+                              onClick={() => {
+                                setDeleteTargetId(o.id);
+                                setShowDeleteConfirm(true);
+                              }}
+                            >
+                              <Trash2 className="size-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pagination */}
+          {showPagination && (
+            <div className="flex items-center justify-between px-1">
+              <p className="text-xs text-muted-foreground">
+                Showing{" "}
+                <span className="font-semibold text-foreground">
+                  {(safePage - 1) * PAGE_SIZE + 1}–
+                  {Math.min(safePage * PAGE_SIZE, filteredOrganizations.length)}
+                </span>{" "}
+                of <span className="font-semibold text-foreground">{filteredOrganizations.length}</span>{" "}
+                organizations
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <Button
+                    key={p}
+                    variant={p === safePage ? "default" : "outline"}
+                    size="icon-sm"
+                    onClick={() => setPage(p)}
+                  >
+                    {p}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Organization Categories Tab Content */}
+      {activeTab === "types" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* List Card */}
+          <div className="md:col-span-2 space-y-4">
+            <Card className="overflow-hidden py-0">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse table-fixed">
+                    <colgroup>
+                      <col className="w-[45%]" />
+                      <col className="w-[35%]" />
+                      <col className="w-[20%]" />
+                    </colgroup>
+                    <thead>
+                      <tr className="bg-muted/50 border-b border-border text-xs font-semibold text-muted-foreground tracking-wider">
+                        <th scope="col" className="px-4 py-2.5 font-semibold">Name</th>
+                        <th scope="col" className="px-4 py-2.5 font-semibold">ID</th>
+                        <th scope="col" className="px-4 py-2.5 font-semibold text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border text-[13px] text-foreground">
+                      {organizationCategoryList.map((category) => (
+                        <tr key={category.id} className="hover:bg-muted/20 transition-colors h-11">
+                          <td className="px-4 py-2 font-medium truncate" title={category.name}>{category.name}</td>
+                          <td className="px-4 py-2 font-mono text-xs text-muted-foreground truncate" title={category.id}>{category.id}</td>
+                          <td className="px-4 py-2 text-right">
+                            <form action={deleteCategoryAction} className="inline-block">
+                              <input type="hidden" name="id" value={category.id} />
+                              <Button
+                                type="submit"
+                                variant="ghost"
+                                size="icon-sm"
+                                disabled={isDeleteCategoryPending}
+                                className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground cursor-pointer"
+                                title="Delete Organization Category"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            </form>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+            {(deleteCategoryState as any)?.error && (
+              <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                {(deleteCategoryState as any).error}
+              </div>
+            )}
+          </div>
+
+          {/* Add Form Card */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="px-6 py-4 border-b border-border">
+                <CardTitle className="text-sm font-bold">Add Organization Category</CardTitle>
+                <CardDescription className="text-xs">
+                  Create a new dynamic category for organizations.
+                </CardDescription>
+              </CardHeader>
+              <form ref={categoryFormRef} action={categoryFormAction}>
+                <CardContent className="p-6 space-y-4">
+                  {(categoryState as any)?.error && (
+                    <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                      {(categoryState as any).error}
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="categoryName" className="text-xs font-bold uppercase tracking-wider">
+                      Category Name
+                    </Label>
+                    <Input
+                      id="categoryName"
+                      name="name"
+                      type="text"
+                      placeholder="e.g. Dog Groomer"
+                      required
+                      disabled={isCategoryPending}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full mt-4 cursor-pointer" disabled={isCategoryPending}>
+                    {isCategoryPending ? "Adding..." : "Add Category"}
+                  </Button>
+                </CardContent>
+              </form>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* Create Organization Modal */}
       {showForm && (
@@ -226,21 +502,22 @@ export function OrganizationsTable({ organizationList }: OrganizationsTableProps
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="organizationType" className="text-xs font-bold uppercase tracking-wider">
-                      Organization Type
+                    <Label htmlFor="organizationCategory" className="text-xs font-bold uppercase tracking-wider">
+                      Organization Category
                     </Label>
                     <select
-                      id="organizationType"
-                      name="organizationType"
-                      defaultValue="dog_service_provider"
+                      id="organizationCategory"
+                      name="organizationCategory"
+                      defaultValue={organizationCategoryList[0]?.id || ""}
                       required
                       disabled={isAnyPending}
                       className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                     >
-                      <option value="dog_service_provider">Dog Service Provider</option>
-                      <option value="dog_kennel">Dog Kennel</option>
-                      <option value="cynological_association">Official Cynological Association</option>
-                      <option value="ngo">NGO</option>
+                      {organizationCategoryList.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -272,7 +549,7 @@ export function OrganizationsTable({ organizationList }: OrganizationsTableProps
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && deleteTargetId && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="relative w-full max-sm shadow-2xl">
+          <Card className="relative w-full max-w-sm shadow-2xl">
             <button
               onClick={() => {
                 setShowDeleteConfirm(false);
@@ -315,144 +592,6 @@ export function OrganizationsTable({ organizationList }: OrganizationsTableProps
               </CardContent>
             </form>
           </Card>
-        </div>
-      )}
-
-      {/* Organizations Table */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left border-collapse table-fixed">
-              <colgroup>
-                <col className="w-[25%]" />
-                <col className="w-[25%]" />
-                <col className="w-[20%]" />
-                <col className="w-[15%]" />
-                <col className="w-[15%]" />
-              </colgroup>
-              <thead>
-                <tr className="bg-muted/50 border-b border-border h-11 text-[11px] font-semibold text-muted-foreground tracking-wider">
-                  <th scope="col" className="px-4 py-3 font-semibold">
-                    Name
-                  </th>
-                  <th scope="col" className="px-4 py-3 font-semibold">
-                    Email Address
-                  </th>
-                  <th scope="col" className="px-4 py-3 font-semibold">
-                    Organization Type
-                  </th>
-                  <th scope="col" className="px-4 py-3 font-semibold">
-                    Joined Date
-                  </th>
-                  <th scope="col" className="px-4 py-3 font-semibold text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border text-[13px] text-foreground">
-                {filteredOrganizations.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-4 py-8 text-center text-muted-foreground font-medium"
-                    >
-                      No organization accounts found.
-                    </td>
-                  </tr>
-                ) : (
-                  pagedOrganizations.map((o) => (
-                    <tr key={o.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-3.5 max-w-0">
-                        <span title={o.name} className="block truncate font-medium">
-                          {o.name}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 max-w-0">
-                        <span
-                          title={o.email ?? undefined}
-                          className="block truncate text-muted-foreground font-mono text-xs"
-                        >
-                          {o.email || "—"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 max-w-0">
-                        <span className="capitalize text-muted-foreground text-xs">
-                          {o.organizationType ? o.organizationType.replace(/_/g, " ") : "—"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className="text-muted-foreground text-xs">
-                          {new Date(o.createdAt).toLocaleDateString()}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-right space-x-1">
-                        <Link
-                          href={`/backoffice/organizations/edit/${o.id}`}
-                          className={buttonVariants({ variant: "outline", size: "icon-sm" })}
-                        >
-                          <Pencil className="size-3" />
-                        </Link>
-                        <Button
-                          variant="destructive"
-                          size="icon-sm"
-                          type="button"
-                          onClick={() => {
-                            setDeleteTargetId(o.id);
-                            setShowDeleteConfirm(true);
-                          }}
-                        >
-                          <Trash2 className="size-3" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      {showPagination && (
-        <div className="flex items-center justify-between px-1">
-          <p className="text-xs text-muted-foreground">
-            Showing{" "}
-            <span className="font-semibold text-foreground">
-              {(safePage - 1) * PAGE_SIZE + 1}–
-              {Math.min(safePage * PAGE_SIZE, filteredOrganizations.length)}
-            </span>{" "}
-            of <span className="font-semibold text-foreground">{filteredOrganizations.length}</span>{" "}
-            organizations
-          </p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage === 1}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <Button
-                key={p}
-                variant={p === safePage ? "default" : "outline"}
-                size="icon-sm"
-                onClick={() => setPage(p)}
-              >
-                {p}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safePage === totalPages}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
         </div>
       )}
     </div>

@@ -70,7 +70,7 @@ const menuData: NavSection[] = [
     icon: Briefcase,
     items: [
       { label: "Manage Services", href: "/backoffice/services" },
-      { label: "Service Types", href: "/backoffice/services/types" },
+      { label: "Service types", href: "/backoffice/services/types" },
     ],
   },
 ];

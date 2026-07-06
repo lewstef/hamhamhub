@@ -25,7 +25,18 @@ vi.mock("@/auth", () => ({
 
 vi.mock("@/db", () => {
   const chain = {
-    from: vi.fn().mockReturnThis(),
+    from: vi.fn().mockImplementation((table) => {
+      const tableName = table?.[Symbol.for("drizzle:Name")];
+      if (tableName === "organization_categories") {
+        return Promise.resolve([
+          { id: "ngo", name: "NGO" },
+          { id: "dog_kennel", name: "Dog Kennel" },
+          { id: "dog_service_provider", name: "Dog service provider" },
+          { id: "cynological_association", name: "Official Cynological Association" },
+        ]);
+      }
+      return chain;
+    }),
     where: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
     limit: vi.fn().mockImplementation(() => {
@@ -83,21 +94,21 @@ describe("Organization Server Actions", () => {
     it("should return error if required fields are missing", async () => {
       const formData = new FormData();
       formData.append("name", "Org Name");
-      // missing email, password, type
+      // missing email, password, category
 
       const result = await createOrganizationAction(null, formData);
       expect(result).toEqual({ error: "All fields are required" });
     });
 
-    it("should return error if organization type is invalid", async () => {
+    it("should return error if organization category is invalid", async () => {
       const formData = new FormData();
       formData.append("name", "Org Name");
       formData.append("email", "org@example.com");
       formData.append("password", "123456");
-      formData.append("organizationType", "invalid_type");
+      formData.append("organizationCategory", "invalid_category");
 
       const result = await createOrganizationAction(null, formData);
-      expect(result).toEqual({ error: "A valid Organization Type is required" });
+      expect(result).toEqual({ error: "A valid Organization Category is required" });
     });
 
     it("should return error if password is less than 6 characters", async () => {
@@ -105,7 +116,7 @@ describe("Organization Server Actions", () => {
       formData.append("name", "Org Name");
       formData.append("email", "org@example.com");
       formData.append("password", "12345");
-      formData.append("organizationType", "ngo");
+      formData.append("organizationCategory", "ngo");
 
       const result = await createOrganizationAction(null, formData);
       expect(result).toEqual({ error: "Password must be at least 6 characters" });
@@ -116,7 +127,7 @@ describe("Organization Server Actions", () => {
       formData.append("name", "Org Name");
       formData.append("email", "org@example.com");
       formData.append("password", "123456");
-      formData.append("organizationType", "ngo");
+      formData.append("organizationCategory", "ngo");
 
       mockSelect.mockResolvedValueOnce([{ id: "existing-id", email: "org@example.com" }]);
 
@@ -129,7 +140,7 @@ describe("Organization Server Actions", () => {
       formData.append("name", "Org Name");
       formData.append("email", "org@example.com");
       formData.append("password", "123456");
-      formData.append("organizationType", "ngo");
+      formData.append("organizationCategory", "ngo");
 
       mockSelect.mockResolvedValueOnce([]); // email check empty
       mockInsert.mockResolvedValueOnce({ id: "new-org-id" });
@@ -146,21 +157,21 @@ describe("Organization Server Actions", () => {
     it("should return error if required fields are missing", async () => {
       const formData = new FormData();
       formData.append("id", "comp-id");
-      // missing name, email, type
+      // missing name, email, category
 
       const result = await updateOrganizationAction(null, formData);
       expect(result).toEqual({ error: "All fields are required" });
     });
 
-    it("should return error if organization type is invalid", async () => {
+    it("should return error if organization category is invalid", async () => {
       const formData = new FormData();
       formData.append("id", "comp-id");
       formData.append("name", "Org Name");
       formData.append("email", "org@example.com");
-      formData.append("organizationType", "invalid_type");
+      formData.append("organizationCategory", "invalid_category");
 
       const result = await updateOrganizationAction(null, formData);
-      expect(result).toEqual({ error: "A valid Organization Type is required" });
+      expect(result).toEqual({ error: "A valid Organization Category is required" });
     });
 
     it("should return error if email is taken by another user", async () => {
@@ -168,7 +179,7 @@ describe("Organization Server Actions", () => {
       formData.append("id", "comp-id");
       formData.append("name", "Org Name");
       formData.append("email", "org@example.com");
-      formData.append("organizationType", "ngo");
+      formData.append("organizationCategory", "ngo");
 
       mockSelect.mockResolvedValueOnce([{ id: "other-id", email: "org@example.com" }]);
 
@@ -181,7 +192,7 @@ describe("Organization Server Actions", () => {
       formData.append("id", "comp-id");
       formData.append("name", "Org Name");
       formData.append("email", "org@example.com");
-      formData.append("organizationType", "ngo");
+      formData.append("organizationCategory", "ngo");
 
       mockSelect.mockResolvedValueOnce([]); // no duplicate email found
       mockUpdate.mockResolvedValueOnce({ count: 1 });

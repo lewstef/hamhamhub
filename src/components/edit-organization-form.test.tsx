@@ -15,11 +15,22 @@ describe("EditOrganizationForm Component", () => {
     id: "org-id-123",
     name: "Happy Paws Rescue",
     email: "paws@ngo.org",
-    organizationType: "ngo" as const,
+    organizationCategory: "ngo",
   };
+  const dummyOrganizationCategoryList = [
+    { id: "ngo", name: "NGO" },
+    { id: "dog_kennel", name: "Dog Kennel" },
+    { id: "dog_service_provider", name: "Dog service provider" },
+    { id: "cynological_association", name: "Official Cynological Association" },
+  ];
 
   it("should render with prefilled organization values on the General tab", () => {
-    render(<EditOrganizationForm organization={dummyOrganization} />);
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
 
     // Check title and description
     expect(screen.getByText("Edit Organization")).toBeDefined();
@@ -32,12 +43,17 @@ describe("EditOrganizationForm Component", () => {
     const emailInput = screen.getByLabelText("Email Address") as HTMLInputElement;
     expect(emailInput.value).toBe(dummyOrganization.email);
 
-    const typeSelect = screen.getByLabelText("Organization Type") as HTMLSelectElement;
-    expect(typeSelect.value).toBe(dummyOrganization.organizationType);
+    const typeSelect = screen.getByLabelText("Organization Category") as HTMLSelectElement;
+    expect(typeSelect.value).toBe(dummyOrganization.organizationCategory);
   });
 
   it("should allow switching between General and Password tabs", () => {
-    render(<EditOrganizationForm organization={dummyOrganization} />);
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
 
     // Initially general form is visible, password form is hidden
     expect(screen.queryByLabelText("New Password")).toBeNull();
@@ -61,7 +77,12 @@ describe("EditOrganizationForm Component", () => {
   });
 
   it("should validate that passwords match and control submit button disabled state", () => {
-    render(<EditOrganizationForm organization={dummyOrganization} />);
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
 
     // Switch to Password tab
     const passwordTabBtn = screen.getByRole("button", { name: "Password" });

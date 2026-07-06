@@ -1,5 +1,11 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
+export const organizationCategories = pgTable("organization_categories", {
+  id: text("id").primaryKey(), // Sluggified name, e.g. "ngo", "dog_kennel"
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
@@ -8,7 +14,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(), // hashed
   role: text("role").$type<"user" | "employee" | "admin" | "organization">().default("user").notNull(),
   theme: text("theme").$type<"light" | "dark">().default("light").notNull(),
-  organizationType: text("organization_type").$type<"dog_service_provider" | "dog_kennel" | "cynological_association" | "ngo">(),
+  organizationCategory: text("organization_category"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -19,6 +25,6 @@ export const users = pgTable("users", {
 export const services = pgTable("services", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  organizationType: text("organization_type").$type<"dog_service_provider" | "dog_kennel" | "cynological_association" | "ngo">().notNull(),
+  organizationCategory: text("organization_category").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

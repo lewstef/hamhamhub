@@ -22,7 +22,18 @@ vi.mock("@/auth", () => ({
 
 vi.mock("@/db", () => {
   const chain = {
-    from: vi.fn().mockReturnThis(),
+    from: vi.fn().mockImplementation((table) => {
+      const tableName = table?.[Symbol.for("drizzle:Name")];
+      if (tableName === "organization_categories") {
+        return Promise.resolve([
+          { id: "ngo", name: "NGO" },
+          { id: "dog_kennel", name: "Dog Kennel" },
+          { id: "dog_service_provider", name: "Dog service provider" },
+          { id: "cynological_association", name: "Official Cynological Association" },
+        ]);
+      }
+      return chain;
+    }),
     where: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
     limit: vi.fn().mockImplementation(() => {
@@ -80,25 +91,25 @@ describe("Service Server Actions", () => {
     it("should return error if required fields are missing", async () => {
       const formData = new FormData();
       formData.append("name", "Dog Boarding");
-      // missing organizationType
+      // missing organizationCategory
 
       const result = await createServiceAction(null, formData);
       expect(result).toEqual({ error: "All fields are required" });
     });
 
-    it("should return error if organization type is invalid", async () => {
+    it("should return error if organization category is invalid", async () => {
       const formData = new FormData();
       formData.append("name", "Dog Boarding");
-      formData.append("organizationType", "invalid_type");
+      formData.append("organizationCategory", "invalid_category");
 
       const result = await createServiceAction(null, formData);
-      expect(result).toEqual({ error: "A valid Organization Type is required" });
+      expect(result).toEqual({ error: "A valid Organization Category is required" });
     });
 
     it("should successfully create service and return success", async () => {
       const formData = new FormData();
       formData.append("name", "Dog Boarding");
-      formData.append("organizationType", "dog_kennel");
+      formData.append("organizationCategory", "dog_kennel");
 
       mockInsert.mockResolvedValueOnce({ id: "new-service-id" });
 

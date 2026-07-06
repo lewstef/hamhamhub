@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { EditOrganizationForm } from "@/components/edit-organization-form";
 
+import { getOrganizationCategories } from "@/app/actions/organizations";
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -22,7 +24,7 @@ export default async function EditOrganizationPage({ params }: PageProps) {
       name: users.name,
       email: users.email,
       role: users.role,
-      organizationType: users.organizationType,
+      organizationCategory: users.organizationCategory,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -33,9 +35,14 @@ export default async function EditOrganizationPage({ params }: PageProps) {
     notFound();
   }
 
+  const organizationCategoryList = await getOrganizationCategories();
+
   return (
     <div className="max-w-5xl">
-      <EditOrganizationForm organization={organization} />
+      <EditOrganizationForm
+        organization={organization}
+        organizationCategoryList={organizationCategoryList}
+      />
     </div>
   );
 }

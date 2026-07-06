@@ -293,7 +293,7 @@ export function EmployeesTable({ staffList }: EmployeesTableProps) {
       )}
 
       {/* Employees Table */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden py-0">
         <CardContent className="p-0">
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse table-fixed">
@@ -305,12 +305,12 @@ export function EmployeesTable({ staffList }: EmployeesTableProps) {
                 <col className="w-[22%]" />
               </colgroup>
               <thead>
-                <tr className="bg-muted/50 border-b border-border h-11 text-[11px] font-semibold text-muted-foreground tracking-wider">
-                  <th scope="col" className="px-4 py-3 font-semibold">Username</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Name</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Email Address</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Role</th>
-                  <th scope="col" className="px-4 py-3 font-semibold text-right">Actions</th>
+                <tr className="bg-muted/50 border-b border-border text-xs font-semibold text-muted-foreground tracking-wider">
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Username</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Name</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Email Address</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold">Role</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border text-[13px] text-foreground">

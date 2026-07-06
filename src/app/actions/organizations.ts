@@ -1,32 +1,116 @@
 "use server";
 
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, organizationCategories } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+export async function getOrganizationCategories() {
+  let list = await db.select().from(organizationCategories);
+  if (list.length === 0) {
+    const defaults = [
+      { id: "ngo", name: "NGO" },
+      { id: "dog_kennel", name: "Dog Kennel" },
+      { id: "dog_service_provider", name: "Dog service provider" },
+      { id: "cynological_association", name: "Official Cynological Association" },
+    ];
+    await db.insert(organizationCategories).values(defaults);
+    list = await db.select().from(organizationCategories);
+  }
+  return list;
+}
+
+export async function createOrganizationCategoryAction(prevState: unknown, formData: FormData) {
+  const name = formData.get("name") as string;
+  if (!name || name.trim() === "") {
+    return { error: "Organization category name is required." };
+  }
+
+  // Generate ID: lowercased, slugged name
+  const id = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/(^_+|_+$)/g, "");
+
+  if (!id) {
+    return { error: "Invalid organization category name." };
+  }
+
+  try {
+    const [existing] = await db
+      .select({ id: organizationCategories.id })
+      .from(organizationCategories)
+      .where(eq(organizationCategories.id, id))
+      .limit(1);
+
+    if (existing) {
+      return { error: "An organization category with this name or ID already exists." };
+    }
+
+    await db.insert(organizationCategories).values({
+      id,
+      name: name.trim(),
+    });
+
+    revalidatePath("/backoffice/organizations");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to create organization category:", error);
+    return { error: "Something went wrong. Please try again." };
+  }
+}
+
+export async function deleteOrganizationCategoryAction(prevState: unknown, formData: FormData) {
+  const id = formData.get("id") as string;
+  if (!id) {
+    return { error: "Organization category ID is required." };
+  }
+
+  try {
+    // Check if any organization user is assigned to this category
+    const [assignedUser] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.role, "organization"), eq(users.organizationCategory, id)))
+      .limit(1);
+
+    if (assignedUser) {
+      return { error: "Cannot delete this organization category because it is in use by one or more organizations." };
+    }
+
+    await db.delete(organizationCategories).where(eq(organizationCategories.id, id));
+    revalidatePath("/backoffice/organizations");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete organization category:", error);
+    return { error: "Could not delete organization category. Please try again." };
+  }
+}
+
 export async function createOrganizationAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const organizationType = formData.get("organizationType") as "dog_service_provider" | "dog_kennel" | "cynological_association" | "ngo";
+  const organizationCategory = formData.get("organizationCategory") as string;
 
-  if (!name || !email || !password || !organizationType) {
+  if (!name || !email || !password || !organizationCategory) {
     return { error: "All fields are required" };
   }
 
-  const validTypes = ["dog_service_provider", "dog_kennel", "cynological_association", "ngo"];
-  if (!validTypes.includes(organizationType)) {
-    return { error: "A valid Organization Type is required" };
-  }
-
-  if (password.length < 6) {
-    return { error: "Password must be at least 6 characters" };
-  }
-
   try {
+    const list = await getOrganizationCategories();
+    const validCategories = list.map((t) => t.id);
+    if (!validCategories.includes(organizationCategory)) {
+      return { error: "A valid Organization Category is required" };
+    }
+
+    if (password.length < 6) {
+      return { error: "Password must be at least 6 characters" };
+    }
+
     const [existingEmail] = await db
       .select()
       .from(users)
@@ -44,7 +128,7 @@ export async function createOrganizationAction(prevState: unknown, formData: For
       email,
       password: hashedPassword,
       role: "organization",
-      organizationType,
+      organizationCategory,
     });
 
     revalidatePath("/backoffice/organizations");
@@ -59,18 +143,19 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
-  const organizationType = formData.get("organizationType") as "dog_service_provider" | "dog_kennel" | "cynological_association" | "ngo";
+  const organizationCategory = formData.get("organizationCategory") as string;
 
-  if (!id || !name || !email || !organizationType) {
+  if (!id || !name || !email || !organizationCategory) {
     return { error: "All fields are required" };
   }
 
-  const validTypes = ["dog_service_provider", "dog_kennel", "cynological_association", "ngo"];
-  if (!validTypes.includes(organizationType)) {
-    return { error: "A valid Organization Type is required" };
-  }
-
   try {
+    const list = await getOrganizationCategories();
+    const validCategories = list.map((t) => t.id);
+    if (!validCategories.includes(organizationCategory)) {
+      return { error: "A valid Organization Category is required" };
+    }
+
     const [existingEmail] = await db
       .select()
       .from(users)
@@ -86,7 +171,7 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
       .set({
         name,
         email,
-        organizationType,
+        organizationCategory,
       })
       .where(eq(users.id, id));
 

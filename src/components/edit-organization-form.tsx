@@ -14,14 +14,20 @@ interface Organization {
   id: string;
   name: string;
   email: string | null;
-  organizationType: "dog_service_provider" | "dog_kennel" | "cynological_association" | "ngo" | null;
+  organizationCategory: string | null;
+}
+
+interface OrganizationCategory {
+  id: string;
+  name: string;
 }
 
 interface EditOrganizationFormProps {
   organization: Organization;
+  organizationCategoryList: OrganizationCategory[];
 }
 
-export function EditOrganizationForm({ organization }: EditOrganizationFormProps) {
+export function EditOrganizationForm({ organization, organizationCategoryList }: EditOrganizationFormProps) {
   const [activeTab, setActiveTab] = useState<"general" | "password">("general");
   const [generalState, generalAction, generalPending] = useActionState(updateOrganizationAction, null);
   const [passwordState, passwordAction, passwordPending] = useActionState(changeOrganizationPasswordAction, null);
@@ -98,21 +104,22 @@ export function EditOrganizationForm({ organization }: EditOrganizationFormProps
                   <Input id="email" name="email" type="email" defaultValue={organization.email || ""} required disabled={isPending} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="organizationType" className="text-xs font-bold uppercase tracking-wider">
-                    Organization Type
+                  <Label htmlFor="organizationCategory" className="text-xs font-bold uppercase tracking-wider">
+                    Organization Category
                   </Label>
                   <select
-                    id="organizationType"
-                    name="organizationType"
-                    defaultValue={organization.organizationType || "dog_service_provider"}
+                    id="organizationCategory"
+                    name="organizationCategory"
+                    defaultValue={organization.organizationCategory || ""}
                     required
                     disabled={isPending}
                     className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                   >
-                    <option value="dog_service_provider">Dog Service Provider</option>
-                    <option value="dog_kennel">Dog Kennel</option>
-                    <option value="cynological_association">Official Cynological Association</option>
-                    <option value="ngo">NGO</option>
+                    {organizationCategoryList.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

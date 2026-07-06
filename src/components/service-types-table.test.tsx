@@ -9,12 +9,10 @@ describe("ServiceTypesTable Component", () => {
     render(<ServiceTypesTable />);
 
     // Verify all core service types exist in the document
-    expect(screen.getByText("Dog Walking")).toBeDefined();
-    expect(screen.getByText("Pet Boarding")).toBeDefined();
-    expect(screen.getByText("Dog Training")).toBeDefined();
-    expect(screen.getByText("Dog Grooming")).toBeDefined();
-    expect(screen.getByText("Pedigree Registration")).toBeDefined();
-    expect(screen.getByText("Rescue & Rehoming")).toBeDefined();
+    expect(screen.getByText("Dog training")).toBeDefined();
+    expect(screen.getByText("Dog boarding")).toBeDefined();
+    expect(screen.getByText("Sport dog training")).toBeDefined();
+    expect(screen.getByText("Dog walking")).toBeDefined();
   });
 
   it("should filter service types based on search input (case insensitive)", () => {
@@ -25,12 +23,12 @@ describe("ServiceTypesTable Component", () => {
     // Search for "walk"
     fireEvent.change(searchInput, { target: { value: "walk" } });
 
-    // "Dog Walking" should remain
-    expect(screen.getByText("Dog Walking")).toBeDefined();
+    // "Dog walking" should remain
+    expect(screen.getByText("Dog walking")).toBeDefined();
 
     // Other categories should be filtered out
-    expect(screen.queryByText("Pet Boarding")).toBeNull();
-    expect(screen.queryByText("Dog Training")).toBeNull();
+    expect(screen.queryByText("Dog boarding")).toBeNull();
+    expect(screen.queryByText("Dog training")).toBeNull();
   });
 
   it("should display a warning/empty message when no matching results are found", () => {
@@ -45,7 +43,7 @@ describe("ServiceTypesTable Component", () => {
     expect(screen.getByText("No service types found.")).toBeDefined();
 
     // Verify list items are gone
-    expect(screen.queryByText("Dog Walking")).toBeNull();
-    expect(screen.queryByText("Pet Boarding")).toBeNull();
+    expect(screen.queryByText("Dog walking")).toBeNull();
+    expect(screen.queryByText("Dog boarding")).toBeNull();
   });
 });

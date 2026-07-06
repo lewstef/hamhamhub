@@ -11,24 +11,26 @@ import { X, Trash2, ChevronRight, Sparkles } from "lucide-react";
 interface Service {
   id: string;
   name: string;
-  organizationType: "dog_service_provider" | "dog_kennel" | "cynological_association" | "ngo";
+  organizationCategory: string;
+}
+
+interface OrganizationCategory {
+  id: string;
+  name: string;
 }
 
 interface ServicesTableProps {
   serviceList: Service[];
+  organizationCategoryList: OrganizationCategory[];
 }
 
-const TYPE_LABELS = {
-  dog_service_provider: "Dog Service Provider",
-  dog_kennel: "Dog Kennel",
-  cynological_association: "Official Cynological Association",
-  ngo: "NGO",
-};
-
-export function ServicesTable({ serviceList }: ServicesTableProps) {
+export function ServicesTable({ serviceList, organizationCategoryList }: ServicesTableProps) {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>("all");
+  const [formOrgCategory, setFormOrgCategory] = useState<string>(
+    organizationCategoryList[0]?.id || "dog_service_provider"
+  );
   
   const [state, formAction, isPending] = useActionState(createServiceAction, null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -62,20 +64,28 @@ export function ServicesTable({ serviceList }: ServicesTableProps) {
 
   const isAnyPending = isPending || deletePending;
 
-  // Filter services by type and name query
+  const handleAddService = (category?: string) => {
+    setFormOrgCategory(
+      category ||
+        (selectedTypeFilter !== "all"
+          ? selectedTypeFilter
+          : organizationCategoryList[0]?.id || "dog_service_provider")
+    );
+    setShowForm(true);
+  };
+
+  // Filter services by category and name query
   const filteredServices = serviceList.filter((s) => {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase());
-    const matchesType = selectedTypeFilter === "all" || s.organizationType === selectedTypeFilter;
-    return matchesSearch && matchesType;
+    const matchesCategory = selectedTypeFilter === "all" || s.organizationCategory === selectedTypeFilter;
+    return matchesSearch && matchesCategory;
   });
 
-  // Group services by organization type
-  const grouped = {
-    dog_service_provider: filteredServices.filter((s) => s.organizationType === "dog_service_provider"),
-    dog_kennel: filteredServices.filter((s) => s.organizationType === "dog_kennel"),
-    cynological_association: filteredServices.filter((s) => s.organizationType === "cynological_association"),
-    ngo: filteredServices.filter((s) => s.organizationType === "ngo"),
-  };
+  // Group services dynamically by organization category
+  const grouped: Record<string, Service[]> = {};
+  for (const category of organizationCategoryList) {
+    grouped[category.id] = filteredServices.filter((s) => s.organizationCategory === category.id);
+  }
 
   return (
     <div className="space-y-6">
@@ -87,6 +97,9 @@ export function ServicesTable({ serviceList }: ServicesTableProps) {
             Manage the master list of services available for each organization category.
           </p>
         </div>
+        <Button onClick={() => handleAddService()} className="sm:w-auto w-full cursor-pointer">
+          Add Service
+        </Button>
       </div>
 
       {/* Filters Bar */}
@@ -108,19 +121,19 @@ export function ServicesTable({ serviceList }: ServicesTableProps) {
                 : "bg-background border-border text-muted-foreground hover:text-foreground"
             }`}
           >
-            All Types
+            All Categories
           </button>
-          {Object.entries(TYPE_LABELS).map(([value, label]) => (
+          {organizationCategoryList.map((category) => (
             <button
-              key={value}
-              onClick={() => setSelectedTypeFilter(value)}
+              key={category.id}
+              onClick={() => setSelectedTypeFilter(category.id)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
-                selectedTypeFilter === value
+                selectedTypeFilter === category.id
                   ? "bg-primary border-primary text-primary-foreground"
                   : "bg-background border-border text-muted-foreground hover:text-foreground"
               }`}
             >
-              {label}
+              {category.name}
             </button>
           ))}
         </div>
@@ -128,31 +141,41 @@ export function ServicesTable({ serviceList }: ServicesTableProps) {
 
       {/* Grouped Services Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Object.entries(TYPE_LABELS).map(([typeKey, typeLabel]) => {
-          const typeServices = grouped[typeKey as keyof typeof grouped] || [];
-          if (selectedTypeFilter !== "all" && selectedTypeFilter !== typeKey) return null;
+        {organizationCategoryList.map((category) => {
+          const categoryServices = grouped[category.id] || [];
+          if (selectedTypeFilter !== "all" && selectedTypeFilter !== category.id) return null;
 
           return (
-            <Card key={typeKey} className="overflow-hidden flex flex-col h-full border border-border/80 shadow-sm hover:shadow-md transition-shadow py-0">
-              <CardHeader className="bg-muted/30 px-6 py-4 border-b border-border flex flex-row items-center justify-between">
-                <div className="space-y-0.5">
-                  <CardTitle className="text-sm font-bold tracking-tight text-foreground">
-                    {typeLabel}
+            <Card key={category.id} className="overflow-hidden flex flex-col h-full border border-border/80 shadow-sm hover:shadow-md transition-shadow py-0">
+              <CardHeader className="bg-muted/30 px-6 py-4 border-b border-border flex flex-row items-center justify-between gap-4">
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <CardTitle className="text-sm font-bold tracking-tight text-foreground truncate">
+                    {category.name}
                   </CardTitle>
                   <CardDescription className="text-xs text-muted-foreground">
-                    {typeServices.length} service{typeServices.length !== 1 && "s"} registered
+                    {categoryServices.length} service{categoryServices.length !== 1 && "s"} registered
                   </CardDescription>
                 </div>
-                <Sparkles className="size-4 text-primary/70 animate-pulse" />
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    onClick={() => handleAddService(category.id)}
+                  >
+                    + Add
+                  </Button>
+                  <Sparkles className="size-4 text-primary/70 animate-pulse" />
+                </div>
               </CardHeader>
               <CardContent className="p-6 flex-1 flex flex-col justify-between">
-                {typeServices.length === 0 ? (
+                {categoryServices.length === 0 ? (
                   <p className="text-xs text-muted-foreground italic py-8 text-center">
-                    No services defined for this type.
+                    No services defined for this category.
                   </p>
                 ) : (
                   <div className="divide-y divide-border/60">
-                    {typeServices.map((s) => (
+                    {categoryServices.map((s) => (
                       <div
                         key={s.id}
                         className="py-3 flex items-center justify-between group/item hover:bg-muted/20 px-2 -mx-2 rounded-lg transition-colors"
@@ -195,7 +218,7 @@ export function ServicesTable({ serviceList }: ServicesTableProps) {
             <CardHeader className="px-6 pt-6 pb-4 border-b border-border">
               <CardTitle className="text-lg font-bold">Create Master Service</CardTitle>
               <CardDescription className="text-xs mt-1">
-                Define a new service and allocate it to a specific business category.
+                Define a new service and allocate it to a specific category.
               </CardDescription>
             </CardHeader>
             <form ref={formRef} action={formAction}>
@@ -220,21 +243,23 @@ export function ServicesTable({ serviceList }: ServicesTableProps) {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="organizationType" className="text-xs font-bold uppercase tracking-wider">
-                      Organization Type
+                    <Label htmlFor="organizationCategory" className="text-xs font-bold uppercase tracking-wider">
+                      Organization Category
                     </Label>
                     <select
-                      id="organizationType"
-                      name="organizationType"
-                      defaultValue={selectedTypeFilter !== "all" ? selectedTypeFilter : "dog_service_provider"}
+                      id="organizationCategory"
+                      name="organizationCategory"
+                      value={formOrgCategory}
+                      onChange={(e) => setFormOrgCategory(e.target.value)}
                       required
                       disabled={isAnyPending}
                       className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                     >
-                      <option value="dog_service_provider">Dog Service Provider</option>
-                      <option value="dog_kennel">Dog Kennel</option>
-                      <option value="cynological_association">Official Cynological Association</option>
-                      <option value="ngo">NGO</option>
+                      {organizationCategoryList.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

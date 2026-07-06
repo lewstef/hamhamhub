@@ -125,11 +125,11 @@ export default async function DashboardPage() {
               <table className="w-full text-sm text-left text-zinc-300">
                 <thead className="text-xs uppercase bg-zinc-900/70 border-b border-zinc-800 text-zinc-400 font-bold">
                   <tr>
-                    <th scope="col" className="px-6 py-4">Hamster</th>
-                    <th scope="col" className="px-6 py-4">Current Activity</th>
-                    <th scope="col" className="px-6 py-4">Metric / Location</th>
-                    <th scope="col" className="px-6 py-4">Temp</th>
-                    <th scope="col" className="px-6 py-4 text-center">Status</th>
+                    <th scope="col" className="px-6 py-2.5">Hamster</th>
+                    <th scope="col" className="px-6 py-2.5">Current Activity</th>
+                    <th scope="col" className="px-6 py-2.5">Metric / Location</th>
+                    <th scope="col" className="px-6 py-2.5">Temp</th>
+                    <th scope="col" className="px-6 py-2.5 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-850">

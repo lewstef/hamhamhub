@@ -5,23 +5,26 @@ import { services } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+import { getOrganizationCategories } from "./organizations";
+
 export async function createServiceAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
-  const organizationType = formData.get("organizationType") as "dog_service_provider" | "dog_kennel" | "cynological_association" | "ngo";
+  const organizationCategory = formData.get("organizationCategory") as string;
 
-  if (!name || !organizationType) {
+  if (!name || !organizationCategory) {
     return { error: "All fields are required" };
   }
 
-  const validTypes = ["dog_service_provider", "dog_kennel", "cynological_association", "ngo"];
-  if (!validTypes.includes(organizationType)) {
-    return { error: "A valid Organization Type is required" };
-  }
-
   try {
+    const list = await getOrganizationCategories();
+    const validCategories = list.map((t) => t.id);
+    if (!validCategories.includes(organizationCategory)) {
+      return { error: "A valid Organization Category is required" };
+    }
+
     await db.insert(services).values({
       name,
-      organizationType,
+      organizationCategory,
     });
 
     revalidatePath("/backoffice/services");
