@@ -40,47 +40,25 @@ vi.mock("react", async (importOriginal) => {
 });
 
 describe("SignupForm Component", () => {
-  it("should render the User (Email) tab as active by default", () => {
+  it("should render standard user inputs and labels", () => {
     render(<SignupForm />);
-    expect(screen.getByRole("button", { name: "User (Email)" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Staff (Username)" })).toBeDefined();
-  });
-
-  it("should show email input and hide username input on User tab", () => {
-    render(<SignupForm />);
+    expect(screen.getByLabelText("Full Name")).toBeDefined();
     expect(screen.getByLabelText("Email Address")).toBeDefined();
-    expect(screen.queryByLabelText("Username")).toBeNull();
+    expect(screen.getByLabelText("Password")).toBeDefined();
   });
 
-  it("should show username + role inputs and hide email when switching to Staff tab", () => {
+  it("should not render Staff options or buttons", () => {
     render(<SignupForm />);
-    fireEvent.click(screen.getByRole("button", { name: "Staff (Username)" }));
-
-    expect(screen.getByLabelText("Username")).toBeDefined();
-    expect(screen.getByLabelText("Role")).toBeDefined();
-    expect(screen.queryByLabelText("Email Address")).toBeNull();
-  });
-
-  it("should switch back to email input after clicking User tab again", () => {
-    render(<SignupForm />);
-    fireEvent.click(screen.getByRole("button", { name: "Staff (Username)" }));
-    fireEvent.click(screen.getByRole("button", { name: "User (Email)" }));
-
-    expect(screen.getByLabelText("Email Address")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "User (Email)" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Staff (Username)" })).toBeNull();
     expect(screen.queryByLabelText("Username")).toBeNull();
+    expect(screen.queryByLabelText("Role")).toBeNull();
   });
 
-  it("should render Sign In link pointing to /dashboard/login when on User tab", () => {
+  it("should render Sign In link pointing to /dashboard/login", () => {
     render(<SignupForm />);
     const link = screen.getByRole("link", { name: "Sign In" }) as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/dashboard/login");
-  });
-
-  it("should render Sign In link pointing to /backoffice/login when on Staff tab", () => {
-    render(<SignupForm />);
-    fireEvent.click(screen.getByRole("button", { name: "Staff (Username)" }));
-    const link = screen.getByRole("link", { name: "Sign In" }) as HTMLAnchorElement;
-    expect(link.getAttribute("href")).toBe("/backoffice/login");
   });
 
   it("should render an error banner when state.error is set", () => {

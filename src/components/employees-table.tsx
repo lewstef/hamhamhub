@@ -22,6 +22,7 @@ interface Employee {
 
 interface EmployeesTableProps {
   staffList: Employee[];
+  currentUserRole?: "user" | "employee" | "admin" | "organization";
 }
 
 function RoleBadge({ role }: { role: string }) {
@@ -31,7 +32,7 @@ function RoleBadge({ role }: { role: string }) {
   return <Badge variant="secondary">{role}</Badge>;
 }
 
-export function EmployeesTable({ staffList }: EmployeesTableProps) {
+export function EmployeesTable({ staffList, currentUserRole = "employee" }: EmployeesTableProps) {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -114,12 +115,14 @@ export function EmployeesTable({ staffList }: EmployeesTableProps) {
             className="max-w-sm"
           />
         </div>
-        <div className="shrink-0">
-          <Button onClick={() => setShowForm(true)} className="gap-2">
-            <Plus className="size-4" />
-            Create Employee
-          </Button>
-        </div>
+        {currentUserRole === "admin" && (
+          <div className="shrink-0">
+            <Button onClick={() => setShowForm(true)} className="gap-2">
+              <Plus className="size-4" />
+              Create Employee
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Create Employee Modal */}

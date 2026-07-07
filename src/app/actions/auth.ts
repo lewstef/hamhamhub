@@ -31,6 +31,10 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
   const password = formData.get("password") as string;
   const roleType = formData.get("roleType") as string; // "user" or "staff"
 
+  if (roleType === "staff") {
+    return { error: "Staff registration is disabled" };
+  }
+
   if (!name || !password) {
     return { error: "Name and password are required" };
   }
@@ -42,64 +46,31 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (roleType === "staff") {
-      const username = formData.get("username") as string;
-      const role = formData.get("role") as "employee" | "admin";
+    // Standard User registration
+    const email = formData.get("email") as string;
 
-      if (!username || !role) {
-        return { error: "Username and staff role are required" };
-      }
-
-      if (!["employee", "admin"].includes(role)) {
-        return { error: "Invalid staff role selected" };
-      }
-
-      // Check if username exists
-      const [existingUsername] = await db
-        .select()
-        .from(users)
-        .where(eq(users.username, username))
-        .limit(1);
-
-      if (existingUsername) {
-        return { error: "Username is already taken" };
-      }
-
-      // Insert staff user
-      await db.insert(users).values({
-        name,
-        username,
-        password: hashedPassword,
-        role,
-      });
-
-    } else {
-      // Standard User registration
-      const email = formData.get("email") as string;
-
-      if (!email) {
-        return { error: "Email is required" };
-      }
-
-      // Check if email exists
-      const [existingEmail] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
-
-      if (existingEmail) {
-        return { error: "Email is already registered" };
-      }
-
-      // Insert standard user
-      await db.insert(users).values({
-        name,
-        email,
-        password: hashedPassword,
-        role: "user",
-      });
+    if (!email) {
+      return { error: "Email is required" };
     }
+
+    // Check if email exists
+    const [existingEmail] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (existingEmail) {
+      return { error: "Email is already registered" };
+    }
+
+    // Insert standard user
+    await db.insert(users).values({
+      name,
+      email,
+      password: hashedPassword,
+      role: "user",
+    });
 
     return { success: true };
   } catch (error) {

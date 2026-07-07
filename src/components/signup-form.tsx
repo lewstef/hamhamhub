@@ -32,41 +32,13 @@ export function SignupForm() {
           Create an Account
         </CardTitle>
         <CardDescription className="text-zinc-400 text-center">
-          Choose account type and enter your details
+          Enter your details to create an account
         </CardDescription>
-
-        {/* Tab Switcher */}
-        <div className="flex p-1 bg-zinc-900/60 rounded-lg border border-zinc-800/80 mt-4">
-          <button
-            type="button"
-            onClick={() => setRoleType("user")}
-            disabled={isPending || state?.success}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              roleType === "user"
-                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            User (Email)
-          </button>
-          <button
-            type="button"
-            onClick={() => setRoleType("staff")}
-            disabled={isPending || state?.success}
-            className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${
-              roleType === "staff"
-                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            Staff (Username)
-          </button>
-        </div>
       </CardHeader>
       
       <form action={formAction}>
         {/* Hidden inputs to pass state */}
-        <input type="hidden" name="roleType" value={roleType} />
+        <input type="hidden" name="roleType" value="user" />
 
         <CardContent className="space-y-4">
           {state?.error && (
@@ -92,48 +64,18 @@ export function SignupForm() {
             />
           </div>
 
-          {roleType === "user" ? (
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-zinc-300">Email Address</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="hammy@hamhamhub.com"
-                required
-                disabled={isPending || state?.success}
-                className="bg-zinc-900/50 border-zinc-800 focus:border-orange-500 focus:ring-orange-500 text-zinc-100 placeholder:text-zinc-600"
-              />
-            </div>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-zinc-300">Username</Label>
-                <Input
-                  id="username"
-                  name="username"
-                  placeholder="hammy_admin"
-                  required
-                  disabled={isPending || state?.success}
-                  className="bg-zinc-900/50 border-zinc-800 focus:border-orange-500 focus:ring-orange-500 text-zinc-100 placeholder:text-zinc-600"
-                />
-              </div>
-
-              <div className="space-y-2">
-                  <Label htmlFor="role" className="text-zinc-300">Role</Label>
-                <select
-                  id="role"
-                  name="role"
-                  required
-                  disabled={isPending || state?.success}
-                  className="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-sm shadow-sm text-zinc-100 outline-none focus:border-orange-500 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="employee" className="bg-zinc-950">Employee</option>
-                  <option value="admin" className="bg-zinc-950">Administrator</option>
-                </select>
-              </div>
-            </>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-zinc-300">Email Address</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="hammy@hamhamhub.com"
+              required
+              disabled={isPending || state?.success}
+              className="bg-zinc-900/50 border-zinc-800 focus:border-orange-500 focus:ring-orange-500 text-zinc-100 placeholder:text-zinc-600"
+            />
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="password" className="text-zinc-300">Password</Label>
@@ -172,7 +114,7 @@ export function SignupForm() {
           <p className="text-sm text-zinc-400">
             Already have an account?{" "}
             <Link
-              href={roleType === "staff" ? "/backoffice/login" : "/dashboard/login"}
+              href="/dashboard/login"
               className="text-orange-400 hover:underline hover:text-orange-300 transition-colors"
             >
               Sign In

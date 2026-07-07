@@ -205,7 +205,7 @@ describe("Organization Server Actions", () => {
     it("should return error if required fields are missing", async () => {
       const formData = new FormData();
       formData.append("id", "comp-id");
-      // missing name, email, category
+      // missing name, category
 
       const result = await updateOrganizationAction(null, formData);
       expect(result).toEqual({ error: "All fields are required" });
@@ -215,45 +215,43 @@ describe("Organization Server Actions", () => {
       const formData = new FormData();
       formData.append("id", "comp-id");
       formData.append("name", "Org Name");
-      formData.append("email", "org@example.com");
       formData.append("organizationCategory", "invalid_category");
 
       const result = await updateOrganizationAction(null, formData);
       expect(result).toEqual({ error: "A valid Organization Category is required" });
     });
 
-    it("should return error if email is taken by another user", async () => {
+    it("should successfully update and return success", async () => {
       const formData = new FormData();
       formData.append("id", "comp-id");
       formData.append("name", "Org Name");
-      formData.append("email", "org@example.com");
       formData.append("organizationCategory", "ngo");
+      formData.append("phoneNumber", "+15551234");
+      formData.append("addressCountry", "Romania");
 
-      mockSelect.mockResolvedValueOnce([{ id: "other-id", email: "org@example.com" }]);
-
-      const result = await updateOrganizationAction(null, formData);
-      expect(result).toEqual({ error: "Email address is already taken" });
-    });
-
-    it("should successfully update and redirect to backoffice/organizations", async () => {
-      const formData = new FormData();
-      formData.append("id", "comp-id");
-      formData.append("name", "Org Name");
-      formData.append("email", "org@example.com");
-      formData.append("organizationCategory", "ngo");
-
-      mockSelect.mockResolvedValueOnce([]); // no duplicate email found
       mockUpdate.mockResolvedValueOnce({ count: 1 });
 
-      await expect(updateOrganizationAction(null, formData)).rejects.toThrow("NEXT_REDIRECT");
+      const result = await updateOrganizationAction(null, formData);
+      expect(result).toEqual({ success: true });
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
-      expect(redirect).toHaveBeenCalledWith("/backoffice/organizations");
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
     });
   });
 
   describe("changeOrganizationPasswordAction", () => {
+    it("should return error if email is taken by another user", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("email", "org@example.com");
+
+      mockSelect.mockResolvedValueOnce([{ id: "other-id", email: "org@example.com" }]);
+
+      const result = await changeOrganizationPasswordAction(null, formData);
+      expect(result).toEqual({ error: "Email address is already taken" });
+    });
+
     it("should return error if passwords do not match", async () => {
       const formData = new FormData();
       formData.append("id", "comp-id");
@@ -274,7 +272,7 @@ describe("Organization Server Actions", () => {
       expect(result).toEqual({ error: "Password must be at least 6 characters" });
     });
 
-    it("should update password and redirect to backoffice/organizations", async () => {
+    it("should update password and return success", async () => {
       const formData = new FormData();
       formData.append("id", "comp-id");
       formData.append("password", "validpassword");
@@ -282,10 +280,27 @@ describe("Organization Server Actions", () => {
 
       mockUpdate.mockResolvedValueOnce({ count: 1 });
 
-      await expect(changeOrganizationPasswordAction(null, formData)).rejects.toThrow("NEXT_REDIRECT");
+      const result = await changeOrganizationPasswordAction(null, formData);
+      expect(result).toEqual({ success: true });
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
-      expect(redirect).toHaveBeenCalledWith("/backoffice/organizations");
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
+    });
+
+    it("should update email and recovery email and return success", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("email", "new@example.com");
+      formData.append("recoveryEmail", "backup@example.com");
+
+      mockSelect.mockResolvedValueOnce([]); // email free
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await changeOrganizationPasswordAction(null, formData);
+      expect(result).toEqual({ success: true });
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
     });
   });
 

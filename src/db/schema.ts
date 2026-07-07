@@ -16,6 +16,14 @@ export const users = pgTable("users", {
   role: text("role").$type<"user" | "employee" | "admin" | "organization">().default("user").notNull(),
   theme: text("theme").$type<"light" | "dark">().default("light").notNull(),
   organizationCategory: text("organization_category"),
+  address: text("address"),
+  phoneNumber: text("phone_number"),
+  recoveryEmail: text("recovery_email"),
+  addressCountry: text("address_country"),
+  addressState: text("address_state"),
+  addressCity: text("address_city"),
+  addressLine: text("address_line"),
+  addressZip: text("address_zip"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

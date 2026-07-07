@@ -238,10 +238,15 @@ export async function createOrganizationAction(prevState: unknown, formData: For
 export async function updateOrganizationAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
   const organizationCategory = formData.get("organizationCategory") as string;
+  const phoneNumber = formData.get("phoneNumber") as string | null;
+  const addressCountry = formData.get("addressCountry") as string | null;
+  const addressState = formData.get("addressState") as string | null;
+  const addressCity = formData.get("addressCity") as string | null;
+  const addressLine = formData.get("addressLine") as string | null;
+  const addressZip = formData.get("addressZip") as string | null;
 
-  if (!id || !name || !email || !organizationCategory) {
+  if (!id || !name || !organizationCategory) {
     return { error: "All fields are required" };
   }
 
@@ -252,27 +257,33 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
       return { error: "A valid Organization Category is required" };
     }
 
-    const [existingEmail] = await db
-      .select()
-      .from(users)
-      .where(and(eq(users.email, email), ne(users.id, id)))
-      .limit(1);
-
-    if (existingEmail) {
-      return { error: "Email address is already taken" };
-    }
+    const parts = [
+      addressLine?.trim(),
+      addressCity?.trim(),
+      addressState?.trim(),
+      addressZip?.trim(),
+      addressCountry?.trim(),
+    ].filter(Boolean);
+    const concatenatedAddress = parts.join(", ") || null;
 
     await db
       .update(users)
       .set({
         name,
-        email,
         organizationCategory,
+        phoneNumber: phoneNumber || null,
+        address: concatenatedAddress,
+        addressCountry: addressCountry || null,
+        addressState: addressState || null,
+        addressCity: addressCity || null,
+        addressLine: addressLine || null,
+        addressZip: addressZip || null,
       })
       .where(eq(users.id, id));
 
     revalidatePath("/backoffice/organizations");
-    redirect("/backoffice/organizations");
+    revalidatePath(`/backoffice/organizations/edit/${id}`);
+    return { success: true };
   } catch (error) {
     if (
       error &&
@@ -288,46 +299,77 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
 }
 
 /**
- * Changes the password for an existing organization account.
+ * Changes the password, email, and recovery email for an existing organization account.
  *
  * @param formData.id              - Organization user ID (required)
- * @param formData.password        - New password, min 6 characters (required)
- * @param formData.confirmPassword - Must match `password` exactly (required)
+ * @param formData.email           - Unique login email (optional/required)
+ * @param formData.recoveryEmail   - Recovery email (optional)
+ * @param formData.password        - New password, min 6 characters (optional)
+ * @param formData.confirmPassword - Must match `password` exactly (optional)
  *
+ * @returns `{ success: true }` on successful update
  * @returns `{ error: string }` on validation or DB failure
- * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/organizations`
- * @throws Re-throws Next.js NEXT_REDIRECT errors.
  * @sideEffect Revalidates `/backoffice/organizations`
  */
 export async function changeOrganizationPasswordAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
-  const password = formData.get("password") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
+  const email = formData.get("email") as string | null;
+  const recoveryEmail = formData.get("recoveryEmail") as string | null;
+  const password = formData.get("password") as string | null;
+  const confirmPassword = formData.get("confirmPassword") as string | null;
 
-  if (!id || !password || !confirmPassword) {
-    return { error: "All fields are required" };
-  }
-
-  if (password.length < 6) {
-    return { error: "Password must be at least 6 characters" };
-  }
-
-  if (password !== confirmPassword) {
-    return { error: "Passwords do not match" };
+  if (!id) {
+    return { error: "Organization ID is required" };
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const updateData: Partial<typeof users.$inferInsert> = {};
 
-    await db
-      .update(users)
-      .set({
-        password: hashedPassword,
-      })
-      .where(eq(users.id, id));
+    if (email) {
+      // Check if email is taken by another user
+      const [existingEmail] = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.email, email), ne(users.id, id)))
+        .limit(1);
+
+      if (existingEmail) {
+        return { error: "Email address is already taken" };
+      }
+      updateData.email = email;
+    }
+
+    if (recoveryEmail !== null) {
+      updateData.recoveryEmail = recoveryEmail || null;
+    }
+
+    if (password || confirmPassword) {
+      if (!password || !confirmPassword) {
+        return { error: "All password fields are required" };
+      }
+
+      if (password.length < 6) {
+        return { error: "Password must be at least 6 characters" };
+      }
+
+      if (password !== confirmPassword) {
+        return { error: "Passwords do not match" };
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.password = hashedPassword;
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, id));
+    }
 
     revalidatePath("/backoffice/organizations");
-    redirect("/backoffice/organizations");
+    revalidatePath(`/backoffice/organizations/edit/${id}`);
+    return { success: true };
   } catch (error) {
     if (
       error &&
@@ -337,7 +379,7 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
     ) {
       throw error;
     }
-    console.error("Failed to change organization password:", error);
+    console.error("Failed to change organization account settings:", error);
     return { error: "Something went wrong. Please try again." };
   }
 }

@@ -25,6 +25,15 @@ export default async function EditOrganizationPage({ params }: PageProps) {
       email: users.email,
       role: users.role,
       organizationCategory: users.organizationCategory,
+      phoneNumber: users.phoneNumber,
+      recoveryEmail: users.recoveryEmail,
+      address: users.address,
+      addressCountry: users.addressCountry,
+      addressState: users.addressState,
+      addressCity: users.addressCity,
+      addressLine: users.addressLine,
+      addressZip: users.addressZip,
+      createdAt: users.createdAt,
     })
     .from(users)
     .where(eq(users.id, id))

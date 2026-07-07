@@ -141,61 +141,7 @@ describe("Core Auth Server Actions", () => {
       });
     });
 
-    describe("Staff User Registration", () => {
-      it("should return error if username or staff role is missing", async () => {
-        const formData = new FormData();
-        formData.append("name", "John");
-        formData.append("password", "123456");
-        formData.append("roleType", "staff");
-        // missing username and role
 
-        const result = await signUpAction(null, formData);
-        expect(result).toEqual({ error: "Username and staff role are required" });
-      });
-
-      it("should return error if staff role is invalid", async () => {
-        const formData = new FormData();
-        formData.append("name", "John");
-        formData.append("password", "123456");
-        formData.append("roleType", "staff");
-        formData.append("username", "johnstaff");
-        formData.append("role", "invalid_role");
-
-        const result = await signUpAction(null, formData);
-        expect(result).toEqual({ error: "Invalid staff role selected" });
-      });
-
-      it("should return error if username is already taken", async () => {
-        const formData = new FormData();
-        formData.append("name", "John");
-        formData.append("password", "123456");
-        formData.append("roleType", "staff");
-        formData.append("username", "johnstaff");
-        formData.append("role", "employee");
-
-        mockSelect.mockResolvedValueOnce([{ id: "existing-id" }]);
-
-        const result = await signUpAction(null, formData);
-        expect(result).toEqual({ error: "Username is already taken" });
-      });
-
-      it("should successfully register staff user", async () => {
-        const formData = new FormData();
-        formData.append("name", "John");
-        formData.append("password", "123456");
-        formData.append("roleType", "staff");
-        formData.append("username", "johnstaff");
-        formData.append("role", "employee");
-
-        mockSelect.mockResolvedValueOnce([]); // no existing username
-        mockInsert.mockResolvedValueOnce({ id: "new-id" });
-
-        const result = await signUpAction(null, formData);
-
-        expect(mockInsert).toHaveBeenCalled();
-        expect(result).toEqual({ success: true });
-      });
-    });
 
     it("should return error on database exception", async () => {
       const formData = new FormData();

@@ -6,6 +6,7 @@ import { eq, and, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
 
 /**
  * Creates a new staff account (role = "employee" | "admin").
@@ -22,6 +23,11 @@ import { revalidatePath } from "next/cache";
  * @sideEffect Revalidates `/backoffice/employees`
  */
 export async function createEmployeeAction(prevState: unknown, formData: FormData) {
+  const session = await auth();
+  if (session?.user?.role !== "admin") {
+    return { error: "Unauthorized" };
+  }
+
   const name = formData.get("name") as string;
   const username = formData.get("username") as string;
   const email = formData.get("email") as string;

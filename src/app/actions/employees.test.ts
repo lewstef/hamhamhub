@@ -1,4 +1,3 @@
-import { vi, describe, it, expect, beforeEach } from "vitest";
 import {
   createEmployeeAction,
   updateEmployeeAction,
@@ -7,6 +6,7 @@ import {
 } from "./employees";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
 // Dummy database URL to satisfy drizzle setup
 process.env.DATABASE_URL = "postgres://dummy:dummy@localhost:5432/dummy";
@@ -77,6 +77,10 @@ vi.mock("bcryptjs", () => ({
 describe("Employee Server Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(auth).mockResolvedValue({
+      user: { id: "admin-id", role: "admin", email: "admin@example.com" },
+      expires: "dummy",
+    });
   });
 
   describe("createEmployeeAction", () => {
@@ -153,6 +157,35 @@ describe("Employee Server Actions", () => {
       expect(mockInsert).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/employees");
       expect(result).toEqual({ success: true });
+    });
+
+    it("should return error if session is missing or unauthorized", async () => {
+      vi.mocked(auth).mockResolvedValueOnce(null);
+      const formData = new FormData();
+      formData.append("name", "John Doe");
+      formData.append("username", "johndoe");
+      formData.append("email", "john@example.com");
+      formData.append("password", "123456");
+      formData.append("role", "employee");
+
+      const result = await createEmployeeAction(null, formData);
+      expect(result).toEqual({ error: "Unauthorized" });
+    });
+
+    it("should return error if non-admin user tries to create an employee", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "employee-id", role: "employee", email: "employee@example.com" },
+        expires: "dummy",
+      });
+      const formData = new FormData();
+      formData.append("name", "John Doe");
+      formData.append("username", "johndoe");
+      formData.append("email", "john@example.com");
+      formData.append("password", "123456");
+      formData.append("role", "employee");
+
+      const result = await createEmployeeAction(null, formData);
+      expect(result).toEqual({ error: "Unauthorized" });
     });
   });
 

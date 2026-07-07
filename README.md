@@ -13,7 +13,7 @@ The backoffice system contains three primary user directories under `/backoffice
 - **Login Credentials**: Username & Password
 - **Roles**: `admin` or `employee`
 - **Fields**: Full Name, Username, Email Address, Role
-- **Privilege Boundaries**: Only administrators can modify roles or perform deletions. Deletion of the primary account with the username `"admin"` is strictly blocked.
+- **Privilege Boundaries**: A staff member can be added/registered by administrators (`role === "admin"`) only; normal employee accounts do not have this permission. Only administrators can modify roles or perform deletions. Deletion of the primary account with the username `"admin"` is strictly blocked.
 
 ### B. Users Directory (`/backoffice/users`)
 - **Domain Context**: Users are the **Pet Owners**.
@@ -114,7 +114,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (187 tests across 20 test files)
+# Run all tests (188 tests across 21 test files)
 npm run test
 
 # Run with coverage report
