@@ -283,6 +283,7 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
 
     revalidatePath("/backoffice/organizations");
     revalidatePath(`/backoffice/organizations/edit/${id}`);
+    revalidatePath("/dashboard/account");
     return { success: true };
   } catch (error) {
     if (
@@ -369,6 +370,7 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
 
     revalidatePath("/backoffice/organizations");
     revalidatePath(`/backoffice/organizations/edit/${id}`);
+    revalidatePath("/dashboard/account");
     return { success: true };
   } catch (error) {
     if (
@@ -422,5 +424,43 @@ export async function deleteOrganizationAction(prevState: unknown, formData: For
   } catch (error) {
     console.error("Failed to delete organization:", error);
     return { error: "Could not delete organization. Please try again." };
+  }
+}
+
+export async function toggleOrganizationServiceAction(organizationId: string, serviceId: string, enabled: boolean) {
+  try {
+    const [org] = await db
+      .select({ enabledServices: users.enabledServices })
+      .from(users)
+      .where(eq(users.id, organizationId))
+      .limit(1);
+
+    if (!org) {
+      return { error: "Organization not found" };
+    }
+
+    let enabledList = org.enabledServices ? org.enabledServices.split(",").map(id => id.trim()).filter(Boolean) : [];
+    if (enabled) {
+      if (!enabledList.includes(serviceId)) {
+        enabledList.push(serviceId);
+      }
+    } else {
+      enabledList = enabledList.filter((id) => id !== serviceId);
+    }
+
+    const nextVal = enabledList.join(",");
+
+    await db
+      .update(users)
+      .set({ enabledServices: nextVal || null })
+      .where(eq(users.id, organizationId));
+
+    revalidatePath("/dashboard/services");
+    revalidatePath("/dashboard/account");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to toggle organization service:", error);
+    return { error: "Failed to toggle service. Please try again." };
   }
 }
