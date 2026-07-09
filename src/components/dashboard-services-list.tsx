@@ -1,30 +1,46 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
+import { toggleOrganizationServiceAction, toggleOrganizationSubServiceAction } from "@/app/actions/organizations";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 interface Service {
   id: string;
   name: string;
   description: string;
+  slug: string;
 }
 
 interface DashboardServicesListProps {
   organizationId: string;
   services: Service[];
   initialEnabledIds: string[];
+  initialEnabledSubServiceIds?: string[];
 }
+
+const DOG_TRAINING_SUB_SERVICES = [
+  { id: "dog-training:basic", label: "Basic Training and Obedience", key: "basic-training-and-obedience" },
+  { id: "dog-training:group", label: "Group Basic Obedience Training", key: "group-basic-obedience-training" },
+  { id: "dog-training:private", label: "Private training", key: "private-training" },
+  { id: "dog-training:sar", label: "Search & Rescue Training", key: "search-and-rescue-training" },
+  { id: "dog-training:show", label: "Show Training and Handling", key: "show-training-and-handling" },
+];
 
 export function DashboardServicesList({
   organizationId,
   services,
   initialEnabledIds,
+  initialEnabledSubServiceIds = [],
 }: DashboardServicesListProps) {
   const router = useRouter();
   const [enabledIds, setEnabledIds] = useState<string[]>(initialEnabledIds);
+  const [enabledSubServiceIds, setEnabledSubServiceIds] = useState<string[]>(initialEnabledSubServiceIds);
+  const [expandedIds, setExpandedIds] = useState<string[]>(initialEnabledIds);
   const [isPending, startTransition] = useTransition();
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [togglingSubId, setTogglingSubId] = useState<string | null>(null);
 
   const handleToggle = (serviceId: string) => {
     const isCurrentlyEnabled = enabledIds.includes(serviceId);
@@ -36,6 +52,10 @@ export function DashboardServicesList({
       : [...enabledIds, serviceId];
     setEnabledIds(nextIds);
 
+    if (!isCurrentlyEnabled) {
+      setExpandedIds((prev) => [...prev, serviceId]);
+    }
+
     startTransition(async () => {
       const res = await toggleOrganizationServiceAction(organizationId, serviceId, !isCurrentlyEnabled);
       if (res?.success) {
@@ -45,6 +65,34 @@ export function DashboardServicesList({
         setEnabledIds(enabledIds);
       }
       setTogglingId(null);
+    });
+  };
+
+  const toggleExpand = (serviceId: string) => {
+    setExpandedIds((prev) =>
+      prev.includes(serviceId)
+        ? prev.filter((id) => id !== serviceId)
+        : [...prev, serviceId]
+    );
+  };
+
+  const handleToggleSubService = (subServiceId: string) => {
+    const isCurrentlyEnabled = enabledSubServiceIds.includes(subServiceId);
+    setTogglingSubId(subServiceId);
+
+    const nextIds = isCurrentlyEnabled
+      ? enabledSubServiceIds.filter((id) => id !== subServiceId)
+      : [...enabledSubServiceIds, subServiceId];
+    setEnabledSubServiceIds(nextIds);
+
+    startTransition(async () => {
+      const res = await toggleOrganizationSubServiceAction(organizationId, subServiceId, !isCurrentlyEnabled);
+      if (res?.success) {
+        router.refresh();
+      } else {
+        setEnabledSubServiceIds(enabledSubServiceIds);
+      }
+      setTogglingSubId(null);
     });
   };
 
@@ -63,37 +111,125 @@ export function DashboardServicesList({
         const isLoading = togglingId === s.id && isPending;
 
         return (
-          <div key={s.id} className="flex items-center justify-between p-5 hover:bg-muted/10 transition-colors">
-            <div className="flex flex-col gap-1.5 max-w-[80%]">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{s.name}</span>
-                {isEnabled && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
-                    Active
-                  </span>
-                )}
+          <div key={s.id} className="flex flex-col">
+            <div className="flex items-center justify-between p-5 hover:bg-muted/10 transition-colors">
+              <div className="flex flex-col gap-1.5 max-w-[80%]">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground">{s.name}</span>
+                  {isEnabled && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                      Active
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  {s.description}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground leading-relaxed">
-                {s.description}
-              </span>
+
+              <div className="flex items-center gap-3">
+                {isEnabled && s.slug === "dog-training" && (
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(s.id)}
+                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                    title={expandedIds.includes(s.id) ? "Collapse sub-services" : "Expand sub-services"}
+                  >
+                    <ChevronDown
+                      className={`size-4.5 transition-transform duration-200 ${
+                        expandedIds.includes(s.id) ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                )}
+                {isEnabled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/dashboard/services/${s.slug}`)}
+                  >
+                    Edit
+                  </Button>
+                )}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isEnabled}
+                  disabled={isLoading}
+                  onClick={() => handleToggle(s.id)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      isEnabled ? "translate-x-4" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
 
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isEnabled}
-              disabled={isLoading}
-              onClick={() => handleToggle(s.id)}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed ${
-                isEnabled ? "bg-primary" : "bg-muted-foreground/30"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-                  isEnabled ? "translate-x-4" : "translate-x-0"
+            {/* Nested Sub-Services Accordion (for Dog training) */}
+            {isEnabled && s.slug === "dog-training" && (
+              <div
+                className={`grid transition-all duration-200 ease-in-out border-t border-border/30 bg-muted/5 ${
+                  expandedIds.includes(s.id)
+                    ? "grid-rows-[1fr] opacity-100 py-5 pl-12 pr-6"
+                    : "grid-rows-[0fr] opacity-0 py-0 pl-12 pr-6 overflow-hidden"
                 }`}
-              />
-            </button>
+              >
+                <div className="overflow-hidden space-y-3">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                    Sub-Services Configured
+                  </div>
+                  <div className="divide-y divide-border/20 border border-border/40 rounded-lg bg-card overflow-hidden">
+                    {DOG_TRAINING_SUB_SERVICES.map((sub) => {
+                      const isSubEnabled = enabledSubServiceIds.includes(sub.id);
+                      const isSubLoading = togglingSubId === sub.id && isPending;
+
+                      return (
+                        <div key={sub.id} className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
+                          <span className="text-sm font-semibold text-foreground/90">
+                            {sub.label}
+                          </span>
+
+                          <div className="flex items-center gap-4">
+                            {isSubEnabled && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                type="button"
+                                className="h-8 px-3"
+                                onClick={() => router.push(`/dashboard/services/dog-training/${sub.key}`)}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={isSubEnabled}
+                              disabled={isSubLoading}
+                              onClick={() => handleToggleSubService(sub.id)}
+                              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                                isSubEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                              }`}
+                            >
+                              <span
+                                className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                  isSubEnabled ? "translate-x-4" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}

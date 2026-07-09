@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
+import { users, services, serviceTypes } from "@/db/schema";
 import { db } from "@/db";
-import { users, services } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -36,21 +36,29 @@ export default async function DashboardLayout({
     .where(eq(users.id, session.user.id))
     .limit(1);
 
-  let activeServices: { id: string; name: string }[] = [];
+  let activeServices: { id: string; name: string; slug: string }[] = [];
   if (org?.organizationCategory) {
     const dbServices = await db
       .select({
         id: services.id,
         name: services.name,
+        serviceTypeId: serviceTypes.id,
       })
       .from(services)
+      .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
       .where(eq(services.organizationCategory, org.organizationCategory));
 
     const enabledIds = org.enabledServices
       ? org.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
-    activeServices = dbServices.filter((s) => enabledIds.includes(s.id));
+    activeServices = dbServices
+      .filter((s) => enabledIds.includes(s.id))
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        slug: (s.serviceTypeId || "").replace(/_/g, "-"),
+      }));
   }
 
   async function handleSignOut() {

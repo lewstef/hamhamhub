@@ -25,6 +25,7 @@ export default async function DashboardServicesPage() {
       role: users.role,
       organizationCategory: users.organizationCategory,
       enabledServices: users.enabledServices,
+      enabledSubServices: users.enabledSubServices,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -35,12 +36,13 @@ export default async function DashboardServicesPage() {
   }
 
   // Get all services belonging to this organization category joined with their descriptions
-  let matchingServices: { id: string; name: string; description: string }[] = [];
+  let matchingServices: { id: string; name: string; slug: string; description: string }[] = [];
   if (organization.organizationCategory) {
     matchingServices = await db
       .select({
         id: services.id,
         name: services.name,
+        serviceTypeId: serviceTypes.id,
         description: serviceTypes.description,
       })
       .from(services)
@@ -50,6 +52,7 @@ export default async function DashboardServicesPage() {
         rows.map((r) => ({
           id: r.id,
           name: r.name,
+          slug: (r.serviceTypeId || "").replace(/_/g, "-"),
           description: r.description || "Operational service listing.",
         }))
       );
@@ -58,6 +61,11 @@ export default async function DashboardServicesPage() {
   // Parse list of enabled service IDs
   const initialEnabledIds = organization.enabledServices
     ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  // Parse list of enabled sub-service IDs
+  const initialEnabledSubServiceIds = organization.enabledSubServices
+    ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
   return (
@@ -73,6 +81,7 @@ export default async function DashboardServicesPage() {
         organizationId={organization.id}
         services={matchingServices}
         initialEnabledIds={initialEnabledIds}
+        initialEnabledSubServiceIds={initialEnabledSubServiceIds}
       />
     </div>
   );

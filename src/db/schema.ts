@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   addressLine: text("address_line"),
   addressZip: text("address_zip"),
   enabledServices: text("enabled_services"),
+  enabledSubServices: text("enabled_sub_services"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

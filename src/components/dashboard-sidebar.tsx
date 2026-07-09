@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   email?: string | null;
-  activeServices?: { id: string; name: string }[];
+  activeServices?: { id: string; name: string; slug: string }[];
   onSignOut: () => void;
 }
 
@@ -173,7 +173,7 @@ export function DashboardSidebar({ email, activeServices = [], onSignOut }: Side
             { label: "Manage Services", href: "/dashboard/services" },
             ...activeServices.map((s) => ({
               label: s.name,
-              href: `/dashboard/services?active=${s.id}`,
+              href: `/dashboard/services/${s.slug}`,
             })),
           ]
         : undefined,

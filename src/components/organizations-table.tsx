@@ -338,7 +338,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                           </td>
                           <td className="px-5 py-3 text-right space-x-1 whitespace-nowrap">
                             <Link
-                              href={`/backoffice/organizations/edit/${o.id}`}
+                              href={`/backoffice/organizations/account-information/${o.id}`}
                               className={buttonVariants({ variant: "outline", size: "icon-sm" }) + " rounded-lg border-border/80 hover:bg-primary/5 hover:text-primary transition-colors cursor-pointer"}
                               title="Edit Organization"
                             >

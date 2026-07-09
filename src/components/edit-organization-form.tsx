@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useActionState, useRef, useEffect } from "react";
-import { updateOrganizationAction, changeOrganizationPasswordAction } from "@/app/actions/organizations";
+import { useState, useActionState, useRef, useEffect, useTransition } from "react";
+import { updateOrganizationAction, changeOrganizationPasswordAction, toggleOrganizationServiceAction, toggleOrganizationSubServiceAction } from "@/app/actions/organizations";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Search, Check, User, ChevronRight, Key, Shield, Mail, Home, Building, Map, Globe, Hash, MapPin, Phone, Lock, Settings } from "lucide-react";
+import { Eye, EyeOff, Search, Check, User, ChevronRight, ChevronDown, Key, Shield, Mail, Home, Building, Map, Globe, Hash, MapPin, Phone, Lock, Settings } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
 
 interface Organization {
@@ -25,6 +25,8 @@ interface Organization {
   addressZip?: string | null;
   address?: string | null;
   createdAt?: Date | string | null;
+  enabledServices?: string | null;
+  enabledSubServices?: string | null;
 }
 
 interface OrganizationCategory {
@@ -32,10 +34,28 @@ interface OrganizationCategory {
   name: string;
 }
 
+interface Service {
+  id: string;
+  name: string;
+  organizationCategory: string | null;
+  slug: string | null;
+  description: string | null;
+}
+
 interface EditOrganizationFormProps {
   organization: Organization;
   organizationCategoryList: OrganizationCategory[];
+  servicesList?: Service[];
+  activeTabProp?: "personal" | "account" | "subscription" | "services";
 }
+
+const DOG_TRAINING_SUB_SERVICES = [
+  { id: "dog-training:basic", label: "Basic Training and Obedience", key: "basic-training-and-obedience" },
+  { id: "dog-training:group", label: "Group Basic Obedience Training", key: "group-basic-obedience-training" },
+  { id: "dog-training:private", label: "Private training", key: "private-training" },
+  { id: "dog-training:sar", label: "Search & Rescue Training", key: "search-and-rescue-training" },
+  { id: "dog-training:show", label: "Show Training and Handling", key: "show-training-and-handling" },
+];
 
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
@@ -81,11 +101,18 @@ const COUNTRY_PHONE_PATTERNS: Record<string, { prefix: string; placeholder: stri
   "Brazil": { prefix: "+55", placeholder: "+55 11 98765-4321" },
 };
 
-export function EditOrganizationForm({ organization, organizationCategoryList }: EditOrganizationFormProps) {
+export function EditOrganizationForm({
+  organization,
+  organizationCategoryList,
+  servicesList = [],
+  activeTabProp,
+}: EditOrganizationFormProps) {
   const router = useRouter();
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"personal" | "account" | "subscription" | "services">("personal");
+  const [localActiveTab, setLocalActiveTab] = useState<"personal" | "account" | "subscription" | "services">("personal");
+
+  const activeTab = activeTabProp || localActiveTab;
 
   // Granular Modal toggle states
   const [showNameModal, setShowNameModal] = useState(false);
@@ -111,7 +138,26 @@ export function EditOrganizationForm({ organization, organizationCategoryList }:
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isPending = personalPending || accountPending;
+  const [enabledIds, setEnabledIds] = useState<string[]>(
+    organization.enabledServices
+      ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
+      : []
+  );
+  const [enabledSubServiceIds, setEnabledSubServiceIds] = useState<string[]>(
+    organization.enabledSubServices
+      ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
+      : []
+  );
+  const [expandedIds, setExpandedIds] = useState<string[]>(
+    organization.enabledServices
+      ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
+      : []
+  );
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [togglingSubId, setTogglingSubId] = useState<string | null>(null);
+  const [isTogglePending, startToggleTransition] = useTransition();
+
+  const isPending = personalPending || accountPending || isTogglePending;
   const passwordsMatch = passwordVal === confirmPasswordVal;
 
   const isPasswordSubmitDisabled =
@@ -146,6 +192,20 @@ export function EditOrganizationForm({ organization, organizationCategoryList }:
     }
   }, [personalState, router]);
 
+  // Sync enabledServices and enabledSubServices state if organization details change
+  useEffect(() => {
+    const nextEnabled = organization.enabledServices
+      ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    setEnabledIds(nextEnabled);
+    setExpandedIds(nextEnabled);
+    setEnabledSubServiceIds(
+      organization.enabledSubServices
+        ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
+        : []
+    );
+  }, [organization.enabledServices, organization.enabledSubServices]);
+
   // Auto-close Account modals on success & refresh data
   useEffect(() => {
     if (accountState?.success) {
@@ -172,6 +232,58 @@ export function EditOrganizationForm({ organization, organizationCategoryList }:
     (c) => c.id === organization.organizationCategory
   )?.name || "NGO";
 
+  const handleToggleService = (serviceId: string) => {
+    const isCurrentlyEnabled = enabledIds.includes(serviceId);
+    setTogglingId(serviceId);
+
+    const nextIds = isCurrentlyEnabled
+      ? enabledIds.filter((id) => id !== serviceId)
+      : [...enabledIds, serviceId];
+    setEnabledIds(nextIds);
+
+    if (!isCurrentlyEnabled) {
+      setExpandedIds((prev) => [...prev, serviceId]);
+    }
+
+    startToggleTransition(async () => {
+      const res = await toggleOrganizationServiceAction(organization.id, serviceId, !isCurrentlyEnabled);
+      if (res?.success) {
+        router.refresh();
+      } else {
+        setEnabledIds(enabledIds); // Rollback
+      }
+      setTogglingId(null);
+    });
+  };
+
+  const toggleExpand = (serviceId: string) => {
+    setExpandedIds((prev) =>
+      prev.includes(serviceId)
+        ? prev.filter((id) => id !== serviceId)
+        : [...prev, serviceId]
+    );
+  };
+
+  const handleToggleSubService = (subServiceId: string) => {
+    const isCurrentlyEnabled = enabledSubServiceIds.includes(subServiceId);
+    setTogglingSubId(subServiceId);
+
+    const nextIds = isCurrentlyEnabled
+      ? enabledSubServiceIds.filter((id) => id !== subServiceId)
+      : [...enabledSubServiceIds, subServiceId];
+    setEnabledSubServiceIds(nextIds);
+
+    startToggleTransition(async () => {
+      const res = await toggleOrganizationSubServiceAction(organization.id, subServiceId, !isCurrentlyEnabled);
+      if (res?.success) {
+        router.refresh();
+      } else {
+        setEnabledSubServiceIds(enabledSubServiceIds); // Rollback
+      }
+      setTogglingSubId(null);
+    });
+  };
+
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Title block */}
@@ -184,50 +296,42 @@ export function EditOrganizationForm({ organization, organizationCategoryList }:
 
       {/* Tabs Navigation */}
       <div className="border-b border-border flex gap-6 text-sm">
-        <button
-          type="button"
-          onClick={() => setActiveTab("personal")}
-          className={`pb-2 px-1 focus:outline-none transition-all cursor-pointer font-semibold ${
-            activeTab === "personal"
+        {[
+          { id: "personal", label: "Account information", path: "account-information" },
+          { id: "account", label: "Account settings", path: "account-settings" },
+          { id: "subscription", label: "Subscription", path: "subscription" },
+          { id: "services", label: "Services", path: "services" },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          const className = `pb-2 px-1 focus:outline-none transition-all cursor-pointer font-semibold ${
+            isActive
               ? "border-b-2 border-primary text-primary"
               : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Account information
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("account")}
-          className={`pb-2 px-1 focus:outline-none transition-all cursor-pointer font-semibold ${
-            activeTab === "account"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Account settings
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("subscription")}
-          className={`pb-2 px-1 focus:outline-none transition-all cursor-pointer font-semibold ${
-            activeTab === "subscription"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Subscription
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("services")}
-          className={`pb-2 px-1 focus:outline-none transition-all cursor-pointer font-semibold ${
-            activeTab === "services"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Services
-        </button>
+          }`;
+
+          if (activeTabProp) {
+            return (
+              <Link
+                key={tab.id}
+                href={`/backoffice/organizations/${tab.path}/${organization.id}`}
+                className={className}
+              >
+                {tab.label}
+              </Link>
+            );
+          } else {
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setLocalActiveTab(tab.id as any)}
+                className={className}
+              >
+                {tab.label}
+              </button>
+            );
+          }
+        })}
       </div>
 
       {/* CARD 1: Account information */}
@@ -396,10 +500,155 @@ export function EditOrganizationForm({ organization, organizationCategoryList }:
         </Card>
       )}
 
-      {/* CARD 4: Services (Empty) */}
+      {/* CARD 4: Services */}
       {activeTab === "services" && (
-        <Card className="border border-border shadow-sm rounded-xl bg-card p-12 text-center text-muted-foreground">
-          No active services associated with this organization.
+        <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
+          <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              <Settings className="size-5" />
+            </div>
+            <CardTitle className="text-base font-bold text-foreground">Services Configuration</CardTitle>
+          </div>
+          <CardContent className="p-0">
+            <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
+              Enable or disable services offered by this organization.
+            </div>
+            {servicesList.length === 0 ? (
+              <div className="p-12 text-center text-muted-foreground">
+                No active services associated with this organization's category.
+              </div>
+            ) : (
+              <div className="divide-y divide-border/50">
+                {servicesList.map((s) => {
+                  const isEnabled = enabledIds.includes(s.id);
+                  const isLoading = togglingId === s.id && isPending;
+                  return (
+                    <div key={s.id} className="flex flex-col">
+                      <div className="flex items-center justify-between px-6 py-4 hover:bg-muted/10 transition-colors">
+                        <div className="flex flex-col gap-1.5 max-w-[80%]">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-foreground">{s.name}</span>
+                            {isEnabled && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground leading-relaxed">
+                            {s.description || "No description provided."}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          {isEnabled && s.slug === "dog-training" && (
+                            <button
+                              type="button"
+                              onClick={() => toggleExpand(s.id)}
+                              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                              title={expandedIds.includes(s.id) ? "Collapse sub-services" : "Expand sub-services"}
+                            >
+                              <ChevronDown
+                                className={`size-4.5 transition-transform duration-200 ${
+                                  expandedIds.includes(s.id) ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                          )}
+                          {isEnabled && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              type="button"
+                              onClick={() => router.push(`/backoffice/organizations/services/${s.slug}/${organization.id}`)}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isEnabled}
+                            disabled={isLoading}
+                            onClick={() => handleToggleService(s.id)}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                            }`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                isEnabled ? "translate-x-4" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Nested Sub-Services Accordion (for Dog training) */}
+                      {isEnabled && s.slug === "dog-training" && (
+                        <div
+                          className={`grid transition-all duration-200 ease-in-out border-t border-border/30 bg-muted/5 ${
+                            expandedIds.includes(s.id)
+                              ? "grid-rows-[1fr] opacity-100 py-5 pl-12 pr-6"
+                              : "grid-rows-[0fr] opacity-0 py-0 pl-12 pr-6 overflow-hidden"
+                          }`}
+                        >
+                          <div className="overflow-hidden space-y-3">
+                            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                              Sub-Services Configured
+                            </div>
+                            <div className="divide-y divide-border/20 border border-border/40 rounded-lg bg-card overflow-hidden">
+                              {DOG_TRAINING_SUB_SERVICES.map((sub) => {
+                                const isSubEnabled = enabledSubServiceIds.includes(sub.id);
+                                const isSubLoading = togglingSubId === sub.id && isPending;
+
+                                return (
+                                  <div key={sub.id} className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
+                                    <span className="text-sm font-semibold text-foreground/90">
+                                      {sub.label}
+                                    </span>
+
+                                    <div className="flex items-center gap-4">
+                                      {isSubEnabled && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          type="button"
+                                          className="h-8 px-3"
+                                          onClick={() => router.push(`/backoffice/organizations/services/dog-training/${sub.key}/${organization.id}`)}
+                                        >
+                                          Edit
+                                        </Button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={isSubEnabled}
+                                        disabled={isSubLoading}
+                                        onClick={() => handleToggleSubService(sub.id)}
+                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                                          isSubEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                                        }`}
+                                      >
+                                        <span
+                                          className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                            isSubEnabled ? "translate-x-4" : "translate-x-0"
+                                          }`}
+                                        />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
         </Card>
       )}
 

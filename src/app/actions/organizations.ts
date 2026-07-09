@@ -464,3 +464,42 @@ export async function toggleOrganizationServiceAction(organizationId: string, se
     return { error: "Failed to toggle service. Please try again." };
   }
 }
+
+export async function toggleOrganizationSubServiceAction(organizationId: string, subServiceId: string, enabled: boolean) {
+  try {
+    const [org] = await db
+      .select({ enabledSubServices: users.enabledSubServices })
+      .from(users)
+      .where(eq(users.id, organizationId))
+      .limit(1);
+
+    if (!org) {
+      return { error: "Organization not found" };
+    }
+
+    let enabledList = org.enabledSubServices ? org.enabledSubServices.split(",").map(id => id.trim()).filter(Boolean) : [];
+    if (enabled) {
+      if (!enabledList.includes(subServiceId)) {
+        enabledList.push(subServiceId);
+      }
+    } else {
+      enabledList = enabledList.filter((id) => id !== subServiceId);
+    }
+
+    const nextVal = enabledList.join(",");
+
+    await db
+      .update(users)
+      .set({ enabledSubServices: nextVal || null })
+      .where(eq(users.id, organizationId));
+
+    revalidatePath("/dashboard/services");
+    revalidatePath("/dashboard/account");
+    revalidatePath("/dashboard");
+    revalidatePath("/backoffice/organizations/services");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to toggle organization sub-service:", error);
+    return { error: "Failed to toggle sub-service. Please try again." };
+  }
+}
