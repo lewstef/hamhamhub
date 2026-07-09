@@ -14,6 +14,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: vi.fn(),
   }),
+  usePathname: () => "/backoffice/organizations",
 }));
 
 describe("EditOrganizationForm Component", () => {

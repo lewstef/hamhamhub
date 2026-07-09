@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Eye, EyeOff, Search, Check, User, ChevronRight, ChevronDown, Key, Shield, Mail, Home, Building, Map, Globe, Hash, MapPin, Phone, Lock, Settings } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
 
@@ -24,6 +24,12 @@ interface Organization {
   addressLine?: string | null;
   addressZip?: string | null;
   address?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
+  youtube?: string | null;
+  website?: string | null;
+  googleBusinessProfile?: string | null;
   createdAt?: Date | string | null;
   enabledServices?: string | null;
   enabledSubServices?: string | null;
@@ -108,6 +114,8 @@ export function EditOrganizationForm({
   activeTabProp,
 }: EditOrganizationFormProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDashboard = pathname.startsWith("/dashboard");
 
   // Tab state
   const [localActiveTab, setLocalActiveTab] = useState<"personal" | "account" | "subscription" | "services">("personal");
@@ -122,6 +130,7 @@ export function EditOrganizationForm({
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showRecoveryEmailModal, setShowRecoveryEmailModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSocialModal, setShowSocialModal] = useState(false);
 
   // Form states and actions
   const [personalState, personalAction, personalPending] = useActionState(updateOrganizationAction, null);
@@ -188,6 +197,7 @@ export function EditOrganizationForm({
       setShowCategoryModal(false);
       setShowAddressModal(false);
       setShowPhoneModal(false);
+      setShowSocialModal(false);
       router.refresh();
     }
   }, [personalState, router]);
@@ -310,10 +320,14 @@ export function EditOrganizationForm({
           }`;
 
           if (activeTabProp) {
+            const isDashboard = pathname.startsWith("/dashboard");
+            const tabHref = isDashboard
+              ? `/dashboard/account/${tab.path}`
+              : `/backoffice/organizations/${tab.path}/${organization.id}`;
             return (
               <Link
                 key={tab.id}
-                href={`/backoffice/organizations/${tab.path}/${organization.id}`}
+                href={tabHref}
                 className={className}
               >
                 {tab.label}
@@ -1140,6 +1154,25 @@ export function EditOrganizationForm({
                   </div>
                 )}
                 <div className="space-y-4">
+                  {isDashboard && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="currentPassword" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Current Password
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                        <Input
+                          id="currentPassword"
+                          name="currentPassword"
+                          type="password"
+                          placeholder="••••••••"
+                          required
+                          className="pl-9 focus-visible:ring-primary/20"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-1.5">
                     <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       New Password

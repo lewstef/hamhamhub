@@ -26,6 +26,12 @@ export const users = pgTable("users", {
   addressZip: text("address_zip"),
   enabledServices: text("enabled_services"),
   enabledSubServices: text("enabled_sub_services"),
+  facebook: text("facebook"),
+  instagram: text("instagram"),
+  tiktok: text("tiktok"),
+  youtube: text("youtube"),
+  website: text("website"),
+  googleBusinessProfile: text("google_business_profile"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

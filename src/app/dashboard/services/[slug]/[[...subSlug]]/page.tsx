@@ -33,6 +33,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       role: users.role,
       organizationCategory: users.organizationCategory,
       enabledServices: users.enabledServices,
+      enabledSubServices: users.enabledSubServices,
     })
     .from(users)
     .where(eq(users.id, userId))
@@ -81,6 +82,10 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
     description: service.description || "Operational service listing.",
   };
 
+  const enabledSubServiceIds = organization.enabledSubServices
+    ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
   return (
     <DashboardServiceDetail
       organizationId={organization.id}
@@ -88,6 +93,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       initialIsEnabled={isEnabled}
       slug={slug}
       activeSubServiceTab={activeSubServiceTab}
+      enabledSubServiceIds={enabledSubServiceIds}
     />
   );
 }

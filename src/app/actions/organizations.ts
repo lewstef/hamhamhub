@@ -6,6 +6,7 @@ import { eq, and, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
 
 /**
  * Returns all organization categories from the database.
@@ -239,12 +240,6 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
   const id = formData.get("id") as string;
   const name = formData.get("name") as string;
   const organizationCategory = formData.get("organizationCategory") as string;
-  const phoneNumber = formData.get("phoneNumber") as string | null;
-  const addressCountry = formData.get("addressCountry") as string | null;
-  const addressState = formData.get("addressState") as string | null;
-  const addressCity = formData.get("addressCity") as string | null;
-  const addressLine = formData.get("addressLine") as string | null;
-  const addressZip = formData.get("addressZip") as string | null;
 
   if (!id || !name || !organizationCategory) {
     return { error: "All fields are required" };
@@ -257,28 +252,66 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
       return { error: "A valid Organization Category is required" };
     }
 
-    const parts = [
-      addressLine?.trim(),
-      addressCity?.trim(),
-      addressState?.trim(),
-      addressZip?.trim(),
-      addressCountry?.trim(),
-    ].filter(Boolean);
-    const concatenatedAddress = parts.join(", ") || null;
+    const updateData: Record<string, any> = {
+      name,
+      organizationCategory,
+    };
+
+    if (formData.has("phoneNumber")) {
+      updateData.phoneNumber = (formData.get("phoneNumber") as string) || null;
+    }
+
+    if (
+      formData.has("addressLine") ||
+      formData.has("addressCity") ||
+      formData.has("addressState") ||
+      formData.has("addressZip") ||
+      formData.has("addressCountry")
+    ) {
+      const addressLine = formData.get("addressLine") as string | null;
+      const addressCity = formData.get("addressCity") as string | null;
+      const addressState = formData.get("addressState") as string | null;
+      const addressZip = formData.get("addressZip") as string | null;
+      const addressCountry = formData.get("addressCountry") as string | null;
+
+      const parts = [
+        addressLine?.trim(),
+        addressCity?.trim(),
+        addressState?.trim(),
+        addressZip?.trim(),
+        addressCountry?.trim(),
+      ].filter(Boolean);
+
+      updateData.address = parts.join(", ") || null;
+      updateData.addressCountry = addressCountry || null;
+      updateData.addressState = addressState || null;
+      updateData.addressCity = addressCity || null;
+      updateData.addressLine = addressLine || null;
+      updateData.addressZip = addressZip || null;
+    }
+
+    if (formData.has("facebook")) {
+      updateData.facebook = (formData.get("facebook") as string) || null;
+    }
+    if (formData.has("instagram")) {
+      updateData.instagram = (formData.get("instagram") as string) || null;
+    }
+    if (formData.has("tiktok")) {
+      updateData.tiktok = (formData.get("tiktok") as string) || null;
+    }
+    if (formData.has("youtube")) {
+      updateData.youtube = (formData.get("youtube") as string) || null;
+    }
+    if (formData.has("website")) {
+      updateData.website = (formData.get("website") as string) || null;
+    }
+    if (formData.has("googleBusinessProfile")) {
+      updateData.googleBusinessProfile = (formData.get("googleBusinessProfile") as string) || null;
+    }
 
     await db
       .update(users)
-      .set({
-        name,
-        organizationCategory,
-        phoneNumber: phoneNumber || null,
-        address: concatenatedAddress,
-        addressCountry: addressCountry || null,
-        addressState: addressState || null,
-        addressCity: addressCity || null,
-        addressLine: addressLine || null,
-        addressZip: addressZip || null,
-      })
+      .set(updateData)
       .where(eq(users.id, id));
 
     revalidatePath("/backoffice/organizations");
@@ -318,6 +351,7 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
   const recoveryEmail = formData.get("recoveryEmail") as string | null;
   const password = formData.get("password") as string | null;
   const confirmPassword = formData.get("confirmPassword") as string | null;
+  const currentPassword = formData.get("currentPassword") as string | null;
 
   if (!id) {
     return { error: "Organization ID is required" };
@@ -355,6 +389,28 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
 
       if (password !== confirmPassword) {
         return { error: "Passwords do not match" };
+      }
+
+      const session = await auth();
+      if (session?.user?.role === "organization") {
+        if (!currentPassword) {
+          return { error: "Current password is required" };
+        }
+
+        const [orgUser] = await db
+          .select({ password: users.password })
+          .from(users)
+          .where(eq(users.id, id))
+          .limit(1);
+
+        if (!orgUser) {
+          return { error: "Organization not found" };
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, orgUser.password);
+        if (!isMatch) {
+          return { error: "Incorrect current password" };
+        }
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);

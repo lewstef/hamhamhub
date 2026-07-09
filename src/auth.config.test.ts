@@ -159,4 +159,70 @@ describe("NextAuth Authorized Callback", () => {
       expect(getRedirectLocation(result)).toBe("http://localhost/backoffice");
     });
   });
+
+  describe("Additional edge cases", () => {
+    it("should redirect organization from backoffice login page to dashboard", () => {
+      const auth = {
+        user: { id: "org-id", role: "organization" as const },
+        expires: "any",
+      };
+      const result = authorized({ auth, request: createRequest("/backoffice/login") });
+      expect(getRedirectLocation(result)).toBe("http://localhost/dashboard");
+    });
+
+    it("should redirect organization from dashboard login page to dashboard", () => {
+      const auth = {
+        user: { id: "org-id", role: "organization" as const },
+        expires: "any",
+      };
+      const result = authorized({ auth, request: createRequest("/dashboard/login") });
+      expect(getRedirectLocation(result)).toBe("http://localhost/dashboard");
+    });
+
+    it("should redirect organization from signup page to dashboard", () => {
+      const auth = {
+        user: { id: "org-id", role: "organization" as const },
+        expires: "any",
+      };
+      const result = authorized({ auth, request: createRequest("/signup") });
+      expect(getRedirectLocation(result)).toBe("http://localhost/dashboard");
+    });
+
+    it("should redirect employee from backoffice login page to backoffice", () => {
+      const auth = {
+        user: { id: "emp-id", role: "employee" as const },
+        expires: "any",
+      };
+      const result = authorized({ auth, request: createRequest("/backoffice/login") });
+      expect(getRedirectLocation(result)).toBe("http://localhost/backoffice");
+    });
+
+    it("should redirect employee from dashboard login page to backoffice", () => {
+      const auth = {
+        user: { id: "emp-id", role: "employee" as const },
+        expires: "any",
+      };
+      const result = authorized({ auth, request: createRequest("/dashboard/login") });
+      expect(getRedirectLocation(result)).toBe("http://localhost/backoffice");
+    });
+
+    it("should redirect admin from dashboard subpage to backoffice", () => {
+      const auth = {
+        user: { id: "admin-id", role: "admin" as const },
+        expires: "any",
+      };
+      const result = authorized({ auth, request: createRequest("/dashboard/account") });
+      expect(getRedirectLocation(result)).toBe("http://localhost/backoffice");
+    });
+
+    it("should allow employee access to backoffice subpages", () => {
+      const auth = {
+        user: { id: "emp-id", role: "employee" as const },
+        expires: "any",
+      };
+      const result = authorized({ auth, request: createRequest("/backoffice/organizations") });
+      expect(result).toBe(true);
+    });
+  });
 });
+

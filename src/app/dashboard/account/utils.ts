@@ -1,10 +1,19 @@
 import { db } from "@/db";
 import { users, services, serviceTypes } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { getOrganizationCategories } from "@/app/actions/organizations";
 
-export async function getOrganizationData(id: string) {
+export async function getDashboardAccountData() {
+  const session = await auth();
+
+  if (!session) {
+    redirect("/dashboard/login");
+  }
+
+  const id = session.user.id;
+
   const [organization] = await db
     .select({
       id: users.id,
@@ -34,33 +43,34 @@ export async function getOrganizationData(id: string) {
     .where(eq(users.id, id))
     .limit(1);
 
-  // Security check: Only allow editing users with 'organization' role on this page
   if (!organization || organization.role !== "organization") {
     notFound();
   }
 
   const organizationCategoryList = await getOrganizationCategories();
 
-  // Fetch all services matching organization category
   let servicesList: any[] = [];
   if (organization.organizationCategory) {
-    const rawServices = await db
+    servicesList = await db
       .select({
         id: services.id,
         name: services.name,
         organizationCategory: services.organizationCategory,
-        slug: serviceTypes.id,
+        serviceTypeId: serviceTypes.id,
         description: serviceTypes.description,
       })
       .from(services)
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
       .where(eq(services.organizationCategory, organization.organizationCategory))
-      .orderBy(services.createdAt);
-
-    servicesList = rawServices.map((s) => ({
-      ...s,
-      slug: s.slug ? s.slug.replace(/_/g, "-") : null,
-    }));
+      .then((rows) =>
+        rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          organizationCategory: r.organizationCategory,
+          slug: (r.serviceTypeId || "").replace(/_/g, "-"),
+          description: r.description || "Operational service listing.",
+        }))
+      );
   }
 
   return {

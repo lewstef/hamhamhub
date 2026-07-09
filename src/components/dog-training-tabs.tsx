@@ -7,9 +7,18 @@ import Link from "next/link";
 
 interface DogTrainingTabsProps {
   activeTabProp?: string;
+  enabledSubServiceIds?: string[];
 }
 
-function DogTrainingTabsContent({ activeTabProp }: DogTrainingTabsProps) {
+const subServiceDbIdMap: Record<string, string> = {
+  "basic-training-and-obedience": "dog-training:basic",
+  "group-basic-obedience-training": "dog-training:group",
+  "private-training": "dog-training:private",
+  "search-and-rescue-training": "dog-training:sar",
+  "show-training-and-handling": "dog-training:show",
+};
+
+function DogTrainingTabsContent({ activeTabProp, enabledSubServiceIds }: DogTrainingTabsProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   
@@ -75,11 +84,29 @@ function DogTrainingTabsContent({ activeTabProp }: DogTrainingTabsProps) {
       <div className="flex flex-wrap gap-2 border-b border-border pb-2">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
-          const className = `px-4 py-2 text-sm font-semibold rounded-md transition-all cursor-pointer ${
-            isActive
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          
+          const dbId = subServiceDbIdMap[tab.id];
+          const isSubEnabled = enabledSubServiceIds ? enabledSubServiceIds.includes(dbId) : true;
+
+          const className = `px-4 py-2 text-sm font-semibold rounded-md transition-all ${
+            !isSubEnabled
+              ? "opacity-40 bg-muted/30 text-muted-foreground/60 cursor-not-allowed pointer-events-none border border-transparent select-none"
+              : isActive
+                ? "bg-primary text-primary-foreground shadow-sm cursor-pointer"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50 cursor-pointer"
           }`;
+
+          if (!isSubEnabled) {
+            return (
+              <span
+                key={tab.id}
+                className={className}
+                title={`${tab.label} is currently disabled`}
+              >
+                {tab.label}
+              </span>
+            );
+          }
 
           if (basePath) {
             const tabHref = isBackoffice ? `${basePath}/${tab.id}/${orgId}` : `${basePath}/${tab.id}`;
@@ -123,10 +150,10 @@ function DogTrainingTabsContent({ activeTabProp }: DogTrainingTabsProps) {
   );
 }
 
-export function DogTrainingTabs({ activeTabProp }: DogTrainingTabsProps) {
+export function DogTrainingTabs({ activeTabProp, enabledSubServiceIds }: DogTrainingTabsProps) {
   return (
     <Suspense fallback={<div className="text-sm text-muted-foreground">Loading training tabs...</div>}>
-      <DogTrainingTabsContent activeTabProp={activeTabProp} />
+      <DogTrainingTabsContent activeTabProp={activeTabProp} enabledSubServiceIds={enabledSubServiceIds} />
     </Suspense>
   );
 }

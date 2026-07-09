@@ -41,6 +41,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
       name: users.name,
       role: users.role,
       organizationCategory: users.organizationCategory,
+      enabledSubServices: users.enabledSubServices,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -109,15 +110,6 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Description
-            </h3>
-            <p className="text-sm text-foreground/90 leading-relaxed bg-muted/30 p-4 rounded-lg border border-border/50">
-              {service.description}
-            </p>
-          </div>
-
           {isDogTraining && (
             <div className="pt-6 border-t border-border space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-semibold">
@@ -125,6 +117,10 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
               </h3>
               <DogTrainingTabs
                 activeTabProp={activeSubServiceTab}
+                enabledSubServiceIds={organization.enabledSubServices
+                  ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
+                  : []
+                }
               />
             </div>
           )}

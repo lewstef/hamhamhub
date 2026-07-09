@@ -103,6 +103,16 @@ describe("Service Types Server Actions", () => {
       expect(result).toEqual({ error: "All fields are required." });
     });
 
+    it("should return error if name or description is blank (whitespace only)", async () => {
+      const formData = new FormData();
+      formData.append("id", "dog_training");
+      formData.append("name", "   ");
+      formData.append("description", "Valid description");
+
+      const result = await updateServiceTypeAction(null, formData);
+      expect(result).toEqual({ error: "All fields are required." });
+    });
+
     it("should successfully update and return success", async () => {
       const formData = new FormData();
       formData.append("id", "dog_training");
@@ -117,6 +127,18 @@ describe("Service Types Server Actions", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services/types");
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
       expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on DB failure", async () => {
+      const formData = new FormData();
+      formData.append("id", "dog_training");
+      formData.append("name", "Dog Training");
+      formData.append("description", "Valid description");
+
+      mockUpdate.mockRejectedValueOnce(new Error("DB connection lost"));
+
+      const result = await updateServiceTypeAction(null, formData);
+      expect(result).toEqual({ error: "Something went wrong. Please try again." });
     });
   });
 });

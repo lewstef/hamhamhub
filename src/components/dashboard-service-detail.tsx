@@ -20,6 +20,7 @@ interface DashboardServiceDetailProps {
   initialIsEnabled: boolean;
   slug: string;
   activeSubServiceTab?: string;
+  enabledSubServiceIds?: string[];
 }
 
 export function DashboardServiceDetail({
@@ -28,6 +29,7 @@ export function DashboardServiceDetail({
   initialIsEnabled,
   slug,
   activeSubServiceTab,
+  enabledSubServiceIds,
 }: DashboardServiceDetailProps) {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(initialIsEnabled);
@@ -98,15 +100,6 @@ export function DashboardServiceDetail({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Service Description Section */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Description
-            </h3>
-            <p className="text-sm text-foreground/90 leading-relaxed bg-muted/30 p-4 rounded-lg border border-border/50">
-              {service.description}
-            </p>
-          </div>
 
           {/* Toggle Control Area */}
           {!isDogTraining && (
@@ -147,6 +140,7 @@ export function DashboardServiceDetail({
               </h3>
               <DogTrainingTabs
                 activeTabProp={activeSubServiceTab}
+                enabledSubServiceIds={enabledSubServiceIds}
               />
             </div>
           )}

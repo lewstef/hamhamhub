@@ -7,9 +7,12 @@ import {
   createOrganizationCategoryAction,
   updateOrganizationCategoryAction,
   deleteOrganizationCategoryAction,
+  toggleOrganizationServiceAction,
+  toggleOrganizationSubServiceAction,
 } from "./organizations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 
 // Dummy database URL to satisfy drizzle setup
 process.env.DATABASE_URL = "postgres://dummy:dummy@localhost:5432/dummy";
@@ -97,6 +100,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("bcryptjs", () => ({
   default: {
     hash: vi.fn(async (val: string) => `hashed_${val}`),
+    compare: vi.fn(async (val: string, hashed: string) => hashed === `hashed_${val}` || hashed === val),
   },
 }));
 
@@ -133,6 +137,41 @@ describe("Organization Server Actions", () => {
       const result = await updateOrganizationCategoryAction(null, formData);
 
       expect(mockUpdate).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should return error if category ID is missing for delete", async () => {
+      const formData = new FormData();
+      // no id appended
+      const result = await deleteOrganizationCategoryAction(null, formData);
+      expect(result).toEqual({ error: "Organization category ID is required." });
+    });
+
+    it("should return error when deleting a category that is in use by an organization", async () => {
+      const formData = new FormData();
+      formData.append("id", "ngo");
+
+      // mock: an organization user is using this category
+      mockSelect.mockResolvedValueOnce([{ id: "org-1" }]);
+
+      const result = await deleteOrganizationCategoryAction(null, formData);
+      expect(result).toEqual({
+        error: "Cannot delete this organization category because it is in use by one or more organizations.",
+      });
+      expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it("should successfully delete a category not in use", async () => {
+      const formData = new FormData();
+      formData.append("id", "ngo");
+
+      // mock: no organization using this category
+      mockSelect.mockResolvedValueOnce([]);
+      mockDelete.mockResolvedValueOnce({ count: 1 });
+
+      const result = await deleteOrganizationCategoryAction(null, formData);
+      expect(mockDelete).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
       expect(result).toEqual({ success: true });
     });
@@ -238,6 +277,25 @@ describe("Organization Server Actions", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
     });
+
+    it("should persist social media and google business profile fields", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("name", "Social Org");
+      formData.append("organizationCategory", "ngo");
+      formData.append("facebook", "https://facebook.com/org");
+      formData.append("instagram", "https://instagram.com/org");
+      formData.append("tiktok", "https://tiktok.com/@org");
+      formData.append("youtube", "https://youtube.com/@org");
+      formData.append("website", "https://org.com");
+      formData.append("googleBusinessProfile", "https://maps.google.com/org");
+
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await updateOrganizationAction(null, formData);
+      expect(result).toEqual({ success: true });
+      expect(mockUpdate).toHaveBeenCalled();
+    });
   });
 
   describe("changeOrganizationPasswordAction", () => {
@@ -332,6 +390,196 @@ describe("Organization Server Actions", () => {
       expect(mockDelete).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
       expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe("changeOrganizationPasswordAction", () => {
+    it("should successfully change password if logged in as admin without current password", async () => {
+      const formData = new FormData();
+      formData.append("id", "org-id");
+      formData.append("password", "newsecurepassword");
+      formData.append("confirmPassword", "newsecurepassword");
+
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "admin-id", role: "admin", name: "Admin" },
+        expires: "expires-date",
+      });
+
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await changeOrganizationPasswordAction(null, formData);
+
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should require current password if logged in as organization", async () => {
+      const formData = new FormData();
+      formData.append("id", "org-id");
+      formData.append("password", "newsecurepassword");
+      formData.append("confirmPassword", "newsecurepassword");
+
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "org-id", role: "organization", name: "Org" },
+        expires: "expires-date",
+      });
+
+      const result = await changeOrganizationPasswordAction(null, formData);
+
+      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(result).toEqual({ error: "Current password is required" });
+    });
+
+    it("should return error if current password is incorrect for organization", async () => {
+      const formData = new FormData();
+      formData.append("id", "org-id");
+      formData.append("password", "newsecurepassword");
+      formData.append("confirmPassword", "newsecurepassword");
+      formData.append("currentPassword", "wrongpassword");
+
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "org-id", role: "organization", name: "Org" },
+        expires: "expires-date",
+      });
+
+      mockSelect.mockResolvedValueOnce([{ password: "hashed_correctpassword" }]);
+
+      const result = await changeOrganizationPasswordAction(null, formData);
+
+      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(result).toEqual({ error: "Incorrect current password" });
+    });
+
+    it("should successfully change password if current password is correct for organization", async () => {
+      const formData = new FormData();
+      formData.append("id", "org-id");
+      formData.append("password", "newsecurepassword");
+      formData.append("confirmPassword", "newsecurepassword");
+      formData.append("currentPassword", "correctpassword");
+
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "org-id", role: "organization", name: "Org" },
+        expires: "expires-date",
+      });
+
+      mockSelect.mockResolvedValueOnce([{ password: "hashed_correctpassword" }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await changeOrganizationPasswordAction(null, formData);
+
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+  });
+
+  describe("toggleOrganizationServiceAction", () => {
+    it("should return error if organization is not found", async () => {
+      mockSelect.mockResolvedValueOnce([]); // no org found
+
+      const result = await toggleOrganizationServiceAction("nonexistent-org", "srv-1", true);
+      expect(result).toEqual({ error: "Organization not found" });
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it("should add a service ID to the enabled list", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledServices: "srv-2" }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/services");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should not add a duplicate service ID to the enabled list", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledServices: "srv-1,srv-2" }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should remove a service ID from the enabled list", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledServices: "srv-1,srv-2" }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await toggleOrganizationServiceAction("org-id", "srv-1", false);
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should handle null enabledServices (start from empty list)", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledServices: null }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on DB failure", async () => {
+      // Trigger failure via the update step (select resolves normally first)
+      mockSelect.mockResolvedValueOnce([{ enabledServices: "srv-2" }]);
+      mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
+
+      const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
+      expect(result).toEqual({ error: "Failed to toggle service. Please try again." });
+    });
+  });
+
+  describe("toggleOrganizationSubServiceAction", () => {
+    it("should return error if organization is not found", async () => {
+      mockSelect.mockResolvedValueOnce([]);
+
+      const result = await toggleOrganizationSubServiceAction("nonexistent-org", "dog-training:basic", true);
+      expect(result).toEqual({ error: "Organization not found" });
+      expect(mockUpdate).not.toHaveBeenCalled();
+    });
+
+    it("should add a sub-service ID to the enabled sub-services list", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledSubServices: "dog-training:group" }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", true);
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/services");
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/services");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should not add a duplicate sub-service ID", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledSubServices: "dog-training:basic,dog-training:group" }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", true);
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should remove a sub-service ID from the enabled list", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledSubServices: "dog-training:basic,dog-training:group" }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", false);
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should handle null enabledSubServices (start from empty list)", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledSubServices: null }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:sar", true);
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on DB failure", async () => {
+      // Trigger failure via the update step (select resolves normally first)
+      mockSelect.mockResolvedValueOnce([{ enabledSubServices: "dog-training:group" }]);
+      mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
+
+      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", true);
+      expect(result).toEqual({ error: "Failed to toggle sub-service. Please try again." });
     });
   });
 });

@@ -44,7 +44,6 @@ describe("DashboardServiceDetail Component", () => {
 
     expect(screen.getByText("Dog Walking")).toBeDefined();
     expect(screen.getByText(/Template Identifier: srv-dog-walking/)).toBeDefined();
-    expect(screen.getByText("Professional walking for all breeds.")).toBeDefined();
     expect(screen.getByText("Active")).toBeDefined();
   });
 
@@ -95,4 +94,35 @@ describe("DashboardServiceDetail Component", () => {
     // Toggle switch should not be rendered
     expect(screen.queryByRole("switch")).toBeNull();
   });
+
+  it("should render DogTrainingTabs section for Dog Training service", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        activeSubServiceTab="group-basic-obedience-training"
+        enabledSubServiceIds={["dog-training:basic", "dog-training:group"]}
+      />
+    );
+
+    // The Sub-Services configuration heading should be present
+    expect(screen.getByText("Sub-Services configuration")).toBeDefined();
+  });
+
+  it("should NOT render DogTrainingTabs for a non-Dog Training service", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={genericService}
+        initialIsEnabled={true}
+        slug="dog-walking"
+      />
+    );
+
+    // Sub-Services configuration section should not appear for non-dog-training
+    expect(screen.queryByText("Sub-Services configuration")).toBeNull();
+  });
 });
+

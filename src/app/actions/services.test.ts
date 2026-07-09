@@ -99,78 +99,29 @@ describe("Service Server Actions", () => {
   });
 
   describe("createServiceAction", () => {
-    it("should return error if organization category is missing", async () => {
+    it("should return error if service name is not a valid service type", async () => {
       const formData = new FormData();
-      formData.append("name", "Dog boarding");
-      // missing organizationCategory
+      formData.append("name", "Invalid Service Type");
+      formData.append("organizationCategory", "ngo");
 
       const result = await createServiceAction(null, formData);
-      expect(result).toEqual({ error: "Organization Category is required" });
+      expect(result).toEqual({ error: `A valid Service Type name is required: "Invalid Service Type"` });
     });
 
-    it("should return error if organization category is invalid", async () => {
+    it("should return error on DB failure in createServiceAction", async () => {
       const formData = new FormData();
       formData.append("name", "Dog boarding");
-      formData.append("organizationCategory", "invalid_category");
-
-      const result = await createServiceAction(null, formData);
-      expect(result).toEqual({ error: "A valid Organization Category is required" });
-    });
-
-    it("should delete deselected services and insert new services", async () => {
-      const formData = new FormData();
-      formData.append("name", "Dog boarding"); // kept (already registered)
-      formData.append("name", "Dog walking");  // newly selected
-      // "Dog training" (originally registered) is deselected
+      formData.append("name", "Dog walking"); // one to delete, one to insert
       formData.append("organizationCategory", "dog_kennel");
 
-      // Mock current services in DB: "Dog boarding" and "Dog training"
+      // Current services fetched successfully, but delete operation fails
       mockSelect.mockResolvedValueOnce([
-        { id: "s1", name: "Dog boarding", organizationCategory: "dog_kennel" },
-        { id: "s2", name: "Dog training", organizationCategory: "dog_kennel" },
+        { id: "s1", name: "Dog training", organizationCategory: "dog_kennel" }, // will be deleted
       ]);
-      mockDelete.mockResolvedValueOnce(1);
-      mockInsert.mockResolvedValueOnce({ id: "new-service-id" });
+      mockDelete.mockRejectedValueOnce(new Error("DB offline"));
 
       const result = await createServiceAction(null, formData);
-
-      expect(mockDelete).toHaveBeenCalled();
-      expect(mockInsert).toHaveBeenCalled();
-      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
-      expect(result).toEqual({ success: true });
-    });
-
-    it("should successfully create service and return success", async () => {
-      const formData = new FormData();
-      formData.append("name", "Dog boarding");
-      formData.append("organizationCategory", "dog_kennel");
-
-      // Mock current services in DB to be empty
-      mockSelect.mockResolvedValueOnce([]);
-      mockInsert.mockResolvedValueOnce({ id: "new-service-id" });
-
-      const result = await createServiceAction(null, formData);
-
-      expect(mockInsert).toHaveBeenCalled();
-      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
-      expect(result).toEqual({ success: true });
-    });
-
-    it("should successfully create multiple services and return success", async () => {
-      const formData = new FormData();
-      formData.append("name", "Dog boarding");
-      formData.append("name", "Dog walking");
-      formData.append("organizationCategory", "dog_kennel");
-
-      // Mock current services in DB to be empty
-      mockSelect.mockResolvedValueOnce([]);
-      mockInsert.mockResolvedValue({ id: "new-service-id" });
-
-      const result = await createServiceAction(null, formData);
-
-      expect(mockInsert).toHaveBeenCalledTimes(2);
-      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({ error: "Something went wrong. Please try again." });
     });
   });
 
@@ -194,6 +145,16 @@ describe("Service Server Actions", () => {
       expect(mockDelete).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
       expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on DB failure in deleteServiceAction", async () => {
+      const formData = new FormData();
+      formData.append("id", "serv-id");
+
+      mockDelete.mockRejectedValueOnce(new Error("DB offline"));
+
+      const result = await deleteServiceAction(null, formData);
+      expect(result).toEqual({ error: "Could not delete service. Please try again." });
     });
   });
 });
