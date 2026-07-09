@@ -105,6 +105,7 @@ function TreeNavItem({
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
+        render={section.href ? <Link href={section.href} /> : undefined}
         onClick={() => !isCollapsed && setOpen((prev) => !prev)}
         isActive={isAnyChildActive && !open}
         tooltip={section.title}
@@ -166,7 +167,7 @@ export function DashboardSidebar({ email, activeServices = [], onSignOut }: Side
       id: "services",
       title: "Services",
       icon: Briefcase,
-      href: activeServices.length === 0 ? "/dashboard/services" : undefined,
+      href: "/dashboard/services",
       items: activeServices.length > 0
         ? [
             { label: "Manage Services", href: "/dashboard/services" },

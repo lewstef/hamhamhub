@@ -7,12 +7,20 @@ import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { headers } from "next/headers";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headerList = await headers();
+  const pathname = headerList.get("x-pathname") || "";
+
+  if (pathname === "/dashboard/login") {
+    return <>{children}</>;
+  }
+
   const session = await auth();
 
   if (!session) {
