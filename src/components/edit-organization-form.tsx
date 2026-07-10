@@ -327,7 +327,7 @@ export function EditOrganizationForm({
           { id: "personal", label: "Account information", path: "account-information" },
           { id: "account", label: "Account settings", path: "account-settings" },
           { id: "subscription", label: "Subscription", path: "subscription" },
-          { id: "services", label: "Services", path: "services" },
+          ...(isDashboard ? [] : [{ id: "services", label: "Services", path: "services" }]),
         ].map((tab) => {
           const isActive = activeTab === tab.id;
           const className = `pb-2 px-1 focus:outline-none transition-all cursor-pointer font-semibold ${
