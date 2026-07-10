@@ -46,6 +46,7 @@ interface Service {
   organizationCategory: string | null;
   slug: string | null;
   description: string | null;
+  subServicesOrder?: string | null;
 }
 
 interface EditOrganizationFormProps {
@@ -116,6 +117,22 @@ export function EditOrganizationForm({
   const router = useRouter();
   const pathname = usePathname();
   const isDashboard = pathname.startsWith("/dashboard");
+
+  const getSortedSubServices = (subServicesOrderString?: string | null) => {
+    const list = [...DOG_TRAINING_SUB_SERVICES];
+    if (subServicesOrderString) {
+      const orderIds = subServicesOrderString.split(",").map(id => id.trim()).filter(Boolean);
+      list.sort((a, b) => {
+        const idxA = orderIds.indexOf(a.id);
+        const idxB = orderIds.indexOf(b.id);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+    }
+    return list;
+  };
 
   // Tab state
   const [localActiveTab, setLocalActiveTab] = useState<"personal" | "account" | "subscription" | "services">("personal");
@@ -611,7 +628,7 @@ export function EditOrganizationForm({
                               Sub-Services Configured
                             </div>
                             <div className="divide-y divide-border/20 border border-border/40 rounded-lg bg-card overflow-hidden">
-                              {DOG_TRAINING_SUB_SERVICES.map((sub) => {
+                              {getSortedSubServices(s.subServicesOrder).map((sub) => {
                                 const isSubEnabled = enabledSubServiceIds.includes(sub.id);
                                 const isSubLoading = togglingSubId === sub.id && isPending;
 

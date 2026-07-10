@@ -12,6 +12,7 @@ interface Service {
   id: string;
   name: string;
   description: string;
+  subServicesOrder?: string | null;
 }
 
 interface DashboardServiceDetailProps {
@@ -141,6 +142,7 @@ export function DashboardServiceDetail({
               <DogTrainingTabs
                 activeTabProp={activeSubServiceTab}
                 enabledSubServiceIds={enabledSubServiceIds}
+                subServicesOrder={service.subServicesOrder ? service.subServicesOrder.split(",").map(s => s.trim()).filter(Boolean) : []}
               />
             </div>
           )}

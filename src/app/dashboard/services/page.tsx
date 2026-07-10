@@ -36,7 +36,7 @@ export default async function DashboardServicesPage() {
   }
 
   // Get all services belonging to this organization category joined with their descriptions
-  let matchingServices: { id: string; name: string; slug: string; description: string }[] = [];
+  let matchingServices: { id: string; name: string; slug: string; description: string; subServicesOrder?: string | null }[] = [];
   if (organization.organizationCategory) {
     matchingServices = await db
       .select({
@@ -44,16 +44,19 @@ export default async function DashboardServicesPage() {
         name: services.name,
         serviceTypeId: serviceTypes.id,
         description: serviceTypes.description,
+        subServicesOrder: services.subServicesOrder,
       })
       .from(services)
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
       .where(eq(services.organizationCategory, organization.organizationCategory))
+      .orderBy(services.sortOrder)
       .then((rows) =>
         rows.map((r) => ({
           id: r.id,
           name: r.name,
           slug: (r.serviceTypeId || "").replace(/_/g, "-"),
           description: r.description || "Operational service listing.",
+          subServicesOrder: r.subServicesOrder,
         }))
       );
   }

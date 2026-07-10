@@ -60,6 +60,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
       id: services.id,
       name: services.name,
       description: serviceTypes.description,
+      subServicesOrder: services.subServicesOrder,
     })
     .from(services)
     .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
@@ -118,9 +119,10 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
               <DogTrainingTabs
                 activeTabProp={activeSubServiceTab}
                 enabledSubServiceIds={organization.enabledSubServices
-                  ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
+                  ? organization.enabledSubServices.split("|")[0].split(",").map((s) => s.trim()).filter(Boolean)
                   : []
                 }
+                subServicesOrder={service?.subServicesOrder ? service.subServicesOrder.split(",").map(s => s.trim()).filter(Boolean) : []}
               />
             </div>
           )}

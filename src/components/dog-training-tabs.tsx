@@ -8,6 +8,7 @@ import Link from "next/link";
 interface DogTrainingTabsProps {
   activeTabProp?: string;
   enabledSubServiceIds?: string[];
+  subServicesOrder?: string[];
 }
 
 const subServiceDbIdMap: Record<string, string> = {
@@ -18,7 +19,7 @@ const subServiceDbIdMap: Record<string, string> = {
   "show-training-and-handling": "dog-training:show",
 };
 
-function DogTrainingTabsContent({ activeTabProp, enabledSubServiceIds }: DogTrainingTabsProps) {
+function DogTrainingTabsContent({ activeTabProp, enabledSubServiceIds, subServicesOrder = [] }: DogTrainingTabsProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   
@@ -61,6 +62,19 @@ function DogTrainingTabsContent({ activeTabProp, enabledSubServiceIds }: DogTrai
       content: "Prepares dogs and handlers for the conformation ring. Covers pacing, stack positioning, judge inspection posture, and display rules.",
     },
   ];
+
+  if (subServicesOrder && subServicesOrder.length > 0) {
+    tabs.sort((a, b) => {
+      const dbIdA = subServiceDbIdMap[a.id];
+      const dbIdB = subServiceDbIdMap[b.id];
+      const idxA = subServicesOrder.indexOf(dbIdA);
+      const idxB = subServicesOrder.indexOf(dbIdB);
+      if (idxA === -1 && idxB === -1) return 0;
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+  }
 
   const [activeTab, setActiveTab] = useState(activeTabProp || tabs[0].id);
 
@@ -150,10 +164,14 @@ function DogTrainingTabsContent({ activeTabProp, enabledSubServiceIds }: DogTrai
   );
 }
 
-export function DogTrainingTabs({ activeTabProp, enabledSubServiceIds }: DogTrainingTabsProps) {
+export function DogTrainingTabs({ activeTabProp, enabledSubServiceIds, subServicesOrder }: DogTrainingTabsProps) {
   return (
     <Suspense fallback={<div className="text-sm text-muted-foreground">Loading training tabs...</div>}>
-      <DogTrainingTabsContent activeTabProp={activeTabProp} enabledSubServiceIds={enabledSubServiceIds} />
+      <DogTrainingTabsContent
+        activeTabProp={activeTabProp}
+        enabledSubServiceIds={enabledSubServiceIds}
+        subServicesOrder={subServicesOrder}
+      />
     </Suspense>
   );
 }

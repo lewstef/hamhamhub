@@ -101,3 +101,39 @@ export async function deleteServiceAction(prevState: unknown, formData: FormData
     return { error: "Could not delete service. Please try again." };
   }
 }
+
+export async function reorderServicesAction(orderedServiceIds: string[]) {
+  try {
+    for (let i = 0; i < orderedServiceIds.length; i++) {
+      await db
+        .update(services)
+        .set({ sortOrder: i })
+        .where(eq(services.id, orderedServiceIds[i]));
+    }
+    revalidatePath("/backoffice/services");
+    revalidatePath("/dashboard/services");
+    revalidatePath("/dashboard/account");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to reorder services:", error);
+    return { error: "Failed to save services order." };
+  }
+}
+
+export async function reorderSubServicesAction(serviceId: string, orderedSubServices: string[]) {
+  try {
+    await db
+      .update(services)
+      .set({ subServicesOrder: orderedSubServices.join(",") })
+      .where(eq(services.id, serviceId));
+    revalidatePath("/backoffice/services");
+    revalidatePath("/dashboard/services");
+    revalidatePath("/dashboard/account");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to reorder sub-services:", error);
+    return { error: "Failed to save sub-services order." };
+  }
+}

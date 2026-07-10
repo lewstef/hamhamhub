@@ -276,6 +276,7 @@ describe("Organization Server Actions", () => {
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
     });
 
     it("should persist social media and google business profile fields", async () => {
@@ -343,6 +344,7 @@ describe("Organization Server Actions", () => {
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
     });
 
     it("should update email and recovery email and return success", async () => {
@@ -359,6 +361,7 @@ describe("Organization Server Actions", () => {
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
     });
   });
 
@@ -410,6 +413,8 @@ describe("Organization Server Actions", () => {
       const result = await changeOrganizationPasswordAction(null, formData);
 
       expect(mockUpdate).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
       expect(result).toEqual({ success: true });
     });
 
@@ -468,6 +473,8 @@ describe("Organization Server Actions", () => {
       const result = await changeOrganizationPasswordAction(null, formData);
 
       expect(mockUpdate).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
       expect(result).toEqual({ success: true });
     });
   });
@@ -488,6 +495,8 @@ describe("Organization Server Actions", () => {
       const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/services");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
       expect(result).toEqual({ success: true });
     });
 
@@ -543,6 +552,8 @@ describe("Organization Server Actions", () => {
       const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", true);
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/services");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/services");
       expect(result).toEqual({ success: true });
     });

@@ -51,11 +51,12 @@ export async function getOrganizationData(id: string) {
         organizationCategory: services.organizationCategory,
         slug: serviceTypes.id,
         description: serviceTypes.description,
+        subServicesOrder: services.subServicesOrder,
       })
       .from(services)
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
       .where(eq(services.organizationCategory, organization.organizationCategory))
-      .orderBy(services.createdAt);
+      .orderBy(services.sortOrder);
 
     servicesList = rawServices.map((s) => ({
       ...s,

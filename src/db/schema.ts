@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer } from "drizzle-orm/pg-core";
 
 export const organizationCategories = pgTable("organization_categories", {
   id: text("id").primaryKey(), // Sluggified name, e.g. "ngo", "dog_kennel"
@@ -43,6 +43,8 @@ export const services = pgTable("services", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   organizationCategory: text("organization_category").notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  subServicesOrder: text("sub_services_order"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

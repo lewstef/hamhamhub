@@ -19,7 +19,7 @@ export default async function ServicesPage() {
     serviceList = await db
       .select()
       .from(services)
-      .orderBy(desc(services.createdAt));
+      .orderBy(services.sortOrder, services.createdAt);
     organizationCategoryList = await getOrganizationCategories();
     serviceTypeList = await getServiceTypesAction();
   } catch (error) {

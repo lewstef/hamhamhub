@@ -542,6 +542,20 @@ export async function toggleOrganizationSubServiceAction(organizationId: string,
       enabledList = enabledList.filter((id) => id !== subServiceId);
     }
 
+    const subServiceOrder = [
+      "dog-training:basic",
+      "dog-training:group",
+      "dog-training:private",
+      "dog-training:sar",
+      "dog-training:show",
+    ];
+
+    enabledList.sort((a, b) => {
+      const idxA = subServiceOrder.indexOf(a);
+      const idxB = subServiceOrder.indexOf(b);
+      return (idxA !== -1 ? idxA : 999) - (idxB !== -1 ? idxB : 999);
+    });
+
     const nextVal = enabledList.join(",");
 
     await db

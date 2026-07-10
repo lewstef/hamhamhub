@@ -2,6 +2,8 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import {
   createServiceAction,
   deleteServiceAction,
+  reorderServicesAction,
+  reorderSubServicesAction,
 } from "./services";
 import { revalidatePath } from "next/cache";
 
@@ -155,6 +157,42 @@ describe("Service Server Actions", () => {
 
       const result = await deleteServiceAction(null, formData);
       expect(result).toEqual({ error: "Could not delete service. Please try again." });
+    });
+  });
+
+  describe("reorderServicesAction", () => {
+    it("should update sortOrder for multiple services and return success", async () => {
+      mockUpdate.mockResolvedValue({ count: 1 });
+
+      const result = await reorderServicesAction(["id-1", "id-2"]);
+      expect(mockUpdate).toHaveBeenCalledTimes(2);
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on database failure", async () => {
+      mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
+
+      const result = await reorderServicesAction(["id-1"]);
+      expect(result).toEqual({ error: "Failed to save services order." });
+    });
+  });
+
+  describe("reorderSubServicesAction", () => {
+    it("should update subServicesOrder for a service and return success", async () => {
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await reorderSubServicesAction("service-id", ["sub-1", "sub-2"]);
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on database failure", async () => {
+      mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
+
+      const result = await reorderSubServicesAction("service-id", ["sub-1"]);
+      expect(result).toEqual({ error: "Failed to save sub-services order." });
     });
   });
 });

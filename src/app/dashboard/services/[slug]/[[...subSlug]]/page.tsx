@@ -56,6 +56,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       name: services.name,
       organizationCategory: services.organizationCategory,
       description: serviceTypes.description,
+      subServicesOrder: services.subServicesOrder,
     })
     .from(services)
     .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
@@ -80,6 +81,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
     id: service.id,
     name: service.name,
     description: service.description || "Operational service listing.",
+    subServicesOrder: service.subServicesOrder,
   };
 
   const enabledSubServiceIds = organization.enabledSubServices

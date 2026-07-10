@@ -1,12 +1,29 @@
 "use client";
 
 import { useState, useActionState, useRef, useEffect } from "react";
-import { createServiceAction, deleteServiceAction } from "@/app/actions/services";
+import {
+  createServiceAction,
+  deleteServiceAction,
+  reorderServicesAction,
+  reorderSubServicesAction,
+} from "@/app/actions/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { X, Trash2, ChevronRight, Sparkles, GraduationCap, Home, Activity, Footprints, Check, Search } from "lucide-react";
+import {
+  X,
+  Trash2,
+  ChevronRight,
+  Sparkles,
+  GraduationCap,
+  Home,
+  Activity,
+  Footprints,
+  Check,
+  Search,
+  GripVertical,
+} from "lucide-react";
 
 interface FormField {
   name: string;
@@ -30,6 +47,7 @@ interface Service {
   id: string;
   name: string;
   organizationCategory: string;
+  subServicesOrder?: string | null;
 }
 
 interface OrganizationCategory {
@@ -43,7 +61,14 @@ interface ServicesTableProps {
   serviceTypeList: ServiceType[];
 }
 
-// Maps service names to visual icons, descriptions and accent colors
+const DOG_TRAINING_SUB_SERVICES = [
+  { id: "dog-training:basic", label: "Basic Training and Obedience", key: "basic-training-and-obedience" },
+  { id: "dog-training:group", label: "Group Basic Obedience Training", key: "group-basic-obedience-training" },
+  { id: "dog-training:private", label: "Private training", key: "private-training" },
+  { id: "dog-training:sar", label: "Search & Rescue Training", key: "search-and-rescue-training" },
+  { id: "dog-training:show", label: "Show Training and Handling", key: "show-training-and-handling" },
+];
+
 const getServiceDetails = (name: string) => {
   const normalized = name.toLowerCase();
   if (normalized.includes("training") && normalized.includes("sport")) {
@@ -89,16 +114,52 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
     organizationCategoryList[0]?.id || "dog_service_provider"
   );
   
-  // Custom multi-select state (holds newly selected services)
   const [selectedServiceNames, setSelectedServiceNames] = useState<string[]>([]);
-
   const [state, formAction, isPending] = useActionState(createServiceAction, null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Delete service state/actions
   const [deleteState, deleteAction, deletePending] = useActionState(deleteServiceAction, null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Reordering states
+  const [services, setServices] = useState<Service[]>(serviceList);
+  const [subServicesMap, setSubServicesMap] = useState<Record<string, typeof DOG_TRAINING_SUB_SERVICES>>({});
+  
+  const [draggedServiceId, setDraggedServiceId] = useState<string | null>(null);
+  const [draggedServiceCategory, setDraggedServiceCategory] = useState<string | null>(null);
+  
+  const [draggedSubServiceId, setDraggedSubServiceId] = useState<string | null>(null);
+  const [draggedSubServiceParentId, setDraggedSubServiceParentId] = useState<string | null>(null);
+
+  // Sync services state with prop
+  useEffect(() => {
+    setServices(serviceList);
+  }, [serviceList]);
+
+  // Sync sub-services lists with custom orders
+  useEffect(() => {
+    const nextMap: Record<string, typeof DOG_TRAINING_SUB_SERVICES> = {};
+    for (const s of services) {
+      if (s.name.toLowerCase() === "dog training") {
+        const orderString = s.subServicesOrder;
+        const list = [...DOG_TRAINING_SUB_SERVICES];
+        if (orderString) {
+          const orderIds = orderString.split(",").map(id => id.trim()).filter(Boolean);
+          list.sort((a, b) => {
+            const idxA = orderIds.indexOf(a.id);
+            const idxB = orderIds.indexOf(b.id);
+            if (idxA === -1 && idxB === -1) return 0;
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+          });
+        }
+        nextMap[s.id] = list;
+      }
+    }
+    setSubServicesMap(nextMap);
+  }, [services]);
 
   // Set selections to currently registered services when switching category or when serviceList changes
   useEffect(() => {
@@ -139,7 +200,6 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
         : organizationCategoryList[0]?.id || "dog_service_provider");
     setFormOrgCategory(nextCategory);
 
-    // Initialize selections to match the category's registered services
     const registered = serviceList
       .filter((s) => s.organizationCategory === nextCategory)
       .map((s) => s.name);
@@ -147,8 +207,73 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
     setShowForm(true);
   };
 
+  // Drag and Drop Handlers for Main Services
+  const handleServiceDragStart = (e: React.DragEvent, id: string, categoryId: string) => {
+    setDraggedServiceId(id);
+    setDraggedServiceCategory(categoryId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleServiceDragOver = (e: React.DragEvent, targetId: string, categoryId: string) => {
+    e.preventDefault();
+    if (!draggedServiceId || draggedServiceCategory !== categoryId || draggedServiceId === targetId) return;
+
+    const listForCat = services.filter((s) => s.organizationCategory === categoryId);
+    const draggedIdx = listForCat.findIndex((s) => s.id === draggedServiceId);
+    const targetIdx = listForCat.findIndex((s) => s.id === targetId);
+
+    if (draggedIdx !== -1 && targetIdx !== -1) {
+      const newServices = [...services];
+      const draggedItemIdx = newServices.findIndex((s) => s.id === draggedServiceId);
+      const targetItemIdx = newServices.findIndex((s) => s.id === targetId);
+
+      const [draggedItem] = newServices.splice(draggedItemIdx, 1);
+      newServices.splice(targetItemIdx, 0, draggedItem);
+      setServices(newServices);
+    }
+  };
+
+  const handleServiceDragEnd = async () => {
+    setDraggedServiceId(null);
+    setDraggedServiceCategory(null);
+    const orderedIds = services.map((s) => s.id);
+    await reorderServicesAction(orderedIds);
+  };
+
+  // Drag and Drop Handlers for Sub-services
+  const handleSubServiceDragStart = (e: React.DragEvent, id: string, serviceId: string) => {
+    setDraggedSubServiceId(id);
+    setDraggedSubServiceParentId(serviceId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleSubServiceDragOver = (e: React.DragEvent, targetId: string, serviceId: string) => {
+    e.preventDefault();
+    if (!draggedSubServiceId || draggedSubServiceParentId !== serviceId || draggedSubServiceId === targetId) return;
+
+    const list = [...(subServicesMap[serviceId] || [])];
+    const draggedIdx = list.findIndex((x) => x.id === draggedSubServiceId);
+    const targetIdx = list.findIndex((x) => x.id === targetId);
+    if (draggedIdx !== -1 && targetIdx !== -1) {
+      const [draggedItem] = list.splice(draggedIdx, 1);
+      list.splice(targetIdx, 0, draggedItem);
+      setSubServicesMap({
+        ...subServicesMap,
+        [serviceId]: list,
+      });
+    }
+  };
+
+  const handleSubServiceDragEnd = async (serviceId: string) => {
+    setDraggedSubServiceId(null);
+    setDraggedSubServiceParentId(null);
+    const list = subServicesMap[serviceId] || [];
+    const orderedIds = list.map((x) => x.id);
+    await reorderSubServicesAction(serviceId, orderedIds);
+  };
+
   // Filter services by category and name query
-  const filteredServices = serviceList.filter((s) => {
+  const filteredServices = services.filter((s) => {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedTypeFilter === "all" || s.organizationCategory === selectedTypeFilter;
     return matchesSearch && matchesCategory;
@@ -159,11 +284,6 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
   for (const category of organizationCategoryList) {
     grouped[category.id] = filteredServices.filter((s) => s.organizationCategory === category.id);
   }
-
-  // Get service names already registered for currently selected category
-  const registeredNamesForCategory = serviceList
-    .filter((s) => s.organizationCategory === formOrgCategory)
-    .map((s) => s.name);
 
   return (
     <div className="space-y-6">
@@ -220,14 +340,14 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
         </div>
       </div>
 
-      {/* Grouped Services Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Grouped Services Layout - single column row-like cards */}
+      <div className="flex flex-col gap-6 w-full">
         {organizationCategoryList.map((category) => {
           const categoryServices = grouped[category.id] || [];
           if (selectedTypeFilter !== "all" && selectedTypeFilter !== category.id) return null;
 
           return (
-            <Card key={category.id} className="overflow-hidden flex flex-col h-full border border-border/80 shadow-sm hover:shadow-md transition-shadow py-0">
+            <Card key={category.id} className="overflow-hidden w-full border border-border/80 shadow-sm hover:shadow-md transition-shadow py-0">
               <CardHeader className="bg-muted/30 px-6 py-4 border-b border-border flex flex-row items-center justify-between gap-4">
                 <div className="space-y-0.5 min-w-0 flex-1">
                   <CardTitle className="text-sm font-bold tracking-tight text-foreground truncate">
@@ -249,7 +369,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                   <Sparkles className="size-4 text-primary/70 animate-pulse" />
                 </div>
               </CardHeader>
-              <CardContent className="p-6 flex-1 flex flex-col justify-between">
+              <CardContent className="p-6">
                 {categoryServices.length === 0 ? (
                   <p className="text-xs text-muted-foreground italic py-8 text-center">
                     No services defined for this category.
@@ -258,33 +378,92 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                   <div className="divide-y divide-border/60">
                     {categoryServices.map((s) => {
                       const details = getServiceDetails(s.name);
+                      const isDogTraining = s.name.toLowerCase() === "dog training";
+                      const isServiceDragged = draggedServiceId === s.id;
+
                       return (
                         <div
                           key={s.id}
-                          className="py-3 flex items-start justify-between group/item hover:bg-muted/20 px-3 -mx-3 rounded-xl transition-all"
+                          className={`flex flex-col py-1 transition-all duration-150 ${
+                            isServiceDragged ? "opacity-40 bg-muted/20 border-dashed border-2 border-primary/20 scale-[0.99] rounded-xl my-2" : ""
+                          }`}
+                          draggable={true}
+                          onDragStart={(e) => handleServiceDragStart(e, s.id, category.id)}
+                          onDragOver={(e) => handleServiceDragOver(e, s.id, category.id)}
+                          onDragEnd={handleServiceDragEnd}
                         >
-                          <div className="flex gap-3 items-start min-w-0 flex-1">
-                            <div className={`p-2 rounded-lg shrink-0 ${details.colorClass.split(" ")[0]} border border-border/40`}>
-                              {details.icon}
+                          <div className="py-3 flex items-start justify-between group/item hover:bg-muted/20 px-3 rounded-xl transition-all">
+                            <div className="flex gap-3.5 items-start min-w-0 flex-1">
+                              {/* Drag Handle */}
+                              <div
+                                className="text-muted-foreground/60 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted"
+                                title="Drag to reorder services"
+                              >
+                                <GripVertical className="size-4" />
+                              </div>
+
+                              <div className={`p-2 rounded-lg shrink-0 ${details.colorClass.split(" ")[0]} border border-border/40`}>
+                                {details.icon}
+                              </div>
+                              <div className="space-y-0.5 min-w-0">
+                                <span className="text-sm font-semibold text-foreground block truncate">{s.name}</span>
+                                <span className="text-[11px] text-muted-foreground line-clamp-1 leading-normal">
+                                  {details.description}
+                                </span>
+                              </div>
                             </div>
-                            <div className="space-y-0.5 min-w-0">
-                              <span className="text-sm font-semibold text-foreground block truncate">{s.name}</span>
-                              <span className="text-[11px] text-muted-foreground line-clamp-1 leading-normal">
-                                {details.description}
-                              </span>
-                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive text-muted-foreground focus:opacity-100 shrink-0 ml-2"
+                              onClick={() => {
+                                setDeleteTargetId(s.id);
+                                setShowDeleteConfirm(true);
+                              }}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive text-muted-foreground focus:opacity-100 shrink-0 ml-2"
-                            onClick={() => {
-                              setDeleteTargetId(s.id);
-                              setShowDeleteConfirm(true);
-                            }}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
+
+                          {/* Nested Sub-Services Accordion (for Dog training) */}
+                          {isDogTraining && subServicesMap[s.id] && (
+                            <div className="pl-12 pr-3 pb-3 space-y-2 mt-1">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 pl-2">
+                                Sub-Services (Drag to reorder)
+                              </div>
+                              <div className="divide-y divide-border/20 border border-border/40 rounded-xl bg-card overflow-hidden">
+                                {(subServicesMap[s.id] || []).map((sub) => {
+                                  const isSubDragged = draggedSubServiceId === sub.id;
+
+                                  return (
+                                    <div
+                                      key={sub.id}
+                                      className={`flex items-center justify-between p-3 pl-4 hover:bg-muted/10 transition-all duration-150 ${
+                                        isSubDragged ? "opacity-40 bg-muted/20 border-dashed border-2 border-primary/20 scale-[0.99]" : ""
+                                      }`}
+                                      draggable={true}
+                                      onDragStart={(e) => handleSubServiceDragStart(e, sub.id, s.id)}
+                                      onDragOver={(e) => handleSubServiceDragOver(e, sub.id, s.id)}
+                                      onDragEnd={() => handleSubServiceDragEnd(s.id)}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        {/* Sub-Service Drag Handle */}
+                                        <div
+                                          className="text-muted-foreground/60 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted"
+                                          title="Drag to reorder sub-services"
+                                        >
+                                          <GripVertical className="size-3.5" />
+                                        </div>
+                                        <span className="text-xs font-semibold text-foreground/90">
+                                          {sub.label}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -381,7 +560,6 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Organization Category
                     </Label>
-                    {/* Hidden input so the value is still submitted with the form */}
                     <input type="hidden" name="organizationCategory" value={formOrgCategory} />
                     <div className="flex items-center gap-2 h-8 px-3 rounded-lg border border-border bg-muted/40 text-sm font-medium text-foreground select-none">
                       <span className="flex-1 truncate">
