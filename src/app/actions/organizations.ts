@@ -315,7 +315,6 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
       .where(eq(users.id, id));
 
     revalidatePath("/backoffice/organizations");
-    revalidatePath(`/backoffice/organizations/edit/${id}`);
     revalidatePath("/dashboard/account");
     return { success: true };
   } catch (error) {
@@ -425,7 +424,6 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
     }
 
     revalidatePath("/backoffice/organizations");
-    revalidatePath(`/backoffice/organizations/edit/${id}`);
     revalidatePath("/dashboard/account");
     return { success: true };
   } catch (error) {

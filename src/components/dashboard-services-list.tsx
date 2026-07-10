@@ -5,6 +5,7 @@ import { toggleOrganizationServiceAction, toggleOrganizationSubServiceAction } f
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { getSortedSubServices } from "@/config/dog-training";
 
 interface Service {
   id: string;
@@ -21,14 +22,6 @@ interface DashboardServicesListProps {
   initialEnabledSubServiceIds?: string[];
 }
 
-const DOG_TRAINING_SUB_SERVICES = [
-  { id: "dog-training:basic", label: "Basic Training and Obedience", key: "basic-training-and-obedience" },
-  { id: "dog-training:group", label: "Group Basic Obedience Training", key: "group-basic-obedience-training" },
-  { id: "dog-training:private", label: "Private training", key: "private-training" },
-  { id: "dog-training:sar", label: "Search & Rescue Training", key: "search-and-rescue-training" },
-  { id: "dog-training:show", label: "Show Training and Handling", key: "show-training-and-handling" },
-];
-
 export function DashboardServicesList({
   organizationId,
   services,
@@ -37,21 +30,6 @@ export function DashboardServicesList({
 }: DashboardServicesListProps) {
   const router = useRouter();
 
-  const getSortedSubServices = (subServicesOrderString?: string | null) => {
-    const list = [...DOG_TRAINING_SUB_SERVICES];
-    if (subServicesOrderString) {
-      const orderIds = subServicesOrderString.split(",").map(id => id.trim()).filter(Boolean);
-      list.sort((a, b) => {
-        const idxA = orderIds.indexOf(a.id);
-        const idxB = orderIds.indexOf(b.id);
-        if (idxA === -1 && idxB === -1) return 0;
-        if (idxA === -1) return 1;
-        if (idxB === -1) return -1;
-        return idxA - idxB;
-      });
-    }
-    return list;
-  };
   const [enabledIds, setEnabledIds] = useState<string[]>(initialEnabledIds);
   const [enabledSubServiceIds, setEnabledSubServiceIds] = useState<string[]>(initialEnabledSubServiceIds);
   const [expandedIds, setExpandedIds] = useState<string[]>(initialEnabledIds);

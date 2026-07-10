@@ -2,6 +2,7 @@
 
 import { useState, useActionState, useRef, useEffect, useTransition } from "react";
 import { updateOrganizationAction, changeOrganizationPasswordAction, toggleOrganizationServiceAction, toggleOrganizationSubServiceAction } from "@/app/actions/organizations";
+import { getSortedSubServices } from "@/config/dog-training";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,13 +57,7 @@ interface EditOrganizationFormProps {
   activeTabProp?: "personal" | "account" | "subscription" | "services";
 }
 
-const DOG_TRAINING_SUB_SERVICES = [
-  { id: "dog-training:basic", label: "Basic Training and Obedience", key: "basic-training-and-obedience" },
-  { id: "dog-training:group", label: "Group Basic Obedience Training", key: "group-basic-obedience-training" },
-  { id: "dog-training:private", label: "Private training", key: "private-training" },
-  { id: "dog-training:sar", label: "Search & Rescue Training", key: "search-and-rescue-training" },
-  { id: "dog-training:show", label: "Show Training and Handling", key: "show-training-and-handling" },
-];
+
 
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
@@ -117,22 +112,6 @@ export function EditOrganizationForm({
   const router = useRouter();
   const pathname = usePathname();
   const isDashboard = pathname.startsWith("/dashboard");
-
-  const getSortedSubServices = (subServicesOrderString?: string | null) => {
-    const list = [...DOG_TRAINING_SUB_SERVICES];
-    if (subServicesOrderString) {
-      const orderIds = subServicesOrderString.split(",").map(id => id.trim()).filter(Boolean);
-      list.sort((a, b) => {
-        const idxA = orderIds.indexOf(a.id);
-        const idxB = orderIds.indexOf(b.id);
-        if (idxA === -1 && idxB === -1) return 0;
-        if (idxA === -1) return 1;
-        if (idxB === -1) return -1;
-        return idxA - idxB;
-      });
-    }
-    return list;
-  };
 
   // Tab state
   const [localActiveTab, setLocalActiveTab] = useState<"personal" | "account" | "subscription" | "services">("personal");
@@ -337,7 +316,6 @@ export function EditOrganizationForm({
           }`;
 
           if (activeTabProp) {
-            const isDashboard = pathname.startsWith("/dashboard");
             const tabHref = isDashboard
               ? `/dashboard/account/${tab.path}`
               : `/backoffice/organizations/${tab.path}/${organization.id}`;
@@ -683,11 +661,13 @@ export function EditOrganizationForm({
         </Card>
       )}
 
-      <div className="flex justify-start">
-        <Link href="/backoffice/organizations" className={buttonVariants({ variant: "outline" })}>
-          Back to list
-        </Link>
-      </div>
+      {!isDashboard && (
+        <div className="flex justify-start">
+          <Link href="/backoffice/organizations" className={buttonVariants({ variant: "outline" })}>
+            Back to list
+          </Link>
+        </div>
+      )}
 
       {/* POPUP 1: Edit Name (Identity) */}
       {showNameModal && (

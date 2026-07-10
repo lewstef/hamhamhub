@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import { SUB_SERVICE_KEY_TO_DB_ID } from "@/config/dog-training";
 
 interface DogTrainingTabsProps {
   activeTabProp?: string;
@@ -11,13 +12,7 @@ interface DogTrainingTabsProps {
   subServicesOrder?: string[];
 }
 
-const subServiceDbIdMap: Record<string, string> = {
-  "basic-training-and-obedience": "dog-training:basic",
-  "group-basic-obedience-training": "dog-training:group",
-  "private-training": "dog-training:private",
-  "search-and-rescue-training": "dog-training:sar",
-  "show-training-and-handling": "dog-training:show",
-};
+
 
 function DogTrainingTabsContent({ activeTabProp, enabledSubServiceIds, subServicesOrder = [] }: DogTrainingTabsProps) {
   const searchParams = useSearchParams();
@@ -65,10 +60,8 @@ function DogTrainingTabsContent({ activeTabProp, enabledSubServiceIds, subServic
 
   if (subServicesOrder && subServicesOrder.length > 0) {
     tabs.sort((a, b) => {
-      const dbIdA = subServiceDbIdMap[a.id];
-      const dbIdB = subServiceDbIdMap[b.id];
-      const idxA = subServicesOrder.indexOf(dbIdA);
-      const idxB = subServicesOrder.indexOf(dbIdB);
+      const idxA = subServicesOrder.indexOf(SUB_SERVICE_KEY_TO_DB_ID[a.id]);
+      const idxB = subServicesOrder.indexOf(SUB_SERVICE_KEY_TO_DB_ID[b.id]);
       if (idxA === -1 && idxB === -1) return 0;
       if (idxA === -1) return 1;
       if (idxB === -1) return -1;
@@ -99,7 +92,7 @@ function DogTrainingTabsContent({ activeTabProp, enabledSubServiceIds, subServic
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           
-          const dbId = subServiceDbIdMap[tab.id];
+          const dbId = SUB_SERVICE_KEY_TO_DB_ID[tab.id];
           const isSubEnabled = enabledSubServiceIds ? enabledSubServiceIds.includes(dbId) : true;
 
           const className = `px-4 py-2 text-sm font-semibold rounded-md transition-all ${

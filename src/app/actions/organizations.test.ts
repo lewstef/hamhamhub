@@ -275,7 +275,6 @@ describe("Organization Server Actions", () => {
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
-      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
     });
 
@@ -343,7 +342,6 @@ describe("Organization Server Actions", () => {
       expect(result).toEqual({ success: true });
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
-      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
     });
 
@@ -360,7 +358,6 @@ describe("Organization Server Actions", () => {
       expect(result).toEqual({ success: true });
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
-      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/edit/comp-id");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
     });
   });

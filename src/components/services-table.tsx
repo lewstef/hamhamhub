@@ -24,6 +24,7 @@ import {
   Search,
   GripVertical,
 } from "lucide-react";
+import { DOG_TRAINING_SUB_SERVICES, getSortedSubServices } from "@/config/dog-training";
 
 interface FormField {
   name: string;
@@ -61,13 +62,7 @@ interface ServicesTableProps {
   serviceTypeList: ServiceType[];
 }
 
-const DOG_TRAINING_SUB_SERVICES = [
-  { id: "dog-training:basic", label: "Basic Training and Obedience", key: "basic-training-and-obedience" },
-  { id: "dog-training:group", label: "Group Basic Obedience Training", key: "group-basic-obedience-training" },
-  { id: "dog-training:private", label: "Private training", key: "private-training" },
-  { id: "dog-training:sar", label: "Search & Rescue Training", key: "search-and-rescue-training" },
-  { id: "dog-training:show", label: "Show Training and Handling", key: "show-training-and-handling" },
-];
+
 
 const getServiceDetails = (name: string) => {
   const normalized = name.toLowerCase();
@@ -142,20 +137,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
     const nextMap: Record<string, typeof DOG_TRAINING_SUB_SERVICES> = {};
     for (const s of services) {
       if (s.name.toLowerCase() === "dog training") {
-        const orderString = s.subServicesOrder;
-        const list = [...DOG_TRAINING_SUB_SERVICES];
-        if (orderString) {
-          const orderIds = orderString.split(",").map(id => id.trim()).filter(Boolean);
-          list.sort((a, b) => {
-            const idxA = orderIds.indexOf(a.id);
-            const idxB = orderIds.indexOf(b.id);
-            if (idxA === -1 && idxB === -1) return 0;
-            if (idxA === -1) return 1;
-            if (idxB === -1) return -1;
-            return idxA - idxB;
-          });
-        }
-        nextMap[s.id] = list;
+        nextMap[s.id] = getSortedSubServices(s.subServicesOrder);
       }
     }
     setSubServicesMap(nextMap);
