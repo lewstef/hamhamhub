@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useActionState, useRef, useEffect, useTransition } from "react";
-import { updateOrganizationAction, changeOrganizationPasswordAction, toggleOrganizationServiceAction, toggleOrganizationSubServiceAction } from "@/app/actions/organizations";
-import { getSortedSubServices } from "@/config/dog-training";
+import { updateOrganizationAction, changeOrganizationPasswordAction, toggleOrganizationServiceAction, toggleOrganizationCourseAction } from "@/app/actions/organizations";
+import { getSortedCourses } from "@/config/dog-training";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +33,7 @@ interface Organization {
   googleBusinessProfile?: string | null;
   createdAt?: Date | string | null;
   enabledServices?: string | null;
-  enabledSubServices?: string | null;
+  enabledCourses?: string | null;
 }
 
 interface OrganizationCategory {
@@ -47,7 +47,7 @@ interface Service {
   organizationCategory: string | null;
   slug: string | null;
   description: string | null;
-  subServicesOrder?: string | null;
+  coursesOrder?: string | null;
 }
 
 interface EditOrganizationFormProps {
@@ -80,7 +80,7 @@ const COUNTRIES = [
   "Romania", "Russia", "Rwanda",
   "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
   "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
-  "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan",
+  "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Urovay", "Uzbekistan",
   "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
   "Yemen",
   "Zambia", "Zimbabwe"
@@ -143,14 +143,14 @@ export function EditOrganizationForm({
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [enabledIds, setEnabledIds] = useState<string[]>(
+  const [enabledServiceIds, setEnabledServiceIds] = useState<string[]>(
     organization.enabledServices
       ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
       : []
   );
-  const [enabledSubServiceIds, setEnabledSubServiceIds] = useState<string[]>(
-    organization.enabledSubServices
-      ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
+  const [enabledCourseIds, setEnabledCourseIds] = useState<string[]>(
+    organization.enabledCourses
+      ? organization.enabledCourses.split(",").map((s) => s.trim()).filter(Boolean)
       : []
   );
   const [expandedIds, setExpandedIds] = useState<string[]>(
@@ -158,8 +158,8 @@ export function EditOrganizationForm({
       ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
       : []
   );
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [togglingSubId, setTogglingSubId] = useState<string | null>(null);
+  const [togglingServiceId, setTogglingServiceId] = useState<string | null>(null);
+  const [togglingCourseId, setTogglingCourseId] = useState<string | null>(null);
   const [isTogglePending, startToggleTransition] = useTransition();
 
   const isPending = personalPending || accountPending || isTogglePending;
@@ -198,19 +198,19 @@ export function EditOrganizationForm({
     }
   }, [personalState, router]);
 
-  // Sync enabledServices and enabledSubServices state if organization details change
+  // Sync enabledServices and enabledCourses state if organization details change
   useEffect(() => {
-    const nextEnabled = organization.enabledServices
-      ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
-    setEnabledIds(nextEnabled);
-    setExpandedIds(nextEnabled);
-    setEnabledSubServiceIds(
-      organization.enabledSubServices
-        ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
+    setEnabledServiceIds(
+      organization.enabledServices
+        ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
         : []
     );
-  }, [organization.enabledServices, organization.enabledSubServices]);
+    setEnabledCourseIds(
+      organization.enabledCourses
+        ? organization.enabledCourses.split(",").map((s) => s.trim()).filter(Boolean)
+        : []
+    );
+  }, [organization.enabledServices, organization.enabledCourses]);
 
   // Auto-close Account modals on success & refresh data
   useEffect(() => {
@@ -270,23 +270,23 @@ export function EditOrganizationForm({
     );
   };
 
-  const handleToggleSubService = (subServiceId: string) => {
-    const isCurrentlyEnabled = enabledSubServiceIds.includes(subServiceId);
-    setTogglingSubId(subServiceId);
+  const handleToggleCourse = (courseId: string) => {
+    const isCurrentlyEnabled = enabledCourseIds.includes(courseId);
+    setTogglingCourseId(courseId);
 
     const nextIds = isCurrentlyEnabled
-      ? enabledSubServiceIds.filter((id) => id !== subServiceId)
-      : [...enabledSubServiceIds, subServiceId];
-    setEnabledSubServiceIds(nextIds);
+      ? enabledCourseIds.filter((id) => id !== courseId)
+      : [...enabledCourseIds, courseId];
+    setEnabledCourseIds(nextIds);
 
     startToggleTransition(async () => {
-      const res = await toggleOrganizationSubServiceAction(organization.id, subServiceId, !isCurrentlyEnabled);
+      const res = await toggleOrganizationCourseAction(organization.id, courseId, !isCurrentlyEnabled);
       if (res?.success) {
         router.refresh();
       } else {
-        setEnabledSubServiceIds(enabledSubServiceIds); // Rollback
+        setEnabledCourseIds(enabledCourseIds); // Rollback
       }
-      setTogglingSubId(null);
+      setTogglingCourseId(null);
     });
   };
 
@@ -549,12 +549,12 @@ export function EditOrganizationForm({
                         </div>
 
                         <div className="flex items-center gap-3">
-                          {isEnabled && s.slug === "dog-training" && getSortedSubServices(s.subServicesOrder).length > 0 && (
+                          {isEnabled && s.slug === "dog-training" && getSortedCourses(s.coursesOrder).length > 0 && (
                             <button
                               type="button"
                               onClick={() => toggleExpand(s.id)}
                               className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                              title={expandedIds.includes(s.id) ? "Collapse sub-services" : "Expand sub-services"}
+                              title={expandedIds.includes(s.id) ? "Collapse courses" : "Expand courses"}
                             >
                               <ChevronDown
                                 className={`size-4.5 transition-transform duration-200 ${
@@ -592,8 +592,8 @@ export function EditOrganizationForm({
                         </div>
                       </div>
 
-                      {/* Nested Sub-Services Accordion (for Dog training) */}
-                      {isEnabled && s.slug === "dog-training" && getSortedSubServices(s.subServicesOrder).length > 0 && (
+                      {/* Nested Courses Accordion (for Dog training) */}
+                      {isEnabled && s.slug === "dog-training" && getSortedCourses(s.coursesOrder).length > 0 && (
                         <div
                           className={`grid transition-all duration-200 ease-in-out border-t border-border/30 bg-muted/5 ${
                             expandedIds.includes(s.id)
@@ -603,12 +603,12 @@ export function EditOrganizationForm({
                         >
                           <div className="overflow-hidden space-y-3">
                             <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                              Sub-Services Configured
+                              Courses Configured
                             </div>
                             <div className="divide-y divide-border/20 border border-border/40 rounded-lg bg-card overflow-hidden">
-                              {getSortedSubServices(s.subServicesOrder).map((sub) => {
-                                const isSubEnabled = enabledSubServiceIds.includes(sub.id);
-                                const isSubLoading = togglingSubId === sub.id && isPending;
+                              {getSortedCourses(s.coursesOrder).map((sub) => {
+                                const isSubEnabled = enabledCourseIds.includes(sub.id);
+                                const isSubLoading = togglingCourseId === sub.id && isPending;
 
                                 return (
                                   <div key={sub.id} className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
@@ -633,7 +633,7 @@ export function EditOrganizationForm({
                                         role="switch"
                                         aria-checked={isSubEnabled}
                                         disabled={isSubLoading}
-                                        onClick={() => handleToggleSubService(sub.id)}
+                                        onClick={() => handleToggleCourse(sub.id)}
                                         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
                                           isSubEnabled ? "bg-primary" : "bg-muted-foreground/30"
                                         }`}

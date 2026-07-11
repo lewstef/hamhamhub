@@ -37,7 +37,7 @@ export async function getDashboardAccountData() {
       googleBusinessProfile: users.googleBusinessProfile,
       createdAt: users.createdAt,
       enabledServices: users.enabledServices,
-      enabledSubServices: users.enabledSubServices,
+      enabledCourses: users.enabledCourses,
     })
     .from(users)
     .where(eq(users.id, id))

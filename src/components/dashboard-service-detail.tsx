@@ -11,7 +11,7 @@ interface Service {
   id: string;
   name: string;
   description: string;
-  subServicesOrder?: string | null;
+  coursesOrder?: string | null;
 }
 
 interface DashboardServiceDetailProps {
@@ -19,8 +19,8 @@ interface DashboardServiceDetailProps {
   service: Service;
   initialIsEnabled: boolean;
   slug: string;
-  activeSubServiceTab?: string;
-  enabledSubServiceIds?: string[];
+  activeCourseTab?: string;
+  enabledCourseIds?: string[];
 }
 
 export function DashboardServiceDetail({
@@ -28,8 +28,8 @@ export function DashboardServiceDetail({
   service,
   initialIsEnabled,
   slug,
-  activeSubServiceTab,
-  enabledSubServiceIds,
+  activeCourseTab,
+  enabledCourseIds,
 }: DashboardServiceDetailProps) {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(initialIsEnabled);

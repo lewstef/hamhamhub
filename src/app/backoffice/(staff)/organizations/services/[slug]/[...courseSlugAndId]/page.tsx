@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PageProps {
-  params: Promise<{ slug: string; subSlugAndId: string[] }>;
+  params: Promise<{ slug: string; courseSlugAndId: string[] }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -19,16 +19,16 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function BackofficeOrganizationServicePage({ params }: PageProps) {
-  const { slug, subSlugAndId } = await params;
+  const { slug, courseSlugAndId } = await params;
 
-  let activeSubServiceTab: string | undefined = undefined;
+  let activeCourseTab: string | undefined = undefined;
   let id: string = "";
 
-  if (subSlugAndId.length === 1) {
-    id = subSlugAndId[0];
-  } else if (subSlugAndId.length === 2) {
-    activeSubServiceTab = subSlugAndId[0];
-    id = subSlugAndId[1];
+  if (courseSlugAndId.length === 1) {
+    id = courseSlugAndId[0];
+  } else if (courseSlugAndId.length === 2) {
+    activeCourseTab = courseSlugAndId[0];
+    id = courseSlugAndId[1];
   } else {
     notFound();
   }
@@ -40,7 +40,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
       name: users.name,
       role: users.role,
       organizationCategory: users.organizationCategory,
-      enabledSubServices: users.enabledSubServices,
+      enabledCourses: users.enabledCourses,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -59,7 +59,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
       id: services.id,
       name: services.name,
       description: serviceTypes.description,
-      subServicesOrder: services.subServicesOrder,
+      coursesOrder: services.coursesOrder,
     })
     .from(services)
     .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
@@ -93,7 +93,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
           {service.name} Settings
         </h1>
         <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
-          Configure sub-services for organization:
+          Configure courses for organization:
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-primary/10 text-primary border border-primary/20 shadow-sm">
             {organization.name}
           </span>

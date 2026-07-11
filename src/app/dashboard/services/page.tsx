@@ -25,7 +25,7 @@ export default async function DashboardServicesPage() {
       role: users.role,
       organizationCategory: users.organizationCategory,
       enabledServices: users.enabledServices,
-      enabledSubServices: users.enabledSubServices,
+      enabledCourses: users.enabledCourses,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -36,7 +36,7 @@ export default async function DashboardServicesPage() {
   }
 
   // Get all services belonging to this organization category joined with their descriptions
-  let matchingServices: { id: string; name: string; slug: string; description: string; subServicesOrder?: string | null }[] = [];
+  let matchingServices: { id: string; name: string; slug: string; description: string; coursesOrder?: string | null }[] = [];
   if (organization.organizationCategory) {
     matchingServices = await db
       .select({
@@ -44,7 +44,7 @@ export default async function DashboardServicesPage() {
         name: services.name,
         serviceTypeId: serviceTypes.id,
         description: serviceTypes.description,
-        subServicesOrder: services.subServicesOrder,
+        coursesOrder: services.coursesOrder,
       })
       .from(services)
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
@@ -56,7 +56,7 @@ export default async function DashboardServicesPage() {
           name: r.name,
           slug: (r.serviceTypeId || "").replace(/_/g, "-"),
           description: r.description || "Operational service listing.",
-          subServicesOrder: r.subServicesOrder,
+          coursesOrder: r.coursesOrder,
         }))
       );
   }
@@ -66,9 +66,9 @@ export default async function DashboardServicesPage() {
     ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
-  // Parse list of enabled sub-service IDs
-  const initialEnabledSubServiceIds = organization.enabledSubServices
-    ? organization.enabledSubServices.split(",").map((s) => s.trim()).filter(Boolean)
+  // Parse list of enabled course IDs
+  const initialEnabledCourseIds = organization.enabledCourses
+    ? organization.enabledCourses.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
   return (
@@ -84,7 +84,7 @@ export default async function DashboardServicesPage() {
         organizationId={organization.id}
         services={matchingServices}
         initialEnabledIds={initialEnabledIds}
-        initialEnabledSubServiceIds={initialEnabledSubServiceIds}
+        initialEnabledCourseIds={initialEnabledCourseIds}
       />
     </div>
   );

@@ -79,7 +79,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
           {service.name} Settings
         </h1>
         <p className="text-sm text-muted-foreground">
-          Configure sub-services for organization: {organization.name}
+          Configure courses for organization: {organization.name}
         </p>
       </div>
 

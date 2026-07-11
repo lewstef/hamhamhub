@@ -28,7 +28,7 @@ export async function getOrganizationData(id: string) {
       googleBusinessProfile: users.googleBusinessProfile,
       createdAt: users.createdAt,
       enabledServices: users.enabledServices,
-      enabledSubServices: users.enabledSubServices,
+      enabledCourses: users.enabledCourses,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -51,7 +51,7 @@ export async function getOrganizationData(id: string) {
         organizationCategory: services.organizationCategory,
         slug: serviceTypes.id,
         description: serviceTypes.description,
-        subServicesOrder: services.subServicesOrder,
+        coursesOrder: services.coursesOrder,
       })
       .from(services)
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))

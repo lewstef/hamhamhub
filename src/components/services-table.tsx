@@ -5,7 +5,7 @@ import {
   createServiceAction,
   deleteServiceAction,
   reorderServicesAction,
-  reorderSubServicesAction,
+  reorderCoursesAction,
 } from "@/app/actions/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ import {
   Search,
   GripVertical,
 } from "lucide-react";
-import { DOG_TRAINING_SUB_SERVICES, getSortedSubServices } from "@/config/dog-training";
+import { DOG_TRAINING_COURSES, getSortedCourses } from "@/config/dog-training";
 
 interface FormField {
   name: string;
@@ -48,7 +48,7 @@ interface Service {
   id: string;
   name: string;
   organizationCategory: string;
-  subServicesOrder?: string | null;
+  coursesOrder?: string | null;
 }
 
 interface OrganizationCategory {
@@ -119,28 +119,28 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
 
   // Reordering states
   const [services, setServices] = useState<Service[]>(serviceList);
-  const [subServicesMap, setSubServicesMap] = useState<Record<string, typeof DOG_TRAINING_SUB_SERVICES>>({});
+  const [coursesMap, setCoursesMap] = useState<Record<string, typeof DOG_TRAINING_COURSES>>({});
   
   const [draggedServiceId, setDraggedServiceId] = useState<string | null>(null);
   const [draggedServiceCategory, setDraggedServiceCategory] = useState<string | null>(null);
   
-  const [draggedSubServiceId, setDraggedSubServiceId] = useState<string | null>(null);
-  const [draggedSubServiceParentId, setDraggedSubServiceParentId] = useState<string | null>(null);
+  const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
+  const [draggedCourseParentId, setDraggedCourseParentId] = useState<string | null>(null);
 
   // Sync services state with prop
   useEffect(() => {
     setServices(serviceList);
   }, [serviceList]);
 
-  // Sync sub-services lists with custom orders
+  // Sync courses lists with custom orders
   useEffect(() => {
-    const nextMap: Record<string, typeof DOG_TRAINING_SUB_SERVICES> = {};
+    const nextMap: Record<string, typeof DOG_TRAINING_COURSES> = {};
     for (const s of services) {
       if (s.name.toLowerCase() === "dog training") {
-        nextMap[s.id] = getSortedSubServices(s.subServicesOrder);
+        nextMap[s.id] = getSortedCourses(s.coursesOrder);
       }
     }
-    setSubServicesMap(nextMap);
+    setCoursesMap(nextMap);
   }, [services]);
 
   // Set selections to currently registered services when switching category or when serviceList changes
@@ -222,36 +222,36 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
     await reorderServicesAction(orderedIds);
   };
 
-  // Drag and Drop Handlers for Sub-services
-  const handleSubServiceDragStart = (e: React.DragEvent, id: string, serviceId: string) => {
-    setDraggedSubServiceId(id);
-    setDraggedSubServiceParentId(serviceId);
+  // Drag and Drop Handlers for Courses
+  const handleCourseDragStart = (e: React.DragEvent, id: string, serviceId: string) => {
+    setDraggedCourseId(id);
+    setDraggedCourseParentId(serviceId);
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleSubServiceDragOver = (e: React.DragEvent, targetId: string, serviceId: string) => {
+  const handleCourseDragOver = (e: React.DragEvent, targetId: string, serviceId: string) => {
     e.preventDefault();
-    if (!draggedSubServiceId || draggedSubServiceParentId !== serviceId || draggedSubServiceId === targetId) return;
+    if (!draggedCourseId || draggedCourseParentId !== serviceId || draggedCourseId === targetId) return;
 
-    const list = [...(subServicesMap[serviceId] || [])];
-    const draggedIdx = list.findIndex((x) => x.id === draggedSubServiceId);
+    const list = [...(coursesMap[serviceId] || [])];
+    const draggedIdx = list.findIndex((x) => x.id === draggedCourseId);
     const targetIdx = list.findIndex((x) => x.id === targetId);
     if (draggedIdx !== -1 && targetIdx !== -1) {
       const [draggedItem] = list.splice(draggedIdx, 1);
       list.splice(targetIdx, 0, draggedItem);
-      setSubServicesMap({
-        ...subServicesMap,
+      setCoursesMap({
+        ...coursesMap,
         [serviceId]: list,
       });
     }
   };
 
-  const handleSubServiceDragEnd = async (serviceId: string) => {
-    setDraggedSubServiceId(null);
-    setDraggedSubServiceParentId(null);
-    const list = subServicesMap[serviceId] || [];
+  const handleCourseDragEnd = async (serviceId: string) => {
+    setDraggedCourseId(null);
+    setDraggedCourseParentId(null);
+    const list = coursesMap[serviceId] || [];
     const orderedIds = list.map((x) => x.id);
-    await reorderSubServicesAction(serviceId, orderedIds);
+    await reorderCoursesAction(serviceId, orderedIds);
   };
 
   // Filter services by category and name query
@@ -407,15 +407,15 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                             </Button>
                           </div>
 
-                          {/* Nested Sub-Services Accordion (for Dog training) */}
-                          {isDogTraining && subServicesMap[s.id] && subServicesMap[s.id].length > 0 && (
+                          {/* Nested Courses Accordion (for Dog training) */}
+                          {isDogTraining && coursesMap[s.id] && coursesMap[s.id].length > 0 && (
                             <div className="pl-12 pr-3 pb-3 space-y-2 mt-1">
                               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 pl-2">
-                                Sub-Services (Drag to reorder)
+                                Courses (Drag to reorder)
                               </div>
                               <div className="divide-y divide-border/20 border border-border/40 rounded-xl bg-card overflow-hidden">
-                                {(subServicesMap[s.id] || []).map((sub) => {
-                                  const isSubDragged = draggedSubServiceId === sub.id;
+                                {(coursesMap[s.id] || []).map((sub) => {
+                                  const isSubDragged = draggedCourseId === sub.id;
 
                                   return (
                                     <div
@@ -424,15 +424,15 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                                         isSubDragged ? "opacity-40 bg-muted/20 border-dashed border-2 border-primary/20 scale-[0.99]" : ""
                                       }`}
                                       draggable={true}
-                                      onDragStart={(e) => handleSubServiceDragStart(e, sub.id, s.id)}
-                                      onDragOver={(e) => handleSubServiceDragOver(e, sub.id, s.id)}
-                                      onDragEnd={() => handleSubServiceDragEnd(s.id)}
+                                      onDragStart={(e) => handleCourseDragStart(e, sub.id, s.id)}
+                                      onDragOver={(e) => handleCourseDragOver(e, sub.id, s.id)}
+                                      onDragEnd={() => handleCourseDragEnd(s.id)}
                                     >
                                       <div className="flex items-center gap-3">
-                                        {/* Sub-Service Drag Handle */}
+                                        {/* Course Drag Handle */}
                                         <div
                                           className="text-muted-foreground/60 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted"
-                                          title="Drag to reorder sub-services"
+                                          title="Drag to reorder courses"
                                         >
                                           <GripVertical className="size-3.5" />
                                         </div>

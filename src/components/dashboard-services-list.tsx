@@ -1,41 +1,41 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toggleOrganizationServiceAction, toggleOrganizationSubServiceAction } from "@/app/actions/organizations";
+import { toggleOrganizationServiceAction, toggleOrganizationCourseAction } from "@/app/actions/organizations";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
-import { getSortedSubServices } from "@/config/dog-training";
+import { getSortedCourses } from "@/config/dog-training";
 
 interface Service {
   id: string;
   name: string;
   description: string;
   slug: string;
-  subServicesOrder?: string | null;
+  coursesOrder?: string | null;
 }
 
 interface DashboardServicesListProps {
   organizationId: string;
   services: Service[];
   initialEnabledIds: string[];
-  initialEnabledSubServiceIds?: string[];
+  initialEnabledCourseIds?: string[];
 }
 
 export function DashboardServicesList({
   organizationId,
   services,
   initialEnabledIds,
-  initialEnabledSubServiceIds = [],
+  initialEnabledCourseIds = [],
 }: DashboardServicesListProps) {
   const router = useRouter();
 
   const [enabledIds, setEnabledIds] = useState<string[]>(initialEnabledIds);
-  const [enabledSubServiceIds, setEnabledSubServiceIds] = useState<string[]>(initialEnabledSubServiceIds);
+  const [enabledCourseIds, setEnabledCourseIds] = useState<string[]>(initialEnabledCourseIds);
   const [expandedIds, setExpandedIds] = useState<string[]>(initialEnabledIds);
   const [isPending, startTransition] = useTransition();
   const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [togglingSubId, setTogglingSubId] = useState<string | null>(null);
+  const [togglingCourseId, setTogglingCourseId] = useState<string | null>(null);
 
   const handleToggle = (serviceId: string) => {
     const isCurrentlyEnabled = enabledIds.includes(serviceId);
@@ -71,23 +71,23 @@ export function DashboardServicesList({
     );
   };
 
-  const handleToggleSubService = (subServiceId: string) => {
-    const isCurrentlyEnabled = enabledSubServiceIds.includes(subServiceId);
-    setTogglingSubId(subServiceId);
+  const handleToggleCourse = (courseId: string) => {
+    const isCurrentlyEnabled = enabledCourseIds.includes(courseId);
+    setTogglingCourseId(courseId);
 
     const nextIds = isCurrentlyEnabled
-      ? enabledSubServiceIds.filter((id) => id !== subServiceId)
-      : [...enabledSubServiceIds, subServiceId];
-    setEnabledSubServiceIds(nextIds);
+      ? enabledCourseIds.filter((id) => id !== courseId)
+      : [...enabledCourseIds, courseId];
+    setEnabledCourseIds(nextIds);
 
     startTransition(async () => {
-      const res = await toggleOrganizationSubServiceAction(organizationId, subServiceId, !isCurrentlyEnabled);
+      const res = await toggleOrganizationCourseAction(organizationId, courseId, !isCurrentlyEnabled);
       if (res?.success) {
         router.refresh();
       } else {
-        setEnabledSubServiceIds(enabledSubServiceIds);
+        setEnabledCourseIds(enabledCourseIds);
       }
-      setTogglingSubId(null);
+      setTogglingCourseId(null);
     });
   };
 
@@ -123,12 +123,12 @@ export function DashboardServicesList({
               </div>
 
               <div className="flex items-center gap-3">
-                {isEnabled && s.slug === "dog-training" && getSortedSubServices(s.subServicesOrder).length > 0 && (
+                {isEnabled && s.slug === "dog-training" && getSortedCourses(s.coursesOrder).length > 0 && (
                   <button
                     type="button"
                     onClick={() => toggleExpand(s.id)}
                     className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                    title={expandedIds.includes(s.id) ? "Collapse sub-services" : "Expand sub-services"}
+                    title={expandedIds.includes(s.id) ? "Collapse courses" : "Expand courses"}
                   >
                     <ChevronDown
                       className={`size-4.5 transition-transform duration-200 ${
@@ -165,8 +165,8 @@ export function DashboardServicesList({
               </div>
             </div>
 
-            {/* Nested Sub-Services Accordion (for Dog training) */}
-            {isEnabled && s.slug === "dog-training" && getSortedSubServices(s.subServicesOrder).length > 0 && (
+            {/* Nested Courses Accordion (for Dog training) */}
+            {isEnabled && s.slug === "dog-training" && getSortedCourses(s.coursesOrder).length > 0 && (
               <div
                 className={`grid transition-all duration-200 ease-in-out border-t border-border/30 bg-muted/5 ${
                   expandedIds.includes(s.id)
@@ -176,12 +176,12 @@ export function DashboardServicesList({
               >
                 <div className="overflow-hidden space-y-3">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                    Sub-Services Configured
+                    Courses Configured
                   </div>
                   <div className="divide-y divide-border/20 border border-border/40 rounded-lg bg-card overflow-hidden">
-                    {getSortedSubServices(s.subServicesOrder).map((sub) => {
-                      const isSubEnabled = enabledSubServiceIds.includes(sub.id);
-                      const isSubLoading = togglingSubId === sub.id && isPending;
+                    {getSortedCourses(s.coursesOrder).map((sub) => {
+                      const isSubEnabled = enabledCourseIds.includes(sub.id);
+                      const isSubLoading = togglingCourseId === sub.id && isPending;
 
                       return (
                         <div key={sub.id} className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
@@ -206,7 +206,7 @@ export function DashboardServicesList({
                               role="switch"
                               aria-checked={isSubEnabled}
                               disabled={isSubLoading}
-                              onClick={() => handleToggleSubService(sub.id)}
+                              onClick={() => handleToggleCourse(sub.id)}
                               className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
                                 isSubEnabled ? "bg-primary" : "bg-muted-foreground/30"
                               }`}

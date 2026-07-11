@@ -25,7 +25,7 @@ export const users = pgTable("users", {
   addressLine: text("address_line"),
   addressZip: text("address_zip"),
   enabledServices: text("enabled_services"),
-  enabledSubServices: text("enabled_sub_services"),
+  enabledCourses: text("enabled_courses"),
   facebook: text("facebook"),
   instagram: text("instagram"),
   tiktok: text("tiktok"),
@@ -44,7 +44,7 @@ export const services = pgTable("services", {
   name: text("name").notNull(),
   organizationCategory: text("organization_category").notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
-  subServicesOrder: text("sub_services_order"),
+  coursesOrder: text("courses_order"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

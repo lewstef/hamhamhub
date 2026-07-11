@@ -3,7 +3,7 @@ import {
   createServiceAction,
   deleteServiceAction,
   reorderServicesAction,
-  reorderSubServicesAction,
+  reorderCoursesAction,
 } from "./services";
 import { revalidatePath } from "next/cache";
 
@@ -178,21 +178,21 @@ describe("Service Server Actions", () => {
     });
   });
 
-  describe("reorderSubServicesAction", () => {
-    it("should update subServicesOrder for a service and return success", async () => {
+  describe("reorderCoursesAction", () => {
+    it("should update coursesOrder for a service and return success", async () => {
       mockUpdate.mockResolvedValueOnce({ count: 1 });
-
-      const result = await reorderSubServicesAction("service-id", ["sub-1", "sub-2"]);
+ 
+      const result = await reorderCoursesAction("service-id", ["sub-1", "sub-2"]);
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
       expect(result).toEqual({ success: true });
     });
-
+ 
     it("should return error on database failure", async () => {
       mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
-
-      const result = await reorderSubServicesAction("service-id", ["sub-1"]);
-      expect(result).toEqual({ error: "Failed to save sub-services order." });
+ 
+      const result = await reorderCoursesAction("service-id", ["sub-1"]);
+      expect(result).toEqual({ error: "Failed to save courses order." });
     });
   });
 });

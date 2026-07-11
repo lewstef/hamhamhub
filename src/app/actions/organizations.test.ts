@@ -8,7 +8,7 @@ import {
   updateOrganizationCategoryAction,
   deleteOrganizationCategoryAction,
   toggleOrganizationServiceAction,
-  toggleOrganizationSubServiceAction,
+  toggleOrganizationCourseAction,
 } from "./organizations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -533,20 +533,20 @@ describe("Organization Server Actions", () => {
     });
   });
 
-  describe("toggleOrganizationSubServiceAction", () => {
+  describe("toggleOrganizationCourseAction", () => {
     it("should return error if organization is not found", async () => {
       mockSelect.mockResolvedValueOnce([]);
-
-      const result = await toggleOrganizationSubServiceAction("nonexistent-org", "dog-training:basic", true);
+ 
+      const result = await toggleOrganizationCourseAction("nonexistent-org", "dog-training:basic", true);
       expect(result).toEqual({ error: "Organization not found" });
       expect(mockUpdate).not.toHaveBeenCalled();
     });
-
-    it("should add a sub-service ID to the enabled sub-services list", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledSubServices: "dog-training:group" }]);
+ 
+    it("should add a course ID to the enabled courses list", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledCourses: "dog-training:group" }]);
       mockUpdate.mockResolvedValueOnce({ count: 1 });
-
-      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", true);
+ 
+      const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", true);
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/services");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
@@ -554,40 +554,40 @@ describe("Organization Server Actions", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/services");
       expect(result).toEqual({ success: true });
     });
-
-    it("should not add a duplicate sub-service ID", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledSubServices: "dog-training:basic,dog-training:group" }]);
+ 
+    it("should not add a duplicate course ID", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledCourses: "dog-training:basic,dog-training:group" }]);
       mockUpdate.mockResolvedValueOnce({ count: 1 });
-
-      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", true);
+ 
+      const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", true);
       expect(mockUpdate).toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
-
-    it("should remove a sub-service ID from the enabled list", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledSubServices: "dog-training:basic,dog-training:group" }]);
+ 
+    it("should remove a course ID from the enabled list", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledCourses: "dog-training:basic,dog-training:group" }]);
       mockUpdate.mockResolvedValueOnce({ count: 1 });
-
-      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", false);
+ 
+      const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", false);
       expect(mockUpdate).toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
-
-    it("should handle null enabledSubServices (start from empty list)", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledSubServices: null }]);
+ 
+    it("should handle null enabledCourses (start from empty list)", async () => {
+      mockSelect.mockResolvedValueOnce([{ enabledCourses: null }]);
       mockUpdate.mockResolvedValueOnce({ count: 1 });
-
-      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:sar", true);
+ 
+      const result = await toggleOrganizationCourseAction("org-id", "dog-training:sar", true);
       expect(result).toEqual({ success: true });
     });
-
+ 
     it("should return error on DB failure", async () => {
       // Trigger failure via the update step (select resolves normally first)
-      mockSelect.mockResolvedValueOnce([{ enabledSubServices: "dog-training:group" }]);
+      mockSelect.mockResolvedValueOnce([{ enabledCourses: "dog-training:group" }]);
       mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
-
-      const result = await toggleOrganizationSubServiceAction("org-id", "dog-training:basic", true);
-      expect(result).toEqual({ error: "Failed to toggle sub-service. Please try again." });
+ 
+      const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", true);
+      expect(result).toEqual({ error: "Failed to toggle course. Please try again." });
     });
   });
 });

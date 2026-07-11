@@ -5,12 +5,12 @@ import React from "react";
 import { DashboardServicesList } from "./dashboard-services-list";
 import {
   toggleOrganizationServiceAction,
-  toggleOrganizationSubServiceAction,
+  toggleOrganizationCourseAction,
 } from "@/app/actions/organizations";
 
 vi.mock("@/app/actions/organizations", () => ({
   toggleOrganizationServiceAction: vi.fn(),
-  toggleOrganizationSubServiceAction: vi.fn(),
+  toggleOrganizationCourseAction: vi.fn(),
 }));
 
 const mockPush = vi.fn();
@@ -26,7 +26,7 @@ const dummyServices = [
   { id: "srv-2", name: "Dog Training", description: "Training.", slug: "dog-training" },
 ];
 
-const ALL_SUB_SERVICE_IDS = [
+const ALL_COURSE_IDS = [
   "dog-training:basic",
   "dog-training:group",
   "dog-training:private",

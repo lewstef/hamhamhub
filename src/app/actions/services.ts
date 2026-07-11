@@ -121,11 +121,11 @@ export async function reorderServicesAction(orderedServiceIds: string[]) {
   }
 }
 
-export async function reorderSubServicesAction(serviceId: string, orderedSubServices: string[]) {
+export async function reorderCoursesAction(serviceId: string, orderedCourses: string[]) {
   try {
     await db
       .update(services)
-      .set({ subServicesOrder: orderedSubServices.join(",") })
+      .set({ coursesOrder: orderedCourses.join(",") })
       .where(eq(services.id, serviceId));
     revalidatePath("/backoffice/services");
     revalidatePath("/dashboard/services");
@@ -133,7 +133,7 @@ export async function reorderSubServicesAction(serviceId: string, orderedSubServ
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
-    console.error("Failed to reorder sub-services:", error);
-    return { error: "Failed to save sub-services order." };
+    console.error("Failed to reorder courses:", error);
+    return { error: "Failed to save courses order." };
   }
 }

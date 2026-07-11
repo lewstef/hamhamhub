@@ -519,10 +519,10 @@ export async function toggleOrganizationServiceAction(organizationId: string, se
   }
 }
 
-export async function toggleOrganizationSubServiceAction(organizationId: string, subServiceId: string, enabled: boolean) {
+export async function toggleOrganizationCourseAction(organizationId: string, courseId: string, enabled: boolean) {
   try {
     const [org] = await db
-      .select({ enabledSubServices: users.enabledSubServices })
+      .select({ enabledCourses: users.enabledCourses })
       .from(users)
       .where(eq(users.id, organizationId))
       .limit(1);
@@ -531,16 +531,16 @@ export async function toggleOrganizationSubServiceAction(organizationId: string,
       return { error: "Organization not found" };
     }
 
-    let enabledList = org.enabledSubServices ? org.enabledSubServices.split(",").map(id => id.trim()).filter(Boolean) : [];
+    let enabledList = org.enabledCourses ? org.enabledCourses.split(",").map(id => id.trim()).filter(Boolean) : [];
     if (enabled) {
-      if (!enabledList.includes(subServiceId)) {
-        enabledList.push(subServiceId);
+      if (!enabledList.includes(courseId)) {
+        enabledList.push(courseId);
       }
     } else {
-      enabledList = enabledList.filter((id) => id !== subServiceId);
+      enabledList = enabledList.filter((id) => id !== courseId);
     }
 
-    const subServiceOrder = [
+    const courseOrder = [
       "dog-training:basic",
       "dog-training:group",
       "dog-training:private",
@@ -549,8 +549,8 @@ export async function toggleOrganizationSubServiceAction(organizationId: string,
     ];
 
     enabledList.sort((a, b) => {
-      const idxA = subServiceOrder.indexOf(a);
-      const idxB = subServiceOrder.indexOf(b);
+      const idxA = courseOrder.indexOf(a);
+      const idxB = courseOrder.indexOf(b);
       return (idxA !== -1 ? idxA : 999) - (idxB !== -1 ? idxB : 999);
     });
 
@@ -558,7 +558,7 @@ export async function toggleOrganizationSubServiceAction(organizationId: string,
 
     await db
       .update(users)
-      .set({ enabledSubServices: nextVal || null })
+      .set({ enabledCourses: nextVal || null })
       .where(eq(users.id, organizationId));
 
     revalidatePath("/dashboard/services");
@@ -567,7 +567,7 @@ export async function toggleOrganizationSubServiceAction(organizationId: string,
     revalidatePath("/backoffice/organizations/services");
     return { success: true };
   } catch (error) {
-    console.error("Failed to toggle organization sub-service:", error);
-    return { error: "Failed to toggle sub-service. Please try again." };
+    console.error("Failed to toggle organization course:", error);
+    return { error: "Failed to toggle course. Please try again." };
   }
 }
