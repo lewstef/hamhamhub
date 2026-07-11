@@ -568,7 +568,17 @@ export function EditOrganizationForm({
                               variant="outline"
                               size="sm"
                               type="button"
-                              onClick={() => router.push(`/backoffice/organizations/services/${s.slug}/${organization.id}`)}
+                              onClick={() => {
+                                if (s.slug === "dog-training") {
+                                  if (isDashboard) {
+                                    router.push(`/dashboard/services/dog-training`);
+                                  } else {
+                                    router.push(`/backoffice/organizations/services/${s.slug}/${organization.id}`);
+                                  }
+                                } else {
+                                  router.push(`/backoffice/organizations/services/${s.slug}/${organization.id}`);
+                                }
+                              }}
                             >
                               Edit
                             </Button>

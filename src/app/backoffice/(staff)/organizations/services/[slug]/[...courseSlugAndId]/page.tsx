@@ -1,10 +1,8 @@
 import { db } from "@/db";
-import { users, services, serviceTypes } from "@/db/schema";
+import { users, services, serviceTypes, courses } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardServiceDetail } from "@/components/dashboard-service-detail";
 
 interface PageProps {
   params: Promise<{ slug: string; courseSlugAndId: string[] }>;
@@ -45,6 +43,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
       name: users.name,
       role: users.role,
       organizationCategory: users.organizationCategory,
+      enabledServices: users.enabledServices,
       enabledCourses: users.enabledCourses,
     })
     .from(users)
@@ -78,46 +77,55 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
     notFound();
   }
 
-  const isDogTraining = slug === "dog-training";
+  // Parse enabled service list
+  const enabledList = organization.enabledServices
+    ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const isEnabled = enabledList.includes(service.id);
+
+  const formattedService = {
+    id: service.id,
+    name: service.name,
+    description: service.description || "Operational service listing.",
+    coursesOrder: service.coursesOrder,
+  };
+
+  const enabledCourseIds = organization.enabledCourses
+    ? organization.enabledCourses.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  // Load courses for dog-training service
+  let orgCourses: any[] = [];
+  if (slug === "dog-training") {
+    orgCourses = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.organizationId, organization.id))
+      .orderBy(courses.createdAt);
+  }
 
   return (
     <div className="space-y-6 w-full p-6">
-      {/* Back Button */}
-      <div>
-        <Link
-          href={`/backoffice/organizations/services/${organization.id}`}
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
-        >
-          <ArrowLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
-          Back to Organization Services
-        </Link>
+      {/* Org context banner */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>Managing courses for organization:</span>
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-primary/10 text-primary border border-primary/20 shadow-sm">
+          {organization.name}
+        </span>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          {service.name} Settings
-        </h1>
-        <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
-          Configure courses for organization:
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-primary/10 text-primary border border-primary/20 shadow-sm">
-            {organization.name}
-          </span>
-        </p>
-      </div>
-
-      <Card className="border border-border bg-card shadow-lg relative overflow-hidden w-full">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-bold tracking-tight text-foreground">
-            Service Details
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-
-        </CardContent>
-      </Card>
+      <DashboardServiceDetail
+        organizationId={organization.id}
+        service={formattedService}
+        initialIsEnabled={isEnabled}
+        slug={slug}
+        activeCourseTab={activeCourseTab}
+        enabledCourseIds={enabledCourseIds}
+        courses={orgCourses}
+        backHref={`/backoffice/organizations/services/${organization.id}`}
+        backLabel="Back to Organization Services"
+      />
     </div>
   );
 }

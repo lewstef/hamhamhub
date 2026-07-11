@@ -39,6 +39,8 @@ interface DashboardServiceDetailProps {
   activeCourseTab?: string;
   enabledCourseIds?: string[];
   courses?: Course[];
+  backHref?: string;
+  backLabel?: string;
 }
 
 export function DashboardServiceDetail({
@@ -49,6 +51,8 @@ export function DashboardServiceDetail({
   activeCourseTab,
   enabledCourseIds,
   courses = [],
+  backHref = "/dashboard/services",
+  backLabel = "Back to Services",
 }: DashboardServiceDetailProps) {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(initialIsEnabled);
@@ -113,11 +117,11 @@ export function DashboardServiceDetail({
       {/* Back Button */}
       <div className="flex items-center justify-between">
         <Link
-          href="/dashboard/services"
+          href={backHref}
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
         >
           <ArrowLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
-          Back to Services
+          {backLabel}
         </Link>
 
         {isDogTraining && (
