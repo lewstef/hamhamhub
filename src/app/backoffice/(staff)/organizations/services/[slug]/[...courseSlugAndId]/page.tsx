@@ -33,6 +33,11 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
     notFound();
   }
 
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    notFound();
+  }
+
   // Fetch the organization details
   const [organization] = await db
     .select({

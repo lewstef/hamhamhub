@@ -5,6 +5,11 @@ import { notFound } from "next/navigation";
 import { getOrganizationCategories } from "@/app/actions/organizations";
 
 export async function getOrganizationData(id: string) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    notFound();
+  }
+
   const [organization] = await db
     .select({
       id: users.id,
