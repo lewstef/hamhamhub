@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DogTrainingTabs } from "@/components/dog-training-tabs";
 
 interface PageProps {
   params: Promise<{ slug: string; subSlugAndId: string[] }>;
@@ -111,21 +110,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {isDogTraining && (
-            <div className="pt-6 border-t border-border space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-semibold">
-                Sub-Services configuration
-              </h3>
-              <DogTrainingTabs
-                activeTabProp={activeSubServiceTab}
-                enabledSubServiceIds={organization.enabledSubServices
-                  ? organization.enabledSubServices.split("|")[0].split(",").map((s) => s.trim()).filter(Boolean)
-                  : []
-                }
-                subServicesOrder={service?.subServicesOrder ? service.subServicesOrder.split(",").map(s => s.trim()).filter(Boolean) : []}
-              />
-            </div>
-          )}
+
         </CardContent>
       </Card>
     </div>

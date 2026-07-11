@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DogTrainingTabs } from "@/components/dog-training-tabs";
 
 interface Service {
   id: string;
@@ -133,19 +132,7 @@ export function DashboardServiceDetail({
             </div>
           )}
 
-          {/* Sub-Services tabs for dog training */}
-          {service.name.toLowerCase() === "dog training" && (
-            <div className="pt-6 border-t border-border space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-semibold">
-                Sub-Services configuration
-              </h3>
-              <DogTrainingTabs
-                activeTabProp={activeSubServiceTab}
-                enabledSubServiceIds={enabledSubServiceIds}
-                subServicesOrder={service.subServicesOrder ? service.subServicesOrder.split(",").map(s => s.trim()).filter(Boolean) : []}
-              />
-            </div>
-          )}
+
         </CardContent>
       </Card>
     </div>
