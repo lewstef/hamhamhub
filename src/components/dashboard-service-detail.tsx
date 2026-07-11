@@ -16,7 +16,7 @@ interface Service {
 }
 
 interface DashboardServiceDetailProps {
-  organization: any;
+  organizationId: string;
   service: Service;
   initialIsEnabled: boolean;
   slug: string;
@@ -25,7 +25,7 @@ interface DashboardServiceDetailProps {
 }
 
 export function DashboardServiceDetail({
-  organization,
+  organizationId,
   service,
   initialIsEnabled,
   slug,
@@ -42,7 +42,7 @@ export function DashboardServiceDetail({
     setIsEnabled(nextState);
 
     startTransition(async () => {
-      const res = await toggleOrganizationServiceAction(organization.id, service.id, nextState);
+      const res = await toggleOrganizationServiceAction(organizationId, service.id, nextState);
       if (res?.success) {
         router.refresh();
       } else {
@@ -143,7 +143,6 @@ export function DashboardServiceDetail({
                 activeTabProp={activeSubServiceTab}
                 enabledSubServiceIds={enabledSubServiceIds}
                 subServicesOrder={service.subServicesOrder ? service.subServicesOrder.split(",").map(s => s.trim()).filter(Boolean) : []}
-                organization={organization}
               />
             </div>
           )}

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer } from "drizzle-orm/pg-core";
 
 export const organizationCategories = pgTable("organization_categories", {
   id: text("id").primaryKey(), // Sluggified name, e.g. "ngo", "dog_kennel"
@@ -32,24 +32,6 @@ export const users = pgTable("users", {
   youtube: text("youtube"),
   website: text("website"),
   googleBusinessProfile: text("google_business_profile"),
-  basicHasField: boolean("basic_has_field").default(false).notNull(),
-  basicFieldDesc: text("basic_field_desc"),
-  basicHasParking: boolean("basic_has_parking").default(false).notNull(),
-  basicParkingDesc: text("basic_parking_desc"),
-  basicSchedule: text("basic_schedule"),
-  basicTerms: text("basic_terms"),
-  basicProgramIncludes: text("basic_program_includes"),
-  basicHasCertifiedTrainer: boolean("basic_has_certified_trainer").default(false).notNull(),
-  basicTrainerInstitution: text("basic_trainer_institution"),
-  groupHasField: boolean("group_has_field").default(false).notNull(),
-  groupFieldDesc: text("group_field_desc"),
-  groupHasParking: boolean("group_has_parking").default(false).notNull(),
-  groupParkingDesc: text("group_parking_desc"),
-  groupSchedule: text("group_schedule"),
-  groupTerms: text("group_terms"),
-  groupProgramIncludes: text("group_program_includes"),
-  groupHasCertifiedTrainer: boolean("group_has_certified_trainer").default(false).notNull(),
-  groupTrainerInstitution: text("group_trainer_institution"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

@@ -1,9 +1,8 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import React from "react";
 import { DogTrainingTabs } from "./dog-training-tabs";
-import { updateSubServiceSettingsAction } from "@/app/actions/subservices";
 
 // Mock next/navigation for the component
 vi.mock("next/navigation", () => ({
@@ -11,13 +10,6 @@ vi.mock("next/navigation", () => ({
     get: vi.fn().mockReturnValue(null),
   }),
   usePathname: () => "/dashboard/services/dog-training",
-  useRouter: () => ({
-    refresh: vi.fn(),
-  }),
-}));
-
-vi.mock("@/app/actions/subservices", () => ({
-  updateSubServiceSettingsAction: vi.fn(),
 }));
 
 // Wrap with Suspense since the component uses it
@@ -188,120 +180,5 @@ describe("DogTrainingTabs Component", () => {
     // No enabledSubServiceIds prop → all tabs treated as enabled → 5 links
     const links = screen.getAllByRole("link");
     expect(links.length).toBe(5);
-  });
-
-  it("should render configurable form when organization is provided for basic training", () => {
-    const org = {
-      id: "org-123",
-      basicHasField: true,
-      basicFieldDesc: "50x50 grass training field",
-      basicHasParking: false,
-      basicParkingDesc: "",
-      basicSchedule: "Saturdays 9 AM",
-      basicTerms: "Dogs must be friendly",
-      basicProgramIncludes: "Obedience lessons",
-      basicHasCertifiedTrainer: true,
-      basicTrainerInstitution: "Karen Pryor",
-    };
-
-    renderWithSuspense(
-      <DogTrainingTabs
-        activeTabProp="basic-training-and-obedience"
-        enabledSubServiceIds={ALL_DB_IDS}
-        organization={org}
-      />
-    );
-
-    expect(screen.getByText("Custom Settings")).toBeDefined();
-    expect(screen.getByLabelText("Dedicated Training Field")).toBeDefined();
-    expect(screen.getByLabelText("Training Field Description")).toBeDefined();
-    expect(screen.getByLabelText("Parking")).toBeDefined();
-    expect(screen.queryByLabelText("Parking Description")).toBeNull();
-    expect(screen.queryByLabelText("Schedule")).toBeNull();
-    expect(screen.getByLabelText("Terms of Participation")).toBeDefined();
-    expect(screen.getByLabelText("Details")).toBeDefined();
-    expect(screen.getByLabelText("Certified Dog Trainer")).toBeDefined();
-    expect(screen.getByLabelText("Certifier name")).toBeDefined();
-  });
-
-  it("should toggle trainer institution when certified dog trainer is clicked", () => {
-    const org = {
-      id: "org-123",
-      basicHasCertifiedTrainer: false,
-      basicTrainerInstitution: "",
-    };
-
-    renderWithSuspense(
-      <DogTrainingTabs
-        activeTabProp="basic-training-and-obedience"
-        enabledSubServiceIds={ALL_DB_IDS}
-        organization={org}
-      />
-    );
-
-    expect(screen.queryByLabelText("Certifier name")).toBeNull();
-
-    const switchBtn = screen.getByLabelText("Certified Dog Trainer");
-    fireEvent.click(switchBtn);
-
-    expect(screen.getByLabelText("Certifier name")).toBeDefined();
-  });
-
-  it("should toggle training field description when training field is clicked", () => {
-    const org = {
-      id: "org-123",
-      basicHasField: false,
-      basicFieldDesc: "",
-      basicHasParking: false,
-      basicParkingDesc: "",
-    };
-
-    renderWithSuspense(
-      <DogTrainingTabs
-        activeTabProp="basic-training-and-obedience"
-        enabledSubServiceIds={ALL_DB_IDS}
-        organization={org}
-      />
-    );
-
-    expect(screen.queryByLabelText("Training Field Description")).toBeNull();
-
-    const switchBtn = screen.getByLabelText("Dedicated Training Field");
-    fireEvent.click(switchBtn);
-
-    expect(screen.getByLabelText("Training Field Description")).toBeDefined();
-  });
-
-  it("should invoke server action when saving settings", async () => {
-    const org = {
-      id: "org-123",
-      basicHasField: false,
-      basicFieldDesc: "",
-      basicHasParking: false,
-      basicParkingDesc: "",
-      basicHasCertifiedTrainer: false,
-      basicTrainerInstitution: "",
-    };
-
-    vi.mocked(updateSubServiceSettingsAction).mockResolvedValueOnce({ success: true });
-
-    renderWithSuspense(
-      <DogTrainingTabs
-        activeTabProp="basic-training-and-obedience"
-        enabledSubServiceIds={ALL_DB_IDS}
-        organization={org}
-      />
-    );
-
-    const detailsEditor = screen.getByLabelText("Details");
-    detailsEditor.innerHTML = "Everyday at 5";
-    fireEvent.input(detailsEditor);
-
-    const saveBtn = screen.getByRole("button", { name: "Save Settings" });
-    fireEvent.click(saveBtn);
-
-    await waitFor(() => {
-      expect(updateSubServiceSettingsAction).toHaveBeenCalled();
-    });
   });
 });
