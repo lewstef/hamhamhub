@@ -239,13 +239,13 @@ export function EditOrganizationForm({
   )?.name || "NGO";
 
   const handleToggleService = (serviceId: string) => {
-    const isCurrentlyEnabled = enabledIds.includes(serviceId);
-    setTogglingId(serviceId);
+    const isCurrentlyEnabled = enabledServiceIds.includes(serviceId);
+    setTogglingServiceId(serviceId);
 
     const nextIds = isCurrentlyEnabled
-      ? enabledIds.filter((id) => id !== serviceId)
-      : [...enabledIds, serviceId];
-    setEnabledIds(nextIds);
+      ? enabledServiceIds.filter((id) => id !== serviceId)
+      : [...enabledServiceIds, serviceId];
+    setEnabledServiceIds(nextIds);
 
     if (!isCurrentlyEnabled) {
       setExpandedIds((prev) => [...prev, serviceId]);
@@ -256,9 +256,9 @@ export function EditOrganizationForm({
       if (res?.success) {
         router.refresh();
       } else {
-        setEnabledIds(enabledIds); // Rollback
+        setEnabledServiceIds(enabledServiceIds); // Rollback
       }
-      setTogglingId(null);
+      setTogglingServiceId(null);
     });
   };
 
@@ -529,8 +529,8 @@ export function EditOrganizationForm({
             ) : (
               <div className="divide-y divide-border/50">
                 {servicesList.map((s) => {
-                  const isEnabled = enabledIds.includes(s.id);
-                  const isLoading = togglingId === s.id && isPending;
+                  const isEnabled = enabledServiceIds.includes(s.id);
+                  const isLoading = togglingServiceId === s.id && isPending;
                   return (
                     <div key={s.id} className="flex flex-col">
                       <div className="flex items-center justify-between px-6 py-4 hover:bg-muted/10 transition-colors">
