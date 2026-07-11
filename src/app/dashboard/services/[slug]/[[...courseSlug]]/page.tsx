@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, services, serviceTypes } from "@/db/schema";
+import { users, services, serviceTypes, courses } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -88,6 +88,15 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
     ? organization.enabledCourses.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
+  let orgCourses: any[] = [];
+  if (slug === "dog-training") {
+    orgCourses = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.organizationId, organization.id))
+      .orderBy(courses.createdAt);
+  }
+
   return (
     <DashboardServiceDetail
       organizationId={organization.id}
@@ -96,6 +105,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       slug={slug}
       activeCourseTab={activeCourseTab}
       enabledCourseIds={enabledCourseIds}
+      courses={orgCourses}
     />
   );
 }

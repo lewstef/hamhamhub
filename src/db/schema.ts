@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer, boolean } from "drizzle-orm/pg-core";
 
 export const organizationCategories = pgTable("organization_categories", {
   id: text("id").primaryKey(), // Sluggified name, e.g. "ngo", "dog_kennel"
@@ -52,5 +52,21 @@ export const serviceTypes = pgTable("service_types", {
   id: text("id").primaryKey(), // e.g., "dog_training"
   name: text("name").notNull(),
   description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const courses = pgTable("courses", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(), // references users.id
+  name: text("name").notNull(),
+  certifiedTrainer: boolean("certified_trainer").default(false).notNull(),
+  certifierName: text("certifier_name"),
+  dedicatedField: boolean("dedicated_field").default(false).notNull(),
+  trainingFieldDescription: text("training_field_description"),
+  parking: boolean("parking").default(false).notNull(),
+  parkingDescription: text("parking_description"),
+  details: text("details"),
+  termsOfParticipation: text("terms_of_participation"),
+  price: text("price"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

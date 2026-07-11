@@ -9,9 +9,16 @@ vi.mock("@/app/actions/organizations", () => ({
   toggleOrganizationServiceAction: vi.fn(),
 }));
 
+vi.mock("@/app/actions/courses", () => ({
+  deleteCourseAction: vi.fn(),
+  createCourseAction: vi.fn(),
+  updateCourseAction: vi.fn(),
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: vi.fn(),
+    push: vi.fn(),
   }),
   useSearchParams: () => ({
     get: vi.fn().mockReturnValue(null),
@@ -78,13 +85,14 @@ describe("DashboardServiceDetail Component", () => {
     expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-dog-walking", true);
   });
 
-  it("should hide toggle button and identifier description for Dog Training", () => {
+  it("should hide toggle button and identifier description for Dog Training, and render Add Course button", () => {
     render(
       <DashboardServiceDetail
         organizationId="org-123"
         service={trainingService}
         initialIsEnabled={true}
         slug="dog-training"
+        courses={[]}
       />
     );
 
@@ -93,6 +101,10 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.queryByText(/Template Identifier:/)).toBeNull();
     // Toggle switch should not be rendered
     expect(screen.queryByRole("switch")).toBeNull();
+    // Add Course button should be rendered
+    expect(screen.getByText("Add Course")).toBeDefined();
+    // Empty state message should be visible
+    expect(screen.getByText(/No courses created yet/)).toBeDefined();
   });
 });
 
