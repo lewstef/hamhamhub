@@ -408,7 +408,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                           </div>
 
                           {/* Nested Sub-Services Accordion (for Dog training) */}
-                          {isDogTraining && subServicesMap[s.id] && (
+                          {isDogTraining && subServicesMap[s.id] && subServicesMap[s.id].length > 0 && (
                             <div className="pl-12 pr-3 pb-3 space-y-2 mt-1">
                               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 pl-2">
                                 Sub-Services (Drag to reorder)

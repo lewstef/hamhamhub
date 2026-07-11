@@ -549,7 +549,7 @@ export function EditOrganizationForm({
                         </div>
 
                         <div className="flex items-center gap-3">
-                          {isEnabled && s.slug === "dog-training" && (
+                          {isEnabled && s.slug === "dog-training" && getSortedSubServices(s.subServicesOrder).length > 0 && (
                             <button
                               type="button"
                               onClick={() => toggleExpand(s.id)}
@@ -593,7 +593,7 @@ export function EditOrganizationForm({
                       </div>
 
                       {/* Nested Sub-Services Accordion (for Dog training) */}
-                      {isEnabled && s.slug === "dog-training" && (
+                      {isEnabled && s.slug === "dog-training" && getSortedSubServices(s.subServicesOrder).length > 0 && (
                         <div
                           className={`grid transition-all duration-200 ease-in-out border-t border-border/30 bg-muted/5 ${
                             expandedIds.includes(s.id)
