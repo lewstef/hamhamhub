@@ -36,9 +36,9 @@ vi.mock("react", async (importOriginal) => {
 });
 
 describe("LoginForm Component", () => {
-  it("should render email/username and password inputs", () => {
+  it("should render email and password inputs", () => {
     render(<LoginForm />);
-    expect(screen.getByLabelText("Email or Username")).toBeDefined();
+    expect(screen.getByLabelText("Email Address")).toBeDefined();
     expect(screen.getByLabelText("Password")).toBeDefined();
   });
 

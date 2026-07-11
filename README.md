@@ -42,6 +42,7 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 
 - **Username Login**: Identifiers *without* an `@` symbol are treated as staff logins. Access checks verify the user does *not* have the `"user"` or `"organization"` role.
 - **Email Login**: Identifiers *with* an `@` symbol are treated as customer/organization logins. Access checks verify the role is either `"user"` or `"organization"`.
+- **Enforced Separation**: Logins on the Client Dashboard (`/dashboard/login`) are strictly restricted to email format. The login server action (`loginAction`) rejects any identifier without an `@` symbol for the `"user"` login type, preventing staff username sign-ins on the client portal.
 
 ---
 
@@ -77,7 +78,27 @@ The backoffice system integrates completely dynamic configuration layers for bus
 
 ---
 
-## 5. Server Action Documentation
+## 5. Core Business Workflows & Dashboards
+
+### A. Client Dashboard (Pet Owners & Organizations)
+- **Hamster Telemetry Stream**: Standard users are presented with a real-time hamster monitoring grid (tracking Cage synced configurations, wheel RPM, food level indicators, and live activity streams for hamsters like Biscuit or Peanut).
+- **Unified Organization Form (`EditOrganizationForm`)**: An advanced multi-tab settings panel containing:
+  - *Personal Info*: Organization names, categories, recovery emails, social profile widgets (Facebook, Instagram, TikTok, website, GBP), and full address structures with country-specific dropdown search matching.
+  - *Localized Address Validation*: Form matches phone pattern inputs against target countries (e.g., +40 for Romania, +44 for UK).
+  - *Account Settings*: Interactive password reset forms complete with real-time Password Strength Check indicators.
+  - *Subscription Details*: Telemetry license tier indicators and plans.
+  - *Services Directory*: Modular tactile service cards enabling direct toggle actions for services and sub-services.
+
+### B. Backoffice Staff Dashboard
+- **Platform Telemetry Metrics**: Staff members can view critical operational metrics, including:
+  - Total registered business entities/organizations.
+  - 24-hour subscription activation rate trackers (+15% trend indicator).
+  - Total active subscription count.
+  - Expiring license alert systems prompting immediate backoffice action.
+
+---
+
+## 6. Server Action Documentation
 
 All server actions in `src/app/actions/` are documented with JSDoc comments directly above each function, covering:
 
@@ -100,7 +121,7 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
 
 ---
 
-## 6. Commands & Verification
+## 7. Commands & Verification
 
 ### Running Locally
 ```bash

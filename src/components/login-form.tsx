@@ -18,7 +18,7 @@ export function LoginForm() {
           Welcome Back
         </CardTitle>
         <CardDescription className="text-zinc-400 text-center">
-          Sign in with your Email (User) or Username (Staff)
+          Sign in with your Email
         </CardDescription>
       </CardHeader>
       <form action={formAction}>
@@ -30,12 +30,12 @@ export function LoginForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="identifier" className="text-zinc-300">Email or Username</Label>
+            <Label htmlFor="identifier" className="text-zinc-300">Email Address</Label>
             <Input
               id="identifier"
               name="identifier"
-              type="text"
-              placeholder="hammy@hamhamhub.com or admin"
+              type="email"
+              placeholder="hammy@hamhamhub.com"
               required
               disabled={isPending}
               className="bg-zinc-900/50 border-zinc-800 focus:border-orange-500 focus:ring-orange-500 text-zinc-100 placeholder:text-zinc-600"

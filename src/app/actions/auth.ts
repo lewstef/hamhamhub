@@ -81,12 +81,13 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
 
 /**
  * Authenticates a user or staff member via NextAuth Credentials provider.
+ * Enforces email format for user/organization logins.
  *
  * @param formData.identifier - Email address (for users/organizations) or username (for staff)
  * @param formData.password   - Account password (required)
  * @param formData.loginType  - "user" redirects to /dashboard; "staff" redirects to /backoffice
  *
- * @returns `{ error: string }` on invalid credentials or missing fields
+ * @returns `{ error: string }` on invalid credentials, missing fields, or invalid email format for user login
  * @returns Never returns on success — issues a server-side `redirect()` to the target path.
  * @throws Re-throws Next.js NEXT_REDIRECT errors so the framework can handle navigation.
  */
@@ -97,6 +98,10 @@ export async function loginAction(prevState: unknown, formData: FormData) {
 
   if (!identifier || !password) {
     return { error: "All fields are required" };
+  }
+
+  if (loginType === "user" && !identifier.includes("@")) {
+    return { error: "Invalid email format." };
   }
 
   const successRedirectTo = loginType === "staff" ? "/backoffice" : "/dashboard";

@@ -171,6 +171,15 @@ describe("Core Auth Server Actions", () => {
       expect(result).toEqual({ error: "All fields are required" });
     });
 
+    it("should return error if loginType is user and identifier is not an email", async () => {
+      const formData = new FormData();
+      formData.append("identifier", "john_username");
+      formData.append("password", "123456");
+      formData.append("loginType", "user");
+      const result = await loginAction(null, formData);
+      expect(result).toEqual({ error: "Invalid email format." });
+    });
+
     it("should return error if invalid credentials error in redirect URL", async () => {
       const formData = new FormData();
       formData.append("identifier", "john@example.com");
