@@ -87,7 +87,7 @@ The backoffice system integrates completely dynamic configuration layers for bus
   - *Localized Address Validation*: Form matches phone pattern inputs against target countries (e.g., +40 for Romania, +44 for UK).
   - *Account Settings*: Interactive password reset forms complete with real-time Password Strength Check indicators.
   - *Subscription Details*: Telemetry license tier indicators and plans.
-  - *Services Directory*: Modular tactile service cards enabling direct toggle actions for services and sub-services.
+  - *Services Directory*: Modular tactile service cards enabling direct toggle actions for services.
 
 ### B. Backoffice Staff Dashboard
 - **Platform Telemetry Metrics**: Staff members can view critical operational metrics, including:
@@ -135,18 +135,24 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (188 tests across 21 test files)
+# Run all tests (229 tests across 23 test files)
 npm run test
 
 # Run with coverage report
 npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
 
+### Test Coverage Metrics
+- **Statements**: 75.95%
+- **Branches**: 65.29%
+- **Functions**: 61.06%
+- **Lines**: 76.58%
+
 ### Test Coverage Summary
 | Area | Files Covered |
 | :--- | :--- |
 | Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
-| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form` |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table` |
 | Config & utilities | `config/service-types`, `lib/utils` |
 | Hooks | `use-mobile` |
