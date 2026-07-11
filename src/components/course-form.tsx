@@ -15,6 +15,9 @@ interface Course {
   certifierName?: string | null;
   dedicatedField: boolean;
   trainingFieldDescription?: string | null;
+  trainingFieldAddress?: string | null;
+  trainingFieldGoogleBusinessProfile?: string | null;
+  trainingFieldGoogleMapsLink?: string | null;
   parking: boolean;
   parkingDescription?: string | null;
   details?: string | null;
@@ -23,12 +26,15 @@ interface Course {
 }
 
 interface CourseFormProps {
+  organizationId: string;
+  serviceId: string;
+  itemNoun: string;
   initialCourse?: Course;
   onCancel: () => void;
   onSubmitSuccess: () => void;
 }
 
-export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseFormProps) {
+export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse, onCancel, onSubmitSuccess }: CourseFormProps) {
   const isEdit = !!initialCourse?.id;
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +45,9 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
   const [certifierName, setCertifierName] = useState(initialCourse?.certifierName || "");
   const [dedicatedField, setDedicatedField] = useState(initialCourse?.dedicatedField || false);
   const [trainingFieldDescription, setTrainingFieldDescription] = useState(initialCourse?.trainingFieldDescription || "");
+  const [trainingFieldAddress, setTrainingFieldAddress] = useState(initialCourse?.trainingFieldAddress || "");
+  const [trainingFieldGoogleBusinessProfile, setTrainingFieldGoogleBusinessProfile] = useState(initialCourse?.trainingFieldGoogleBusinessProfile || "");
+  const [trainingFieldGoogleMapsLink, setTrainingFieldGoogleMapsLink] = useState(initialCourse?.trainingFieldGoogleMapsLink || "");
   const [parking, setParking] = useState(initialCourse?.parking || false);
   const [parkingDescription, setParkingDescription] = useState(initialCourse?.parkingDescription || "");
   const [details, setDetails] = useState(initialCourse?.details || "");
@@ -48,7 +57,7 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Course name is required.");
+      setError(`${itemNoun} name is required.`);
       return;
     }
 
@@ -57,12 +66,17 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
     if (isEdit && initialCourse?.id) {
       formData.append("id", initialCourse.id);
     }
+    formData.append("organizationId", organizationId);
+    formData.append("serviceId", serviceId);
     formData.append("name", name);
     formData.append("price", price);
     formData.append("certifiedTrainer", String(certifiedTrainer));
     formData.append("certifierName", certifierName);
     formData.append("dedicatedField", String(dedicatedField));
     formData.append("trainingFieldDescription", trainingFieldDescription);
+    formData.append("trainingFieldAddress", trainingFieldAddress);
+    formData.append("trainingFieldGoogleBusinessProfile", trainingFieldGoogleBusinessProfile);
+    formData.append("trainingFieldGoogleMapsLink", trainingFieldGoogleMapsLink);
     formData.append("parking", String(parking));
     formData.append("parkingDescription", parkingDescription);
     formData.append("details", details);
@@ -74,7 +88,7 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
       if (res?.success) {
         onSubmitSuccess();
       } else {
-        setError(res?.error || "An error occurred while saving the course.");
+        setError(res?.error || `An error occurred while saving the ${itemNoun.toLowerCase()}.`);
       }
     });
   };
@@ -89,15 +103,15 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group self-start"
         >
           <ArrowLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
-          Back to Courses List
+          Back to {itemNoun}s List
         </button>
 
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold tracking-tight text-foreground">
-            {isEdit ? `Edit Course: ${initialCourse?.name}` : "Create New Course"}
+            {isEdit ? `Edit ${itemNoun}: ${initialCourse?.name}` : `Create New ${itemNoun}`}
           </h2>
           <p className="text-xs text-muted-foreground">
-            Configure the specific course details, pricing structure, and facilities.
+            Configure the specific {itemNoun.toLowerCase()} details, pricing structure, and facilities.
           </p>
         </div>
       </div>
@@ -114,11 +128,11 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
         {/* Column 1 - 64% Width */}
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="course-name">Course Name</Label>
+            <Label htmlFor="course-name">{itemNoun} Name</Label>
             <Input
               id="course-name"
               type="text"
-              placeholder="e.g. Puppy Socialization Class"
+              placeholder={itemNoun === "Dog Sport" ? "e.g. Agility, IGP, Obedience" : "e.g. Puppy Socialization Class"}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="bg-card"
@@ -138,7 +152,7 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
                 <div className="space-y-0.5">
                   <span className="text-sm font-bold text-foreground">Certified Dog Trainer</span>
                   <p className="text-xs text-muted-foreground">
-                    Enable if this course is coached by an officially certified trainer.
+                    Enable if this {itemNoun.toLowerCase()} is coached by an officially certified trainer.
                   </p>
                 </div>
                 <button
@@ -202,13 +216,48 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
               </div>
 
               {dedicatedField && (
-                <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                  <Label>Training Field Description</Label>
-                  <WysiwygEditor
-                    value={trainingFieldDescription}
-                    onChange={setTrainingFieldDescription}
-                    placeholder="Explain field attributes, size, safety fences, etc."
-                  />
+                <div className="space-y-4 pl-4 border-l-2 border-primary/20 transition-all duration-200">
+                  <div className="space-y-2">
+                    <Label>Training Field Description</Label>
+                    <WysiwygEditor
+                      value={trainingFieldDescription}
+                      onChange={setTrainingFieldDescription}
+                      placeholder="Explain field attributes, size, safety fences, etc."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="training-field-address">Address</Label>
+                    <Input
+                      id="training-field-address"
+                      type="text"
+                      placeholder="e.g. 123 Canine Lane, Bucharest"
+                      value={trainingFieldAddress}
+                      onChange={(e) => setTrainingFieldAddress(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="training-field-gbp">Google Business Profile</Label>
+                    <Input
+                      id="training-field-gbp"
+                      type="url"
+                      placeholder="https://business.google.com/..."
+                      value={trainingFieldGoogleBusinessProfile}
+                      onChange={(e) => setTrainingFieldGoogleBusinessProfile(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="training-field-maps">Google Maps Link</Label>
+                    <Input
+                      id="training-field-maps"
+                      type="url"
+                      placeholder="https://maps.google.com/..."
+                      value={trainingFieldGoogleMapsLink}
+                      onChange={(e) => setTrainingFieldGoogleMapsLink(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -256,7 +305,7 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
 
           {/* Details & Terms Editors */}
           <div className="space-y-2">
-            <Label>Course Information and Details</Label>
+            <Label>{itemNoun} Information and Details</Label>
             <WysiwygEditor
               value={details}
               onChange={setDetails}
@@ -304,7 +353,7 @@ export function CourseForm({ initialCourse, onCancel, onSubmitSuccess }: CourseF
               disabled={isPending}
             >
               {isPending && <Loader2 className="mr-2 size-4.5 animate-spin" />}
-              {isEdit ? "Save Changes" : "Create Course"}
+              {isEdit ? "Save Changes" : `Create ${itemNoun}`}
             </Button>
             <Button
               type="button"

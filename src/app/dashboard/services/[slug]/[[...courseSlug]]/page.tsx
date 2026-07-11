@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users, services, serviceTypes, courses } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or, isNull } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DashboardServiceDetail } from "@/components/dashboard-service-detail";
@@ -93,8 +93,24 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
     orgCourses = await db
       .select()
       .from(courses)
-      .where(eq(courses.organizationId, organization.id))
-      .orderBy(courses.createdAt);
+      .where(
+        and(
+          eq(courses.organizationId, organization.id),
+          or(eq(courses.serviceId, service.id), isNull(courses.serviceId))
+        )
+      )
+      .orderBy(courses.sortOrder, courses.createdAt);
+  } else if (slug === "sport-dog-training") {
+    orgCourses = await db
+      .select()
+      .from(courses)
+      .where(
+        and(
+          eq(courses.organizationId, organization.id),
+          eq(courses.serviceId, service.id)
+        )
+      )
+      .orderBy(courses.sortOrder, courses.createdAt);
   }
 
   return (

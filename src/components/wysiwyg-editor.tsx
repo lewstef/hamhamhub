@@ -113,7 +113,7 @@ export function WysiwygEditor({ value, onChange, placeholder = "Start typing..."
         contentEditable
         onInput={handleInput}
         className="p-4 min-h-[140px] max-h-[300px] overflow-y-auto focus:outline-none text-sm text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none"
-        placeholder={placeholder}
+        {...({ placeholder } as any)}
         style={{ outline: "none" }}
       />
     </div>

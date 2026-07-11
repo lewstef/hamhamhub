@@ -13,7 +13,7 @@ describe("ServiceTypesTable Component", () => {
   const dummyServiceTypesList = [
     { id: "dog_training", name: "Dog training", description: "Behavioral training", applicableTo: [], fields: [] },
     { id: "dog_boarding", name: "Dog boarding", description: "Overnight stays", applicableTo: [], fields: [] },
-    { id: "sport_dog_training", name: "Sport dog training", description: "Advanced training", applicableTo: [], fields: [] },
+    { id: "sport_dog_training", name: "Dog Sports Training", description: "Advanced training", applicableTo: [], fields: [] },
     { id: "dog_walking", name: "Dog walking", description: "Daily exercise walks", applicableTo: [], fields: [] },
   ];
 
@@ -23,7 +23,7 @@ describe("ServiceTypesTable Component", () => {
     // Verify all core service types exist in the document
     expect(screen.getByText("Dog training")).toBeDefined();
     expect(screen.getByText("Dog boarding")).toBeDefined();
-    expect(screen.getByText("Sport dog training")).toBeDefined();
+    expect(screen.getByText("Dog Sports Training")).toBeDefined();
     expect(screen.getByText("Dog walking")).toBeDefined();
   });
 

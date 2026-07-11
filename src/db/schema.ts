@@ -58,15 +58,20 @@ export const serviceTypes = pgTable("service_types", {
 export const courses = pgTable("courses", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id").notNull(), // references users.id
+  serviceId: uuid("service_id"),
   name: text("name").notNull(),
   certifiedTrainer: boolean("certified_trainer").default(false).notNull(),
   certifierName: text("certifier_name"),
   dedicatedField: boolean("dedicated_field").default(false).notNull(),
   trainingFieldDescription: text("training_field_description"),
+  trainingFieldAddress: text("training_field_address"),
+  trainingFieldGoogleBusinessProfile: text("training_field_google_business_profile"),
+  trainingFieldGoogleMapsLink: text("training_field_google_maps_link"),
   parking: boolean("parking").default(false).notNull(),
   parkingDescription: text("parking_description"),
   details: text("details"),
   termsOfParticipation: text("terms_of_participation"),
   price: text("price"),
+  sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

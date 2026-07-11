@@ -12,6 +12,6 @@ export type DogTrainingCourse = typeof DOG_TRAINING_COURSES[number];
 
 export const COURSE_KEY_TO_DB_ID: Record<string, string> = {};
 
-export function getSortedCourses(coursesOrderString?: string | null) {
+export function getSortedCourses(coursesOrderString?: string | null): any[] {
   return [];
 }

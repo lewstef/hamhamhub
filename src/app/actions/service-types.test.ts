@@ -61,7 +61,7 @@ describe("Service Types Server Actions", () => {
         .mockResolvedValueOnce([
           { id: "dog_training", name: "Dog training", description: "DB Desc" },
           { id: "dog_boarding", name: "Dog boarding", description: "DB Desc" },
-          { id: "sport_dog_training", name: "Sport dog training", description: "DB Desc" },
+          { id: "sport_dog_training", name: "Dog Sports Training", description: "DB Desc" },
           { id: "dog_walking", name: "Dog walking", description: "DB Desc" },
         ]);
 

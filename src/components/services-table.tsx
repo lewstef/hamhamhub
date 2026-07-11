@@ -119,7 +119,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
 
   // Reordering states
   const [services, setServices] = useState<Service[]>(serviceList);
-  const [coursesMap, setCoursesMap] = useState<Record<string, typeof DOG_TRAINING_COURSES>>({});
+  const [coursesMap, setCoursesMap] = useState<Record<string, any[]>>({});
   
   const [draggedServiceId, setDraggedServiceId] = useState<string | null>(null);
   const [draggedServiceCategory, setDraggedServiceCategory] = useState<string | null>(null);
@@ -134,7 +134,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
 
   // Sync courses lists with custom orders
   useEffect(() => {
-    const nextMap: Record<string, typeof DOG_TRAINING_COURSES> = {};
+    const nextMap: Record<string, any[]> = {};
     for (const s of services) {
       if (s.name.toLowerCase() === "dog training") {
         nextMap[s.id] = getSortedCourses(s.coursesOrder);

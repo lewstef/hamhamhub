@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
-import { deleteCourseAction } from "@/app/actions/courses";
+import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/courses";
 import { CourseForm } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, Check } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +17,9 @@ interface Course {
   certifierName?: string | null;
   dedicatedField: boolean;
   trainingFieldDescription?: string | null;
+  trainingFieldAddress?: string | null;
+  trainingFieldGoogleBusinessProfile?: string | null;
+  trainingFieldGoogleMapsLink?: string | null;
   parking: boolean;
   parkingDescription?: string | null;
   details?: string | null;
@@ -59,11 +62,24 @@ export function DashboardServiceDetail({
   const [isPending, startTransition] = useTransition();
 
   // Course states
+  const [localCourses, setLocalCourses] = useState<Course[]>(courses);
+  const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | undefined>(undefined);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Sync localCourses with courses prop
+  useEffect(() => {
+    setLocalCourses(courses);
+  }, [courses]);
 
   const isDogTraining = service.name.toLowerCase() === "dog training";
+  const isSportDogTraining = service.name.toLowerCase() === "dog sports training";
+  const isDynamicCourses = isDogTraining || isSportDogTraining;
+  const itemNoun = isSportDogTraining ? "Dog Sport" : "Course";
 
   const handleToggle = () => {
     const nextState = !isEnabled;
@@ -80,23 +96,59 @@ export function DashboardServiceDetail({
   };
 
   const handleDeleteCourse = (courseId: string) => {
-    if (!confirm("Are you sure you want to delete this course?")) return;
-    setIsDeletingId(courseId);
+    setDeleteTargetId(courseId);
+    setDeleteError(null);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTargetId) return;
+    setIsDeletingId(deleteTargetId);
     startTransition(async () => {
-      const res = await deleteCourseAction(courseId);
+      const res = await deleteCourseAction(deleteTargetId);
       if (res?.success) {
+        setShowDeleteConfirm(false);
+        setDeleteTargetId(null);
         router.refresh();
       } else {
-        alert(res?.error || "Failed to delete course.");
+        setDeleteError(res?.error || "Failed to delete course.");
       }
       setIsDeletingId(null);
     });
   };
 
-  if (isDogTraining && isFormOpen) {
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedCourseId(id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedCourseId || draggedCourseId === targetId) return;
+
+    const draggedIndex = localCourses.findIndex((item) => item.id === draggedCourseId);
+    const targetIndex = localCourses.findIndex((item) => item.id === targetId);
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const updatedList = [...localCourses];
+    const [draggedItem] = updatedList.splice(draggedIndex, 1);
+    updatedList.splice(targetIndex, 0, draggedItem);
+
+    setLocalCourses(updatedList);
+  };
+
+  const handleDragEnd = async () => {
+    setDraggedCourseId(null);
+    const orderedIds = localCourses.map((item) => item.id).filter((id): id is string => !!id);
+    await reorderOrgCoursesAction(orderedIds);
+  };
+
+  if (isDynamicCourses && isFormOpen) {
     return (
       <div className="space-y-6 w-full">
         <CourseForm
+          organizationId={organizationId}
+          serviceId={service.id}
+          itemNoun={itemNoun}
           initialCourse={editingCourse}
           onCancel={() => {
             setIsFormOpen(false);
@@ -124,7 +176,7 @@ export function DashboardServiceDetail({
           {backLabel}
         </Link>
 
-        {isDogTraining && (
+        {isDynamicCourses && (
           <Button
             onClick={() => {
               setEditingCourse(undefined);
@@ -133,7 +185,7 @@ export function DashboardServiceDetail({
             className="font-bold shadow-md shadow-primary/10"
           >
             <Plus className="size-4 mr-2" />
-            Add Course
+            Add {itemNoun}
           </Button>
         )}
       </div>
@@ -149,7 +201,7 @@ export function DashboardServiceDetail({
               <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
                 {service.name}
               </CardTitle>
-              {!isDogTraining && (
+              {!isDynamicCourses && (
                 <CardDescription className="text-sm">
                   Service Template Identifier: {service.id}
                 </CardDescription>
@@ -174,8 +226,8 @@ export function DashboardServiceDetail({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Toggle Control Area (Hidden for Dog Training since it lists custom courses) */}
-          {!isDogTraining && (
+          {/* Toggle Control Area (Hidden for dynamic course services since they list custom items) */}
+          {!isDynamicCourses && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/20 gap-4">
               <div className="space-y-1">
                 <span className="text-sm font-semibold text-foreground">
@@ -206,144 +258,161 @@ export function DashboardServiceDetail({
           )}
 
           {/* Dog Training Dynamic Courses Listing */}
-          {isDogTraining && (
-            <div className="space-y-4">
-              {courses.length === 0 ? (
+          {isDynamicCourses && (
+            <div className="space-y-2">
+              {localCourses.length === 0 ? (
                 <div className="text-center p-12 border border-dashed border-border rounded-2xl text-muted-foreground bg-muted/5">
-                  No courses created yet. Click "Add Course" above to add your first course.
+                  No {itemNoun.toLowerCase()}s created yet. Click "Add {itemNoun}" above to add your first {itemNoun.toLowerCase()}.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-6">
-                  {courses.map((course) => (
-                    <div
-                      key={course.id}
-                      className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group flex flex-col justify-between gap-6"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-2 max-w-[70%]">
-                          <h4 className="text-lg font-bold text-foreground tracking-tight">
-                            {course.name}
-                          </h4>
-
-                          {/* Quick details badges */}
-                          <div className="flex flex-wrap gap-2">
-                            {course.certifiedTrainer && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                                <Award className="size-3" />
-                                Trainer Certified: {course.certifierName}
-                              </span>
-                            )}
-                            {course.dedicatedField && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-500 border border-sky-500/20">
-                                <MapPin className="size-3" />
-                                Dedicated Field
-                              </span>
-                            )}
-                            {course.parking && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                                <Car className="size-3" />
-                                Parking Available
-                              </span>
-                            )}
+                <div className="divide-y divide-border/60 rounded-2xl border border-border overflow-hidden">
+                  {localCourses.map((course) => {
+                    const isCourseDragged = draggedCourseId === course.id;
+                    return (
+                      <div
+                        key={course.id}
+                        draggable={true}
+                        onDragStart={(e) => course.id && handleDragStart(e, course.id)}
+                        onDragOver={(e) => course.id && handleDragOver(e, course.id)}
+                        onDragEnd={handleDragEnd}
+                        className={`flex items-center justify-between gap-4 px-5 py-4 bg-card hover:bg-muted/10 transition-colors ${
+                          isCourseDragged
+                            ? "opacity-40 bg-muted/20 border-dashed border border-primary/20 scale-[0.99]"
+                            : ""
+                        }`}
+                      >
+                        {/* Left: drag handle + name + chips */}
+                        <div className="flex flex-wrap items-center gap-2 min-w-0">
+                          {/* Drag Handle */}
+                          <div
+                            className="text-muted-foreground/60 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted"
+                            title="Drag to reorder courses"
+                          >
+                            <GripVertical className="size-3.5" />
                           </div>
-                        </div>
-
-                        {/* Price Badge */}
-                        <div className="text-right">
-                          <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-sm font-extrabold bg-primary/10 text-primary border border-primary/20">
-                            {course.price || "Free"}
+                          <span className="text-sm font-bold text-foreground">
+                            {course.name}
                           </span>
-                        </div>
-                      </div>
-
-                      {/* Course Details sections */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm leading-relaxed text-muted-foreground/90 border-t border-border/60 pt-5">
-                        <div className="space-y-2">
-                          <span className="text-xs font-extrabold uppercase tracking-wider text-foreground">
-                            Course Details
-                          </span>
-                          <div
-                            className="text-xs prose prose-sm dark:prose-invert max-w-none text-muted-foreground/95"
-                            dangerouslySetInnerHTML={{ __html: course.details || "No details provided." }}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <span className="text-xs font-extrabold uppercase tracking-wider text-foreground">
-                            Terms & Requirements
-                          </span>
-                          <div
-                            className="text-xs prose prose-sm dark:prose-invert max-w-none text-muted-foreground/95"
-                            dangerouslySetInnerHTML={{ __html: course.termsOfParticipation || "No terms specified." }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Facility details expansion (rendered dynamically if available) */}
-                      {(course.dedicatedField || course.parking) && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm leading-relaxed text-muted-foreground/90 border-t border-border/40 pt-4 bg-muted/5 p-4 rounded-xl">
-                          {course.dedicatedField && course.trainingFieldDescription && (
-                            <div className="space-y-1">
-                              <span className="text-[11px] font-bold text-sky-500 flex items-center gap-1">
-                                <MapPin className="size-3" />
-                                Field details:
-                              </span>
-                              <div
-                                className="text-xs prose prose-sm dark:prose-invert text-muted-foreground/90"
-                                dangerouslySetInnerHTML={{ __html: course.trainingFieldDescription }}
-                              />
-                            </div>
+                          {course.certifiedTrainer && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                              <Award className="size-2.5" />
+                              Certified
+                            </span>
                           )}
-
-                          {course.parking && course.parkingDescription && (
-                            <div className="space-y-1">
-                              <span className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
-                                <Car className="size-3" />
-                                Parking details:
-                              </span>
-                              <div
-                                className="text-xs prose prose-sm dark:prose-invert text-muted-foreground/90"
-                                dangerouslySetInnerHTML={{ __html: course.parkingDescription }}
-                              />
-                            </div>
+                          {course.dedicatedField && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-600 border border-sky-500/20">
+                              <MapPin className="size-2.5" />
+                              Field
+                            </span>
+                          )}
+                          {course.parking && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                              <Car className="size-2.5" />
+                              Parking
+                            </span>
+                          )}
+                          {course.price && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
+                              {course.price}
+                            </span>
                           )}
                         </div>
-                      )}
 
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-2 justify-end border-t border-border/60 pt-4 mt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingCourse(course);
-                            setIsFormOpen(true);
+                        {/* Right: action buttons */}
+                        <div
+                          className="flex items-center gap-2 shrink-0"
+                          draggable={false}
+                          onDragStart={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                           }}
-                          className="h-8.5 font-bold text-xs"
-                          disabled={isDeletingId === course.id}
                         >
-                          <Edit2 className="size-3.5 mr-1.5" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => course.id && handleDeleteCourse(course.id)}
-                          className="h-8.5 font-bold text-xs shadow-md shadow-destructive/10"
-                          disabled={isDeletingId === course.id}
-                        >
-                          <Trash2 className="size-3.5 mr-1.5" />
-                          Delete
-                        </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingCourse(course);
+                              setIsFormOpen(true);
+                            }}
+                            className="h-8 font-bold text-xs"
+                            disabled={isDeletingId === course.id}
+                          >
+                            <Edit2 className="size-3.5 mr-1.5" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => course.id && handleDeleteCourse(course.id)}
+                            className="h-8 font-bold text-xs"
+                            disabled={isDeletingId === course.id}
+                          >
+                            <Trash2 className="size-3.5 mr-1.5" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && deleteTargetId && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="relative w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setDeleteTargetId(null);
+                setDeleteError(null);
+              }}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
+            <CardHeader className="px-6 pt-6 pb-4 border-b border-border">
+              <CardTitle className="text-lg font-bold">Delete {itemNoun}</CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Are you sure you want to delete this {itemNoun.toLowerCase()}? This action cannot be undone.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              {deleteError && (
+                <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                  {deleteError}
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteTargetId(null);
+                    setDeleteError(null);
+                  }}
+                  disabled={isDeletingId !== null}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleConfirmDelete}
+                  disabled={isDeletingId !== null}
+                >
+                  {isDeletingId !== null ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
