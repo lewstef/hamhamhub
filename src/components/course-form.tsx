@@ -23,6 +23,7 @@ interface Course {
   details?: string | null;
   termsOfParticipation?: string | null;
   price?: string | null;
+  priceType?: string | null;
 }
 
 interface CourseFormProps {
@@ -53,6 +54,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
   const [details, setDetails] = useState(initialCourse?.details || "");
   const [termsOfParticipation, setTermsOfParticipation] = useState(initialCourse?.termsOfParticipation || "");
   const [price, setPrice] = useState(initialCourse?.price || "");
+  const [priceType, setPriceType] = useState(initialCourse?.priceType || "course");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +72,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     formData.append("serviceId", serviceId);
     formData.append("name", name);
     formData.append("price", price);
+    formData.append("priceType", priceType);
     formData.append("certifiedTrainer", String(certifiedTrainer));
     formData.append("certifierName", certifierName);
     formData.append("dedicatedField", String(dedicatedField));
@@ -329,19 +332,30 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
             <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90">
               Pricing Configuration
             </h3>
-            <div className="space-y-2">
-              <Label htmlFor="course-price">Price</Label>
-              <Input
-                id="course-price"
-                type="text"
-                placeholder="e.g. $150 or 500 RON"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="bg-background text-lg font-semibold"
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Define the currency symbol and billing frequency directly.
-              </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="course-price">Price Amount</Label>
+                <Input
+                  id="course-price"
+                  type="text"
+                  placeholder="e.g. $150 or 500 RON"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="bg-background text-lg font-semibold"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="course-price-type">Billing Frequency</Label>
+                <select
+                  id="course-price-type"
+                  value={priceType}
+                  onChange={(e) => setPriceType(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 font-bold focus:outline-none"
+                >
+                  <option value="course">Per {itemNoun}</option>
+                  <option value="month">Per Month</option>
+                </select>
+              </div>
             </div>
           </div>
 

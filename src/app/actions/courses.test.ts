@@ -51,6 +51,7 @@ describe("Courses Server Actions", () => {
       const formData = new FormData();
       formData.append("name", "Basic Obedience");
       formData.append("price", "200");
+      formData.append("priceType", "month");
       formData.append("certifiedTrainer", "true");
       formData.append("certifierName", "SuperDog");
       formData.append("dedicatedField", "true");
@@ -63,6 +64,7 @@ describe("Courses Server Actions", () => {
       expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
         name: "Basic Obedience",
         price: "200",
+        priceType: "month",
         certifiedTrainer: true,
         certifierName: "SuperDog",
         dedicatedField: true,

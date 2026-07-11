@@ -72,6 +72,7 @@ export const courses = pgTable("courses", {
   details: text("details"),
   termsOfParticipation: text("terms_of_participation"),
   price: text("price"),
+  priceType: text("price_type").default("course").notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

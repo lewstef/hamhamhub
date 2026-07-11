@@ -25,6 +25,7 @@ interface Course {
   details?: string | null;
   termsOfParticipation?: string | null;
   price?: string | null;
+  priceType?: string | null;
 }
 
 interface Service {
@@ -313,7 +314,7 @@ export function DashboardServiceDetail({
                           )}
                           {course.price && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
-                              {course.price}
+                              {course.price} / {course.priceType === "month" ? "month" : itemNoun.toLowerCase()}
                             </span>
                           )}
                         </div>

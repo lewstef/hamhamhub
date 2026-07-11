@@ -13,6 +13,7 @@ vi.mock("@/app/actions/courses", () => ({
   deleteCourseAction: vi.fn(),
   createCourseAction: vi.fn(),
   updateCourseAction: vi.fn(),
+  reorderOrgCoursesAction: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -105,6 +106,72 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Add Course")).toBeDefined();
     // Empty state message should be visible
     expect(screen.getByText(/No courses created yet/)).toBeDefined();
+  });
+
+  it("should render Dog Sports Training service details correctly, showing Add Dog Sport and correct empty state", () => {
+    const sportService = {
+      id: "srv-sport-dog-training",
+      name: "Dog Sports Training",
+      description: "Advanced training for dog sports.",
+    };
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={sportService}
+        initialIsEnabled={true}
+        slug="sport-dog-training"
+        courses={[]}
+      />
+    );
+
+    expect(screen.getByText("Dog Sports Training")).toBeDefined();
+    expect(screen.queryByText(/Template Identifier:/)).toBeNull();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.getByText("Add Dog Sport")).toBeDefined();
+    expect(screen.getByText(/No dog sports created yet/)).toBeDefined();
+  });
+
+  it("should display pricing formatted with suffix according to priceType", () => {
+    const trainingServiceWithCourses = {
+      id: "srv-dog-training",
+      name: "Dog Training",
+      description: "Behavioral training.",
+    };
+
+    const mockCourses = [
+      {
+        id: "c-1",
+        name: "Puppy Basics",
+        certifiedTrainer: false,
+        dedicatedField: false,
+        parking: false,
+        price: "$100",
+        priceType: "course",
+      },
+      {
+        id: "c-2",
+        name: "Agility Pro",
+        certifiedTrainer: false,
+        dedicatedField: false,
+        parking: false,
+        price: "$50",
+        priceType: "month",
+      },
+    ];
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingServiceWithCourses}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={mockCourses}
+      />
+    );
+
+    expect(screen.getByText("$100 / course")).toBeDefined();
+    expect(screen.getByText("$50 / month")).toBeDefined();
   });
 });
 

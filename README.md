@@ -98,7 +98,31 @@ The backoffice system integrates completely dynamic configuration layers for bus
 
 ---
 
-## 6. Server Action Documentation
+## 6. Dynamic Offerings & Cynological Offerings (Courses & Dog Sports)
+
+The platform supports dynamic, nested sub-offerings for specialized services, specifically **"Dog training"** and **"Dog Sports Training"**:
+
+### A. Dynamic Noun Context-Switching
+The application UI dynamically adjusts its user-facing terminology and input settings depending on the slug of the active service:
+- **Dog training** (`dog-training`): Configures and displays offerings as **"Courses"** (e.g. "Add Course", "Course Name").
+- **Dog Sports Training** (`sport-dog-training`): Configures and displays offerings as **"Dog Sports"** (e.g. "Add Dog Sport", "Dog Sport Name").
+
+### B. Facility & Venue Attributes
+Each course or dog sport is defined in a dynamic form featuring:
+- **Obedience & Certified Coaching**: Toggleable trainer certifications with certifier name tracking.
+- **Dedicated Venues**: An address field, Google Business Profile (GBP) link, and Google Maps embed link (grouped under "Dedicated Training Field").
+- **Parking Accommodations**: Switchable parking toggle with descriptive details.
+- **WYSIWYG Descriptions**: Text styling editors for program details and participation terms.
+
+### C. Configurable Pricing Frequency
+Pricing configurations support both **per-offering** and **per-month** options. The selection is saved in the database under `courses.priceType` and formatted cleanly in the directory listing (e.g. `200 RON / course` or `$150 / month`).
+
+### D. Interactive Drag-and-Drop Reordering
+Dynamic offerings are rendered as a clean, flat list featuring a tactical `GripVertical` handle. Users can drag and drop items to reorder them locally. On drop, the new sequence is persisted to the database via `reorderOrgCoursesAction` updating the `sortOrder` values.
+
+---
+
+## 7. Server Action Documentation
 
 All server actions in `src/app/actions/` are documented with JSDoc comments directly above each function, covering:
 
@@ -118,10 +142,11 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
 | `actions/organizations.ts` | `getOrganizationCategories`, `createOrganizationCategoryAction`, `updateOrganizationCategoryAction`, `deleteOrganizationCategoryAction`, `createOrganizationAction`, `updateOrganizationAction`, `changeOrganizationPasswordAction`, `deleteOrganizationAction` |
 | `actions/services.ts` | `createServiceAction`, `deleteServiceAction` |
 | `actions/service-types.ts` | `getServiceTypesAction`, `updateServiceTypeAction` |
+| `actions/courses.ts` | `createCourseAction`, `updateCourseAction`, `deleteCourseAction`, `reorderOrgCoursesAction` |
 
 ---
 
-## 7. Commands & Verification
+## 8. Commands & Verification
 
 ### Running Locally
 ```bash
@@ -135,7 +160,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (229 tests across 23 test files)
+# Run all tests (241 tests across 24 test files)
 npm run test
 
 # Run with coverage report
@@ -151,8 +176,8 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ### Test Coverage Summary
 | Area | Files Covered |
 | :--- | :--- |
-| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types` |
+| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types`, `courses` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
-| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table` |
-| Config & utilities | `config/service-types`, `lib/utils` |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail` |
+| Config & utilities | `config/service-types`, `config/dog-training`, `lib/utils` |
 | Hooks | `use-mobile` |

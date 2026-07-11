@@ -36,6 +36,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
 
   const name = formData.get("name") as string;
   const price = formData.get("price") as string;
+  const priceType = formData.get("priceType") as string || "course";
   const serviceId = formData.get("serviceId") as string || null;
   const certifiedTrainer = formData.get("certifiedTrainer") === "true";
   const certifierName = formData.get("certifierName") as string;
@@ -70,6 +71,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       details,
       termsOfParticipation,
       price,
+      priceType,
     });
 
     revalidatePath("/dashboard/services/dog-training");
@@ -104,6 +106,7 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
   const courseId = formData.get("id") as string;
   const name = formData.get("name") as string;
   const price = formData.get("price") as string;
+  const priceType = formData.get("priceType") as string || "course";
   const serviceId = formData.get("serviceId") as string || null;
   const certifiedTrainer = formData.get("certifiedTrainer") === "true";
   const certifierName = formData.get("certifierName") as string;
@@ -156,6 +159,7 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         details,
         termsOfParticipation,
         price,
+        priceType,
       })
       .where(eq(courses.id, courseId));
 
