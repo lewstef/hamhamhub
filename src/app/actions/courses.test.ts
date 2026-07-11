@@ -105,6 +105,18 @@ describe("Courses Server Actions", () => {
       const result = await createCourseAction(null, formData);
       expect(result).toEqual({ error: "Organization ID is required." });
     });
+
+    it("should return error on DB failure", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const mockValues = vi.fn().mockRejectedValueOnce(new Error("DB insertion failed"));
+      vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
+
+      const formData = new FormData();
+      formData.append("name", "Obedience 101");
+
+      const result = await createCourseAction(null, formData);
+      expect(result).toEqual({ error: "Something went wrong. Please try again." });
+    });
   });
 
   describe("updateCourseAction", () => {
@@ -176,6 +188,76 @@ describe("Courses Server Actions", () => {
       }));
       expect(result).toEqual({ success: true });
     });
+
+    it("should fail if organization user tries to update a course owned by another organization", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+
+      const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-different" }]);
+      const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhereSelect });
+      vi.mocked(db.select).mockReturnValueOnce({ from: mockFrom } as any);
+
+      const formData = new FormData();
+      formData.append("id", "course-123");
+      formData.append("name", "Malicious Update Attempt");
+
+      const result = await updateCourseAction(null, formData);
+      expect(result).toEqual({ error: "Unauthorized course modification" });
+    });
+
+    it("should clear conditional fields (trainer name and venue details) when their respective toggles are false", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+
+      const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
+      const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhereSelect });
+      vi.mocked(db.select).mockReturnValueOnce({ from: mockFrom } as any);
+
+      const mockWhereUpdate = vi.fn().mockResolvedValueOnce({ count: 1 });
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
+      vi.mocked(db.update).mockReturnValueOnce({ set: mockSet } as any);
+
+      const formData = new FormData();
+      formData.append("id", "course-123");
+      formData.append("name", "Puppy Obedience");
+      formData.append("certifiedTrainer", "false");
+      formData.append("certifierName", "Unused Certifier");
+      formData.append("dedicatedField", "false");
+      formData.append("trainingFieldAddress", "123 Address");
+      formData.append("parking", "false");
+      formData.append("parkingDescription", "Unused parking desc");
+
+      const result = await updateCourseAction(null, formData);
+      expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
+        certifierName: null,
+        trainingFieldDescription: null,
+        trainingFieldAddress: null,
+        trainingFieldGoogleBusinessProfile: null,
+        trainingFieldGoogleMapsLink: null,
+        parkingDescription: null,
+      }));
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on DB failure", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+
+      const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
+      const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhereSelect });
+      vi.mocked(db.select).mockReturnValueOnce({ from: mockFrom } as any);
+
+      const mockWhereUpdate = vi.fn().mockRejectedValueOnce(new Error("DB update failed"));
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
+      vi.mocked(db.update).mockReturnValueOnce({ set: mockSet } as any);
+
+      const formData = new FormData();
+      formData.append("id", "course-123");
+      formData.append("name", "Puppy Obedience");
+
+      const result = await updateCourseAction(null, formData);
+      expect(result).toEqual({ error: "Something went wrong. Please try again." });
+    });
   });
 
   describe("deleteCourseAction", () => {
@@ -208,6 +290,34 @@ describe("Courses Server Actions", () => {
       const result = await deleteCourseAction("course-123");
       expect(result).toEqual({ success: true });
     });
+
+    it("should fail if organization user tries to delete a course owned by another organization", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+
+      const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-different" }]);
+      const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhereSelect });
+      vi.mocked(db.select).mockReturnValueOnce({ from: mockFrom } as any);
+
+      const result = await deleteCourseAction("course-123");
+      expect(result).toEqual({ error: "Unauthorized course deletion" });
+    });
+
+    it("should return error on DB failure", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+
+      const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
+      const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhereSelect });
+      vi.mocked(db.select).mockReturnValueOnce({ from: mockFrom } as any);
+
+      vi.mocked(db.delete).mockReturnValueOnce({
+        where: vi.fn().mockRejectedValueOnce(new Error("DB delete failed")),
+      } as any);
+
+      const result = await deleteCourseAction("course-123");
+      expect(result).toEqual({ error: "Something went wrong. Please try again." });
+    });
   });
 
   describe("reorderOrgCoursesAction", () => {
@@ -239,6 +349,17 @@ describe("Courses Server Actions", () => {
       const result = await reorderOrgCoursesAction(["course-1", "course-2"]);
       expect(mockSet).toHaveBeenCalledTimes(2);
       expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on DB failure", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+
+      const mockWhereUpdate = vi.fn().mockRejectedValueOnce(new Error("DB update failed"));
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
+      vi.mocked(db.update).mockReturnValueOnce({ set: mockSet } as any);
+
+      const result = await reorderOrgCoursesAction(["course-1", "course-2"]);
+      expect(result).toEqual({ error: "Failed to save courses order." });
     });
   });
 });
