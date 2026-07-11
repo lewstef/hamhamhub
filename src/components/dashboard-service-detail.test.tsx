@@ -19,6 +19,10 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/services/dog-walking",
 }));
 
+vi.mock("@/components/dog-training-tabs", () => ({
+  DogTrainingTabs: () => <div data-testid="dog-training-tabs">Dog Training Tabs</div>,
+}));
+
 describe("DashboardServiceDetail Component", () => {
   const genericService = {
     id: "srv-dog-walking",
@@ -32,10 +36,16 @@ describe("DashboardServiceDetail Component", () => {
     description: "Professional training for all breeds.",
   };
 
+  const mockOrg = {
+    id: "org-123",
+    name: "Dogmaster",
+    role: "organization",
+  };
+
   it("should render service details correctly when active", () => {
     render(
       <DashboardServiceDetail
-        organizationId="org-123"
+        organization={mockOrg}
         service={genericService}
         initialIsEnabled={true}
         slug="dog-walking"
@@ -50,7 +60,7 @@ describe("DashboardServiceDetail Component", () => {
   it("should render service details correctly when inactive", () => {
     render(
       <DashboardServiceDetail
-        organizationId="org-123"
+        organization={mockOrg}
         service={genericService}
         initialIsEnabled={false}
         slug="dog-walking"
@@ -65,7 +75,7 @@ describe("DashboardServiceDetail Component", () => {
 
     render(
       <DashboardServiceDetail
-        organizationId="org-123"
+        organization={mockOrg}
         service={genericService}
         initialIsEnabled={false}
         slug="dog-walking"
@@ -81,7 +91,7 @@ describe("DashboardServiceDetail Component", () => {
   it("should hide toggle button and identifier description for Dog Training", () => {
     render(
       <DashboardServiceDetail
-        organizationId="org-123"
+        organization={mockOrg}
         service={trainingService}
         initialIsEnabled={true}
         slug="dog-training"
@@ -98,7 +108,7 @@ describe("DashboardServiceDetail Component", () => {
   it("should render DogTrainingTabs section for Dog Training service", () => {
     render(
       <DashboardServiceDetail
-        organizationId="org-123"
+        organization={mockOrg}
         service={trainingService}
         initialIsEnabled={true}
         slug="dog-training"
@@ -114,7 +124,7 @@ describe("DashboardServiceDetail Component", () => {
   it("should NOT render DogTrainingTabs for a non-Dog Training service", () => {
     render(
       <DashboardServiceDetail
-        organizationId="org-123"
+        organization={mockOrg}
         service={genericService}
         initialIsEnabled={true}
         slug="dog-walking"
@@ -125,4 +135,3 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.queryByText("Sub-Services configuration")).toBeNull();
   });
 });
-

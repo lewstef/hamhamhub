@@ -29,6 +29,25 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
       name: users.name,
       role: users.role,
       organizationCategory: users.organizationCategory,
+      enabledSubServices: users.enabledSubServices,
+      basicHasField: users.basicHasField,
+      basicFieldDesc: users.basicFieldDesc,
+      basicHasParking: users.basicHasParking,
+      basicParkingDesc: users.basicParkingDesc,
+      basicSchedule: users.basicSchedule,
+      basicTerms: users.basicTerms,
+      basicProgramIncludes: users.basicProgramIncludes,
+      basicHasCertifiedTrainer: users.basicHasCertifiedTrainer,
+      basicTrainerInstitution: users.basicTrainerInstitution,
+      groupHasField: users.groupHasField,
+      groupFieldDesc: users.groupFieldDesc,
+      groupHasParking: users.groupHasParking,
+      groupParkingDesc: users.groupParkingDesc,
+      groupSchedule: users.groupSchedule,
+      groupTerms: users.groupTerms,
+      groupProgramIncludes: users.groupProgramIncludes,
+      groupHasCertifiedTrainer: users.groupHasCertifiedTrainer,
+      groupTrainerInstitution: users.groupTrainerInstitution,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -47,6 +66,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
       id: services.id,
       name: services.name,
       description: serviceTypes.description,
+      subServicesOrder: services.subServicesOrder,
     })
     .from(services)
     .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
@@ -108,7 +128,14 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-semibold">
                 Sub-Services configuration
               </h3>
-              <DogTrainingTabs />
+              <DogTrainingTabs
+                enabledSubServiceIds={organization.enabledSubServices
+                  ? organization.enabledSubServices.split("|")[0].split(",").map((s) => s.trim()).filter(Boolean)
+                  : []
+                }
+                subServicesOrder={service?.subServicesOrder ? service.subServicesOrder.split(",").map(s => s.trim()).filter(Boolean) : []}
+                organization={organization}
+              />
             </div>
           )}
         </CardContent>

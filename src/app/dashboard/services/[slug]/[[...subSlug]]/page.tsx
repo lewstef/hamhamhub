@@ -34,6 +34,24 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       organizationCategory: users.organizationCategory,
       enabledServices: users.enabledServices,
       enabledSubServices: users.enabledSubServices,
+      basicHasField: users.basicHasField,
+      basicFieldDesc: users.basicFieldDesc,
+      basicHasParking: users.basicHasParking,
+      basicParkingDesc: users.basicParkingDesc,
+      basicSchedule: users.basicSchedule,
+      basicTerms: users.basicTerms,
+      basicProgramIncludes: users.basicProgramIncludes,
+      basicHasCertifiedTrainer: users.basicHasCertifiedTrainer,
+      basicTrainerInstitution: users.basicTrainerInstitution,
+      groupHasField: users.groupHasField,
+      groupFieldDesc: users.groupFieldDesc,
+      groupHasParking: users.groupHasParking,
+      groupParkingDesc: users.groupParkingDesc,
+      groupSchedule: users.groupSchedule,
+      groupTerms: users.groupTerms,
+      groupProgramIncludes: users.groupProgramIncludes,
+      groupHasCertifiedTrainer: users.groupHasCertifiedTrainer,
+      groupTrainerInstitution: users.groupTrainerInstitution,
     })
     .from(users)
     .where(eq(users.id, userId))
@@ -90,7 +108,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
 
   return (
     <DashboardServiceDetail
-      organizationId={organization.id}
+      organization={organization}
       service={formattedService}
       initialIsEnabled={isEnabled}
       slug={slug}
