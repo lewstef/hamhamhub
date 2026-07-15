@@ -7,11 +7,38 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 
 /**
- * Creates a new course associated with the organization.
+ * Creates a new offering (Course, Dog Sport, or Boarding Service) associated with the organization.
  *
  * @param prevState - Unused state placeholder
- * @param formData - The course form data
- * @returns `{ success: true }` or `{ error: string }`
+ * @param formData - The course/boarding form data
+ * @param formData.name - Name of the offering (required)
+ * @param formData.price - Price amount (e.g. "150 RON")
+ * @param formData.priceType - Suffix billing frequency (e.g. "course", "month", "night", "day")
+ * @param formData.serviceId - Linked service template UUID
+ * @param formData.certifiedTrainer - Boolean string for training trainer certification
+ * @param formData.certifierName - Trainer certification body name
+ * @param formData.dedicatedField - Boolean string for training field availability
+ * @param formData.trainingFieldDescription - Description of training field
+ * @param formData.trainingFieldAddress - Address of training field
+ * @param formData.trainingFieldGoogleBusinessProfile - Google Business Profile link of training field
+ * @param formData.trainingFieldGoogleMapsLink - Google Maps link of training field
+ * @param formData.parking - Boolean string for parking availability
+ * @param formData.parkingDescription - Description of parking spaces
+ * @param formData.details - Offering detailed description
+ * @param formData.termsOfParticipation - Offering terms and prerequisites
+ * @param formData.medicationAdministration - Boolean string for boarding meds administration
+ * @param formData.medicationAdministrationDetails - Instructions for medication administration
+ * @param formData.dailyWalks - Integer string (1-4) representing daily walk frequency
+ * @param formData.ownerCommunication - Boolean string for owner updates communication
+ * @param formData.ownerCommunicationDetails - Delivery methods for owner communication
+ * @param formData.personalizedMealPlan - Boolean string for custom dietary meal plans
+ * @param formData.personalizedMealPlanDetails - Custom meal planning specifications
+ * @param formData.checkin - The check-in time, format: hh:mm (24h)
+ * @param formData.checkout - The check-out time, format: hh:mm (24h)
+ *
+ * @returns `{ success: true }` on successful creation
+ * @returns `{ error: string }` if name is missing, unauthorized access, or DB failure
+ * @sideEffect Revalidates /dashboard/services/dog-training, /dashboard/services/sport-dog-training, /dashboard/services/dog-boarding, and matching backoffice paths
  */
 export async function createCourseAction(prevState: unknown, formData: FormData) {
   const session = await auth();
@@ -50,6 +77,25 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
   const details = formData.get("details") as string;
   const termsOfParticipation = formData.get("termsOfParticipation") as string;
 
+  const medicationAdministration = formData.get("medicationAdministration") === "true";
+  const medicationAdministrationDetails = formData.get("medicationAdministrationDetails") as string;
+  const dailyWalksStr = formData.get("dailyWalks") as string;
+  const dailyWalks = dailyWalksStr ? parseInt(dailyWalksStr, 10) : null;
+  const ownerCommunication = formData.get("ownerCommunication") === "true";
+  const ownerCommunicationDetails = formData.get("ownerCommunicationDetails") as string;
+  const personalizedMealPlan = formData.get("personalizedMealPlan") === "true";
+  const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
+  const checkin = formData.get("checkin") as string || null;
+  const checkout = formData.get("checkout") as string || null;
+
+  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  if (checkin && !timeRegex.test(checkin)) {
+    return { error: "Invalid check-in time format. Use hh:mm (24h)." };
+  }
+  if (checkout && !timeRegex.test(checkout)) {
+    return { error: "Invalid check-out time format. Use hh:mm (24h)." };
+  }
+
   if (!name) {
     return { error: "Course name is required." };
   }
@@ -72,12 +118,23 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       termsOfParticipation,
       price,
       priceType,
+      medicationAdministration,
+      medicationAdministrationDetails: medicationAdministration ? medicationAdministrationDetails : null,
+      dailyWalks,
+      ownerCommunication,
+      ownerCommunicationDetails: ownerCommunication ? ownerCommunicationDetails : null,
+      personalizedMealPlan,
+      personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
+      checkin,
+      checkout,
     });
 
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
+    revalidatePath("/dashboard/services/dog-boarding");
     revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
     return { success: true };
   } catch (error) {
     console.error("Failed to create course:", error);
@@ -86,11 +143,39 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
 }
 
 /**
- * Updates an existing course.
+ * Updates an existing offering (Course, Dog Sport, or Boarding Service).
  *
  * @param prevState - Unused state placeholder
- * @param formData - The course form data
- * @returns `{ success: true }` or `{ error: string }`
+ * @param formData - The course/boarding form data
+ * @param formData.id - ID of the course to update (required)
+ * @param formData.name - Name of the offering (required)
+ * @param formData.price - Price amount (e.g. "150 RON")
+ * @param formData.priceType - Suffix billing frequency (e.g. "course", "month", "night", "day")
+ * @param formData.serviceId - Linked service template UUID
+ * @param formData.certifiedTrainer - Boolean string for training trainer certification
+ * @param formData.certifierName - Trainer certification body name
+ * @param formData.dedicatedField - Boolean string for training field availability
+ * @param formData.trainingFieldDescription - Description of training field
+ * @param formData.trainingFieldAddress - Address of training field
+ * @param formData.trainingFieldGoogleBusinessProfile - Google Business Profile link of training field
+ * @param formData.trainingFieldGoogleMapsLink - Google Maps link of training field
+ * @param formData.parking - Boolean string for parking availability
+ * @param formData.parkingDescription - Description of parking spaces
+ * @param formData.details - Offering detailed description
+ * @param formData.termsOfParticipation - Offering terms and prerequisites
+ * @param formData.medicationAdministration - Boolean string for boarding meds administration
+ * @param formData.medicationAdministrationDetails - Instructions for medication administration
+ * @param formData.dailyWalks - Integer string (1-4) representing daily walk frequency
+ * @param formData.ownerCommunication - Boolean string for owner updates communication
+ * @param formData.ownerCommunicationDetails - Delivery methods for owner communication
+ * @param formData.personalizedMealPlan - Boolean string for custom dietary meal plans
+ * @param formData.personalizedMealPlanDetails - Custom meal planning specifications
+ * @param formData.checkin - The check-in time, format: hh:mm (24h)
+ * @param formData.checkout - The check-out time, format: hh:mm (24h)
+ *
+ * @returns `{ success: true }` on successful update
+ * @returns `{ error: string }` if name or id is missing, unauthorized access, or DB failure
+ * @sideEffect Revalidates /dashboard/services/dog-training, /dashboard/services/sport-dog-training, /dashboard/services/dog-boarding, and matching backoffice paths
  */
 export async function updateCourseAction(prevState: unknown, formData: FormData) {
   const session = await auth();
@@ -119,6 +204,25 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
   const parkingDescription = formData.get("parkingDescription") as string;
   const details = formData.get("details") as string;
   const termsOfParticipation = formData.get("termsOfParticipation") as string;
+
+  const medicationAdministration = formData.get("medicationAdministration") === "true";
+  const medicationAdministrationDetails = formData.get("medicationAdministrationDetails") as string;
+  const dailyWalksStr = formData.get("dailyWalks") as string;
+  const dailyWalks = dailyWalksStr ? parseInt(dailyWalksStr, 10) : null;
+  const ownerCommunication = formData.get("ownerCommunication") === "true";
+  const ownerCommunicationDetails = formData.get("ownerCommunicationDetails") as string;
+  const personalizedMealPlan = formData.get("personalizedMealPlan") === "true";
+  const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
+  const checkin = formData.get("checkin") as string || null;
+  const checkout = formData.get("checkout") as string || null;
+
+  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  if (checkin && !timeRegex.test(checkin)) {
+    return { error: "Invalid check-in time format. Use hh:mm (24h)." };
+  }
+  if (checkout && !timeRegex.test(checkout)) {
+    return { error: "Invalid check-out time format. Use hh:mm (24h)." };
+  }
 
   if (!courseId) {
     return { error: "Course ID is required." };
@@ -160,13 +264,24 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         termsOfParticipation,
         price,
         priceType,
+        medicationAdministration,
+        medicationAdministrationDetails: medicationAdministration ? medicationAdministrationDetails : null,
+        dailyWalks,
+        ownerCommunication,
+        ownerCommunicationDetails: ownerCommunication ? ownerCommunicationDetails : null,
+        personalizedMealPlan,
+        personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
+        checkin,
+        checkout,
       })
       .where(eq(courses.id, courseId));
 
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
+    revalidatePath("/dashboard/services/dog-boarding");
     revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
     return { success: true };
   } catch (error) {
     console.error("Failed to update course:", error);
@@ -210,8 +325,10 @@ export async function deleteCourseAction(courseId: string) {
 
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
+    revalidatePath("/dashboard/services/dog-boarding");
     revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete course:", error);
@@ -252,8 +369,10 @@ export async function reorderOrgCoursesAction(orderedCourseIds: string[]) {
     }
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
+    revalidatePath("/dashboard/services/dog-boarding");
     revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
     return { success: true };
   } catch (error) {
     console.error("Failed to reorder organization courses:", error);

@@ -6,7 +6,7 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +26,15 @@ interface Course {
   termsOfParticipation?: string | null;
   price?: string | null;
   priceType?: string | null;
+  medicationAdministration?: boolean | null;
+  medicationAdministrationDetails?: string | null;
+  dailyWalks?: number | null;
+  ownerCommunication?: boolean | null;
+  ownerCommunicationDetails?: string | null;
+  personalizedMealPlan?: boolean | null;
+  personalizedMealPlanDetails?: string | null;
+  checkin?: string | null;
+  checkout?: string | null;
 }
 
 interface Service {
@@ -54,7 +63,7 @@ export function DashboardServiceDetail({
   slug,
   activeCourseTab,
   enabledCourseIds,
-  courses = [],
+  courses,
   backHref = "/dashboard/services",
   backLabel = "Back to Services",
 }: DashboardServiceDetailProps) {
@@ -63,7 +72,7 @@ export function DashboardServiceDetail({
   const [isPending, startTransition] = useTransition();
 
   // Course states
-  const [localCourses, setLocalCourses] = useState<Course[]>(courses);
+  const [localCourses, setLocalCourses] = useState<Course[]>(courses || []);
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | undefined>(undefined);
@@ -74,13 +83,16 @@ export function DashboardServiceDetail({
 
   // Sync localCourses with courses prop
   useEffect(() => {
-    setLocalCourses(courses);
+    if (courses) {
+      setLocalCourses(courses);
+    }
   }, [courses]);
 
   const isDogTraining = service.name.toLowerCase() === "dog training";
   const isSportDogTraining = service.name.toLowerCase() === "dog sports training";
-  const isDynamicCourses = isDogTraining || isSportDogTraining;
-  const itemNoun = isSportDogTraining ? "Dog Sport" : "Course";
+  const isDogBoarding = service.name.toLowerCase() === "dog boarding";
+  const isDynamicCourses = isDogTraining || isSportDogTraining || isDogBoarding;
+  const itemNoun = isSportDogTraining ? "Dog Sport" : isDogBoarding ? "Boarding service" : "Course";
 
   const handleToggle = () => {
     const nextState = !isEnabled;
@@ -202,7 +214,7 @@ export function DashboardServiceDetail({
               <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
                 {service.name}
               </CardTitle>
-              {!isDynamicCourses && (
+              {!isDynamicCourses && slug !== "dog-boarding" && (
                 <CardDescription className="text-sm">
                   Service Template Identifier: {service.id}
                 </CardDescription>
@@ -228,7 +240,7 @@ export function DashboardServiceDetail({
 
         <CardContent className="space-y-6">
           {/* Toggle Control Area (Hidden for dynamic course services since they list custom items) */}
-          {!isDynamicCourses && (
+          {!isDynamicCourses && slug !== "dog-boarding" && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/20 gap-4">
               <div className="space-y-1">
                 <span className="text-sm font-semibold text-foreground">
@@ -293,6 +305,13 @@ export function DashboardServiceDetail({
                           </div>
                           <span className="text-sm font-bold text-foreground">
                             {course.name}
+                            {(course.checkin || course.checkout) && (
+                              <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
+                                {course.checkin ? `In: ${course.checkin}` : ""}
+                                {course.checkin && course.checkout ? " • " : ""}
+                                {course.checkout ? `Out: ${course.checkout}` : ""}
+                              </span>
+                            )}
                           </span>
                           {course.certifiedTrainer && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
@@ -312,9 +331,33 @@ export function DashboardServiceDetail({
                               Parking
                             </span>
                           )}
+                          {course.medicationAdministration && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-600 border border-red-500/20" title={course.medicationAdministrationDetails || ""}>
+                              <Pill className="size-2.5" />
+                              Meds Administered
+                            </span>
+                          )}
+                          {course.dailyWalks && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
+                              <Footprints className="size-2.5" />
+                              {course.dailyWalks} {course.dailyWalks === 1 ? "Walk" : "Walks"}
+                            </span>
+                          )}
+                          {course.ownerCommunication && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/10 text-pink-600 border border-pink-500/20" title={course.ownerCommunicationDetails || ""}>
+                              <Camera className="size-2.5" />
+                              Updates Sent
+                            </span>
+                          )}
+                          {course.personalizedMealPlan && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-600 border border-orange-500/20" title={course.personalizedMealPlanDetails || ""}>
+                              <Utensils className="size-2.5" />
+                              Meal Plan
+                            </span>
+                          )}
                           {course.price && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
-                              {course.price} / {course.priceType === "month" ? "month" : itemNoun.toLowerCase()}
+                              {course.price} / {["month", "night", "day", "service"].includes(course.priceType || "") ? course.priceType : itemNoun.toLowerCase()}
                             </span>
                           )}
                         </div>

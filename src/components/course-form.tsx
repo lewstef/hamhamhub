@@ -24,7 +24,23 @@ interface Course {
   termsOfParticipation?: string | null;
   price?: string | null;
   priceType?: string | null;
+  medicationAdministration?: boolean | null;
+  medicationAdministrationDetails?: string | null;
+  dailyWalks?: number | null;
+  ownerCommunication?: boolean | null;
+  ownerCommunicationDetails?: string | null;
+  personalizedMealPlan?: boolean | null;
+  personalizedMealPlanDetails?: string | null;
+  checkin?: string | null;
+  checkout?: string | null;
 }
+
+// Pre-populates 30-minute interval suggestions (00:00 to 23:30) for check-in/check-out combobox selectors
+const timeOptions = Array.from({ length: 48 }, (_, i) => {
+  const hours = Math.floor(i / 2).toString().padStart(2, "0");
+  const minutes = (i % 2 === 0 ? "00" : "30");
+  return `${hours}:${minutes}`;
+});
 
 interface CourseFormProps {
   organizationId: string;
@@ -54,7 +70,18 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
   const [details, setDetails] = useState(initialCourse?.details || "");
   const [termsOfParticipation, setTermsOfParticipation] = useState(initialCourse?.termsOfParticipation || "");
   const [price, setPrice] = useState(initialCourse?.price || "");
-  const [priceType, setPriceType] = useState(initialCourse?.priceType || "course");
+  const [priceType, setPriceType] = useState(initialCourse?.priceType || (itemNoun === "Boarding service" ? "night" : "course"));
+  const [medicationAdministration, setMedicationAdministration] = useState(initialCourse?.medicationAdministration || false);
+  const [medicationAdministrationDetails, setMedicationAdministrationDetails] = useState(initialCourse?.medicationAdministrationDetails || "");
+  const [dailyWalks, setDailyWalks] = useState(initialCourse?.dailyWalks || 1);
+  const [ownerCommunication, setOwnerCommunication] = useState(initialCourse?.ownerCommunication || false);
+  const [ownerCommunicationDetails, setOwnerCommunicationDetails] = useState(initialCourse?.ownerCommunicationDetails || "");
+  const [personalizedMealPlan, setPersonalizedMealPlan] = useState(initialCourse?.personalizedMealPlan || false);
+  const [personalizedMealPlanDetails, setPersonalizedMealPlanDetails] = useState(initialCourse?.personalizedMealPlanDetails || "");
+  
+  // Boarding check-in and check-out times in 24-hour (hh:mm) format
+  const [checkin, setCheckin] = useState(initialCourse?.checkin || "08:00");
+  const [checkout, setCheckout] = useState(initialCourse?.checkout || "18:00");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +111,15 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     formData.append("parkingDescription", parkingDescription);
     formData.append("details", details);
     formData.append("termsOfParticipation", termsOfParticipation);
+    formData.append("medicationAdministration", String(medicationAdministration));
+    formData.append("medicationAdministrationDetails", medicationAdministrationDetails);
+    formData.append("dailyWalks", String(dailyWalks));
+    formData.append("ownerCommunication", String(ownerCommunication));
+    formData.append("ownerCommunicationDetails", ownerCommunicationDetails);
+    formData.append("personalizedMealPlan", String(personalizedMealPlan));
+    formData.append("personalizedMealPlanDetails", personalizedMealPlanDetails);
+    formData.append("checkin", checkin);
+    formData.append("checkout", checkout);
 
     startTransition(async () => {
       const action = isEdit ? updateCourseAction : createCourseAction;
@@ -135,7 +171,13 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
             <Input
               id="course-name"
               type="text"
-              placeholder={itemNoun === "Dog Sport" ? "e.g. Agility, IGP, Obedience" : "e.g. Puppy Socialization Class"}
+              placeholder={
+                itemNoun === "Dog Sport"
+                  ? "e.g. Agility, IGP, Obedience"
+                  : itemNoun === "Boarding service"
+                  ? "e.g. Standard Room, VIP Cabin"
+                  : "e.g. Puppy Socialization Class"
+              }
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="bg-card"
@@ -146,126 +188,134 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
           {/* Toggle groups */}
           <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
             <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
-              Trainer & Facility Attributes
+              {itemNoun === "Boarding service" ? "Facility Attributes" : "Trainer & Facility Attributes"}
             </h3>
 
             {/* Certified Trainer Toggle */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-sm font-bold text-foreground">Certified Dog Trainer</span>
-                  <p className="text-xs text-muted-foreground">
-                    Enable if this {itemNoun.toLowerCase()} is coached by an officially certified trainer.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={certifiedTrainer}
-                  onClick={() => setCertifiedTrainer(!certifiedTrainer)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    certifiedTrainer ? "bg-primary" : "bg-muted-foreground/30"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      certifiedTrainer ? "translate-x-4" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
+            {itemNoun !== "Boarding service" && (
+              <>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-sm font-bold text-foreground">Certified Dog Trainer</span>
+                      <p className="text-xs text-muted-foreground">
+                        Enable if this {itemNoun.toLowerCase()} is coached by an officially certified trainer.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={certifiedTrainer}
+                      onClick={() => setCertifiedTrainer(!certifiedTrainer)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        certifiedTrainer ? "bg-primary" : "bg-muted-foreground/30"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          certifiedTrainer ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
 
-              {certifiedTrainer && (
-                <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                  <Label htmlFor="certifier-name">Certifier Name</Label>
-                  <Input
-                    id="certifier-name"
-                    type="text"
-                    placeholder="Name of certifying institution/body"
-                    value={certifierName}
-                    onChange={(e) => setCertifierName(e.target.value)}
-                    className="bg-background"
-                  />
+                  {certifiedTrainer && (
+                    <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
+                      <Label htmlFor="certifier-name">Certifier Name</Label>
+                      <Input
+                        id="certifier-name"
+                        type="text"
+                        placeholder="Name of certifying institution/body"
+                        value={certifierName}
+                        onChange={(e) => setCertifierName(e.target.value)}
+                        className="bg-background"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="h-px bg-border/60" />
+                <div className="h-px bg-border/60" />
+              </>
+            )}
 
             {/* Dedicated Training Field Toggle */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <span className="text-sm font-bold text-foreground">Dedicated Training Field</span>
-                  <p className="text-xs text-muted-foreground">
-                    Does the class run on a fully closed, dedicated training field?
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={dedicatedField}
-                  onClick={() => setDedicatedField(!dedicatedField)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    dedicatedField ? "bg-primary" : "bg-muted-foreground/30"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      dedicatedField ? "translate-x-4" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
+            {itemNoun !== "Boarding service" && (
+              <>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-sm font-bold text-foreground">Dedicated Training Field</span>
+                      <p className="text-xs text-muted-foreground">
+                        Does the class run on a fully closed, dedicated training field?
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={dedicatedField}
+                      onClick={() => setDedicatedField(!dedicatedField)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        dedicatedField ? "bg-primary" : "bg-muted-foreground/30"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          dedicatedField ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
 
-              {dedicatedField && (
-                <div className="space-y-4 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                  <div className="space-y-2">
-                    <Label>Training Field Description</Label>
-                    <WysiwygEditor
-                      value={trainingFieldDescription}
-                      onChange={setTrainingFieldDescription}
-                      placeholder="Explain field attributes, size, safety fences, etc."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="training-field-address">Address</Label>
-                    <Input
-                      id="training-field-address"
-                      type="text"
-                      placeholder="e.g. 123 Canine Lane, Bucharest"
-                      value={trainingFieldAddress}
-                      onChange={(e) => setTrainingFieldAddress(e.target.value)}
-                      className="bg-background"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="training-field-gbp">Google Business Profile</Label>
-                    <Input
-                      id="training-field-gbp"
-                      type="url"
-                      placeholder="https://business.google.com/..."
-                      value={trainingFieldGoogleBusinessProfile}
-                      onChange={(e) => setTrainingFieldGoogleBusinessProfile(e.target.value)}
-                      className="bg-background"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="training-field-maps">Google Maps Link</Label>
-                    <Input
-                      id="training-field-maps"
-                      type="url"
-                      placeholder="https://maps.google.com/..."
-                      value={trainingFieldGoogleMapsLink}
-                      onChange={(e) => setTrainingFieldGoogleMapsLink(e.target.value)}
-                      className="bg-background"
-                    />
-                  </div>
+                  {dedicatedField && (
+                    <div className="space-y-4 pl-4 border-l-2 border-primary/20 transition-all duration-200">
+                      <div className="space-y-2">
+                        <Label>Training Field Description</Label>
+                        <WysiwygEditor
+                          value={trainingFieldDescription}
+                          onChange={setTrainingFieldDescription}
+                          placeholder="Explain field attributes, size, safety fences, etc."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="training-field-address">Address</Label>
+                        <Input
+                          id="training-field-address"
+                          type="text"
+                          placeholder="e.g. 123 Canine Lane, Bucharest"
+                          value={trainingFieldAddress}
+                          onChange={(e) => setTrainingFieldAddress(e.target.value)}
+                          className="bg-background"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="training-field-gbp">Google Business Profile</Label>
+                        <Input
+                          id="training-field-gbp"
+                          type="url"
+                          placeholder="https://business.google.com/..."
+                          value={trainingFieldGoogleBusinessProfile}
+                          onChange={(e) => setTrainingFieldGoogleBusinessProfile(e.target.value)}
+                          className="bg-background"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="training-field-maps">Google Maps Link</Label>
+                        <Input
+                          id="training-field-maps"
+                          type="url"
+                          placeholder="https://maps.google.com/..."
+                          value={trainingFieldGoogleMapsLink}
+                          onChange={(e) => setTrainingFieldGoogleMapsLink(e.target.value)}
+                          className="bg-background"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="h-px bg-border/60" />
+                <div className="h-px bg-border/60" />
+              </>
+            )}
 
             {/* Parking Toggle */}
             <div className="space-y-4">
@@ -305,6 +355,201 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
               )}
             </div>
           </div>
+
+          {itemNoun === "Boarding service" && (
+            <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
+                Boarding Details
+              </h3>
+
+              {/* Medication Administration Toggle */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-sm font-bold text-foreground">Medication Administration</span>
+                    <p className="text-xs text-muted-foreground">
+                      Can you administer medication or medical care?
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={medicationAdministration}
+                    onClick={() => setMedicationAdministration(!medicationAdministration)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      medicationAdministration ? "bg-primary" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        medicationAdministration ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {medicationAdministration && (
+                  <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
+                    <Label htmlFor="medication-details">Medication Administration Instructions</Label>
+                    <Input
+                      id="medication-details"
+                      type="text"
+                      placeholder="e.g. oral tablets, injections, schedule limitations"
+                      value={medicationAdministrationDetails}
+                      onChange={(e) => setMedicationAdministrationDetails(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="h-px bg-border/60" />
+
+              {/* Daily Walks Dropdown */}
+              <div className="space-y-2">
+                <Label htmlFor="daily-walks">Daily Walks</Label>
+                <select
+                  id="daily-walks"
+                  value={dailyWalks}
+                  onChange={(e) => setDailyWalks(parseInt(e.target.value, 10))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 font-bold focus:outline-none"
+                >
+                  <option value={1}>1 walk per day</option>
+                  <option value={2}>2 walks per day</option>
+                  <option value={3}>3 walks per day</option>
+                  <option value={4}>4 walks per day</option>
+                </select>
+              </div>
+
+              <div className="h-px bg-border/60" />
+
+              {/* Communication with the Owner Toggle */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-sm font-bold text-foreground">Communication with the Owner</span>
+                    <p className="text-xs text-muted-foreground">
+                      Will you provide regular photo/video updates to the owner?
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={ownerCommunication}
+                    onClick={() => setOwnerCommunication(!ownerCommunication)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      ownerCommunication ? "bg-primary" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        ownerCommunication ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {ownerCommunication && (
+                  <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
+                    <Label htmlFor="communication-details">Communication Updates Details</Label>
+                    <Input
+                      id="communication-details"
+                      type="text"
+                      placeholder="e.g. daily photos via WhatsApp, weekly email progress"
+                      value={ownerCommunicationDetails}
+                      onChange={(e) => setOwnerCommunicationDetails(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="h-px bg-border/60" />
+
+              {/* Personalized Meal Plan Toggle */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-sm font-bold text-foreground">Personalized Meal Plan</span>
+                    <p className="text-xs text-muted-foreground">
+                      Can you provide a customized meal plan or accommodate special diets?
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={personalizedMealPlan}
+                    onClick={() => setPersonalizedMealPlan(!personalizedMealPlan)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      personalizedMealPlan ? "bg-primary" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        personalizedMealPlan ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {personalizedMealPlan && (
+                  <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
+                    <Label htmlFor="meal-details">Meal Plan Details</Label>
+                    <Input
+                      id="meal-details"
+                      type="text"
+                      placeholder="e.g. BARF diet support, raw food storage, customized portions"
+                      value={personalizedMealPlanDetails}
+                      onChange={(e) => setPersonalizedMealPlanDetails(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="h-px bg-border/60" />
+
+              {/* Checkin / Checkout time pickers */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="checkin">Check-in Time</Label>
+                  <Input
+                    id="checkin"
+                    type="text"
+                    list="time-options"
+                    value={checkin}
+                    onChange={(e) => setCheckin(e.target.value)}
+                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+                    placeholder="e.g. 08:00"
+                    title="Please enter a valid time in 24-hour hh:mm format."
+                    className="bg-background font-mono"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="checkout">Check-out Time</Label>
+                  <Input
+                    id="checkout"
+                    type="text"
+                    list="time-options"
+                    value={checkout}
+                    onChange={(e) => setCheckout(e.target.value)}
+                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+                    placeholder="e.g. 18:00"
+                    title="Please enter a valid time in 24-hour hh:mm format."
+                    className="bg-background font-mono"
+                    required
+                  />
+                </div>
+              </div>
+
+              <datalist id="time-options">
+                {timeOptions.map((time) => (
+                  <option key={time} value={time} />
+                ))}
+              </datalist>
+            </div>
+          )}
 
           {/* Details & Terms Editors */}
           <div className="space-y-2">
@@ -352,8 +597,19 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                   onChange={(e) => setPriceType(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 font-bold focus:outline-none"
                 >
-                  <option value="course">Per {itemNoun}</option>
-                  <option value="month">Per Month</option>
+                  {itemNoun === "Boarding service" ? (
+                    <>
+                      <option value="night">Per Night</option>
+                      <option value="day">Per Day</option>
+                      <option value="month">Per Month</option>
+                      <option value="service">Per Boarding service</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="course">Per {itemNoun}</option>
+                      <option value="month">Per Month</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>

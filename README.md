@@ -4,6 +4,34 @@ A modern Next.js admin backoffice application integrating robust authentication,
 
 ---
 
+## Technology Stack
+
+This application is built with a state-of-the-art framework stack:
+
+### Core Framework & View Layer
+- **Next.js 16 (`16.2.9`)**: Uses App Router, Dynamic Metadata, Middleware route guards, and Server Actions for asynchronous server-client interaction.
+- **React 19 (`19.2.4`) & React DOM (`19.2.4`)**: Leverages React Server Components, actions hooks, and form state tracking.
+- **Tailwind CSS v4 (`^4`)**: Dynamic styles processed via `@tailwindcss/postcss` for custom themes.
+- **Lucide Icons (`^1.22.0`)**: Vector graphic icons library.
+- **Base UI / Radix UI Primitives (`^1.6.0`)**: Accessible component primitives powered by `@base-ui/react`.
+
+### Database & Data Access Layer
+- **Drizzle ORM (`^0.45.2`)**: TypeScript-safe Object-Relational Mapper for PostgreSQL.
+- **Postgres.js (`^3.4.9`)**: Pooled client connection driver for native PostgreSQL.
+- **Zod (`^4.4.3`)**: Schema-based validation utilized for profile parameters, address layouts, and credentials checks.
+
+### Authentication & Security
+- **Auth.js / NextAuth.js (`5.0.0-beta.31`)**: Session-based credentials authentication with custom role and token payloads.
+- **BcryptJS (`^3.0.3`)**: Password hashing and verification library.
+
+### Development & Testing
+- **TypeScript (`^5`)**: Strong static typing compiled and validated locally.
+- **Vitest (`^4.1.9`)**: Lightweight unit and integration test runner.
+- **Happy DOM (`^20.10.6`)**: Fast, lightweight browser simulation environment.
+- **Testing Library React (`^16.3.2`)**: Component validation utilities.
+
+---
+
 ## 1. Directory Structure
 
 The backoffice system contains three primary user directories under `/backoffice`:
@@ -88,6 +116,10 @@ The backoffice system integrates completely dynamic configuration layers for bus
   - *Account Settings*: Interactive password reset forms complete with real-time Password Strength Check indicators.
   - *Subscription Details*: Telemetry license tier indicators and plans.
   - *Services Directory*: Modular tactile service cards enabling direct toggle actions for services.
+- **Dynamic Dog Boarding Settings (Presentation-Only)**: The Dog Boarding settings page (`/dashboard/services/dog-boarding`) allows organizations to add custom sortable **Boarding service** offerings (e.g., Standard Room, VIP Cabin) with drag-and-drop reordering. The configuration form is tailored to exclude training-specific inputs (trainer certification, training field details) and supports daily, nightly, monthly, and service-level pricing frequencies. It excludes the technical Service Template Identifier string and the Service Status toggle panel.
+  - *Custom attributes*: Allows toggling medication administration instructions, owner communication update feeds, and custom dietary meal plans (displaying details text boxes when enabled), along with a 1-4 walks selection dropdown.
+  - *Check-in/Check-out timing*: Combobox timing text inputs validated to 24-hour `hh:mm` format with Microsoft Teams-style native browser `<datalist>` dropdown suggestions every 30 minutes from `00:00` to `23:30`.
+  - *Tactile lists indicators*: Displays visual indicators (Meds Administered, Walks, Updates Sent, Meal Plan) and timing markers (e.g. `In: 08:00 • Out: 18:00`) next to offerings in the dashboard view.
 
 ### B. Backoffice Staff Dashboard
 - **Platform Telemetry Metrics**: Staff members can view critical operational metrics, including:

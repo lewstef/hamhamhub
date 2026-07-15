@@ -111,6 +111,17 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
         )
       )
       .orderBy(courses.sortOrder, courses.createdAt);
+  } else if (slug === "dog-boarding") {
+    orgCourses = await db
+      .select()
+      .from(courses)
+      .where(
+        and(
+          eq(courses.organizationId, organization.id),
+          eq(courses.serviceId, service.id)
+        )
+      )
+      .orderBy(courses.sortOrder, courses.createdAt);
   }
 
   return (

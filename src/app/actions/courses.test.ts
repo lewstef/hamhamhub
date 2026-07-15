@@ -98,6 +98,63 @@ describe("Courses Server Actions", () => {
       expect(result).toEqual({ success: true });
     });
 
+    it("should successfully insert new boarding offering with custom boarding attributes", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
+
+      const formData = new FormData();
+      formData.append("name", "VIP Kennel Stay");
+      formData.append("price", "300");
+      formData.append("priceType", "night");
+      formData.append("medicationAdministration", "true");
+      formData.append("medicationAdministrationDetails", "Give pill after meals");
+      formData.append("dailyWalks", "3");
+      formData.append("ownerCommunication", "true");
+      formData.append("ownerCommunicationDetails", "WhatsApp photo at noon");
+      formData.append("personalizedMealPlan", "true");
+      formData.append("personalizedMealPlanDetails", "Raw BARF mix twice a day");
+      formData.append("checkin", "08:30");
+      formData.append("checkout", "18:00");
+
+      const result = await createCourseAction(null, formData);
+      expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
+        name: "VIP Kennel Stay",
+        price: "300",
+        priceType: "night",
+        medicationAdministration: true,
+        medicationAdministrationDetails: "Give pill after meals",
+        dailyWalks: 3,
+        ownerCommunication: true,
+        ownerCommunicationDetails: "WhatsApp photo at noon",
+        personalizedMealPlan: true,
+        personalizedMealPlanDetails: "Raw BARF mix twice a day",
+        checkin: "08:30",
+        checkout: "18:00",
+      }));
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should fail check-in format validation", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const formData = new FormData();
+      formData.append("name", "VIP Stay");
+      formData.append("checkin", "25:00");
+
+      const result = await createCourseAction(null, formData);
+      expect(result).toEqual({ error: "Invalid check-in time format. Use hh:mm (24h)." });
+    });
+
+    it("should fail check-out format validation", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const formData = new FormData();
+      formData.append("name", "VIP Stay");
+      formData.append("checkout", "18:65");
+
+      const result = await createCourseAction(null, formData);
+      expect(result).toEqual({ error: "Invalid check-out time format. Use hh:mm (24h)." });
+    });
+
     it("should fail if organization ID is missing for admin", async () => {
       vi.mocked(auth).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
       const formData = new FormData();

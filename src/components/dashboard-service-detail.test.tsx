@@ -5,8 +5,35 @@ import React from "react";
 import { DashboardServiceDetail } from "./dashboard-service-detail";
 import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
 
+vi.mock("lucide-react", () => ({
+  ArrowLeft: () => <div data-testid="arrow-left" />,
+  CheckCircle2: () => <div data-testid="check-circle" />,
+  XCircle: () => <div data-testid="x-circle" />,
+  Plus: () => <div data-testid="plus" />,
+  Edit2: () => <div data-testid="edit" />,
+  Trash2: () => <div data-testid="trash" />,
+  Award: () => <div data-testid="award" />,
+  MapPin: () => <div data-testid="map-pin" />,
+  Car: () => <div data-testid="car" />,
+  X: () => <div data-testid="x" />,
+  GripVertical: () => <div data-testid="grip" />,
+  Pill: () => <div data-testid="pill" />,
+  Footprints: () => <div data-testid="footprints" />,
+  Camera: () => <div data-testid="camera" />,
+  Utensils: () => <div data-testid="utensils" />,
+}));
+
 vi.mock("@/app/actions/organizations", () => ({
   toggleOrganizationServiceAction: vi.fn(),
+}));
+
+vi.mock("@/db", () => ({
+  db: {
+    insert: vi.fn(),
+    select: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 
 vi.mock("@/app/actions/courses", () => ({
@@ -172,6 +199,114 @@ describe("DashboardServiceDetail Component", () => {
 
     expect(screen.getByText("$100 / course")).toBeDefined();
     expect(screen.getByText("$50 / month")).toBeDefined();
+  });
+
+  it("should hide toggle button and identifier description for Dog Boarding", () => {
+    const boardingService = {
+      id: "srv-dog-boarding",
+      name: "Dog Boarding",
+      description: "Overnight stays, boarding services, and day care facilities.",
+    };
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={boardingService}
+        initialIsEnabled={true}
+        slug="dog-boarding"
+      />
+    );
+
+    expect(screen.getByText("Dog Boarding")).toBeDefined();
+    expect(screen.queryByText(/Template Identifier:/)).toBeNull();
+    expect(screen.queryByRole("switch")).toBeNull();
+  });
+
+  it("should format pricing with night/day/service suffix for Boarding services", () => {
+    const boardingService = {
+      id: "srv-dog-boarding",
+      name: "Dog Boarding",
+      description: "Overnight stays, boarding services, and day care facilities.",
+    };
+
+    const mockBoardingOfferings = [
+      {
+        id: "b-1",
+        name: "Standard Room",
+        certifiedTrainer: false,
+        dedicatedField: false,
+        parking: true,
+        price: "120 RON",
+        priceType: "night",
+      },
+      {
+        id: "b-2",
+        name: "VIP Suite",
+        certifiedTrainer: false,
+        dedicatedField: false,
+        parking: true,
+        price: "250 RON",
+        priceType: "day",
+      },
+    ];
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={boardingService}
+        initialIsEnabled={true}
+        slug="dog-boarding"
+        courses={mockBoardingOfferings}
+      />
+    );
+
+    expect(screen.getByText("120 RON / night")).toBeDefined();
+    expect(screen.getByText("250 RON / day")).toBeDefined();
+  });
+
+  it("should display custom badges (Meds, Walks, Updates, Meals) for Boarding services", () => {
+    const boardingService = {
+      id: "srv-dog-boarding",
+      name: "Dog Boarding",
+      description: "Overnight stays, boarding services, and day care facilities.",
+    };
+
+    const mockBoardingOfferings = [
+      {
+        id: "b-1",
+        name: "Standard Room",
+        certifiedTrainer: false,
+        dedicatedField: false,
+        parking: true,
+        price: "120 RON",
+        priceType: "night",
+        medicationAdministration: true,
+        medicationAdministrationDetails: "Twice daily",
+        dailyWalks: 3,
+        ownerCommunication: true,
+        ownerCommunicationDetails: "WhatsApp photos",
+        personalizedMealPlan: true,
+        personalizedMealPlanDetails: "BARF diet",
+        checkin: "08:00",
+        checkout: "18:00",
+      },
+    ];
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={boardingService}
+        initialIsEnabled={true}
+        slug="dog-boarding"
+        courses={mockBoardingOfferings}
+      />
+    );
+
+    expect(screen.getByText("Meds Administered")).toBeDefined();
+    expect(screen.getByText("3 Walks")).toBeDefined();
+    expect(screen.getByText("Updates Sent")).toBeDefined();
+    expect(screen.getByText("Meal Plan")).toBeDefined();
+    expect(screen.getByText("In: 08:00 • Out: 18:00")).toBeDefined();
   });
 });
 
