@@ -481,6 +481,18 @@ export async function deleteOrganizationAction(prevState: unknown, formData: For
   }
 }
 
+/**
+ * Toggles the enabled status of a service for a specific organization.
+ *
+ * Adds or removes the service ID to/from the organization's comma-separated list of enabled services.
+ *
+ * @param {string} organizationId - The database ID of the organization to modify.
+ * @param {string} serviceId - The unique ID of the service to toggle.
+ * @param {boolean} enabled - True to enable the service; false to disable it.
+ * @returns {Promise<{ success: boolean } | { error: string }>} Resolves with success state or error message.
+ * @sideEffect Revalidates cache paths: `/dashboard/services`, `/dashboard/account`, and `/dashboard`.
+ * @security Guarded by db query lookup verifying organization exists.
+ */
 export async function toggleOrganizationServiceAction(organizationId: string, serviceId: string, enabled: boolean) {
   try {
     const [org] = await db
@@ -519,6 +531,19 @@ export async function toggleOrganizationServiceAction(organizationId: string, se
   }
 }
 
+/**
+ * Toggles the active status of an individual course under a service for a specific organization.
+ *
+ * Adds or removes the course ID to/from the organization's comma-separated list of active courses.
+ * Sorted according to a predefined display order.
+ *
+ * @param {string} organizationId - The database ID of the organization to modify.
+ * @param {string} courseId - The unique ID of the course to toggle.
+ * @param {boolean} enabled - True to activate; false to deactivate.
+ * @returns {Promise<{ success: boolean } | { error: string }>} Resolves with success state or error message.
+ * @sideEffect Revalidates cache paths: `/dashboard/services`, `/dashboard/account`, `/dashboard`, and `/backoffice/organizations/services`.
+ * @security Guarded by db query lookup verifying organization exists.
+ */
 export async function toggleOrganizationCourseAction(organizationId: string, courseId: string, enabled: boolean) {
   try {
     const [org] = await db

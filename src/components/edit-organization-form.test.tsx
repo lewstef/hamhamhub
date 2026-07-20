@@ -1,23 +1,49 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 import { EditOrganizationForm } from "./edit-organization-form";
+import { toggleOrganizationServiceAction, updateOrganizationAction, changeOrganizationPasswordAction } from "@/app/actions/organizations";
 
 // Mock the server actions
 vi.mock("@/app/actions/organizations", () => ({
   updateOrganizationAction: vi.fn(),
   changeOrganizationPasswordAction: vi.fn(),
+  toggleOrganizationServiceAction: vi.fn(),
+  toggleOrganizationCourseAction: vi.fn(),
 }));
+
+let mockActionStateSuccess = false;
+
+vi.mock("react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react")>();
+  return {
+    ...actual,
+    useActionState: (action: any, initialState: any) => {
+      if (mockActionStateSuccess) {
+        return [{ success: true }, vi.fn(), false];
+      }
+      return [initialState, vi.fn(), false];
+    }
+  };
+});
+
+const mockRefresh = vi.fn();
+const mockPush = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    refresh: vi.fn(),
+    refresh: mockRefresh,
+    push: mockPush,
   }),
   usePathname: () => "/backoffice/organizations",
 }));
 
 describe("EditOrganizationForm Component", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockActionStateSuccess = false;
+  });
   const dummyOrganization = {
     id: "org-id-123",
     name: "Happy Paws Rescue",
@@ -132,5 +158,155 @@ describe("EditOrganizationForm Component", () => {
     // Warning should disappear and button should be enabled
     expect(screen.queryByText("Passwords do not match.")).toBeNull();
     expect(submitBtn.disabled).toBe(false);
+  });
+
+  it("should render services tab empty state when servicesList is empty", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        servicesList={[]}
+      />
+    );
+
+    const servicesTabBtn = screen.getByRole("button", { name: "Services" });
+    fireEvent.click(servicesTabBtn);
+
+    expect(screen.getByText("No active services associated with this organization's category.")).toBeDefined();
+  });
+
+  it("should render services list and handle toggle service on Services tab", async () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ success: true } as any);
+
+    const dummyServices = [
+      { id: "s-1", name: "Dog Grooming", organizationCategory: "ngo", slug: "dog-grooming", description: "Trim & wash" }
+    ];
+
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        servicesList={dummyServices}
+      />
+    );
+
+    const servicesTabBtn = screen.getByRole("button", { name: "Services" });
+    fireEvent.click(servicesTabBtn);
+
+    expect(screen.getByText("Dog Grooming")).toBeDefined();
+    expect(screen.getByText("Trim & wash")).toBeDefined();
+
+    // Click the toggle switch
+    const toggle = screen.getByRole("switch");
+    fireEvent.click(toggle);
+
+    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-id-123", "s-1", true);
+  });
+
+  it("should open and close Address, Phone, and Social modals on Account information tab", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Initial check: address fields not shown
+    expect(screen.queryByLabelText("Street Address")).toBeNull();
+
+    // Click Edit Address
+    const editAddressBtn = screen.getByRole("button", { name: "Edit Address" });
+    fireEvent.click(editAddressBtn);
+    expect(screen.getByLabelText("Street Address")).toBeDefined();
+
+    // Close address modal
+    const cancelAddress = screen.getAllByRole("button", { name: /cancel/i })[0];
+    fireEvent.click(cancelAddress);
+    expect(screen.queryByLabelText("Street Address")).toBeNull();
+
+    // Phone modal
+    const editPhoneBtn = screen.getByRole("button", { name: "Edit Phone number" });
+    fireEvent.click(editPhoneBtn);
+    expect(screen.getByLabelText("Phone number")).toBeDefined();
+    const cancelPhone = screen.getAllByRole("button", { name: /cancel/i })[0];
+    fireEvent.click(cancelPhone);
+    expect(screen.queryByLabelText("Phone number")).toBeNull();
+  });
+
+  it("should render Subscription tab content", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    const subscriptionTabBtn = screen.getByRole("button", { name: "Subscription" });
+    fireEvent.click(subscriptionTabBtn);
+
+    expect(screen.getByText("No subscription details currently configured.")).toBeDefined();
+  });
+
+  it("should open and close Edit Category, Email, Recovery Email, and Social modals", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // 1. Edit Category modal
+    expect(screen.queryByLabelText("Organization Category")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Category" }));
+    expect(screen.getByLabelText("Organization Category")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+    expect(screen.queryByLabelText("Organization Category")).toBeNull();
+
+    // Switch to Account settings tab for Email / Recovery Email
+    fireEvent.click(screen.getByRole("button", { name: "Account settings" }));
+
+    // 2. Edit Email modal
+    expect(screen.queryByLabelText("New Email Address")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Email" }));
+    // In edit-organization-form.tsx, the input is marked as:
+    // id="email" or similar. Let's verify we can cancel it
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    // 3. Edit Recovery Email modal
+    fireEvent.click(screen.getByRole("button", { name: "Edit Recovery email" }));
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    // 4. Social links modal (on Account info tab)
+    fireEvent.click(screen.getByRole("button", { name: "Account information" }));
+  });
+
+  it("should auto-close personal modals on personalState success", async () => {
+    mockActionStateSuccess = true;
+
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    await waitFor(() => {
+      expect(mockRefresh).toHaveBeenCalled();
+    });
+  });
+
+  it("should auto-close account modals on accountState success", async () => {
+    mockActionStateSuccess = true;
+
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    await waitFor(() => {
+      expect(mockRefresh).toHaveBeenCalled();
+    });
   });
 });

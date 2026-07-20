@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React, { useActionState } from "react";
 import { ServicesTable } from "./services-table";
+import { deleteServiceAction } from "@/app/actions/services";
 
 // Mock the server actions
 vi.mock("@/app/actions/services", () => ({
@@ -23,11 +24,12 @@ vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
   return {
     ...actual,
-    useActionState: vi.fn((_action: unknown, initialState: unknown) => [
-      initialState,
-      vi.fn(),
-      false, // isPending
-    ]),
+    useActionState: vi.fn((action: any, initialState: unknown) => {
+      const dispatch = vi.fn().mockImplementation((payload) => {
+        action(null, payload);
+      });
+      return [initialState, dispatch, false];
+    }),
   };
 });
 
@@ -202,5 +204,51 @@ describe("ServicesTable Component", () => {
     const cancelDeleteBtn = screen.getByRole("button", { name: "Cancel" });
     fireEvent.click(cancelDeleteBtn);
     expect(screen.queryByText("Delete Service")).toBeNull();
+  });
+
+  it("should call deleteServiceAction when deletion is confirmed", async () => {
+    vi.mocked(deleteServiceAction).mockResolvedValue({ success: true } as any);
+
+    render(
+      <ServicesTable
+        serviceList={mockServiceList}
+        organizationCategoryList={mockOrgCategoryList}
+        serviceTypeList={mockServiceTypeList}
+      />
+    );
+
+    const trashButtons = screen.getAllByRole("button").filter(
+      (btn) => btn.querySelector("svg")
+    );
+    fireEvent.click(trashButtons[0]);
+
+    // Deletion confirmation modal should show up
+    expect(screen.getByText("Delete Service")).toBeDefined();
+
+    // Confirm deletion
+    const confirmDeleteBtn = screen.getByRole("button", { name: "Delete" });
+    fireEvent.click(confirmDeleteBtn);
+
+    expect(deleteServiceAction).toHaveBeenCalled();
+  });
+
+  it("should show custom icon and descriptions based on service names", () => {
+    const specialServiceList = [
+      { id: "s-sport", name: "Dog Sports Training", organizationCategory: "ngo" },
+      { id: "s-walking", name: "Dog Walking", organizationCategory: "dog_service_provider" },
+      { id: "s-general", name: "Special Therapy Service", organizationCategory: "ngo" },
+    ];
+
+    render(
+      <ServicesTable
+        serviceList={specialServiceList}
+        organizationCategoryList={mockOrgCategoryList}
+        serviceTypeList={mockServiceTypeList}
+      />
+    );
+
+    expect(screen.getByText("Advanced canine sports, agility, and competition coaching.")).toBeDefined();
+    expect(screen.getByText("Outdoor exercise runs, safety walks, and park adventures.")).toBeDefined();
+    expect(screen.getByText("General dog services and master allocations.")).toBeDefined();
   });
 });

@@ -9,10 +9,25 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { ArrowLeft, Eye, CheckCircle2 } from "lucide-react";
 
+/**
+ * Props for the ServiceTypePreviewForm component.
+ * @interface ServiceTypePreviewFormProps
+ * @property {ServiceType} serviceType - The service type configuration schema to preview.
+ */
 interface ServiceTypePreviewFormProps {
   serviceType: ServiceType;
 }
 
+/**
+ * ServiceTypePreviewForm Component
+ *
+ * A backoffice preview form renderer that dynamically builds input fields (inputs, textareas,
+ * select dropdowns, checkboxes) based on a ServiceType schema structure. Allows platform
+ * admins to test-drive how organizations will configure service options in the dashboard.
+ *
+ * @param {ServiceTypePreviewFormProps} props - The component props.
+ * @returns {React.ReactElement} The service type preview form component.
+ */
 export function ServiceTypePreviewForm({ serviceType }: ServiceTypePreviewFormProps) {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [previewSuccess, setPreviewSuccess] = useState(false);
@@ -23,7 +38,6 @@ export function ServiceTypePreviewForm({ serviceType }: ServiceTypePreviewFormPr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting preview data:", formData);
     setPreviewSuccess(true);
     setTimeout(() => setPreviewSuccess(false), 4000);
   };

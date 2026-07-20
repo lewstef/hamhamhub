@@ -171,8 +171,8 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
 | `actions/initialization.ts` | `createAdminAction` |
 | `actions/employees.ts` | `createEmployeeAction`, `updateEmployeeAction`, `changeEmployeePasswordAction`, `deleteEmployeeAction` |
 | `actions/users.ts` | `createUserAction`, `updateUserAction`, `changeUserPasswordAction`, `deleteUserAction` |
-| `actions/organizations.ts` | `getOrganizationCategories`, `createOrganizationCategoryAction`, `updateOrganizationCategoryAction`, `deleteOrganizationCategoryAction`, `createOrganizationAction`, `updateOrganizationAction`, `changeOrganizationPasswordAction`, `deleteOrganizationAction` |
-| `actions/services.ts` | `createServiceAction`, `deleteServiceAction` |
+| `actions/organizations.ts` | `getOrganizationCategories`, `createOrganizationCategoryAction`, `updateOrganizationCategoryAction`, `deleteOrganizationCategoryAction`, `createOrganizationAction`, `updateOrganizationAction`, `changeOrganizationPasswordAction`, `deleteOrganizationAction`, `toggleOrganizationServiceAction`, `toggleOrganizationCourseAction` |
+| `actions/services.ts` | `createServiceAction`, `deleteServiceAction`, `reorderServicesAction`, `reorderCoursesAction` |
 | `actions/service-types.ts` | `getServiceTypesAction`, `updateServiceTypeAction` |
 | `actions/courses.ts` | `createCourseAction`, `updateCourseAction`, `deleteCourseAction`, `reorderOrgCoursesAction` |
 
@@ -192,7 +192,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (241 tests across 24 test files)
+# Run all tests (360 tests across 32 test files)
 npm run test
 
 # Run with coverage report
@@ -200,16 +200,16 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
 
 ### Test Coverage Metrics
-- **Statements**: 75.95%
-- **Branches**: 65.29%
-- **Functions**: 61.06%
-- **Lines**: 76.58%
+- **Statements**: 85.28%
+- **Branches**: 78.62%
+- **Functions**: 78.97%
+- **Lines**: 86.03%
 
 ### Test Coverage Summary
 | Area | Files Covered |
 | :--- | :--- |
 | Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types`, `courses` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
-| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail` |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor` |
 | Config & utilities | `config/service-types`, `config/dog-training`, `lib/utils` |
 | Hooks | `use-mobile` |

@@ -15,6 +15,14 @@ interface Service {
   coursesOrder?: string | null;
 }
 
+/**
+ * Props for the DashboardServicesList component.
+ * @interface DashboardServicesListProps
+ * @property {string} organizationId - The active organization's database ID.
+ * @property {Service[]} services - List of master directory services available.
+ * @property {string[]} initialEnabledIds - List of database IDs of services currently enabled for the organization.
+ * @property {string[]} [initialEnabledCourseIds] - List of database IDs of courses currently active for the organization.
+ */
 interface DashboardServicesListProps {
   organizationId: string;
   services: Service[];
@@ -22,6 +30,16 @@ interface DashboardServicesListProps {
   initialEnabledCourseIds?: string[];
 }
 
+/**
+ * DashboardServicesList Component
+ *
+ * Renders the business owner dashboard overview for active services and courses.
+ * Supports optimistic toggle actions for services and individual courses, accordion collapse toggles,
+ * and navigation shortcuts to manage details.
+ *
+ * @param {DashboardServicesListProps} props - The component props.
+ * @returns {React.ReactElement} The dashboard services list component.
+ */
 export function DashboardServicesList({
   organizationId,
   services,

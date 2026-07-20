@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import React from "react";
 import { DashboardServiceDetail } from "./dashboard-service-detail";
 import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
+import { deleteCourseAction, createCourseAction } from "@/app/actions/courses";
 
 vi.mock("lucide-react", () => ({
   ArrowLeft: () => <div data-testid="arrow-left" />,
@@ -21,6 +22,18 @@ vi.mock("lucide-react", () => ({
   Footprints: () => <div data-testid="footprints" />,
   Camera: () => <div data-testid="camera" />,
   Utensils: () => <div data-testid="utensils" />,
+  // WysiwygEditor icons
+  Bold: () => <div data-testid="bold" />,
+  Italic: () => <div data-testid="italic" />,
+  Underline: () => <div data-testid="underline" />,
+  List: () => <div data-testid="list" />,
+  ListOrdered: () => <div data-testid="list-ordered" />,
+  RemoveFormatting: () => <div data-testid="remove-formatting" />,
+  // CourseForm icons
+  ChevronDown: () => <div data-testid="chevron-down" />,
+  CheckCircle: () => <div data-testid="check-circle-2" />,
+  Info: () => <div data-testid="info" />,
+  AlertCircle: () => <div data-testid="alert-circle" />,
 }));
 
 vi.mock("@/app/actions/organizations", () => ({
@@ -125,13 +138,9 @@ describe("DashboardServiceDetail Component", () => {
     );
 
     expect(screen.getByText("Dog Training")).toBeDefined();
-    // Identifier should not be rendered
     expect(screen.queryByText(/Template Identifier:/)).toBeNull();
-    // Toggle switch should not be rendered
     expect(screen.queryByRole("switch")).toBeNull();
-    // Add Course button should be rendered
     expect(screen.getByText("Add Course")).toBeDefined();
-    // Empty state message should be visible
     expect(screen.getByText(/No courses created yet/)).toBeDefined();
   });
 
@@ -160,12 +169,6 @@ describe("DashboardServiceDetail Component", () => {
   });
 
   it("should display pricing formatted with suffix according to priceType", () => {
-    const trainingServiceWithCourses = {
-      id: "srv-dog-training",
-      name: "Dog Training",
-      description: "Behavioral training.",
-    };
-
     const mockCourses = [
       {
         id: "c-1",
@@ -190,7 +193,7 @@ describe("DashboardServiceDetail Component", () => {
     render(
       <DashboardServiceDetail
         organizationId="org-123"
-        service={trainingServiceWithCourses}
+        service={trainingService}
         initialIsEnabled={true}
         slug="dog-training"
         courses={mockCourses}
@@ -308,5 +311,292 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Meal Plan")).toBeDefined();
     expect(screen.getByText("In: 08:00 • Out: 18:00")).toBeDefined();
   });
-});
 
+  it("should display Certified, Field, and Parking badges when course has those flags", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          {
+            id: "c-1",
+            name: "Advanced Agility",
+            certifiedTrainer: true,
+            certifierName: "John Doe",
+            dedicatedField: true,
+            parking: true,
+            priceType: "course",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("Certified")).toBeDefined();
+    expect(screen.getByText("Field")).toBeDefined();
+    expect(screen.getByText("Parking")).toBeDefined();
+  });
+
+  it("should show '1 Walk' (singular) when dailyWalks is 1", () => {
+    const boardingService = {
+      id: "srv-dog-boarding",
+      name: "Dog Boarding",
+      description: "Day care.",
+    };
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={boardingService}
+        initialIsEnabled={true}
+        slug="dog-boarding"
+        courses={[
+          {
+            id: "b-1",
+            name: "Basic Stay",
+            certifiedTrainer: false,
+            dedicatedField: false,
+            parking: false,
+            dailyWalks: 1,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("1 Walk")).toBeDefined();
+  });
+
+  it("should open delete confirmation modal when Delete button is clicked", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          { id: "c-1", name: "Puppy Basics", certifiedTrainer: false, dedicatedField: false, parking: false },
+        ]}
+      />
+    );
+
+    // Find the Delete button in the course row (not in a modal yet)
+    const deleteBtn = screen.getByRole("button", { name: /Delete/ });
+    fireEvent.click(deleteBtn);
+
+    expect(screen.getByText("Delete Course")).toBeDefined();
+    expect(screen.getByText(/Are you sure you want to delete this course/)).toBeDefined();
+  });
+
+  it("should close delete confirmation modal via Cancel button", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          { id: "c-1", name: "Puppy Basics", certifiedTrainer: false, dedicatedField: false, parking: false },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Delete/ }));
+    expect(screen.getByText("Delete Course")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByText("Delete Course")).toBeNull();
+  });
+
+  it("should close delete confirmation modal via X button", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          { id: "c-1", name: "Puppy Basics", certifiedTrainer: false, dedicatedField: false, parking: false },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Delete/ }));
+    expect(screen.getByText("Delete Course")).toBeDefined();
+
+    // Find the X button in the modal
+    const xBtn = screen.getAllByRole("button").find(
+      (btn) => btn.querySelector("[data-testid='x']")
+    );
+    fireEvent.click(xBtn!);
+    expect(screen.queryByText("Delete Course")).toBeNull();
+  });
+
+  it("should call deleteCourseAction when confirm delete button is clicked", async () => {
+    vi.mocked(deleteCourseAction).mockResolvedValue({ success: true });
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          { id: "c-1", name: "Puppy Basics", certifiedTrainer: false, dedicatedField: false, parking: false },
+        ]}
+      />
+    );
+
+    // Open delete modal
+    fireEvent.click(screen.getByRole("button", { name: /Delete/ }));
+    // The modal has a "Delete" confirm button
+    const allDeleteBtns = screen.getAllByRole("button", { name: "Delete" });
+    // The last one is the confirm button inside the modal
+    fireEvent.click(allDeleteBtns[allDeleteBtns.length - 1]);
+
+    expect(deleteCourseAction).toHaveBeenCalledWith("c-1");
+  });
+
+  it("should open CourseForm when Edit button is clicked for a course", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          { id: "c-1", name: "Puppy Basics", certifiedTrainer: false, dedicatedField: false, parking: false },
+        ]}
+      />
+    );
+
+    // Before clicking Edit, the course row with name is visible
+    expect(screen.getByText("Puppy Basics")).toBeDefined();
+    // Also the Add Course header button is visible
+    expect(screen.getByText("Add Course")).toBeDefined();
+
+    const editBtn = screen.getByRole("button", { name: /Edit/ });
+    fireEvent.click(editBtn);
+
+    // After clicking Edit, CourseForm takes over — the course row list is replaced
+    // The Add Course top button disappears since isDynamicCourses && isFormOpen renders only the form
+    expect(screen.queryByText("Add Course")).toBeNull();
+  });
+
+  it("should open CourseForm when Add Course button is clicked", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[]}
+      />
+    );
+
+    // Empty state message is visible before clicking Add
+    expect(screen.getByText(/No courses created yet/)).toBeDefined();
+
+    fireEvent.click(screen.getByText("Add Course"));
+
+    // CourseForm takes over — empty state is gone, Add button is gone
+    expect(screen.queryByText("Add Course")).toBeNull();
+    expect(screen.queryByText(/No courses created yet/)).toBeNull();
+  });
+
+  it("should use custom backHref and backLabel when provided", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={genericService}
+        initialIsEnabled={true}
+        slug="dog-walking"
+        backHref="/dashboard/account/services"
+        backLabel="Back to My Services"
+      />
+    );
+
+    expect(screen.getByText("Back to My Services")).toBeDefined();
+  });
+
+  it("should display only checkin time when checkout is absent", () => {
+    const boardingService = {
+      id: "srv-dog-boarding",
+      name: "Dog Boarding",
+      description: "Stays.",
+    };
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={boardingService}
+        initialIsEnabled={true}
+        slug="dog-boarding"
+        courses={[
+          {
+            id: "b-1",
+            name: "Basic Stay",
+            certifiedTrainer: false,
+            dedicatedField: false,
+            parking: false,
+            checkin: "09:00",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("In: 09:00")).toBeDefined();
+  });
+
+  it("should close the CourseForm and return to list when onCancel (Back button) is triggered", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[]}
+      />
+    );
+
+    // Click Add Course to open CourseForm
+    fireEvent.click(screen.getByText("Add Course"));
+    expect(screen.queryByText("Add Course")).toBeNull();
+
+    // Click Back to Courses List (which fires onCancel)
+    fireEvent.click(screen.getByText("Back to Courses List"));
+
+    // Form should close and main view with Add Course button should be back
+    expect(screen.getByText("Add Course")).toBeDefined();
+    expect(screen.getByText(/No courses created yet/)).toBeDefined();
+  });
+
+  it("should close the CourseForm and return to list when onSubmitSuccess is triggered", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ success: true });
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[]}
+      />
+    );
+
+    // Open form
+    fireEvent.click(screen.getByText("Add Course"));
+
+    // Fill form and submit
+    const nameInput = screen.getByLabelText("Course Name");
+    fireEvent.change(nameInput, { target: { value: "New Agility" } });
+
+    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    // Submission success should trigger onSubmitSuccess, closing the form and going back to list view
+    expect(screen.getByText("Add Course")).toBeDefined();
+  });
+});

@@ -29,17 +29,39 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+/**
+ * Props for the DashboardSidebar component.
+ * @interface SidebarProps
+ * @property {string} [email] - The authenticated user's email address.
+ * @property {Array<{ id: string; name: string; slug: string }>} [activeServices] - List of services currently enabled for the business.
+ * @property {() => void} onSignOut - Sign-out click callback handler.
+ */
 interface SidebarProps {
   email?: string | null;
   activeServices?: { id: string; name: string; slug: string }[];
   onSignOut: () => void;
 }
 
+/**
+ * Navigation item representation within sections.
+ * @interface NavItem
+ * @property {string} label - The readable label of the navigation link.
+ * @property {string} href - The absolute pathname link destination.
+ */
 interface NavItem {
   label: string;
   href: string;
 }
 
+/**
+ * Top level navigation section structure.
+ * @interface NavSection
+ * @property {string} id - Unique section identifier.
+ * @property {string} title - The section display title.
+ * @property {React.ElementType} icon - Lucide icon component representation.
+ * @property {string} [href] - Optional default destination link if no children are active.
+ * @property {NavItem[]} [items] - Nested children items list.
+ */
 interface NavSection {
   id: string;
   title: string;
@@ -155,6 +177,15 @@ function TreeNavItem({
   );
 }
 
+/**
+ * DashboardSidebar Component
+ *
+ * Renders the business owner sidebar panel containing collapsible navigation menus,
+ * service shortcuts, a search bar filter, and platform administration shortcuts.
+ *
+ * @param {SidebarProps} props - The component props.
+ * @returns {React.ReactElement} The dashboard sidebar component.
+ */
 export function DashboardSidebar({ email, activeServices = [], onSignOut }: SidebarProps) {
   const pathname = usePathname();
   const { state } = useSidebar();

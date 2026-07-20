@@ -3,12 +3,29 @@
 import React, { useRef, useEffect } from "react";
 import { Bold, Italic, Underline, List, ListOrdered, RemoveFormatting } from "lucide-react";
 
+/**
+ * Props for the WysiwygEditor component.
+ * @interface WysiwygEditorProps
+ * @property {string} value - The HTML content string value.
+ * @property {(val: string) => void} onChange - Callback function triggered when content changes.
+ * @property {string} [placeholder] - Optional placeholder text shown when the editor is empty.
+ */
 interface WysiwygEditorProps {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
 }
 
+/**
+ * WysiwygEditor Component
+ *
+ * A custom rich-text HTML editor built with a contentEditable div and native browser execCommand handlers.
+ * Includes formatting options for Bold, Italic, Underline, Bullet/Numbered Lists, and formatting reset.
+ * Automatically synchronizes content state changes bidirectionally while avoiding cursor jump resets.
+ *
+ * @param {WysiwygEditorProps} props - The component props.
+ * @returns {React.ReactElement} The Wysiwyg rich text editor component.
+ */
 export function WysiwygEditor({ value, onChange, placeholder = "Start typing..." }: WysiwygEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
 

@@ -7,6 +7,8 @@ import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
 
 vi.mock("lucide-react", () => ({
   ArrowLeft: () => <div data-testid="arrow-left" />,
+  Loader2: () => <div data-testid="loader" />,
+  AlertCircle: () => <div data-testid="alert-circle" />,
 }));
 
 vi.mock("@/db", () => ({
@@ -37,6 +39,16 @@ vi.mock("@/components/wysiwyg-editor", () => ({
 describe("CourseForm Component", () => {
   const onCancel = vi.fn();
   const onSubmitSuccess = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(React, "useTransition").mockImplementation((() => [
+      false,
+      (fn: () => void) => {
+        fn();
+      },
+    ]) as any);
+  });
 
   it("should render Course dynamic terminology correctly", () => {
     render(
@@ -230,5 +242,168 @@ describe("CourseForm Component", () => {
 
     fireEvent.change(checkinInput, { target: { value: "09:30" } });
     expect(checkinInput.value).toBe("09:30");
+  });
+
+  it("should render Edit Course terminology and values in edit mode", () => {
+    const initialCourse = {
+      id: "course-123",
+      name: "Agility Mastery",
+      certifiedTrainer: true,
+      certifierName: "FCI",
+      dedicatedField: true,
+      trainingFieldDescription: "Grassy field",
+      trainingFieldAddress: "123 Field Way",
+      parking: true,
+      parkingDescription: "Free parking",
+      details: "<p>Advanced agility classes</p>",
+      termsOfParticipation: "<p>Dogs must be 1+ year old</p>",
+      price: "200",
+      priceType: "course",
+    };
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        initialCourse={initialCourse}
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    expect(screen.getByText("Edit Course: Agility Mastery")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Save Changes" })).toBeDefined();
+    expect((screen.getByLabelText("Course Name") as HTMLInputElement).value).toBe("Agility Mastery");
+    expect((screen.getByLabelText("Certifier Name") as HTMLInputElement).value).toBe("FCI");
+    expect((screen.getByLabelText("Price Amount") as HTMLInputElement).value).toBe("200");
+  });
+
+  it("should trigger onCancel when Back button is clicked", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const backBtn = screen.getByText("Back to Courses List");
+    fireEvent.click(backBtn);
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("should show local validation error when course name is empty", async () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const nameInput = screen.getByLabelText("Course Name");
+    fireEvent.change(nameInput, { target: { value: "   " } });
+
+    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(screen.getByText("Course name is required.")).toBeDefined();
+  });
+
+  it("should show server action error when submission fails", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ error: "Failed to create course" });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const nameInput = screen.getByLabelText("Course Name");
+    fireEvent.change(nameInput, { target: { value: "Fail Course" } });
+
+    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(screen.getByText("Failed to create course")).toBeDefined();
+  });
+
+  it("should trigger onSubmitSuccess after successful edit/update", async () => {
+    vi.mocked(updateCourseAction).mockResolvedValue({ success: true });
+
+    const initialCourse = {
+      id: "course-123",
+      name: "Existing Course",
+      certifiedTrainer: false,
+      dedicatedField: false,
+      parking: false,
+    };
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        initialCourse={initialCourse}
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const nameInput = screen.getByLabelText("Course Name");
+    fireEvent.change(nameInput, { target: { value: "Updated Name" } });
+
+    const submitBtn = screen.getByRole("button", { name: "Save Changes" });
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(updateCourseAction).toHaveBeenCalled();
+    expect(onSubmitSuccess).toHaveBeenCalled();
+  });
+
+  it("should expand certifiedTrainer and dedicatedField inputs when toggled on", async () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Initial state: certifierName is not visible
+    expect(screen.queryByLabelText("Certifier Name")).toBeNull();
+    
+    // Toggle Certified Trainer
+    const switches = screen.getAllByRole("switch");
+    const trainerSwitch = switches[0];
+    await act(async () => {
+      fireEvent.click(trainerSwitch);
+    });
+
+    expect(screen.getByLabelText("Certifier Name")).toBeDefined();
+
+    // Toggle Dedicated Field
+    const fieldSwitch = switches[1];
+    expect(screen.queryByLabelText("Address")).toBeNull();
+    await act(async () => {
+      fireEvent.click(fieldSwitch);
+    });
+    expect(screen.getByLabelText("Address")).toBeDefined();
   });
 });

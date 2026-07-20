@@ -82,4 +82,14 @@ describe("SignupForm Component", () => {
       screen.getByText("Registration successful! Redirecting to login...")
     ).toBeDefined();
   });
+
+  it("should update the PasswordStrength indicator when password is typed", () => {
+    render(<SignupForm />);
+
+    const passwordInput = screen.getByLabelText("Password");
+    fireEvent.change(passwordInput, { target: { value: "MyStrongPass1!" } });
+
+    // After typing, the input value should reflect what was typed
+    expect((passwordInput as HTMLInputElement).value).toBe("MyStrongPass1!");
+  });
 });

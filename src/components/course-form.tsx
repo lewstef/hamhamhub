@@ -42,6 +42,16 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
   return `${hours}:${minutes}`;
 });
 
+/**
+ * Props for the CourseForm component.
+ * @interface CourseFormProps
+ * @property {string} organizationId - The active organization's database ID.
+ * @property {string} serviceId - The parent service's database ID.
+ * @property {string} itemNoun - Singular human-readable label of the sub-service (e.g. Course, Boarding Option).
+ * @property {Course} [initialCourse] - Optional initial Course data for edit/update mode.
+ * @property {() => void} onCancel - Callback triggered when cancelling/going back.
+ * @property {() => void} onSubmitSuccess - Callback triggered after successful creation or update action.
+ */
 interface CourseFormProps {
   organizationId: string;
   serviceId: string;
@@ -51,6 +61,17 @@ interface CourseFormProps {
   onSubmitSuccess: () => void;
 }
 
+/**
+ * CourseForm Component
+ *
+ * Form rendering panel for creating or editing sub-service items (such as Training Courses or Boarding rates).
+ * Provides toggles and expand/collapse fieldsets for Certified Trainer, Dedicated Field, Parking,
+ * Medication Administration, Owner Updates, and personalized meal planning.
+ * Submits data via createCourseAction or updateCourseAction Server Actions.
+ *
+ * @param {CourseFormProps} props - The component props.
+ * @returns {React.ReactElement} The course/boarding configuration form component.
+ */
 export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse, onCancel, onSubmitSuccess }: CourseFormProps) {
   const isEdit = !!initialCourse?.id;
   const [isPending, startTransition] = useTransition();

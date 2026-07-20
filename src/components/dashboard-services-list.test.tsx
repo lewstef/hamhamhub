@@ -26,14 +26,6 @@ const dummyServices = [
   { id: "srv-2", name: "Dog Training", description: "Training.", slug: "dog-training" },
 ];
 
-const ALL_COURSE_IDS = [
-  "dog-training:basic",
-  "dog-training:group",
-  "dog-training:private",
-  "dog-training:sar",
-  "dog-training:show",
-];
-
 describe("DashboardServicesList Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -97,7 +89,83 @@ describe("DashboardServicesList Component", () => {
 
     expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-1", true);
   });
+
+  it("should optimistically show Active badge when a disabled service is toggled on", () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ success: true });
+
+    render(
+      <DashboardServicesList
+        organizationId="org-123"
+        services={[{ id: "srv-1", name: "Dog Boarding", description: "Safe stay.", slug: "dog-boarding" }]}
+        initialEnabledIds={[]}
+      />
+    );
+
+    // Initially no Active badge
+    expect(screen.queryByText("Active")).toBeNull();
+
+    const toggle = screen.getByRole("switch");
+    fireEvent.click(toggle);
+
+    // Optimistic update: Active badge appears before server responds
+    expect(screen.getByText("Active")).toBeDefined();
+  });
+
+  it("should show the Edit button only for enabled services", () => {
+    render(
+      <DashboardServicesList
+        organizationId="org-123"
+        services={dummyServices}
+        initialEnabledIds={["srv-1"]} // only srv-1 is enabled
+      />
+    );
+
+    // Only one Edit button should be present (for Dog Boarding which is enabled)
+    expect(screen.getAllByRole("button", { name: "Edit" }).length).toBe(1);
+  });
+
+  it("should toggle a service off (disable) when an enabled service switch is clicked", () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ success: true });
+
+    render(
+      <DashboardServicesList
+        organizationId="org-123"
+        services={[{ id: "srv-1", name: "Dog Boarding", description: "Safe stay.", slug: "dog-boarding" }]}
+        initialEnabledIds={["srv-1"]}
+      />
+    );
+
+    // Active badge visible initially
+    expect(screen.getByText("Active")).toBeDefined();
+
+    const toggle = screen.getByRole("switch");
+    fireEvent.click(toggle);
+
+    // After optimistic update, Active badge should disappear
+    expect(screen.queryByText("Active")).toBeNull();
+    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-1", false);
+  });
+
+  it("should rollback optimistic state when toggleOrganizationServiceAction returns error", async () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ error: "Server error" });
+
+    render(
+      <DashboardServicesList
+        organizationId="org-123"
+        services={[{ id: "srv-1", name: "Dog Boarding", description: "Safe stay.", slug: "dog-boarding" }]}
+        initialEnabledIds={[]}
+      />
+    );
+
+    // Verify initially not active
+    expect(screen.queryByText("Active")).toBeNull();
+
+    const toggle = screen.getByRole("switch");
+    fireEvent.click(toggle);
+
+    // Optimistically enabled
+    expect(screen.getByText("Active")).toBeDefined();
+    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-1", true);
+  });
 });
-
-
 

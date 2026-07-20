@@ -44,6 +44,19 @@ interface Service {
   coursesOrder?: string | null;
 }
 
+/**
+ * Props for the DashboardServiceDetail component.
+ * @interface DashboardServiceDetailProps
+ * @property {string} organizationId - The active organization's database ID.
+ * @property {Service} service - The Service object metadata.
+ * @property {boolean} initialIsEnabled - Initial state of whether this service is active for the organization.
+ * @property {string} slug - Slug identifier for the service.
+ * @property {string} [activeCourseTab] - Optional active tab identifier.
+ * @property {string[]} [enabledCourseIds] - List of database IDs of courses registered under this service.
+ * @property {Course[]} [courses] - List of courses associated with this service type.
+ * @property {string} [backHref] - Optional navigation destination path for back action.
+ * @property {string} [backLabel] - Optional display label for back navigation.
+ */
 interface DashboardServiceDetailProps {
   organizationId: string;
   service: Service;
@@ -56,6 +69,16 @@ interface DashboardServiceDetailProps {
   backLabel?: string;
 }
 
+/**
+ * DashboardServiceDetail Component
+ *
+ * Renders the business owner detail dashboard view for an individual service type (e.g., Boarding, Training).
+ * Provides a status toggle activation switch, full course lists, delete confirmation dialogs, drag and drop
+ * item reordering support, and embedded CourseForm editing panels.
+ *
+ * @param {DashboardServiceDetailProps} props - The component props.
+ * @returns {React.ReactElement} The dashboard service detail component.
+ */
 export function DashboardServiceDetail({
   organizationId,
   service,
