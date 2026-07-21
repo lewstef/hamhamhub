@@ -35,6 +35,8 @@ import { auth } from "@/auth";
  * @param formData.personalizedMealPlanDetails - Custom meal planning specifications
  * @param formData.checkin - The check-in time, format: hh:mm (24h)
  * @param formData.checkout - The check-out time, format: hh:mm (24h)
+ * @param formData.ageLimitsEnabled - Boolean string for age limits requirements
+ * @param formData.ageLimits - Comma-separated selected age limits list
  * @param formData.faq - Serialized JSON string representing array of Frequently Asked Questions
  *
  * @returns `{ success: true }` on successful creation
@@ -179,6 +181,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
  * @param formData.personalizedMealPlanDetails - Custom meal planning specifications
  * @param formData.checkin - The check-in time, format: hh:mm (24h)
  * @param formData.checkout - The check-out time, format: hh:mm (24h)
+ * @param formData.ageLimitsEnabled - Boolean string for age limits requirements
+ * @param formData.ageLimits - Comma-separated selected age limits list
  * @param formData.faq - Serialized JSON string representing array of Frequently Asked Questions
  *
  * @returns `{ success: true }` on successful update
