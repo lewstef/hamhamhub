@@ -133,4 +133,34 @@ describe("ServiceTypesTable Component", () => {
     expect(screen.getByText("Dog boarding")).toBeDefined();
     expect(screen.queryByText("Dog training")).toBeNull();
   });
+
+  it("should render the edit modal description with service type id", () => {
+    render(<ServiceTypesTable serviceTypesList={dummyServiceTypesList} />);
+
+    fireEvent.click(screen.getAllByTitle(/Edit /)[0]);
+
+    // Modal description mentions the service type id
+    expect(screen.getByText(/dog_training/)).toBeDefined();
+  });
+
+  it("should render the textarea with the existing description in the edit modal", () => {
+    render(<ServiceTypesTable serviceTypesList={dummyServiceTypesList} />);
+
+    // Open modal for first item (Dog training)
+    fireEvent.click(screen.getAllByTitle(/Edit /)[0]);
+
+    // Check the description textarea has the default value
+    const descTextarea = screen.getByDisplayValue("Behavioral training");
+    expect(descTextarea).toBeDefined();
+  });
+
+  it("should update input value when user types in the name field of the edit modal", () => {
+    render(<ServiceTypesTable serviceTypesList={dummyServiceTypesList} />);
+
+    fireEvent.click(screen.getAllByTitle(/Edit /)[0]);
+
+    const nameInput = screen.getByDisplayValue("Dog training") as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: "Dog Training Updated" } });
+    expect(nameInput.value).toBe("Dog Training Updated");
+  });
 });

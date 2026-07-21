@@ -82,6 +82,7 @@ export const courses = pgTable("courses", {
   personalizedMealPlanDetails: text("personalized_meal_plan_details"),
   checkin: text("checkin"),
   checkout: text("checkout"),
+  faq: text("faq"),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

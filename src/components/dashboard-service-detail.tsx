@@ -6,9 +6,10 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface Course {
   id?: string;
@@ -35,6 +36,7 @@ interface Course {
   personalizedMealPlanDetails?: string | null;
   checkin?: string | null;
   checkout?: string | null;
+  faq?: string | null;
 }
 
 interface Service {
@@ -96,6 +98,7 @@ export function DashboardServiceDetail({
 
   // Course states
   const [localCourses, setLocalCourses] = useState<Course[]>(courses || []);
+  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | undefined>(undefined);
@@ -311,113 +314,183 @@ export function DashboardServiceDetail({
                         onDragStart={(e) => course.id && handleDragStart(e, course.id)}
                         onDragOver={(e) => course.id && handleDragOver(e, course.id)}
                         onDragEnd={handleDragEnd}
-                        className={`flex items-center justify-between gap-4 px-5 py-4 bg-card hover:bg-muted/10 transition-colors ${
+                        className={`flex flex-col border-b border-border/40 last:border-b-0 bg-card transition-all ${
                           isCourseDragged
                             ? "opacity-40 bg-muted/20 border-dashed border border-primary/20 scale-[0.99]"
                             : ""
                         }`}
                       >
-                        {/* Left: drag handle + name + chips */}
-                        <div className="flex flex-wrap items-center gap-2 min-w-0">
-                          {/* Drag Handle */}
-                          <div
-                            className="text-muted-foreground/60 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted"
-                            title="Drag to reorder courses"
-                          >
-                            <GripVertical className="size-3.5" />
-                          </div>
-                          <span className="text-sm font-bold text-foreground">
-                            {course.name}
-                            {(course.checkin || course.checkout) && (
-                              <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
-                                {course.checkin ? `In: ${course.checkin}` : ""}
-                                {course.checkin && course.checkout ? " • " : ""}
-                                {course.checkout ? `Out: ${course.checkout}` : ""}
+                        <div
+                          className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/5 transition-colors cursor-pointer"
+                          onClick={() => course.id && setExpandedCourseId(expandedCourseId === course.id ? null : course.id)}
+                        >
+                          {/* Left: drag handle + name + chips */}
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            {/* Drag Handle */}
+                            <div
+                              className="text-muted-foreground/60 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted"
+                              title="Drag to reorder"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <GripVertical className="size-3.5" />
+                            </div>
+                            <span className="text-sm font-bold text-foreground">
+                              {course.name}
+                              {(course.checkin || course.checkout) && (
+                                <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
+                                  {course.checkin ? `In: ${course.checkin}` : ""}
+                                  {course.checkin && course.checkout ? " • " : ""}
+                                  {course.checkout ? `Out: ${course.checkout}` : ""}
+                                </span>
+                              )}
+                            </span>
+                            {course.certifiedTrainer && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                <Award className="size-2.5" />
+                                Certified
                               </span>
                             )}
-                          </span>
-                          {course.certifiedTrainer && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                              <Award className="size-2.5" />
-                              Certified
-                            </span>
-                          )}
-                          {course.dedicatedField && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-600 border border-sky-500/20">
-                              <MapPin className="size-2.5" />
-                              Field
-                            </span>
-                          )}
-                          {course.parking && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                              <Car className="size-2.5" />
-                              Parking
-                            </span>
-                          )}
-                          {course.medicationAdministration && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-600 border border-red-500/20" title={course.medicationAdministrationDetails || ""}>
-                              <Pill className="size-2.5" />
-                              Meds Administered
-                            </span>
-                          )}
-                          {course.dailyWalks && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
-                              <Footprints className="size-2.5" />
-                              {course.dailyWalks} {course.dailyWalks === 1 ? "Walk" : "Walks"}
-                            </span>
-                          )}
-                          {course.ownerCommunication && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/10 text-pink-600 border border-pink-500/20" title={course.ownerCommunicationDetails || ""}>
-                              <Camera className="size-2.5" />
-                              Updates Sent
-                            </span>
-                          )}
-                          {course.personalizedMealPlan && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-600 border border-orange-500/20" title={course.personalizedMealPlanDetails || ""}>
-                              <Utensils className="size-2.5" />
-                              Meal Plan
-                            </span>
-                          )}
-                          {course.price && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
-                              {course.price} / {["month", "night", "day", "service"].includes(course.priceType || "") ? course.priceType : itemNoun.toLowerCase()}
-                            </span>
-                          )}
+                            {course.dedicatedField && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-600 border border-sky-500/20">
+                                <MapPin className="size-2.5" />
+                                Field
+                              </span>
+                            )}
+                            {course.parking && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                <Car className="size-2.5" />
+                                Parking
+                              </span>
+                            )}
+                            {course.medicationAdministration && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-600 border border-red-500/20" title={course.medicationAdministrationDetails || ""}>
+                                <Pill className="size-2.5" />
+                                Meds Administered
+                              </span>
+                            )}
+                            {course.dailyWalks && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 border border-indigo-500/20">
+                                <Footprints className="size-2.5" />
+                                {course.dailyWalks} {course.dailyWalks === 1 ? "Walk" : "Walks"}
+                              </span>
+                            )}
+                            {course.ownerCommunication && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/10 text-pink-600 border border-pink-500/20" title={course.ownerCommunicationDetails || ""}>
+                                <Camera className="size-2.5" />
+                                Updates Sent
+                              </span>
+                            )}
+                            {course.personalizedMealPlan && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-600 border border-orange-500/20" title={course.personalizedMealPlanDetails || ""}>
+                                <Utensils className="size-2.5" />
+                                Meal Plan
+                              </span>
+                            )}
+                            {course.price && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
+                                {course.price} / {["month", "night", "day", "service"].includes(course.priceType || "") ? course.priceType : itemNoun.toLowerCase()}
+                              </span>
+                            )}
+                          </div>
+  
+                          {/* Right: action buttons */}                           <div
+                            className="flex items-center gap-2 shrink-0"
+                            draggable={false}
+                            onDragStart={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingCourse(course);
+                                setIsFormOpen(true);
+                              }}
+                              className="h-8 font-bold text-xs"
+                              disabled={isDeletingId === course.id}
+                            >
+                              <Edit2 className="size-3.5 mr-1.5" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => course.id && handleDeleteCourse(course.id)}
+                              className="h-8 font-bold text-xs"
+                              disabled={isDeletingId === course.id}
+                            >
+                              <Trash2 className="size-3.5 mr-1.5" />
+                              Delete
+                            </Button>
+                          </div>
                         </div>
 
-                        {/* Right: action buttons */}
-                        <div
-                          className="flex items-center gap-2 shrink-0"
-                          draggable={false}
-                          onDragStart={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                        >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setEditingCourse(course);
-                              setIsFormOpen(true);
-                            }}
-                            className="h-8 font-bold text-xs"
-                            disabled={isDeletingId === course.id}
-                          >
-                            <Edit2 className="size-3.5 mr-1.5" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => course.id && handleDeleteCourse(course.id)}
-                            className="h-8 font-bold text-xs"
-                            disabled={isDeletingId === course.id}
-                          >
-                            <Trash2 className="size-3.5 mr-1.5" />
-                            Delete
-                          </Button>
-                        </div>
+                        {/* Collapsible Panel */}
+                        {expandedCourseId === course.id && (
+                          <div className="px-5 pb-5 pt-2 border-t border-border/40 bg-muted/5 animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="space-y-4">
+                              {/* Details */}
+                              {course.details && (
+                                <div className="space-y-1.5">
+                                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description & Details</h4>
+                                  <div 
+                                    className="text-xs text-foreground/90 leading-relaxed prose prose-sm dark:prose-invert max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: course.details }}
+                                  />
+                                </div>
+                              )}
+  
+                              {/* Terms of Participation */}
+                              {course.termsOfParticipation && (
+                                <div className="space-y-1.5">
+                                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Terms of Participation</h4>
+                                  <div 
+                                    className="text-xs text-foreground/90 leading-relaxed prose prose-sm dark:prose-invert max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: course.termsOfParticipation }}
+                                  />
+                                </div>
+                              )}
+  
+                              {/* FAQs Section */}
+                              {(() => {
+                                let parsedFaqs: Array<{ question: string; answer: string }> = [];
+                                if (course.faq) {
+                                  try {
+                                    const parsed = JSON.parse(course.faq);
+                                    if (Array.isArray(parsed)) {
+                                      parsedFaqs = parsed;
+                                    }
+                                  } catch (e) {
+                                    console.error("Failed to parse FAQ:", e);
+                                  }
+                                }
+  
+                                if (parsedFaqs.length === 0) return null;
+  
+                                return (
+                                  <div className="space-y-2 pt-3 border-t border-border/40" data-testid="faq-accordion">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Frequently Asked Questions</h4>
+                                    <div className="space-y-2">
+                                      {parsedFaqs.map((faq, fIdx) => (
+                                        <FAQAccordionRow key={fIdx} question={faq.question} answer={faq.answer} />
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+  
+                              {/* Empty state details */}
+                              {!course.details && !course.termsOfParticipation && (!course.faq || JSON.parse(course.faq || "[]").length === 0) && (
+                                <p className="text-xs text-muted-foreground italic">No extra details, terms of participation, or FAQs configured.</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -478,6 +551,41 @@ export function DashboardServiceDetail({
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * FAQAccordionRow Component
+ *
+ * Renders an individual FAQ item inside the course details collapsible panel.
+ * Toggles expanded text visibility on header click with a chevron rotation transition.
+ */
+function FAQAccordionRow({ question, answer }: { question: string; answer: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="border border-border/80 rounded-xl bg-card overflow-hidden shadow-sm transition-all duration-200">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors text-left font-bold text-xs text-foreground/95 select-none focus:outline-none cursor-pointer"
+        aria-expanded={isOpen}
+      >
+        <span>{question || "Untitled Question"}</span>
+        <ChevronDown
+          className={cn(
+            "size-3.5 text-muted-foreground transition-transform duration-200 shrink-0 ml-4",
+            isOpen && "rotate-180"
+          )}
+        />
+      </button>
+      {isOpen && (
+        <div className="px-4 pb-3 pt-1 border-t border-border/30 bg-muted/5 animate-in fade-in slide-in-from-top-1 duration-200">
+          <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium">
+            {answer || "No answer provided."}
+          </p>
         </div>
       )}
     </div>

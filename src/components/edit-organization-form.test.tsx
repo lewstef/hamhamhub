@@ -309,4 +309,201 @@ describe("EditOrganizationForm Component", () => {
       expect(mockRefresh).toHaveBeenCalled();
     });
   });
+
+  it("should toggle a course and call toggleOrganizationCourseAction", async () => {
+    const { toggleOrganizationCourseAction } = await import("@/app/actions/organizations");
+    vi.mocked(toggleOrganizationCourseAction).mockResolvedValue({ success: true });
+
+    const orgWithEnabledService = {
+      ...dummyOrganization,
+      enabledServices: "s-1",
+      enabledCourses: "",
+    };
+
+    // Service with dog-training slug and courses order
+    const dummyServices = [
+      { id: "s-1", name: "Dog Training", organizationCategory: "ngo", slug: "dog-training", description: "Train your dog.", coursesOrder: null },
+    ];
+
+    render(
+      <EditOrganizationForm
+        organization={orgWithEnabledService}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        servicesList={dummyServices}
+      />
+    );
+
+    const servicesTabBtn = screen.getByRole("button", { name: "Services" });
+    fireEvent.click(servicesTabBtn);
+
+    // Service is enabled — Edit button should appear
+    expect(screen.getByText("Dog Training")).toBeDefined();
+    expect(screen.getByText("Active")).toBeDefined();
+  });
+
+  it("should rollback service state when toggleOrganizationServiceAction returns error", async () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ error: "Failed to toggle" });
+
+    const dummyServices = [
+      { id: "s-2", name: "Dog Walking", organizationCategory: "ngo", slug: "dog-walking", description: "Walk your dog.", coursesOrder: null },
+    ];
+
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        servicesList={dummyServices}
+      />
+    );
+
+    const servicesTabBtn = screen.getByRole("button", { name: "Services" });
+    fireEvent.click(servicesTabBtn);
+
+    const toggle = screen.getByRole("switch");
+    fireEvent.click(toggle);
+
+    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-id-123", "s-2", true);
+  });
+
+  it("should render enabledServices and enabledCourses from organization prop", () => {
+    const orgWithData = {
+      ...dummyOrganization,
+      enabledServices: "s-1,s-2",
+      enabledCourses: "dog-training:basic,dog-training:group",
+    };
+
+    const dummyServices = [
+      { id: "s-1", name: "Dog Training", organizationCategory: "ngo", slug: "dog-training", description: "Train dogs.", coursesOrder: null },
+      { id: "s-2", name: "Dog Walking", organizationCategory: "ngo", slug: "dog-walking", description: "Walk dogs.", coursesOrder: null },
+    ];
+
+    render(
+      <EditOrganizationForm
+        organization={orgWithData}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        servicesList={dummyServices}
+      />
+    );
+
+    const servicesTabBtn = screen.getByRole("button", { name: "Services" });
+    fireEvent.click(servicesTabBtn);
+
+    // Both services are enabled — both have Active badge
+    expect(screen.getAllByText("Active").length).toBe(2);
+  });
+
+  it("should render with activeTabProp 'services' showing the services tab content", () => {
+    const dummyServices = [
+      { id: "s-1", name: "Dog Boarding", organizationCategory: "ngo", slug: "dog-boarding", description: "Safe stay.", coursesOrder: null },
+    ];
+
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        servicesList={dummyServices}
+        activeTabProp="services"
+      />
+    );
+
+    // When activeTabProp is set, tabs are rendered as Link elements, not buttons
+    // Services tab content should still show
+    expect(screen.getByText("Services Configuration")).toBeDefined();
+  });
+
+  it("should render with activeTabProp 'personal' showing account information content", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="personal"
+      />
+    );
+
+    // With activeTabProp, tabs are link elements; "Account information" appears in tab + card heading
+    expect(screen.getAllByText("Account information").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should show country phone pattern placeholder in phone modal", () => {
+    const orgWithCountry = {
+      ...dummyOrganization,
+      addressCountry: "United States",
+    };
+
+    render(
+      <EditOrganizationForm
+        organization={orgWithCountry}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Open phone modal
+    const editPhoneBtn = screen.getByRole("button", { name: "Edit Phone number" });
+    fireEvent.click(editPhoneBtn);
+
+    // Placeholder for USA should be +1 (555) 000-0000
+    const phoneInput = screen.getByPlaceholderText("+1 (555) 000-0000");
+    expect(phoneInput).toBeDefined();
+  });
+
+  it("should show '-' when no address is provided", () => {
+    const orgNoAddress = {
+      ...dummyOrganization,
+      address: null,
+    };
+
+    render(
+      <EditOrganizationForm
+        organization={orgNoAddress}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Address row should show "-" (multiple dashes may appear for empty fields)
+    expect(screen.getAllByText("-").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should show/hide password text when eye icon buttons are clicked", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Switch to Account settings tab
+    const accountTabBtn = screen.getByRole("button", { name: "Account settings" });
+    fireEvent.click(accountTabBtn);
+
+    // Open change password modal
+    const editPasswordBtn = screen.getByRole("button", { name: "Edit Password" });
+    fireEvent.click(editPasswordBtn);
+
+    expect(screen.getAllByText("Change Password").length).toBeGreaterThanOrEqual(1);
+
+    // The inputs should initially be type="password"
+    const passwordInput = document.getElementById("password") as HTMLInputElement;
+    const confirmPasswordInput = document.getElementById("confirmPassword") as HTMLInputElement;
+    expect(passwordInput.type).toBe("password");
+    expect(confirmPasswordInput.type).toBe("password");
+
+    // Get the eye toggle buttons
+    const eyeButtons = screen.getAllByRole("button").filter(
+      (btn) => btn.querySelector("svg") && btn.closest(".relative") && !btn.textContent
+    );
+    expect(eyeButtons.length).toBeGreaterThanOrEqual(2);
+
+    // Click first eye button
+    fireEvent.click(eyeButtons[0]);
+    expect(passwordInput.type).toBe("text");
+
+    // Click second eye button
+    fireEvent.click(eyeButtons[1]);
+    expect(confirmPasswordInput.type).toBe("text");
+
+    // Click cancel button on password modal
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelBtn);
+    expect(screen.queryByText("Change Password")).toBeNull();
+  });
 });

@@ -9,6 +9,8 @@ vi.mock("lucide-react", () => ({
   ArrowLeft: () => <div data-testid="arrow-left" />,
   Loader2: () => <div data-testid="loader" />,
   AlertCircle: () => <div data-testid="alert-circle" />,
+  Plus: () => <div data-testid="plus" />,
+  Trash2: () => <div data-testid="trash2" />,
 }));
 
 vi.mock("@/db", () => ({
@@ -406,4 +408,117 @@ describe("CourseForm Component", () => {
     });
     expect(screen.getByLabelText("Address")).toBeDefined();
   });
+
+  it("should manage adding, editing, and deleting FAQs in the builder", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Initial state: empty notice is shown
+    expect(screen.getByText('No FAQs added yet. Click "Add FAQ" below to start.')).toBeDefined();
+
+    // Click "Add FAQ Item"
+    const addBtn = screen.getByRole("button", { name: "Add FAQ Item" });
+    await act(async () => {
+      fireEvent.click(addBtn);
+    });
+
+    // Empty notice should disappear, FAQ item inputs should be visible
+    expect(screen.queryByText('No FAQs added yet. Click "Add FAQ" below to start.')).toBeNull();
+    
+    const questionInput = screen.getByLabelText("Question");
+    const answerInput = screen.getByLabelText("Answer");
+
+    // Edit Question and Answer
+    fireEvent.change(questionInput, { target: { value: "Vaccine requirement?" } });
+    fireEvent.change(answerInput, { target: { value: "Yes, up-to-date DHPP required." } });
+
+    // Submit form and verify action call includes JSON faq string
+    const nameInput = screen.getByLabelText("Course Name");
+    fireEvent.change(nameInput, { target: { value: "Advanced Agility" } });
+
+    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    expect(passedFormData.get("faq")).toBe(
+      JSON.stringify([{ question: "Vaccine requirement?", answer: "Yes, up-to-date DHPP required." }])
+    );
+
+    // Click "Remove FAQ" button and verify empty notice is back
+    const removeBtn = screen.getByRole("button", { name: "Remove FAQ" });
+    await act(async () => {
+      fireEvent.click(removeBtn);
+    });
+
+    expect(screen.getByText('No FAQs added yet. Click "Add FAQ" below to start.')).toBeDefined();
+  });
+
+  it("should trigger onCancel when Back button is clicked with no changes", async () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const backBtn = screen.getByRole("button", { name: "Back to Courses List" });
+    await act(async () => {
+      fireEvent.click(backBtn);
+    });
+
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("should prompt user when clicking Back button with unsaved changes", async () => {
+    const originalConfirm = window.confirm;
+    window.confirm = vi.fn().mockReturnValue(false);
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Edit name input to make form dirty
+    const nameInput = screen.getByLabelText("Course Name");
+    fireEvent.change(nameInput, { target: { value: "Dirty Agility" } });
+
+    const backBtn = screen.getByRole("button", { name: "Back to Courses List" });
+    await act(async () => {
+      fireEvent.click(backBtn);
+    });
+
+    // Confirm dialog should be called
+    expect(window.confirm).toHaveBeenCalledWith("You have unsaved changes. Are you sure you want to leave?");
+    expect(onCancel).not.toHaveBeenCalled();
+
+    // Confirm the leaving prompt
+    window.confirm = vi.fn().mockReturnValue(true);
+    await act(async () => {
+      fireEvent.click(backBtn);
+    });
+    expect(onCancel).toHaveBeenCalled();
+
+    window.confirm = originalConfirm;
+  });
 });
+

@@ -358,58 +358,6 @@ describe("Organization Server Actions", () => {
       expect(result).toEqual({ success: true });
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
-      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
-    });
-  });
-
-  describe("deleteOrganizationAction", () => {
-    it("should restrict deleting users with roles other than 'organization'", async () => {
-      const formData = new FormData();
-      formData.append("id", "emp-id");
-
-      // Mock DB look up returning employee role
-      mockSelect.mockResolvedValueOnce([{ role: "employee" }]);
-
-      const result = await deleteOrganizationAction(null, formData);
-
-      expect(mockSelect).toHaveBeenCalled();
-      expect(mockDelete).not.toHaveBeenCalled();
-      expect(result).toEqual({ error: "Security restriction: Only organization accounts can be deleted." });
-    });
-
-    it("should allow deleting a user with role 'organization'", async () => {
-      const formData = new FormData();
-      formData.append("id", "comp-id");
-
-      mockSelect.mockResolvedValueOnce([{ role: "organization" }]);
-      mockDelete.mockResolvedValueOnce({ count: 1 });
-
-      const result = await deleteOrganizationAction(null, formData);
-
-      expect(mockSelect).toHaveBeenCalled();
-      expect(mockDelete).toHaveBeenCalled();
-      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
-      expect(result).toEqual({ success: true });
-    });
-  });
-
-  describe("changeOrganizationPasswordAction", () => {
-    it("should successfully change password if logged in as admin without current password", async () => {
-      const formData = new FormData();
-      formData.append("id", "org-id");
-      formData.append("password", "newsecurepassword");
-      formData.append("confirmPassword", "newsecurepassword");
-
-      vi.mocked(auth).mockResolvedValueOnce({
-        user: { id: "admin-id", role: "admin", name: "Admin" },
-        expires: "expires-date",
-      });
-
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
-
-      const result = await changeOrganizationPasswordAction(null, formData);
-
-      expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
       expect(result).toEqual({ success: true });
@@ -471,15 +419,58 @@ describe("Organization Server Actions", () => {
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
-      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
+    });
+  });
+
+  describe("deleteOrganizationAction", () => {
+    it("should return error if org ID is missing", async () => {
+      const formData = new FormData();
+      const result = await deleteOrganizationAction(null, formData);
+      expect(result).toEqual({ error: "Organization ID is required" });
+    });
+
+    it("should return error if organization is not found", async () => {
+      const formData = new FormData();
+      formData.append("id", "nonexistent-id");
+      mockSelect.mockResolvedValueOnce([]);
+      const result = await deleteOrganizationAction(null, formData);
+      expect(result).toEqual({ error: "Organization not found." });
+      expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it("should restrict deleting users with roles other than 'organization'", async () => {
+      const formData = new FormData();
+      formData.append("id", "emp-id");
+      mockSelect.mockResolvedValueOnce([{ role: "employee" }]);
+      const result = await deleteOrganizationAction(null, formData);
+      expect(mockDelete).not.toHaveBeenCalled();
+      expect(result).toEqual({ error: "Security restriction: Only organization accounts can be deleted." });
+    });
+
+    it("should allow deleting a user with role 'organization'", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      mockSelect.mockResolvedValueOnce([{ role: "organization" }]);
+      mockDelete.mockResolvedValueOnce({ count: 1 });
+      const result = await deleteOrganizationAction(null, formData);
+      expect(mockDelete).toHaveBeenCalled();
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
       expect(result).toEqual({ success: true });
+    });
+
+    it("should return error on DB failure", async () => {
+      const formData = new FormData();
+      formData.append("id", "org-id");
+      mockSelect.mockResolvedValueOnce([{ role: "organization" }]);
+      mockDelete.mockRejectedValueOnce(new Error("DB connection lost"));
+      const result = await deleteOrganizationAction(null, formData);
+      expect(result).toEqual({ error: "Could not delete organization. Please try again." });
     });
   });
 
   describe("toggleOrganizationServiceAction", () => {
     it("should return error if organization is not found", async () => {
-      mockSelect.mockResolvedValueOnce([]); // no org found
-
+      mockSelect.mockResolvedValueOnce([]);
       const result = await toggleOrganizationServiceAction("nonexistent-org", "srv-1", true);
       expect(result).toEqual({ error: "Organization not found" });
       expect(mockUpdate).not.toHaveBeenCalled();

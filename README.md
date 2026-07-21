@@ -81,6 +81,8 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Password Strength Indicator**: Renders a premium, real-time client-side validation widget on all forms where passwords are set or modified. It checks for length (min 6 characters), numbers, uppercase letters, and special symbols, updating visual segmented color-coded bars and checklists dynamically.
 - **Setup Auto-Redirection**: Automatically routes the administrator to the backoffice portal (/backoffice) upon completing first-time platform setup. Direct access to `/initialization` is strictly blocked and redirected to `/backoffice` once the platform has been initialized.
 - **Tactile Service Toggle Cards**: Replaced standard multi-select fields with a visual option grid. Users can toggle multiple services. Existing category services are displayed as checkmarked and disabled with a "Registered" indicator to prevent duplicate allocations.
+- **FAQ Accordion Builder & Display**: Interactive FAQ Q&A list builder situated underneath the Terms of Participation section in the Course Form (`CourseForm`). Renders as a sleek, custom collapsible accordion structure inside expandable course detail drawers on the dynamic services settings page.
+- **Unsaved Changes Safeguard**: Checks if any input fields in the Course Configurator (`CourseForm`) are dirty. Prompts a native confirm dialog if the user clicks the "Back" button, and registers a browser `beforeunload` listener to warn the user if they attempt to reload or close the tab.
 
 ---
 
@@ -192,7 +194,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (360 tests across 32 test files)
+# Run all tests (364 tests across 32 test files)
 npm run test
 
 # Run with coverage report
@@ -200,10 +202,10 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
 
 ### Test Coverage Metrics
-- **Statements**: 85.28%
-- **Branches**: 78.62%
-- **Functions**: 78.97%
-- **Lines**: 86.03%
+- **Statements**: 85.00%
+- **Branches**: 78.60%
+- **Functions**: 79.46%
+- **Lines**: 85.73%
 
 ### Test Coverage Summary
 | Area | Files Covered |

@@ -226,3 +226,59 @@ describe("NextAuth Authorized Callback", () => {
   });
 });
 
+describe("NextAuth jwt and session Callbacks", () => {
+  const jwt = authConfig.callbacks.jwt;
+  const session = authConfig.callbacks.session;
+
+  describe("jwt callback", () => {
+    it("should augment token with id and role when user object is present", async () => {
+      const token = {};
+      const user = { id: "user-123", role: "admin" as const };
+      const result = await jwt({ token, user } as any);
+      expect(result.id).toBe("user-123");
+      expect(result.role).toBe("admin");
+    });
+
+    it("should return token unchanged when no user is provided", async () => {
+      const token = { id: "existing-id", role: "organization" as const };
+      const result = await jwt({ token } as any);
+      expect(result.id).toBe("existing-id");
+      expect(result.role).toBe("organization");
+    });
+
+    it("should not override existing token fields when user is undefined", async () => {
+      const token = { id: "persisted-id", role: "employee" as const, name: "Test" };
+      const result = await jwt({ token, user: undefined } as any);
+      expect(result.id).toBe("persisted-id");
+      expect(result.role).toBe("employee");
+    });
+  });
+
+  describe("session callback", () => {
+    it("should map token.id to session.user.id when token has id", async () => {
+      const token = { id: "tok-id-123", role: "organization" as const };
+      const sess: any = { user: { name: "Org" }, expires: "any" };
+      const result = await session({ session: sess, token } as any);
+      expect(result.user.id).toBe("tok-id-123");
+      expect(result.user.role).toBe("organization");
+    });
+
+    it("should not set session.user.id when token.id is absent", async () => {
+      const token = {};
+      const sess: any = { user: { name: "Anonymous" }, expires: "any" };
+      const result = await session({ session: sess, token } as any);
+      expect(result.user.id).toBeUndefined();
+      expect(result.user.role).toBeUndefined();
+    });
+
+    it("should set session.user.role from token.role for all role types", async () => {
+      for (const role of ["user", "employee", "admin", "organization"] as const) {
+        const token = { id: "some-id", role };
+        const sess: any = { user: {}, expires: "any" };
+        const result = await session({ session: sess, token } as any);
+        expect(result.user.role).toBe(role);
+      }
+    });
+  });
+});
+

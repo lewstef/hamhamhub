@@ -35,6 +35,7 @@ import { auth } from "@/auth";
  * @param formData.personalizedMealPlanDetails - Custom meal planning specifications
  * @param formData.checkin - The check-in time, format: hh:mm (24h)
  * @param formData.checkout - The check-out time, format: hh:mm (24h)
+ * @param formData.faq - Serialized JSON string representing array of Frequently Asked Questions
  *
  * @returns `{ success: true }` on successful creation
  * @returns `{ error: string }` if name is missing, unauthorized access, or DB failure
@@ -87,6 +88,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
   const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
   const checkin = formData.get("checkin") as string || null;
   const checkout = formData.get("checkout") as string || null;
+  const faq = formData.get("faq") as string || null;
 
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
   if (checkin && !timeRegex.test(checkin)) {
@@ -127,6 +129,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
       checkin,
       checkout,
+      faq,
     });
 
     revalidatePath("/dashboard/services/dog-training");
@@ -172,6 +175,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
  * @param formData.personalizedMealPlanDetails - Custom meal planning specifications
  * @param formData.checkin - The check-in time, format: hh:mm (24h)
  * @param formData.checkout - The check-out time, format: hh:mm (24h)
+ * @param formData.faq - Serialized JSON string representing array of Frequently Asked Questions
  *
  * @returns `{ success: true }` on successful update
  * @returns `{ error: string }` if name or id is missing, unauthorized access, or DB failure
@@ -215,6 +219,7 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
   const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
   const checkin = formData.get("checkin") as string || null;
   const checkout = formData.get("checkout") as string || null;
+  const faq = formData.get("faq") as string || null;
 
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
   if (checkin && !timeRegex.test(checkin)) {
@@ -273,6 +278,7 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
         checkin,
         checkout,
+        faq,
       })
       .where(eq(courses.id, courseId));
 

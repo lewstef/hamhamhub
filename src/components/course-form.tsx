@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
 
 interface Course {
   id?: string;
@@ -33,6 +33,7 @@ interface Course {
   personalizedMealPlanDetails?: string | null;
   checkin?: string | null;
   checkout?: string | null;
+  faq?: string | null;
 }
 
 // Pre-populates 30-minute interval suggestions (00:00 to 23:30) for check-in/check-out combobox selectors
@@ -104,6 +105,98 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
   const [checkin, setCheckin] = useState(initialCourse?.checkin || "08:00");
   const [checkout, setCheckout] = useState(initialCourse?.checkout || "18:00");
 
+  // FAQ Builder State
+  const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>(() => {
+    if (initialCourse?.faq) {
+      try {
+        const parsed = JSON.parse(initialCourse.faq);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Failed to parse FAQ initial value:", e);
+      }
+    }
+    return [];
+  });
+
+  const handleAddFaq = () => {
+    setFaqs([...faqs, { question: "", answer: "" }]);
+  };
+
+  const handleUpdateFaq = (index: number, key: "question" | "answer", value: string) => {
+    const updated = [...faqs];
+    updated[index][key] = value;
+    setFaqs(updated);
+  };
+
+  const handleRemoveFaq = (index: number) => {
+    setFaqs(faqs.filter((_, i) => i !== index));
+  };
+  
+  // Calculate if the form is dirty compared to the initial input values
+  let initialFaqStr = "[]";
+  if (initialCourse?.faq) {
+    try {
+      const parsed = JSON.parse(initialCourse.faq);
+      if (Array.isArray(parsed)) {
+        initialFaqStr = JSON.stringify(parsed);
+      }
+    } catch (e) {}
+  }
+
+  const isDirty = 
+    name !== (initialCourse?.name || "") ||
+    certifiedTrainer !== (initialCourse?.certifiedTrainer || false) ||
+    certifierName !== (initialCourse?.certifierName || "") ||
+    dedicatedField !== (initialCourse?.dedicatedField || false) ||
+    trainingFieldDescription !== (initialCourse?.trainingFieldDescription || "") ||
+    trainingFieldAddress !== (initialCourse?.trainingFieldAddress || "") ||
+    trainingFieldGoogleBusinessProfile !== (initialCourse?.trainingFieldGoogleBusinessProfile || "") ||
+    trainingFieldGoogleMapsLink !== (initialCourse?.trainingFieldGoogleMapsLink || "") ||
+    parking !== (initialCourse?.parking || false) ||
+    parkingDescription !== (initialCourse?.parkingDescription || "") ||
+    details !== (initialCourse?.details || "") ||
+    termsOfParticipation !== (initialCourse?.termsOfParticipation || "") ||
+    price !== (initialCourse?.price || "") ||
+    priceType !== (initialCourse?.priceType || (itemNoun === "Boarding service" ? "night" : "course")) ||
+    medicationAdministration !== (initialCourse?.medicationAdministration || false) ||
+    medicationAdministrationDetails !== (initialCourse?.medicationAdministrationDetails || "") ||
+    dailyWalks !== (initialCourse?.dailyWalks || 1) ||
+    ownerCommunication !== (initialCourse?.ownerCommunication || false) ||
+    ownerCommunicationDetails !== (initialCourse?.ownerCommunicationDetails || "") ||
+    personalizedMealPlan !== (initialCourse?.personalizedMealPlan || false) ||
+    personalizedMealPlanDetails !== (initialCourse?.personalizedMealPlanDetails || "") ||
+    checkin !== (initialCourse?.checkin || "08:00") ||
+    checkout !== (initialCourse?.checkout || "18:00") ||
+    JSON.stringify(faqs) !== initialFaqStr;
+
+  // Safeguard: Ask before leaving page when there are unsaved changes
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+      return e.returnValue;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
+
+  const handleCancel = () => {
+    if (isDirty) {
+      const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to leave?");
+      if (!confirmLeave) {
+        return;
+      }
+    }
+    onCancel();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -141,6 +234,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     formData.append("personalizedMealPlanDetails", personalizedMealPlanDetails);
     formData.append("checkin", checkin);
     formData.append("checkout", checkout);
+    formData.append("faq", JSON.stringify(faqs));
 
     startTransition(async () => {
       const action = isEdit ? updateCourseAction : createCourseAction;
@@ -159,7 +253,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
       <div className="flex flex-col gap-3">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={handleCancel}
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group self-start"
         >
           <ArrowLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -589,6 +683,81 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
               onChange={setTermsOfParticipation}
               placeholder="List prerequisites, mandatory vaccine records, age, etc."
             />
+          </div>
+
+          {/* FAQ Builder Section */}
+          <div className="space-y-4 pt-4 border-t border-border/60">
+            <div className="flex flex-col gap-1">
+              <Label className="text-sm font-bold">Frequently Asked Questions (FAQ)</Label>
+              <p className="text-xs text-muted-foreground">
+                Add Q&A pairs for clients regarding this {itemNoun.toLowerCase()}.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {faqs.length === 0 ? (
+                <div className="text-center p-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
+                  No FAQs added yet. Click "Add FAQ" below to start.
+                </div>
+              ) : (
+                <div className="space-y-3" data-testid="faq-list">
+                  {faqs.map((faq, index) => (
+                    <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                          FAQ Item #{index + 1}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveFaq(index)}
+                          className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                          title="Remove FAQ"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="space-y-1">
+                          <Label htmlFor={`faq-q-${index}`} className="text-xs font-semibold">Question</Label>
+                          <Input
+                            id={`faq-q-${index}`}
+                            type="text"
+                            placeholder="e.g. Is there a vaccination requirement?"
+                            value={faq.question}
+                            onChange={(e) => handleUpdateFaq(index, "question", e.target.value)}
+                            className="bg-background h-8 text-xs font-semibold"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`faq-a-${index}`} className="text-xs font-semibold">Answer</Label>
+                          <textarea
+                            id={`faq-a-${index}`}
+                            placeholder="e.g. Yes, all dogs must have up-to-date DHPP and Rabies vaccines."
+                            value={faq.answer}
+                            onChange={(e) => handleUpdateFaq(index, "answer", e.target.value)}
+                            className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs outline-none placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors resize-y font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddFaq}
+                className="w-full font-bold text-xs py-5 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
+              >
+                <Plus className="size-3.5 mr-1.5" />
+                Add FAQ Item
+              </Button>
+            </div>
           </div>
         </div>
 

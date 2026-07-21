@@ -22,6 +22,8 @@ vi.mock("lucide-react", () => ({
   Footprints: () => <div data-testid="footprints" />,
   Camera: () => <div data-testid="camera" />,
   Utensils: () => <div data-testid="utensils" />,
+  ChevronDown: () => <div data-testid="chevron-down" />,
+  ChevronUp: () => <div data-testid="chevron-up" />,
   // WysiwygEditor icons
   Bold: () => <div data-testid="bold" />,
   Italic: () => <div data-testid="italic" />,
@@ -598,5 +600,152 @@ describe("DashboardServiceDetail Component", () => {
 
     // Submission success should trigger onSubmitSuccess, closing the form and going back to list view
     expect(screen.getByText("Add Course")).toBeDefined();
+  });
+
+  it("should open collapsible drawer and show details, terms, and toggle FAQ accordion answers", async () => {
+    const coursesWithFaq = [
+      {
+        id: "course-abc",
+        name: "Agility Pro",
+        certifiedTrainer: true,
+        dedicatedField: false,
+        parking: false,
+        details: "<p>Learn high speed agility runs</p>",
+        termsOfParticipation: "<p>Must have completed Basic course</p>",
+        faq: JSON.stringify([
+          { question: "Are treats allowed?", answer: "Yes, healthy soft treats are recommended." },
+          { question: "What is the age limit?", answer: "Dogs must be at least 1 year old." }
+        ])
+      }
+    ];
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={coursesWithFaq}
+      />
+    );
+
+    // Initial state: details and FAQs should not be rendered
+    expect(screen.queryByText("Description & Details")).toBeNull();
+    expect(screen.queryByText("Terms of Participation")).toBeNull();
+    expect(screen.queryByText("Are treats allowed?")).toBeNull();
+
+    // Click the course row header (the course name text) to toggle details
+    const courseRowHeader = screen.getByText("Agility Pro");
+    fireEvent.click(courseRowHeader);
+
+    // Details drawer should be expanded
+    expect(screen.getByText("Description & Details")).toBeDefined();
+    expect(screen.getByText("Terms of Participation")).toBeDefined();
+    
+    // FAQs section questions should be visible
+    expect(screen.getByText("Are treats allowed?")).toBeDefined();
+    expect(screen.getByText("What is the age limit?")).toBeDefined();
+
+    // FAQ answers should not be visible initially (accordion closed)
+    expect(screen.queryByText("Yes, healthy soft treats are recommended.")).toBeNull();
+
+    // Click on the first FAQ question header to expand it
+    const faqQuestionBtn = screen.getByRole("button", { name: "Are treats allowed?" });
+    fireEvent.click(faqQuestionBtn);
+
+    // FAQ answer should now be visible
+    expect(screen.getByText("Yes, healthy soft treats are recommended.")).toBeDefined();
+
+    // Click FAQ question header again to close it
+    fireEvent.click(faqQuestionBtn);
+    expect(screen.queryByText("Yes, healthy soft treats are recommended.")).toBeNull();
+  });
+
+  it("should rollback toggle state when toggleOrganizationServiceAction returns an error", async () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ error: "Toggle failed" });
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={genericService}
+        initialIsEnabled={false}
+        slug="dog-walking"
+      />
+    );
+
+    // Initially inactive
+    expect(screen.getByText("Inactive")).toBeDefined();
+
+    const toggle = screen.getByRole("switch");
+    fireEvent.click(toggle);
+
+    // Optimistically shows Active
+    expect(screen.getByText("Active")).toBeDefined();
+    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-dog-walking", true);
+  });
+
+  it("should call reorderOrgCoursesAction after drag-end on a course row", async () => {
+    const { reorderOrgCoursesAction } = await import("@/app/actions/courses");
+    vi.mocked(reorderOrgCoursesAction).mockResolvedValue({ success: true });
+
+    const mockCourses = [
+      { id: "c-1", name: "Puppy Basics", certifiedTrainer: false, dedicatedField: false, parking: false },
+      { id: "c-2", name: "Advanced Agility", certifiedTrainer: false, dedicatedField: false, parking: false },
+    ];
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={mockCourses}
+      />
+    );
+
+    // Find a course row that has draggable behavior
+    const courseRows = document.querySelectorAll("[draggable]");
+    expect(courseRows.length).toBeGreaterThan(0);
+
+    // Simulate drag start on first course
+    fireEvent.dragStart(courseRows[0], { dataTransfer: { effectAllowed: "" } });
+
+    // Simulate drag over on second course
+    fireEvent.dragOver(courseRows[1]);
+
+    // Simulate drag end on first course
+    fireEvent.dragEnd(courseRows[0]);
+
+    // reorderOrgCoursesAction should have been called
+    await vi.waitFor(() => {
+      expect(reorderOrgCoursesAction).toHaveBeenCalled();
+    });
+  });
+
+  it("should show delete error message when deleteCourseAction fails", async () => {
+    vi.mocked(deleteCourseAction).mockResolvedValue({ error: "Failed to delete" });
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          { id: "c-1", name: "Puppy Basics", certifiedTrainer: false, dedicatedField: false, parking: false },
+        ]}
+      />
+    );
+
+    // Open delete modal
+    fireEvent.click(screen.getByRole("button", { name: /Delete/ }));
+
+    // Confirm delete
+    const allDeleteBtns = screen.getAllByRole("button", { name: "Delete" });
+    fireEvent.click(allDeleteBtns[allDeleteBtns.length - 1]);
+
+    await vi.waitFor(() => {
+      expect(deleteCourseAction).toHaveBeenCalledWith("c-1");
+    });
   });
 });

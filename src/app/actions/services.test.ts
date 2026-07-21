@@ -101,6 +101,24 @@ describe("Service Server Actions", () => {
   });
 
   describe("createServiceAction", () => {
+    it("should return error if organizationCategory is missing", async () => {
+      const formData = new FormData();
+      formData.append("name", "Dog training");
+      // organizationCategory intentionally not appended
+
+      const result = await createServiceAction(null, formData);
+      expect(result).toEqual({ error: "Organization Category is required" });
+    });
+
+    it("should return error if organizationCategory is not a valid category", async () => {
+      const formData = new FormData();
+      formData.append("name", "Dog training");
+      formData.append("organizationCategory", "invalid_category");
+
+      const result = await createServiceAction(null, formData);
+      expect(result).toEqual({ error: "A valid Organization Category is required" });
+    });
+
     it("should return error if service name is not a valid service type", async () => {
       const formData = new FormData();
       formData.append("name", "Invalid Service Type");
@@ -108,6 +126,27 @@ describe("Service Server Actions", () => {
 
       const result = await createServiceAction(null, formData);
       expect(result).toEqual({ error: `A valid Service Type name is required: "Invalid Service Type"` });
+    });
+
+    it("should delete removed services and insert new ones on successful create", async () => {
+      const formData = new FormData();
+      formData.append("name", "Dog boarding");
+      formData.append("name", "Dog walking"); // two names: boarding stays, walking is new
+      formData.append("organizationCategory", "dog_kennel");
+
+      // Current services: dog training (to be removed), dog boarding (to stay)
+      mockSelect.mockResolvedValueOnce([
+        { id: "s1", name: "Dog training", organizationCategory: "dog_kennel" },
+        { id: "s2", name: "Dog boarding", organizationCategory: "dog_kennel" },
+      ]);
+      mockDelete.mockResolvedValueOnce({ count: 1 }); // delete dog training
+      mockInsert.mockResolvedValueOnce({ id: "s3" }); // insert dog walking
+
+      const result = await createServiceAction(null, formData);
+      expect(result).toEqual({ success: true });
+      expect(mockDelete).toHaveBeenCalledTimes(1);
+      expect(mockInsert).toHaveBeenCalledTimes(1);
+      expect(revalidatePath).toHaveBeenCalledWith("/backoffice/services");
     });
 
     it("should return error on DB failure in createServiceAction", async () => {
