@@ -32,6 +32,15 @@ export const users = pgTable("users", {
   youtube: text("youtube"),
   website: text("website"),
   googleBusinessProfile: text("google_business_profile"),
+  billingCompanyName: text("billing_company_name"),
+  billingTaxId: text("billing_tax_id"),
+  billingTradeRegistryNumber: text("billing_trade_registry_number"),
+  billingEuid: text("billing_euid"),
+  billingBankAccountNumber: text("billing_bank_account_number"),
+  billingBankName: text("billing_bank_name"),
+  billingContactName: text("billing_contact_name"),
+  billingContactPhone: text("billing_contact_phone"),
+  billingContactEmail: text("billing_contact_email"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

@@ -5,6 +5,14 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getOrganizationCategories } from "@/app/actions/organizations";
 
+/**
+ * Fetches data for the authenticated organization user's dashboard account pages.
+ * Includes user profiles, categories list, services list, and custom billing details.
+ *
+ * @returns `{ organization, organizationCategoryList, servicesList }`
+ * @throws Redirects to `/dashboard/login` if the user is not authenticated.
+ * @securityGuard Auth session check
+ */
 export async function getDashboardAccountData() {
   const session = await auth();
 
@@ -38,6 +46,15 @@ export async function getDashboardAccountData() {
       createdAt: users.createdAt,
       enabledServices: users.enabledServices,
       enabledCourses: users.enabledCourses,
+      billingCompanyName: users.billingCompanyName,
+      billingTaxId: users.billingTaxId,
+      billingTradeRegistryNumber: users.billingTradeRegistryNumber,
+      billingEuid: users.billingEuid,
+      billingBankAccountNumber: users.billingBankAccountNumber,
+      billingBankName: users.billingBankName,
+      billingContactName: users.billingContactName,
+      billingContactPhone: users.billingContactPhone,
+      billingContactEmail: users.billingContactEmail,
     })
     .from(users)
     .where(eq(users.id, id))

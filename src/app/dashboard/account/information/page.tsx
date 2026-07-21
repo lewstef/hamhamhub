@@ -2,11 +2,11 @@ import { getDashboardAccountData } from "../utils";
 import { EditOrganizationForm } from "@/components/edit-organization-form";
 
 export const metadata = {
-  title: "Subscription - Dashboard",
-  description: "View subscription details.",
+  title: "Account Information - Dashboard",
+  description: "View and edit organization details.",
 };
 
-export default async function AccountSubscriptionPage() {
+export default async function AccountInformationPage() {
   const { organization, organizationCategoryList, servicesList } = await getDashboardAccountData();
 
   return (
@@ -15,7 +15,7 @@ export default async function AccountSubscriptionPage() {
         organization={organization}
         organizationCategoryList={organizationCategoryList}
         servicesList={servicesList}
-        activeTabProp="subscription"
+        activeTabProp="personal"
       />
     </div>
   );

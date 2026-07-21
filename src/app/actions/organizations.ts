@@ -223,18 +223,39 @@ export async function createOrganizationAction(prevState: unknown, formData: For
 }
 
 /**
- * Updates profile fields for an existing organization account.
+ * Updates profile and billing fields for an existing organization account.
  * Does not change password or role.
  *
- * @param formData.id                   - Organization user ID (required)
- * @param formData.name                 - New display name (required)
- * @param formData.email                - New unique email (required)
+ * @param prevState - Unused state placeholder
+ * @param formData - The FormData object containing input fields
+ * @param formData.id - Organization user ID (required)
+ * @param formData.name - New display name (required)
  * @param formData.organizationCategory - Must be a valid category ID (required)
+ * @param formData.phoneNumber - Contact phone number (optional)
+ * @param formData.addressLine - Street address line (optional)
+ * @param formData.addressCity - City name (optional)
+ * @param formData.addressState - State / region (optional)
+ * @param formData.addressZip - Zip code (optional)
+ * @param formData.addressCountry - Country (optional)
+ * @param formData.facebook - Facebook profile URL (optional)
+ * @param formData.instagram - Instagram profile URL (optional)
+ * @param formData.tiktok - TikTok profile URL (optional)
+ * @param formData.youtube - YouTube channel URL (optional)
+ * @param formData.website - Website URL (optional)
+ * @param formData.googleBusinessProfile - Google Business Profile link (optional)
+ * @param formData.billingCompanyName - Company legal name (optional)
+ * @param formData.billingTaxId - VAT / Tax ID (optional)
+ * @param formData.billingTradeRegistryNumber - Trade Registry Identifier (optional)
+ * @param formData.billingEuid - EUID identification code (optional)
+ * @param formData.billingBankName - Bank name from Romania (optional)
+ * @param formData.billingBankAccountNumber - Bank account IBAN (optional)
+ * @param formData.billingContactName - Billing contact person name (optional)
+ * @param formData.billingContactPhone - Billing contact phone number (optional)
+ * @param formData.billingContactEmail - Billing contact email address (optional)
  *
- * @returns `{ error: string }` on validation or DB failure
- * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/organizations`
- * @throws Re-throws Next.js NEXT_REDIRECT errors.
- * @sideEffect Revalidates `/backoffice/organizations`
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` on validation or database query failure
+ * @sideEffect Revalidates Next.js path caches for `/backoffice/organizations` and `/dashboard/account`
  */
 export async function updateOrganizationAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
@@ -307,6 +328,33 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
     }
     if (formData.has("googleBusinessProfile")) {
       updateData.googleBusinessProfile = (formData.get("googleBusinessProfile") as string) || null;
+    }
+    if (formData.has("billingCompanyName")) {
+      updateData.billingCompanyName = (formData.get("billingCompanyName") as string) || null;
+    }
+    if (formData.has("billingTaxId")) {
+      updateData.billingTaxId = (formData.get("billingTaxId") as string) || null;
+    }
+    if (formData.has("billingTradeRegistryNumber")) {
+      updateData.billingTradeRegistryNumber = (formData.get("billingTradeRegistryNumber") as string) || null;
+    }
+    if (formData.has("billingEuid")) {
+      updateData.billingEuid = (formData.get("billingEuid") as string) || null;
+    }
+    if (formData.has("billingBankAccountNumber")) {
+      updateData.billingBankAccountNumber = (formData.get("billingBankAccountNumber") as string) || null;
+    }
+    if (formData.has("billingBankName")) {
+      updateData.billingBankName = (formData.get("billingBankName") as string) || null;
+    }
+    if (formData.has("billingContactName")) {
+      updateData.billingContactName = (formData.get("billingContactName") as string) || null;
+    }
+    if (formData.has("billingContactPhone")) {
+      updateData.billingContactPhone = (formData.get("billingContactPhone") as string) || null;
+    }
+    if (formData.has("billingContactEmail")) {
+      updateData.billingContactEmail = (formData.get("billingContactEmail") as string) || null;
     }
 
     await db

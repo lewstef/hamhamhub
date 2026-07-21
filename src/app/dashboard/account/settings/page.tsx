@@ -2,20 +2,20 @@ import { getDashboardAccountData } from "../utils";
 import { EditOrganizationForm } from "@/components/edit-organization-form";
 
 export const metadata = {
-  title: "Account Information - Dashboard",
-  description: "View and edit organization details.",
+  title: "Account Settings - Dashboard",
+  description: "View and edit organization credentials.",
 };
 
-export default async function AccountInformationPage() {
+export default async function AccountSettingsPage() {
   const { organization, organizationCategoryList, servicesList } = await getDashboardAccountData();
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full">
       <EditOrganizationForm
         organization={organization}
         organizationCategoryList={organizationCategoryList}
         servicesList={servicesList}
-        activeTabProp="personal"
+        activeTabProp="account"
       />
     </div>
   );

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Eye, EyeOff, Search, Check, User, ChevronRight, ChevronDown, Key, Shield, Mail, Home, Building, Map, Globe, Hash, MapPin, Phone, Lock, Settings } from "lucide-react";
+import { Eye, EyeOff, Search, Check, User, ChevronRight, ChevronDown, X, Key, Shield, Mail, Home, Building, Map, Globe, Hash, MapPin, Phone, Lock, Settings } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
 
 interface Organization {
@@ -34,6 +34,15 @@ interface Organization {
   createdAt?: Date | string | null;
   enabledServices?: string | null;
   enabledCourses?: string | null;
+  billingCompanyName?: string | null;
+  billingTaxId?: string | null;
+  billingTradeRegistryNumber?: string | null;
+  billingEuid?: string | null;
+  billingBankAccountNumber?: string | null;
+  billingBankName?: string | null;
+  billingContactName?: string | null;
+  billingContactPhone?: string | null;
+  billingContactEmail?: string | null;
 }
 
 interface OrganizationCategory {
@@ -54,10 +63,30 @@ interface EditOrganizationFormProps {
   organization: Organization;
   organizationCategoryList: OrganizationCategory[];
   servicesList?: Service[];
-  activeTabProp?: "personal" | "account" | "subscription" | "services";
+  activeTabProp?: "personal" | "account" | "subscription" | "services" | "billing";
 }
 
 
+
+const ROMANIAN_BANKS = [
+  "Banca Transilvania",
+  "BCR (Banca Comercială Română)",
+  "BRD (Groupe Société Générale)",
+  "ING Bank",
+  "Raiffeisen Bank",
+  "UniCredit Bank",
+  "CEC Bank",
+  "Alpha Bank",
+  "OTP Bank",
+  "Garanti BBVA",
+  "Libra Internet Bank",
+  "Vista Bank",
+  "Patria Bank",
+  "First Bank",
+  "ProCredit Bank",
+  "Intesa Sanpaolo Bank",
+  "Salt Bank",
+];
 
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
@@ -114,7 +143,7 @@ export function EditOrganizationForm({
   const isDashboard = pathname.startsWith("/dashboard");
 
   // Tab state
-  const [localActiveTab, setLocalActiveTab] = useState<"personal" | "account" | "subscription" | "services">("personal");
+  const [localActiveTab, setLocalActiveTab] = useState<"personal" | "account" | "subscription" | "services" | "billing">("personal");
 
   const activeTab = activeTabProp || localActiveTab;
 
@@ -127,6 +156,8 @@ export function EditOrganizationForm({
   const [showRecoveryEmailModal, setShowRecoveryEmailModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   // Form states and actions
   const [personalState, personalAction, personalPending] = useActionState(updateOrganizationAction, null);
@@ -142,6 +173,12 @@ export function EditOrganizationForm({
   const [editCountry, setEditCountry] = useState(organization.addressCountry || "");
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Bank select state
+  const [bankSearch, setBankSearch] = useState(organization.billingBankName || "");
+  const [editBank, setEditBank] = useState(organization.billingBankName || "");
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const bankDropdownRef = useRef<HTMLDivElement>(null);
 
   const [enabledServiceIds, setEnabledServiceIds] = useState<string[]>(
     organization.enabledServices
@@ -172,6 +209,10 @@ export function EditOrganizationForm({
     c.toLowerCase().includes((countrySearch || "").toLowerCase())
   );
 
+  const filteredBanks = ROMANIAN_BANKS.filter((b) =>
+    b.toLowerCase().includes((bankSearch || "").toLowerCase())
+  );
+
   // Phone pattern check
   const selectedCountry = organization.addressCountry;
   const phonePatternInfo = selectedCountry ? COUNTRY_PHONE_PATTERNS[selectedCountry] : null;
@@ -194,6 +235,8 @@ export function EditOrganizationForm({
       setShowAddressModal(false);
       setShowPhoneModal(false);
       setShowSocialModal(false);
+      setShowBillingModal(false);
+      setShowContactModal(false);
       router.refresh();
     }
   }, [personalState, router]);
@@ -212,6 +255,16 @@ export function EditOrganizationForm({
     );
   }, [organization.enabledServices, organization.enabledCourses]);
 
+  useEffect(() => {
+    setCountrySearch(organization.addressCountry || "");
+    setEditCountry(organization.addressCountry || "");
+  }, [organization.addressCountry]);
+
+  useEffect(() => {
+    setBankSearch(organization.billingBankName || "");
+    setEditBank(organization.billingBankName || "");
+  }, [organization.billingBankName]);
+
   // Auto-close Account modals on success & refresh data
   useEffect(() => {
     if (accountState?.success) {
@@ -228,6 +281,9 @@ export function EditOrganizationForm({
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowCountryDropdown(false);
+      }
+      if (bankDropdownRef.current && !bankDropdownRef.current.contains(event.target as Node)) {
+        setShowBankDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -291,7 +347,7 @@ export function EditOrganizationForm({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className={`space-y-6 ${activeTab === "billing" ? "w-full" : "max-w-4xl"}`}>
       {/* Title block */}
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Organization</h1>
@@ -303,8 +359,9 @@ export function EditOrganizationForm({
       {/* Tabs Navigation */}
       <div className="border-b border-border flex gap-6 text-sm">
         {[
-          { id: "personal", label: "Account information", path: "account-information" },
-          { id: "account", label: "Account settings", path: "account-settings" },
+          { id: "personal", label: "Information", path: "information" },
+          { id: "billing", label: "Billing", path: "billing" },
+          { id: "account", label: "Settings", path: "settings" },
           { id: "subscription", label: "Subscription", path: "subscription" },
           ...(isDashboard ? [] : [{ id: "services", label: "Services", path: "services" }]),
         ].map((tab) => {
@@ -343,18 +400,18 @@ export function EditOrganizationForm({
         })}
       </div>
 
-      {/* CARD 1: Account information */}
+      {/* CARD 1: Information */}
       {activeTab === "personal" && (
         <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
           <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg text-primary">
               <User className="size-5" />
             </div>
-            <CardTitle className="text-base font-bold text-foreground">Account information</CardTitle>
+            <CardTitle className="text-base font-bold text-foreground">Information</CardTitle>
           </div>
           <CardContent className="p-0">
             <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
-              The information provided below will reflect on your invoices
+              Manage your basic organization profile details
             </div>
             <div className="divide-y divide-border/50">
               {/* Name Row */}
@@ -368,21 +425,6 @@ export function EditOrganizationForm({
                 <div className="flex flex-1 items-center">
                   <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Name</span>
                   <span className="text-sm font-semibold text-foreground">{organization.name}</span>
-                </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
-
-              {/* Address Row */}
-              <button
-                type="button"
-                onClick={() => setShowAddressModal(true)}
-                aria-label="Edit Address"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Address</span>
-                  <span className="text-sm text-foreground/90">{organization.address || "-"}</span>
                 </div>
                 <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
               </button>
@@ -439,14 +481,201 @@ export function EditOrganizationForm({
         </Card>
       )}
 
-      {/* CARD 2: Account settings */}
+      {/* CARD 1.2: Billing details */}
+      {activeTab === "billing" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* CARD 1.2: Company details */}
+          <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
+            <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Building className="size-5" />
+              </div>
+              <CardTitle className="text-base font-bold text-foreground">Company information</CardTitle>
+            </div>
+            <CardContent className="p-0">
+              <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
+                The information provided below will reflect on your invoices
+              </div>
+              <div className="divide-y divide-border/50">
+                {/* Company Name Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowBillingModal(true)}
+                  aria-label="Edit Billing Company Name"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Company name</span>
+                    <span className="text-sm text-foreground/90">{organization.billingCompanyName || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Tax ID Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowBillingModal(true)}
+                  aria-label="Edit Billing Tax ID"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Tax ID</span>
+                    <span className="text-sm text-foreground/90">{organization.billingTaxId || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Trade Registry Number Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowBillingModal(true)}
+                  aria-label="Edit Billing Trade Registry Number"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Trade Registry Number</span>
+                    <span className="text-sm text-foreground/90">{organization.billingTradeRegistryNumber || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* EUID Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowBillingModal(true)}
+                  aria-label="Edit Billing EUID"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">EUID</span>
+                    <span className="text-sm text-foreground/90">{organization.billingEuid || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Address Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowAddressModal(true)}
+                  aria-label="Edit Address"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Address</span>
+                    <span className="text-sm text-foreground/90">{organization.address || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Bank Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowBillingModal(true)}
+                  aria-label="Edit Billing Bank"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Bank</span>
+                    <span className="text-sm text-foreground/90">{organization.billingBankName || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Bank Account Number Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowBillingModal(true)}
+                  aria-label="Edit Billing Bank Account Number"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Bank Account Number</span>
+                    <span className="text-sm text-foreground/90">{organization.billingBankAccountNumber || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* CARD 1.3: Contact details */}
+          <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
+            <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <User className="size-5" />
+              </div>
+              <CardTitle className="text-base font-bold text-foreground">Contact information</CardTitle>
+            </div>
+            <CardContent className="p-0">
+              <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
+                The primary contact person details for this organization
+              </div>
+              <div className="divide-y divide-border/50">
+                {/* Contact Person Name Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  aria-label="Edit Contact Person Name"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Contact person name</span>
+                    <span className="text-sm text-foreground/90">{organization.billingContactName || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Contact Person Phone Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  aria-label="Edit Contact Person Phone"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Contact person phone</span>
+                    <span className="text-sm text-foreground/90">{organization.billingContactPhone || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Contact Person Email Row */}
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  aria-label="Edit Contact Person Email"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Contact person email</span>
+                    <span className="text-sm text-foreground/90">{organization.billingContactEmail || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* CARD 2: Settings */}
       {activeTab === "account" && (
         <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
           <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg text-primary">
               <Mail className="size-5" />
             </div>
-            <CardTitle className="text-base font-bold text-foreground">Account settings</CardTitle>
+            <CardTitle className="text-base font-bold text-foreground">Settings</CardTitle>
           </div>
           <CardContent className="p-0">
             <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
@@ -710,7 +939,7 @@ export function EditOrganizationForm({
                 )}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <Label htmlFor="name" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Organization Name
                     </Label>
                     <div className="relative">
@@ -771,7 +1000,7 @@ export function EditOrganizationForm({
                 )}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="organizationCategory" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <Label htmlFor="organizationCategory" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Organization Category
                     </Label>
                     <select
@@ -831,7 +1060,7 @@ export function EditOrganizationForm({
                 <div className="space-y-4">
                   {/* Street Address */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="addressLine" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <Label htmlFor="addressLine" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Street Address
                     </Label>
                     <div className="relative">
@@ -850,7 +1079,7 @@ export function EditOrganizationForm({
                   {/* City & State */}
                   <div className="grid gap-4 grid-cols-2">
                     <div className="space-y-1.5">
-                      <Label htmlFor="addressCity" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Label htmlFor="addressCity" className="text-sm font-medium normal-case text-muted-foreground/80">
                         City
                       </Label>
                       <div className="relative">
@@ -867,7 +1096,7 @@ export function EditOrganizationForm({
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="addressState" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Label htmlFor="addressState" className="text-sm font-medium normal-case text-muted-foreground/80">
                         State / Region / Province
                       </Label>
                       <div className="relative">
@@ -887,7 +1116,7 @@ export function EditOrganizationForm({
                   {/* Zip Code & Country */}
                   <div className="grid gap-4 grid-cols-2">
                     <div className="space-y-1.5">
-                      <Label htmlFor="addressZip" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Label htmlFor="addressZip" className="text-sm font-medium normal-case text-muted-foreground/80">
                         Zip Code / Postal Code
                       </Label>
                       <div className="relative">
@@ -905,7 +1134,7 @@ export function EditOrganizationForm({
 
                     {/* Country select with suggestions */}
                     <div className="space-y-1.5 relative" ref={dropdownRef}>
-                      <Label htmlFor="addressCountry" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Label htmlFor="addressCountry" className="text-sm font-medium normal-case text-muted-foreground/80">
                         Country
                       </Label>
                       <div className="relative">
@@ -927,7 +1156,7 @@ export function EditOrganizationForm({
                       </div>
 
                       {showCountryDropdown && filteredCountries.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-lg shadow-xl max-h-36 overflow-y-auto animate-in slide-in-from-top-1 duration-100">
+                        <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
                           {filteredCountries.map((c) => (
                             <button
                               key={c}
@@ -937,10 +1166,10 @@ export function EditOrganizationForm({
                                 setCountrySearch(c);
                                 setShowCountryDropdown(false);
                               }}
-                              className="w-full text-left px-3 py-2 text-xs text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none flex items-center justify-between"
+                              className="w-full text-left px-3 py-2.5 text-sm rounded-lg text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0"
                             >
                               <span>{c}</span>
-                              {editCountry === c && <Check className="size-3 text-primary" />}
+                              {editCountry === c && <Check className="size-4 text-primary" />}
                             </button>
                           ))}
                         </div>
@@ -993,7 +1222,7 @@ export function EditOrganizationForm({
                 )}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="phoneNumber" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <Label htmlFor="phoneNumber" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Phone number
                     </Label>
                     <div className="relative">
@@ -1052,7 +1281,7 @@ export function EditOrganizationForm({
                 )}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <Label htmlFor="email" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Email Address
                     </Label>
                     <div className="relative">
@@ -1106,7 +1335,7 @@ export function EditOrganizationForm({
                 )}
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="recoveryEmail" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <Label htmlFor="recoveryEmail" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Recovery email
                     </Label>
                     <div className="relative">
@@ -1163,7 +1392,7 @@ export function EditOrganizationForm({
                 <div className="space-y-4">
                   {isDashboard && (
                     <div className="space-y-1.5">
-                      <Label htmlFor="currentPassword" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Label htmlFor="currentPassword" className="text-sm font-medium normal-case text-muted-foreground/80">
                         Current Password
                       </Label>
                       <div className="relative">
@@ -1181,7 +1410,7 @@ export function EditOrganizationForm({
                   )}
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <Label htmlFor="password" className="text-sm font-medium normal-case text-muted-foreground/80">
                       New Password
                     </Label>
                     <div className="relative">
@@ -1208,7 +1437,7 @@ export function EditOrganizationForm({
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Confirm Password
                     </Label>
                     <div className="relative">
@@ -1242,6 +1471,264 @@ export function EditOrganizationForm({
                   </Button>
                   <Button type="submit" disabled={isPasswordSubmitDisabled}>
                     {isPending ? "Saving..." : "Change Password"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+      {/* POPUP 6: Edit Billing Details */}
+      {showBillingModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Building className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit Company details</CardTitle>
+                <CardDescription className="text-xs">Update your organization billing details used on invoices.</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+
+              <CardContent className="p-6 space-y-4">
+                {personalState?.error && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalState.error}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingCompanyName" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Company name <span className="text-destructive font-semibold">*</span>
+                    </Label>
+                    <Input
+                      id="billingCompanyName"
+                      name="billingCompanyName"
+                      type="text"
+                      key={organization.billingCompanyName || ""}
+                      defaultValue={organization.billingCompanyName || ""}
+                      required
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingTaxId" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Tax ID <span className="text-destructive font-semibold">*</span>
+                    </Label>
+                    <Input
+                      id="billingTaxId"
+                      name="billingTaxId"
+                      type="text"
+                      key={organization.billingTaxId || ""}
+                      defaultValue={organization.billingTaxId || ""}
+                      required
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingTradeRegistryNumber" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Trade Registry Number <span className="text-destructive font-semibold">*</span>
+                    </Label>
+                    <Input
+                      id="billingTradeRegistryNumber"
+                      name="billingTradeRegistryNumber"
+                      type="text"
+                      key={organization.billingTradeRegistryNumber || ""}
+                      defaultValue={organization.billingTradeRegistryNumber || ""}
+                      placeholder="J40/1234/2020"
+                      required
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingEuid" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      EUID <span className="text-destructive font-semibold">*</span>
+                    </Label>
+                    <Input
+                      id="billingEuid"
+                      name="billingEuid"
+                      type="text"
+                      key={organization.billingEuid || ""}
+                      defaultValue={organization.billingEuid || ""}
+                      required
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+
+                  {/* Bank select with suggestions */}
+                  <div className="space-y-1.5 relative" ref={bankDropdownRef}>
+                    <Label htmlFor="billingBankName" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Bank
+                    </Label>
+                    <div className="relative">
+                      <Building className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                      <Input
+                        id="billingBankName"
+                        name="billingBankName"
+                        type="text"
+                        value={bankSearch}
+                        onChange={(e) => {
+                          setBankSearch(e.target.value);
+                          setEditBank(e.target.value);
+                          setShowBankDropdown(true);
+                        }}
+                        onFocus={() => setShowBankDropdown(true)}
+                        placeholder="Search or select bank..."
+                        className="pl-9 pr-10 focus-visible:ring-primary/20"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                        {bankSearch && (
+                          <button
+                            type="button"
+                            aria-label="Clear bank selection"
+                            onClick={() => {
+                              setBankSearch("");
+                              setEditBank("");
+                              setShowBankDropdown(false);
+                            }}
+                            className="text-muted-foreground/60 hover:text-foreground/90 transition-colors p-0.5"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        )}
+                        <ChevronDown className="size-4 text-muted-foreground/60 pointer-events-none" />
+                      </div>
+                    </div>
+
+                    {showBankDropdown && filteredBanks.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
+                        {filteredBanks.map((b) => (
+                          <button
+                            key={b}
+                            type="button"
+                            onClick={() => {
+                              setEditBank(b);
+                              setBankSearch(b);
+                              setShowBankDropdown(false);
+                            }}
+                            className="w-full text-left px-3 py-2.5 text-sm rounded-lg text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0"
+                          >
+                            <span>{b}</span>
+                            {editBank === b && <Check className="size-4 text-primary" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingBankAccountNumber" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Bank Account Number
+                    </Label>
+                    <Input
+                      id="billingBankAccountNumber"
+                      name="billingBankAccountNumber"
+                      type="text"
+                      key={organization.billingBankAccountNumber || ""}
+                      defaultValue={organization.billingBankAccountNumber || ""}
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => setShowBillingModal(false)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* POPUP 7: Edit Contact Details */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <User className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit Contact details</CardTitle>
+                <CardDescription className="text-xs">Update your organization's primary contact details.</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+
+              <CardContent className="p-6 space-y-4">
+                {personalState?.error && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalState.error}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingContactName" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Contact person name <span className="text-destructive font-semibold">*</span>
+                    </Label>
+                    <Input
+                      id="billingContactName"
+                      name="billingContactName"
+                      type="text"
+                      key={organization.billingContactName || ""}
+                      defaultValue={organization.billingContactName || ""}
+                      required
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingContactPhone" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Contact person phone <span className="text-destructive font-semibold">*</span>
+                    </Label>
+                    <Input
+                      id="billingContactPhone"
+                      name="billingContactPhone"
+                      type="text"
+                      key={organization.billingContactPhone || ""}
+                      defaultValue={organization.billingContactPhone || ""}
+                      required
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingContactEmail" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Contact person email <span className="text-destructive font-semibold">*</span>
+                    </Label>
+                    <Input
+                      id="billingContactEmail"
+                      name="billingContactEmail"
+                      type="email"
+                      key={organization.billingContactEmail || ""}
+                      defaultValue={organization.billingContactEmail || ""}
+                      required
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => setShowContactModal(false)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               </CardContent>

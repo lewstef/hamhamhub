@@ -6,5 +6,5 @@ interface PageProps {
 
 export default async function EditOrganizationPage({ params }: PageProps) {
   const { id } = await params;
-  redirect(`/backoffice/organizations/account-information/${id}`);
+  redirect(`/backoffice/organizations/information/${id}`);
 }

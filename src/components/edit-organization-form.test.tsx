@@ -72,22 +72,30 @@ describe("EditOrganizationForm Component", () => {
 
     expect(screen.getByText("Edit Organization")).toBeDefined();
     
-    // Account information tab is default
-    expect(screen.getAllByText("Account information")[0]).toBeDefined();
+    // Information tab is default
+    expect(screen.getAllByText("Information")[0]).toBeDefined();
     expect(screen.getByText(dummyOrganization.name)).toBeDefined();
     expect(screen.getByText("NGO")).toBeDefined();
-    expect(screen.getByText(dummyOrganization.address)).toBeDefined();
     expect(screen.getByText(dummyOrganization.phoneNumber)).toBeDefined();
 
+    // Address is on Billing tab, shouldn't be visible yet
+    expect(screen.queryByText(dummyOrganization.address)).toBeNull();
+
     // Verify other tabs are visible
+    expect(screen.getByRole("button", { name: "Billing" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Subscription" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Services" })).toBeDefined();
     
-    // Email is on Account settings tab, shouldn't be visible yet
+    // Email is on Settings tab, shouldn't be visible yet
     expect(screen.queryByText(dummyOrganization.email)).toBeNull();
 
-    // Switch to Account settings tab
-    const accountTabBtn = screen.getByRole("button", { name: "Account settings" });
+    // Switch to Billing tab to verify address
+    const billingTabBtn = screen.getByRole("button", { name: "Billing" });
+    fireEvent.click(billingTabBtn);
+    expect(screen.getByText(dummyOrganization.address)).toBeDefined();
+
+    // Switch to Settings tab
+    const accountTabBtn = screen.getByRole("button", { name: "Settings" });
     fireEvent.click(accountTabBtn);
 
     // Email should now be visible
@@ -130,7 +138,7 @@ describe("EditOrganizationForm Component", () => {
     );
 
     // Switch to Account settings tab first
-    const accountTabBtn = screen.getByRole("button", { name: "Account settings" });
+    const accountTabBtn = screen.getByRole("button", { name: "Settings" });
     fireEvent.click(accountTabBtn);
 
     // Click the Edit button corresponding to Password row
@@ -214,6 +222,10 @@ describe("EditOrganizationForm Component", () => {
     // Initial check: address fields not shown
     expect(screen.queryByLabelText("Street Address")).toBeNull();
 
+    // Click Billing tab first to show Address row
+    const billingTabBtn = screen.getByRole("button", { name: "Billing" });
+    fireEvent.click(billingTabBtn);
+
     // Click Edit Address
     const editAddressBtn = screen.getByRole("button", { name: "Edit Address" });
     fireEvent.click(editAddressBtn);
@@ -223,6 +235,10 @@ describe("EditOrganizationForm Component", () => {
     const cancelAddress = screen.getAllByRole("button", { name: /cancel/i })[0];
     fireEvent.click(cancelAddress);
     expect(screen.queryByLabelText("Street Address")).toBeNull();
+
+    // Switch back to Information tab to show Phone and Social rows
+    const infoTabBtn = screen.getByRole("button", { name: "Information" });
+    fireEvent.click(infoTabBtn);
 
     // Phone modal
     const editPhoneBtn = screen.getByRole("button", { name: "Edit Phone number" });
@@ -262,8 +278,8 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
     expect(screen.queryByLabelText("Organization Category")).toBeNull();
 
-    // Switch to Account settings tab for Email / Recovery Email
-    fireEvent.click(screen.getByRole("button", { name: "Account settings" }));
+    // Switch to Settings tab for Email / Recovery Email
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 
     // 2. Edit Email modal
     expect(screen.queryByLabelText("New Email Address")).toBeNull();
@@ -276,8 +292,8 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit Recovery email" }));
     fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
 
-    // 4. Social links modal (on Account info tab)
-    fireEvent.click(screen.getByRole("button", { name: "Account information" }));
+    // 4. Social links modal (on Information tab)
+    fireEvent.click(screen.getByRole("button", { name: "Information" }));
   });
 
   it("should auto-close personal modals on personalState success", async () => {
@@ -420,8 +436,8 @@ describe("EditOrganizationForm Component", () => {
       />
     );
 
-    // With activeTabProp, tabs are link elements; "Account information" appears in tab + card heading
-    expect(screen.getAllByText("Account information").length).toBeGreaterThanOrEqual(1);
+    // With activeTabProp, tabs are link elements; "Information" appears in tab + card heading
+    expect(screen.getAllByText("Information").length).toBeGreaterThanOrEqual(1);
   });
 
   it("should show country phone pattern placeholder in phone modal", () => {
@@ -471,8 +487,8 @@ describe("EditOrganizationForm Component", () => {
       />
     );
 
-    // Switch to Account settings tab
-    const accountTabBtn = screen.getByRole("button", { name: "Account settings" });
+    // Switch to Settings tab
+    const accountTabBtn = screen.getByRole("button", { name: "Settings" });
     fireEvent.click(accountTabBtn);
 
     // Open change password modal
@@ -505,5 +521,84 @@ describe("EditOrganizationForm Component", () => {
     const cancelBtn = screen.getByRole("button", { name: "Cancel" });
     fireEvent.click(cancelBtn);
     expect(screen.queryByText("Change Password")).toBeNull();
+  });
+
+  it("should render new billing and contact fields, handle bank dropdown search filtering and clear button", async () => {
+    const orgWithBilling = {
+      ...dummyOrganization,
+      billingCompanyName: "Happy Paws SRL",
+      billingTaxId: "RO123456",
+      billingTradeRegistryNumber: "J12/345/2020",
+      billingEuid: "ROONRC.J12/345/2020",
+      billingBankName: "ING Bank",
+      billingBankAccountNumber: "RO12INGB0000000000000000",
+      billingContactName: "John Doe",
+      billingContactPhone: "0722000000",
+      billingContactEmail: "john@paws.org",
+    };
+
+    render(
+      <EditOrganizationForm
+        organization={orgWithBilling}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Switch to Billing tab
+    const billingTabBtn = screen.getByRole("button", { name: "Billing" });
+    fireEvent.click(billingTabBtn);
+
+    // Verify company billing values are rendered on the card
+    expect(screen.getByText("Happy Paws SRL")).toBeDefined();
+    expect(screen.getByText("RO123456")).toBeDefined();
+    expect(screen.getByText("J12/345/2020")).toBeDefined();
+    expect(screen.getByText("ROONRC.J12/345/2020")).toBeDefined();
+    expect(screen.getByText("ING Bank")).toBeDefined();
+    expect(screen.getByText("RO12INGB0000000000000000")).toBeDefined();
+
+    // Verify contact values are rendered on the card
+    expect(screen.getByText("John Doe")).toBeDefined();
+    expect(screen.getByText("0722000000")).toBeDefined();
+    expect(screen.getByText("john@paws.org")).toBeDefined();
+
+    // Click to open Edit Company details modal
+    const editCompanyBtn = screen.getByRole("button", { name: "Edit Billing Company Name" });
+    fireEvent.click(editCompanyBtn);
+
+    // Verify input values are preset in form inputs
+    const companyInput = document.getElementById("billingCompanyName") as HTMLInputElement;
+    const taxIdInput = document.getElementById("billingTaxId") as HTMLInputElement;
+    const bankInput = document.getElementById("billingBankName") as HTMLInputElement;
+    const bankAccountInput = document.getElementById("billingBankAccountNumber") as HTMLInputElement;
+
+    expect(companyInput.value).toBe("Happy Paws SRL");
+    expect(taxIdInput.value).toBe("RO123456");
+    expect(bankInput.value).toBe("ING Bank");
+    expect(bankAccountInput.value).toBe("RO12INGB0000000000000000");
+
+    // Verify required attribute is on Company name and Tax ID, but not Bank or Bank Account
+    expect(companyInput.hasAttribute("required")).toBe(true);
+    expect(taxIdInput.hasAttribute("required")).toBe(true);
+    expect(bankInput.hasAttribute("required")).toBe(false);
+    expect(bankAccountInput.hasAttribute("required")).toBe(false);
+
+    // Test bank input change filters Romanian banks list
+    fireEvent.change(bankInput, { target: { value: "Banca" } });
+    expect(screen.getByText("Banca Transilvania")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "ING Bank" })).toBeNull();
+
+    // Select a bank from the filtered list
+    const btOption = screen.getByText("Banca Transilvania");
+    fireEvent.click(btOption);
+    expect(bankInput.value).toBe("Banca Transilvania");
+
+    // Test clear bank input button
+    const clearBtn = screen.getByRole("button", { name: "Clear bank selection" });
+    fireEvent.click(clearBtn);
+    expect(bankInput.value).toBe("");
+
+    // Click Cancel to close modal
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelBtn);
   });
 });

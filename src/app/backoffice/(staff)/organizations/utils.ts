@@ -4,6 +4,15 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getOrganizationCategories } from "@/app/actions/organizations";
 
+/**
+ * Fetches organization details for the backoffice admin management pages.
+ * Validates the ID parameter format and role privilege level.
+ *
+ * @param id - The unique organization user UUID identifier (required)
+ * @returns `{ organization, organizationCategoryList, servicesList }`
+ * @throws Triggers Next.js `notFound()` if UUID is invalid, organization is missing, or role is not "organization"
+ * @securityGuard UUID format validation check, role check
+ */
 export async function getOrganizationData(id: string) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(id)) {
@@ -34,6 +43,15 @@ export async function getOrganizationData(id: string) {
       createdAt: users.createdAt,
       enabledServices: users.enabledServices,
       enabledCourses: users.enabledCourses,
+      billingCompanyName: users.billingCompanyName,
+      billingTaxId: users.billingTaxId,
+      billingTradeRegistryNumber: users.billingTradeRegistryNumber,
+      billingEuid: users.billingEuid,
+      billingBankAccountNumber: users.billingBankAccountNumber,
+      billingBankName: users.billingBankName,
+      billingContactName: users.billingContactName,
+      billingContactPhone: users.billingContactPhone,
+      billingContactEmail: users.billingContactEmail,
     })
     .from(users)
     .where(eq(users.id, id))

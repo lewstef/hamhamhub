@@ -296,6 +296,28 @@ describe("Organization Server Actions", () => {
       expect(result).toEqual({ success: true });
       expect(mockUpdate).toHaveBeenCalled();
     });
+
+    it("should successfully persist company billing and contact details fields", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("name", "Billing Org");
+      formData.append("organizationCategory", "ngo");
+      formData.append("billingCompanyName", "Billing Corp SRL");
+      formData.append("billingTaxId", "RO998877");
+      formData.append("billingTradeRegistryNumber", "J40/123/2021");
+      formData.append("billingEuid", "ROONRC.J40/123/2021");
+      formData.append("billingBankName", "Banca Transilvania");
+      formData.append("billingBankAccountNumber", "RO99BTRL0000000000000000");
+      formData.append("billingContactName", "Alice Smith");
+      formData.append("billingContactPhone", "0733111222");
+      formData.append("billingContactEmail", "alice@billing.org");
+
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await updateOrganizationAction(null, formData);
+      expect(result).toEqual({ success: true });
+      expect(mockUpdate).toHaveBeenCalled();
+    });
   });
 
   describe("changeOrganizationPasswordAction", () => {
