@@ -50,6 +50,22 @@ export function WysiwygEditor({ value, onChange, placeholder = "Start typing..."
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey || e.metaKey) {
+      const key = e.key.toLowerCase();
+      if (key === "b") {
+        e.preventDefault();
+        executeCommand("bold");
+      } else if (key === "i") {
+        e.preventDefault();
+        executeCommand("italic");
+      } else if (key === "u") {
+        e.preventDefault();
+        executeCommand("underline");
+      }
+    }
+  };
+
   return (
     <div className="border border-border rounded-xl bg-card shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all duration-200">
       {/* Toolbar */}
@@ -129,6 +145,7 @@ export function WysiwygEditor({ value, onChange, placeholder = "Start typing..."
         ref={editorRef}
         contentEditable
         onInput={handleInput}
+        onKeyDown={handleKeyDown}
         className="p-4 min-h-[140px] max-h-[300px] overflow-y-auto focus:outline-none text-sm text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none"
         {...({ placeholder } as any)}
         style={{ outline: "none" }}

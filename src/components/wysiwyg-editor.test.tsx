@@ -153,4 +153,23 @@ describe("WysiwygEditor Component", () => {
     const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
     expect(editable.innerHTML).toBe("");
   });
+
+  it("should trigger bold, italic, and underline commands when Ctrl+B, Ctrl+I, or Ctrl+U is pressed inside the editor", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+
+    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
+    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
+
+    // Press Ctrl+B
+    fireEvent.keyDown(editable, { key: "b", ctrlKey: true });
+    expect(document.execCommand).toHaveBeenCalledWith("bold", false, "");
+
+    // Press Ctrl+I
+    fireEvent.keyDown(editable, { key: "i", ctrlKey: true });
+    expect(document.execCommand).toHaveBeenCalledWith("italic", false, "");
+
+    // Press Ctrl+U
+    fireEvent.keyDown(editable, { key: "u", ctrlKey: true });
+    expect(document.execCommand).toHaveBeenCalledWith("underline", false, "");
+  });
 });
