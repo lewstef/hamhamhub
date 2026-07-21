@@ -54,6 +54,8 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
  * @property {Course} [initialCourse] - Optional initial Course data for edit/update mode.
  * @property {() => void} onCancel - Callback triggered when cancelling/going back.
  * @property {() => void} onSubmitSuccess - Callback triggered after successful creation or update action.
+ * @property {string} [serviceSlug] - Slug of the parent service. Used to conditionally render boarding-only fields
+ *   (Check-in / Check-out pickers) and hide age-limits toggle for non-training services.
  */
 interface CourseFormProps {
   organizationId: string;
@@ -68,10 +70,16 @@ interface CourseFormProps {
 /**
  * CourseForm Component
  *
- * Form rendering panel for creating or editing sub-service items (such as Training Courses or Boarding rates).
- * Provides toggles and expand/collapse fieldsets for Certified Trainer, Dedicated Field, Parking,
- * Medication Administration, Owner Updates, and personalized meal planning.
- * Submits data via createCourseAction or updateCourseAction Server Actions.
+ * Form rendering panel for creating or editing sub-service items (Training Courses, Dog Sports, or Boarding rates).
+ * Provides boolean toggle fieldsets for: Certified Trainer, Dedicated Field, Parking,
+ * Medication Administration, Owner Updates, Personalized Meal Plan, and Age Limits.
+ *
+ * Conditional rendering rules:
+ * - Check-in / Check-out time pickers are shown **only** when `serviceSlug === 'dog-boarding'`.
+ * - Age Limits switch and phase checkboxes are shown **only** for non-boarding services
+ *   (i.e. dog-training and sport-dog-training).
+ *
+ * Submits data via `createCourseAction` or `updateCourseAction` Server Actions.
  *
  * @param {CourseFormProps} props - The component props.
  * @returns {React.ReactElement} The course/boarding configuration form component.

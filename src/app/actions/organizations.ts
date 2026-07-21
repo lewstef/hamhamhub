@@ -232,6 +232,7 @@ export async function createOrganizationAction(prevState: unknown, formData: For
  * @param formData.name - New display name (required)
  * @param formData.organizationCategory - Must be a valid category ID (required)
  * @param formData.phoneNumber - Contact phone number (optional)
+ * @param formData.description - Rich-text organization description, stored as HTML string (optional)
  * @param formData.addressLine - Street address line (optional)
  * @param formData.addressCity - City name (optional)
  * @param formData.addressState - State / region (optional)
