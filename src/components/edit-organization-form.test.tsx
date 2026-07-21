@@ -94,8 +94,8 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(billingTabBtn);
     expect(screen.getByText(dummyOrganization.address)).toBeDefined();
 
-    // Switch to Settings tab
-    const accountTabBtn = screen.getByRole("button", { name: "Settings" });
+    // Switch to Security tab
+    const accountTabBtn = screen.getByRole("button", { name: "Security" });
     fireEvent.click(accountTabBtn);
 
     // Email should now be visible
@@ -129,7 +129,7 @@ describe("EditOrganizationForm Component", () => {
     expect(screen.queryByLabelText("Organization Name")).toBeNull();
   });
 
-  it("should open and test password matching logic in Password modal on the Account settings tab", () => {
+  it("should open and test password matching logic in Password modal on the Security tab", () => {
     render(
       <EditOrganizationForm
         organization={dummyOrganization}
@@ -137,8 +137,8 @@ describe("EditOrganizationForm Component", () => {
       />
     );
 
-    // Switch to Account settings tab first
-    const accountTabBtn = screen.getByRole("button", { name: "Settings" });
+    // Switch to Security tab first
+    const accountTabBtn = screen.getByRole("button", { name: "Security" });
     fireEvent.click(accountTabBtn);
 
     // Click the Edit button corresponding to Password row
@@ -278,8 +278,8 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
     expect(screen.queryByLabelText("Organization Category")).toBeNull();
 
-    // Switch to Settings tab for Email / Recovery Email
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    // Switch to Security tab for Email / Recovery Email
+    fireEvent.click(screen.getByRole("button", { name: "Security" }));
 
     // 2. Edit Email modal
     expect(screen.queryByLabelText("New Email Address")).toBeNull();
@@ -487,8 +487,8 @@ describe("EditOrganizationForm Component", () => {
       />
     );
 
-    // Switch to Settings tab
-    const accountTabBtn = screen.getByRole("button", { name: "Settings" });
+    // Switch to Security tab
+    const accountTabBtn = screen.getByRole("button", { name: "Security" });
     fireEvent.click(accountTabBtn);
 
     // Open change password modal

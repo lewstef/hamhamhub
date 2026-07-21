@@ -6,11 +6,11 @@ interface PageProps {
 }
 
 export const metadata = {
-  title: "Account Settings - Backoffice",
+  title: "Security - Backoffice",
   description: "Update organization account settings.",
 };
 
-export default async function AccountSettingsPage({ params }: PageProps) {
+export default async function OrganizationSecurityPage({ params }: PageProps) {
   const { id } = await params;
   const { organization, organizationCategoryList, servicesList } = await getOrganizationData(id);
 

@@ -576,7 +576,7 @@ export function EditOrganizationForm({
         {[
           { id: "personal", label: "Information", path: "information" },
           { id: "billing", label: "Billing", path: "billing" },
-          { id: "account", label: "Settings", path: "settings" },
+          { id: "account", label: "Security", path: "security" },
           { id: "subscription", label: "Subscription", path: "subscription" },
           ...(isDashboard ? [] : [{ id: "services", label: "Services", path: "services" }]),
         ].map((tab) => {
@@ -972,14 +972,14 @@ export function EditOrganizationForm({
         </div>
       )}
 
-      {/* CARD 2: Settings */}
+      {/* CARD 2: Security */}
       {activeTab === "account" && (
         <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
           <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg text-primary">
               <Mail className="size-5" />
             </div>
-            <CardTitle className="text-base font-bold text-foreground">Settings</CardTitle>
+            <CardTitle className="text-base font-bold text-foreground">Security</CardTitle>
           </div>
           <CardContent className="p-0">
             <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
