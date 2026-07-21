@@ -825,7 +825,7 @@ export function EditOrganizationForm({
               </div>
 
               {/* Primary Contact Person Section */}
-              <div className="px-6 py-2.5 bg-muted/20 border-b border-border/50 text-xs font-bold uppercase tracking-wider text-muted-foreground/90">
+              <div className="px-6 py-2.5 bg-muted/20 border-b border-border/50 text-xs font-bold text-muted-foreground/90">
                 Primary Contact Person
               </div>
               <div className="divide-y divide-border/50 border-b border-border/50">
@@ -876,7 +876,7 @@ export function EditOrganizationForm({
               </div>
 
               {/* Secondary Contact Person Section */}
-              <div className="px-6 py-2.5 bg-muted/20 border-b border-border/50 text-xs font-bold uppercase tracking-wider text-muted-foreground/90 flex items-center justify-between">
+              <div className="px-6 py-2.5 bg-muted/20 border-b border-border/50 text-xs font-bold text-muted-foreground/90 flex items-center justify-between">
                 <span>Secondary Contact Person</span>
                 <span className="text-[10px] font-normal normal-case text-muted-foreground/70">(Optional)</span>
               </div>

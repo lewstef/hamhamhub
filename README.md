@@ -88,7 +88,7 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - The "Billing" tab splits content into a two-column layout on large screens: **Company information** card (Company name, Tax ID, Trade Registry Number, EUID, Address, Bank, and Bank Account Number) and **Contact information** card (Primary Contact Person and Secondary Contact Person).
   - Primary Contact Person: Name (`*`), Phone (`*`), Email (`*`) — all mandatory.
   - Secondary Contact Person: Name, Phone, Email — optional secondary contact backup.
-  - Simplified clean field labels (`Name`, `Phone`, `Email`) under explicit section headers ("Primary Contact Person" and "Secondary Contact Person (Optional)").
+  - Simplified clean field labels (`Name`, `Phone`, `Email`) under explicit section headers ("Primary Contact Person" and "Secondary Contact Person (Optional)" with no uppercase font transforms applied).
   - Separated primary and secondary contact details editing into distinct popups (`showPrimaryContactModal` and `showSecondaryContactModal`).
   - Marked all required fields dynamically with a red asterisk `*` and native validation.
   - Added a search dropdown selector containing all major Romanian banks with a dropdown indicator and quick-reset clear button.
