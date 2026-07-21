@@ -220,7 +220,7 @@ describe("EditOrganizationForm Component", () => {
     );
 
     // Initial check: address fields not shown
-    expect(screen.queryByLabelText("Street Address")).toBeNull();
+    expect(screen.queryByLabelText(/Street Address/i)).toBeNull();
 
     // Click Billing tab first to show Address row
     const billingTabBtn = screen.getByRole("button", { name: "Billing" });
@@ -229,12 +229,12 @@ describe("EditOrganizationForm Component", () => {
     // Click Edit Address
     const editAddressBtn = screen.getByRole("button", { name: "Edit Address" });
     fireEvent.click(editAddressBtn);
-    expect(screen.getByLabelText("Street Address")).toBeDefined();
+    expect(screen.getByLabelText(/Street Address/i)).toBeDefined();
 
     // Close address modal
     const cancelAddress = screen.getAllByRole("button", { name: /cancel/i })[0];
     fireEvent.click(cancelAddress);
-    expect(screen.queryByLabelText("Street Address")).toBeNull();
+    expect(screen.queryByLabelText(/Street Address/i)).toBeNull();
 
     // Switch back to Information tab to show Phone and Social rows
     const infoTabBtn = screen.getByRole("button", { name: "Information" });

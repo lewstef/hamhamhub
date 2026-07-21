@@ -1296,6 +1296,7 @@ export function EditOrganizationForm({
       )}
 
       {/* POPUP 2: Edit Address */}
+      {/* POPUP 4: Edit Address Details */}
       {showAddressModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-2xl shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
@@ -1328,7 +1329,7 @@ export function EditOrganizationForm({
                     <div className="space-y-1.5 relative" ref={countyDropdownRef}>
                       <input type="hidden" name="addressState" value={editCounty} />
                       <Label htmlFor="addressState" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        County
+                        County <span className="text-destructive font-semibold">*</span>
                       </Label>
                       <div className="relative">
                         <Map className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
@@ -1344,6 +1345,7 @@ export function EditOrganizationForm({
                           onFocus={() => setShowCountyDropdown(true)}
                           onKeyDown={handleCountyKeyDown}
                           placeholder="Search county..."
+                          required
                           className="pl-9 pr-10 focus-visible:ring-primary/20"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
@@ -1393,7 +1395,7 @@ export function EditOrganizationForm({
                     <div className="space-y-1.5 relative" ref={localityDropdownRef}>
                       <input type="hidden" name="addressCity" value={editLocality} />
                       <Label htmlFor="addressCity" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        Locality
+                        Locality <span className="text-destructive font-semibold">*</span>
                       </Label>
                       <div className="relative">
                         <Building className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
@@ -1413,6 +1415,7 @@ export function EditOrganizationForm({
                           }}
                           onKeyDown={handleLocalityKeyDown}
                           placeholder={editCounty ? "Search locality..." : "Select county first..."}
+                          required
                           className="pl-9 pr-10 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
@@ -1464,7 +1467,7 @@ export function EditOrganizationForm({
                   {/* Street Address */}
                   <div className="space-y-1.5">
                     <Label htmlFor="addressLine" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Street Address
+                      Street Address <span className="text-destructive font-semibold">*</span>
                     </Label>
                     <div className="relative">
                       <Home className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
@@ -1474,6 +1477,7 @@ export function EditOrganizationForm({
                         type="text"
                         defaultValue={organization.addressLine || ""}
                         placeholder="123 Main Street, Suite 100"
+                        required
                         className="pl-9 focus-visible:ring-primary/20"
                       />
                     </div>
@@ -1483,7 +1487,7 @@ export function EditOrganizationForm({
                   <div className="grid gap-4 grid-cols-2">
                     <div className="space-y-1.5">
                       <Label htmlFor="addressZip" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        Zip Code / Postal Code
+                        Zip code
                       </Label>
                       <div className="relative">
                         <Hash className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />

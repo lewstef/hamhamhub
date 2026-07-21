@@ -93,12 +93,13 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Marked all required fields dynamically with a red asterisk `*` and native validation.
   - Added a search dropdown selector containing all major Romanian banks with a dropdown indicator and quick-reset clear button.
   - Optimized wrapper layouts to allow full-width page stretching on `/dashboard/account/*` and `/backoffice/organizations/*` subpages, while constraining single-column forms to `max-w-4xl` and allowing the two-column Billing view to split 50%-50% across the entire width of the page.
-- **Romanian Territory Searchable Dependent Dropdowns with Keyboard Navigation & Auto-Focus Jump**:
+- **Romanian Territory Searchable Dependent Dropdowns with Keyboard Navigation, Auto-Focus Jump & Validation**:
   - Built a comprehensive territory dictionary (`src/config/romanian-territory.ts`) mapping all 42 Romanian Counties to their respective cities, municipalities, towns, and communes.
   - Form address County (`addressState`) renders as a searchable dropdown listing all 42 Romanian counties with real-time text filtering and quick reset (`X`) clear button.
   - Locality (`addressCity`) renders as a searchable dependent dropdown input populated dynamically based on the selected county.
   - Implemented full keyboard navigation (`ArrowDown`, `ArrowUp`, `Enter`, `Escape`, mouse hover sync) for all search dropdown inputs.
   - Automatically shifts focus directly to the Locality input field and opens its search dropdown as soon as a County is selected.
+  - Configured Edit Address Details modal to enforce County, Locality, and Street Address as mandatory (marked with red asterisk `*` and native form validation) while leaving the Zip Code optional and renamed to "Zip code".
 
 ---
 
