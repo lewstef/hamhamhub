@@ -646,19 +646,9 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Are treats allowed?")).toBeDefined();
     expect(screen.getByText("What is the age limit?")).toBeDefined();
 
-    // FAQ answers should not be visible initially (accordion closed)
-    expect(screen.queryByText("Yes, healthy soft treats are recommended.")).toBeNull();
-
-    // Click on the first FAQ question header to expand it
-    const faqQuestionBtn = screen.getByRole("button", { name: "Are treats allowed?" });
-    fireEvent.click(faqQuestionBtn);
-
-    // FAQ answer should now be visible
+    // FAQ answers should be statically visible immediately (no accordion collapsible functionality)
     expect(screen.getByText("Yes, healthy soft treats are recommended.")).toBeDefined();
-
-    // Click FAQ question header again to close it
-    fireEvent.click(faqQuestionBtn);
-    expect(screen.queryByText("Yes, healthy soft treats are recommended.")).toBeNull();
+    expect(screen.getByText("Dogs must be at least 1 year old.")).toBeDefined();
   });
 
   it("should rollback toggle state when toggleOrganizationServiceAction returns an error", async () => {

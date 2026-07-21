@@ -560,34 +560,15 @@ export function DashboardServiceDetail({
 /**
  * FAQAccordionRow Component
  *
- * Renders an individual FAQ item inside the course details collapsible panel.
- * Toggles expanded text visibility on header click with a chevron rotation transition.
+ * Renders an individual FAQ item inside the course details panel statically.
  */
 function FAQAccordionRow({ question, answer }: { question: string; answer: string }) {
-  const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="border border-border/80 rounded-xl bg-card overflow-hidden shadow-sm transition-all duration-200">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors text-left font-bold text-xs text-foreground/95 select-none focus:outline-none cursor-pointer"
-        aria-expanded={isOpen}
-      >
-        <span>{question || "Untitled Question"}</span>
-        <ChevronDown
-          className={cn(
-            "size-3.5 text-muted-foreground transition-transform duration-200 shrink-0 ml-4",
-            isOpen && "rotate-180"
-          )}
-        />
-      </button>
-      {isOpen && (
-        <div className="px-4 pb-3 pt-1 border-t border-border/30 bg-muted/5 animate-in fade-in slide-in-from-top-1 duration-200">
-          <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium">
-            {answer || "No answer provided."}
-          </p>
-        </div>
-      )}
+    <div className="border border-border/80 rounded-xl bg-card overflow-hidden shadow-sm transition-all duration-200 p-4 space-y-2">
+      <h5 className="font-bold text-xs text-foreground/95">{question || "Untitled Question"}</h5>
+      <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium border-t border-border/30 pt-2">
+        {answer || "No answer provided."}
+      </p>
     </div>
   );
 }
