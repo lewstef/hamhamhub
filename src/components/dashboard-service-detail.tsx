@@ -189,6 +189,7 @@ export function DashboardServiceDetail({
           serviceId={service.id}
           itemNoun={itemNoun}
           initialCourse={editingCourse}
+          serviceSlug={slug}
           onCancel={() => {
             setIsFormOpen(false);
             setEditingCourse(undefined);
@@ -335,7 +336,7 @@ export function DashboardServiceDetail({
                             </div>
                             <span className="text-sm font-bold text-foreground">
                               {course.name}
-                              {(course.checkin || course.checkout) && (
+                              {slug === "dog-boarding" && (course.checkin || course.checkout) && (
                                 <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
                                   {course.checkin ? `In: ${course.checkin}` : ""}
                                   {course.checkin && course.checkout ? " • " : ""}

@@ -165,6 +165,7 @@ describe("CourseForm Component", () => {
         organizationId="org-1"
         serviceId="srv-dog-boarding"
         itemNoun="Boarding service"
+        serviceSlug="dog-boarding"
         onCancel={onCancel}
         onSubmitSuccess={onSubmitSuccess}
       />

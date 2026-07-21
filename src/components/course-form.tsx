@@ -60,6 +60,7 @@ interface CourseFormProps {
   initialCourse?: Course;
   onCancel: () => void;
   onSubmitSuccess: () => void;
+  serviceSlug?: string;
 }
 
 /**
@@ -73,8 +74,9 @@ interface CourseFormProps {
  * @param {CourseFormProps} props - The component props.
  * @returns {React.ReactElement} The course/boarding configuration form component.
  */
-export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse, onCancel, onSubmitSuccess }: CourseFormProps) {
+export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse, onCancel, onSubmitSuccess, serviceSlug }: CourseFormProps) {
   const isEdit = !!initialCourse?.id;
+  const isBoarding = serviceSlug === "dog-boarding";
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -232,8 +234,10 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     formData.append("ownerCommunicationDetails", ownerCommunicationDetails);
     formData.append("personalizedMealPlan", String(personalizedMealPlan));
     formData.append("personalizedMealPlanDetails", personalizedMealPlanDetails);
-    formData.append("checkin", checkin);
-    formData.append("checkout", checkout);
+    if (isBoarding) {
+      formData.append("checkin", checkin);
+      formData.append("checkout", checkout);
+    }
     formData.append("faq", JSON.stringify(faqs));
 
     startTransition(async () => {
@@ -622,41 +626,45 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                 )}
               </div>
 
-              <div className="h-px bg-border/60" />
+              {isBoarding && (
+                <>
+                  <div className="h-px bg-border/60" />
 
-              {/* Checkin / Checkout time pickers */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="checkin">Check-in Time</Label>
-                  <Input
-                    id="checkin"
-                    type="text"
-                    list="time-options"
-                    value={checkin}
-                    onChange={(e) => setCheckin(e.target.value)}
-                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-                    placeholder="e.g. 08:00"
-                    title="Please enter a valid time in 24-hour hh:mm format."
-                    className="bg-background font-mono"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="checkout">Check-out Time</Label>
-                  <Input
-                    id="checkout"
-                    type="text"
-                    list="time-options"
-                    value={checkout}
-                    onChange={(e) => setCheckout(e.target.value)}
-                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-                    placeholder="e.g. 18:00"
-                    title="Please enter a valid time in 24-hour hh:mm format."
-                    className="bg-background font-mono"
-                    required
-                  />
-                </div>
-              </div>
+                  {/* Checkin / Checkout time pickers */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="checkin">Check-in Time</Label>
+                      <Input
+                        id="checkin"
+                        type="text"
+                        list="time-options"
+                        value={checkin}
+                        onChange={(e) => setCheckin(e.target.value)}
+                        pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+                        placeholder="e.g. 08:00"
+                        title="Please enter a valid time in 24-hour hh:mm format."
+                        className="bg-background font-mono"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="checkout">Check-out Time</Label>
+                      <Input
+                        id="checkout"
+                        type="text"
+                        list="time-options"
+                        value={checkout}
+                        onChange={(e) => setCheckout(e.target.value)}
+                        pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+                        placeholder="e.g. 18:00"
+                        title="Please enter a valid time in 24-hour hh:mm format."
+                        className="bg-background font-mono"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <datalist id="time-options">
                 {timeOptions.map((time) => (
