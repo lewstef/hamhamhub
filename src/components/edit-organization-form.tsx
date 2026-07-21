@@ -161,7 +161,8 @@ export function EditOrganizationForm({
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [showBillingModal, setShowBillingModal] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
+  const [showPrimaryContactModal, setShowPrimaryContactModal] = useState(false);
+  const [showSecondaryContactModal, setShowSecondaryContactModal] = useState(false);
 
   // Form states and actions
   const [personalState, personalAction, personalPending] = useActionState(updateOrganizationAction, null);
@@ -411,7 +412,8 @@ export function EditOrganizationForm({
       setShowPhoneModal(false);
       setShowSocialModal(false);
       setShowBillingModal(false);
-      setShowContactModal(false);
+      setShowPrimaryContactModal(false);
+      setShowSecondaryContactModal(false);
       router.refresh();
     }
   }, [personalState, router]);
@@ -830,7 +832,7 @@ export function EditOrganizationForm({
                 {/* Primary Contact Name */}
                 <button
                   type="button"
-                  onClick={() => setShowContactModal(true)}
+                  onClick={() => setShowPrimaryContactModal(true)}
                   aria-label="Edit Primary Contact Person Name"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -845,7 +847,7 @@ export function EditOrganizationForm({
                 {/* Primary Contact Phone */}
                 <button
                   type="button"
-                  onClick={() => setShowContactModal(true)}
+                  onClick={() => setShowPrimaryContactModal(true)}
                   aria-label="Edit Primary Contact Person Phone"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -860,7 +862,7 @@ export function EditOrganizationForm({
                 {/* Primary Contact Email */}
                 <button
                   type="button"
-                  onClick={() => setShowContactModal(true)}
+                  onClick={() => setShowPrimaryContactModal(true)}
                   aria-label="Edit Primary Contact Person Email"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -882,7 +884,7 @@ export function EditOrganizationForm({
                 {/* Secondary Contact Name */}
                 <button
                   type="button"
-                  onClick={() => setShowContactModal(true)}
+                  onClick={() => setShowSecondaryContactModal(true)}
                   aria-label="Edit Secondary Contact Person Name"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -897,7 +899,7 @@ export function EditOrganizationForm({
                 {/* Secondary Contact Phone */}
                 <button
                   type="button"
-                  onClick={() => setShowContactModal(true)}
+                  onClick={() => setShowSecondaryContactModal(true)}
                   aria-label="Edit Secondary Contact Person Phone"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -912,7 +914,7 @@ export function EditOrganizationForm({
                 {/* Secondary Contact Email */}
                 <button
                   type="button"
-                  onClick={() => setShowContactModal(true)}
+                  onClick={() => setShowSecondaryContactModal(true)}
                   aria-label="Edit Secondary Contact Person Email"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -1979,8 +1981,8 @@ export function EditOrganizationForm({
         </div>
       )}
 
-      {/* POPUP 7: Edit Contact Details */}
-      {showContactModal && (
+      {/* POPUP 7: Edit Primary Contact Details */}
+      {showPrimaryContactModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-lg shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
@@ -1988,8 +1990,8 @@ export function EditOrganizationForm({
                 <User className="size-5" />
               </div>
               <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Contact Details</CardTitle>
-                <CardDescription className="text-xs">Update primary and secondary contact persons for your organization.</CardDescription>
+                <CardTitle className="text-base font-semibold">Edit Primary Contact</CardTitle>
+                <CardDescription className="text-xs">Update your organization's primary contact details.</CardDescription>
               </div>
             </CardHeader>
             <form action={personalAction}>
@@ -2004,11 +2006,7 @@ export function EditOrganizationForm({
                   </div>
                 )}
                 
-                {/* SECTION 1: Primary Contact Person */}
                 <div className="space-y-4">
-                  <div className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border/40 pb-1.5">
-                    Primary Contact Person
-                  </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="billingContactName" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Name <span className="text-destructive font-semibold">*</span>
@@ -2058,15 +2056,46 @@ export function EditOrganizationForm({
                   </div>
                 </div>
 
-                {/* SECTION 2: Secondary Contact Person */}
-                <div className="space-y-4 pt-2 border-t border-border/50">
-                  <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/90">
-                      Secondary Contact Person
-                    </span>
-                    <span className="text-[11px] text-muted-foreground/70 font-medium">(Optional)</span>
-                  </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => setShowPrimaryContactModal(false)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
 
+      {/* POPUP 8: Edit Secondary Contact Details */}
+      {showSecondaryContactModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <User className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit Secondary Contact</CardTitle>
+                <CardDescription className="text-xs">Update your organization's secondary contact details (optional).</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+
+              <CardContent className="p-6 space-y-6">
+                {personalState?.error && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalState.error}
+                  </div>
+                )}
+                
+                <div className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="billingSecondaryContactName" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Name
@@ -2114,7 +2143,7 @@ export function EditOrganizationForm({
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowContactModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => setShowSecondaryContactModal(false)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>

@@ -89,6 +89,7 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Primary Contact Person: Name (`*`), Phone (`*`), Email (`*`) — all mandatory.
   - Secondary Contact Person: Name, Phone, Email — optional secondary contact backup.
   - Simplified clean field labels (`Name`, `Phone`, `Email`) under explicit section headers ("Primary Contact Person" and "Secondary Contact Person (Optional)").
+  - Separated primary and secondary contact details editing into distinct popups (`showPrimaryContactModal` and `showSecondaryContactModal`).
   - Marked all required fields dynamically with a red asterisk `*` and native validation.
   - Added a search dropdown selector containing all major Romanian banks with a dropdown indicator and quick-reset clear button.
   - Optimized wrapper layouts to allow full-width page stretching on `/dashboard/account/*` and `/backoffice/organizations/*` subpages, while constraining single-column forms to `max-w-4xl` and allowing the two-column Billing view to split 50%-50% across the entire width of the page.

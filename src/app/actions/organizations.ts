@@ -359,6 +359,15 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
     if (formData.has("billingContactEmail")) {
       updateData.billingContactEmail = (formData.get("billingContactEmail") as string) || null;
     }
+    if (formData.has("billingSecondaryContactName")) {
+      updateData.billingSecondaryContactName = (formData.get("billingSecondaryContactName") as string) || null;
+    }
+    if (formData.has("billingSecondaryContactPhone")) {
+      updateData.billingSecondaryContactPhone = (formData.get("billingSecondaryContactPhone") as string) || null;
+    }
+    if (formData.has("billingSecondaryContactEmail")) {
+      updateData.billingSecondaryContactEmail = (formData.get("billingSecondaryContactEmail") as string) || null;
+    }
 
     await db
       .update(users)

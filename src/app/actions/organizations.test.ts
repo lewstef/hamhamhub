@@ -311,6 +311,9 @@ describe("Organization Server Actions", () => {
       formData.append("billingContactName", "Alice Smith");
       formData.append("billingContactPhone", "0733111222");
       formData.append("billingContactEmail", "alice@billing.org");
+      formData.append("billingSecondaryContactName", "Bob Backup");
+      formData.append("billingSecondaryContactPhone", "0744111222");
+      formData.append("billingSecondaryContactEmail", "bob@billing.org");
 
       mockUpdate.mockResolvedValueOnce({ count: 1 });
 

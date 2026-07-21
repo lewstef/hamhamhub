@@ -602,7 +602,7 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(cancelBtn);
   });
 
-  it("should render Primary and Secondary Contact Person fields in Contact details modal", () => {
+  it("should render Primary and Secondary Contact Person fields in distinct modals", () => {
     const orgWithSecondaryContact = {
       ...dummyOrganization,
       billingContactName: "Jane Primary",
@@ -627,17 +627,35 @@ describe("EditOrganizationForm Component", () => {
     expect(screen.getByText("Jane Primary")).toBeDefined();
     expect(screen.getByText("John Secondary")).toBeDefined();
 
-    // Click to open Edit Contact details modal
-    const editContactBtn = screen.getByRole("button", { name: "Edit Primary Contact Person Name" });
-    fireEvent.click(editContactBtn);
+    // Click to open Edit Primary Contact modal
+    const editPrimaryBtn = screen.getByRole("button", { name: "Edit Primary Contact Person Name" });
+    fireEvent.click(editPrimaryBtn);
 
     const primaryNameInput = document.getElementById("billingContactName") as HTMLInputElement;
-    const secondaryNameInput = document.getElementById("billingSecondaryContactName") as HTMLInputElement;
+    const secondaryNameInputInPrimary = document.getElementById("billingSecondaryContactName");
 
     expect(primaryNameInput.value).toBe("Jane Primary");
-    expect(secondaryNameInput.value).toBe("John Secondary");
     expect(primaryNameInput.hasAttribute("required")).toBe(true);
+    expect(secondaryNameInputInPrimary).toBeNull();
+
+    // Click Cancel to close Primary modal
+    const cancelPrimaryBtn = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelPrimaryBtn);
+
+    // Click to open Edit Secondary Contact modal
+    const editSecondaryBtn = screen.getByRole("button", { name: "Edit Secondary Contact Person Name" });
+    fireEvent.click(editSecondaryBtn);
+
+    const secondaryNameInput = document.getElementById("billingSecondaryContactName") as HTMLInputElement;
+    const primaryNameInputInSecondary = document.getElementById("billingContactName");
+
+    expect(secondaryNameInput.value).toBe("John Secondary");
     expect(secondaryNameInput.hasAttribute("required")).toBe(false);
+    expect(primaryNameInputInSecondary).toBeNull();
+
+    // Click Cancel to close Secondary modal
+    const cancelSecondaryBtn = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelSecondaryBtn);
   });
 
   it("should handle searchable dependent Romanian County and Locality dropdown inputs in Address modal", () => {
