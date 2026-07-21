@@ -154,3 +154,25 @@
 .animate-float-slower {
   animation: float-slower 11s ease-in-out infinite;
 }
+
+/* Custom prose / rich-text style overrides for lists */
+.prose ul, [contenteditable] ul {
+  list-style-type: disc !important;
+  margin-left: 1.5rem !important;
+  padding-left: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose ol, [contenteditable] ol {
+  list-style-type: decimal !important;
+  margin-left: 1.5rem !important;
+  padding-left: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose li, [contenteditable] li {
+  margin-bottom: 0.25rem !important;
+  list-style: inherit !important;
+}
