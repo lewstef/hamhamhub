@@ -33,6 +33,8 @@ interface Course {
   personalizedMealPlanDetails?: string | null;
   checkin?: string | null;
   checkout?: string | null;
+  ageLimitsEnabled?: boolean | null;
+  ageLimits?: string | null;
   faq?: string | null;
 }
 
@@ -84,6 +86,12 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
   const [name, setName] = useState(initialCourse?.name || "");
   const [certifiedTrainer, setCertifiedTrainer] = useState(initialCourse?.certifiedTrainer || false);
   const [certifierName, setCertifierName] = useState(initialCourse?.certifierName || "");
+  const [ageLimitsEnabled, setAgeLimitsEnabled] = useState(initialCourse?.ageLimitsEnabled || false);
+  const [selectedAgeLimits, setSelectedAgeLimits] = useState<string[]>(
+    initialCourse?.ageLimits
+      ? initialCourse.ageLimits.split(",").map((s) => s.trim()).filter(Boolean)
+      : []
+  );
   const [dedicatedField, setDedicatedField] = useState(initialCourse?.dedicatedField || false);
   const [trainingFieldDescription, setTrainingFieldDescription] = useState(initialCourse?.trainingFieldDescription || "");
   const [trainingFieldAddress, setTrainingFieldAddress] = useState(initialCourse?.trainingFieldAddress || "");
@@ -151,6 +159,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     name !== (initialCourse?.name || "") ||
     certifiedTrainer !== (initialCourse?.certifiedTrainer || false) ||
     certifierName !== (initialCourse?.certifierName || "") ||
+    ageLimitsEnabled !== (initialCourse?.ageLimitsEnabled || false) ||
+    selectedAgeLimits.join(",") !== (initialCourse?.ageLimits || "") ||
     dedicatedField !== (initialCourse?.dedicatedField || false) ||
     trainingFieldDescription !== (initialCourse?.trainingFieldDescription || "") ||
     trainingFieldAddress !== (initialCourse?.trainingFieldAddress || "") ||
@@ -218,6 +228,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     formData.append("priceType", priceType);
     formData.append("certifiedTrainer", String(certifiedTrainer));
     formData.append("certifierName", certifierName);
+    formData.append("ageLimitsEnabled", String(ageLimitsEnabled));
+    formData.append("ageLimits", selectedAgeLimits.join(","));
     formData.append("dedicatedField", String(dedicatedField));
     formData.append("trainingFieldDescription", trainingFieldDescription);
     formData.append("trainingFieldAddress", trainingFieldAddress);
@@ -351,6 +363,67 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                       />
                     </div>
                   )}
+
+                  {/* Age Limits Toggle */}
+                  <div className="h-px bg-border/40" />
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="text-sm font-bold text-foreground">Age Limits</span>
+                        <p className="text-xs text-muted-foreground">
+                          Enable if this {itemNoun.toLowerCase()} has specific age limits/requirements.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={ageLimitsEnabled}
+                        onClick={() => setAgeLimitsEnabled(!ageLimitsEnabled)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          ageLimitsEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                            ageLimitsEnabled ? "translate-x-4" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {ageLimitsEnabled && (
+                      <div className="space-y-3 pl-4 border-l-2 border-primary/20 transition-all duration-200">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Select Age Phases</Label>
+                        <div className="space-y-2">
+                          {[
+                            "Puppyhood (8 Weeks to 5 Months)",
+                            "Adolescence / Teenage Phase (5 Months to 12–18 Months)",
+                            "Adulthood & Senior Years (1 Year +)",
+                          ].map((option) => {
+                            const isChecked = selectedAgeLimits.includes(option);
+                            return (
+                              <label key={option} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/10 hover:bg-muted/30 transition-colors cursor-pointer text-sm font-medium">
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => {
+                                    if (isChecked) {
+                                      setSelectedAgeLimits(selectedAgeLimits.filter((x) => x !== option));
+                                    } else {
+                                      setSelectedAgeLimits([...selectedAgeLimits, option]);
+                                    }
+                                  }}
+                                  className="mt-0.5 rounded border-input text-primary focus:ring-primary size-4"
+                                />
+                                <span className="text-foreground">{option}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="h-px bg-border/60" />

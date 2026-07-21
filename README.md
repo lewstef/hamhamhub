@@ -88,6 +88,13 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Added **Email** row to the Information tab page, linking to the pre-existing email edit modal.
   - Renamed **"Phone number"** row and input labels to **"Phone"**.
   - Added a new rich-text **Description** field (persisted under `description` in database schema) edited using the pre-existing custom `WysiwygEditor` inside a new dedicated edit modal popup. Renders a plain-text preview on the card view.
+- **Flat Service Lists & Boarding-only Time Pickers**:
+  - Removed course collapsible detail panel drawers entirely on training, sports, and boarding services detail views to present clean, flat entry list rows. Key attribute badges (Certified, Field, Parking, Meds, Walks, Updates, Meal Plan, Price) render directly inside the rows.
+  - Restricted "Check-in Time" and "Check-out Time" picker inputs and badges to only display for the Dog Boarding service (`slug === "dog-boarding"`).
+- **Service Age Limits Switch & Checkboxes Option Group**:
+  - Added a new database-backed `Age limits` boolean switch (`ageLimitsEnabled`) and text field (`ageLimits`) to courses schema.
+  - Shows when editing or adding courses for "Dog training" and "Dog sports training" services.
+  - If enabled, presents a checkbox multi-select option group for age phases: "Puppyhood (8 Weeks to 5 Months)", "Adolescence / Teenage Phase (5 Months to 12–18 Months)", and "Adulthood & Senior Years (1 Year +)".
 - **Two-Column Billing Cards & Primary / Secondary Contact Reorganization**:
   - The "Billing" tab splits content into a two-column layout on large screens: **Company information** card (Company name, Tax ID, Trade Registry Number, EUID, Address, Bank, and Bank Account Number) and **Contact information** card (Primary Contact Person and Secondary Contact Person).
   - Primary Contact Person: Name (`*`), Phone (`*`), Email (`*`) — all mandatory.

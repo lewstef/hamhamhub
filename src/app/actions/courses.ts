@@ -88,6 +88,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
   const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
   const checkin = formData.get("checkin") as string || null;
   const checkout = formData.get("checkout") as string || null;
+  const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
+  const ageLimits = formData.get("ageLimits") as string || null;
   const faq = formData.get("faq") as string || null;
 
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -129,6 +131,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
       checkin,
       checkout,
+      ageLimitsEnabled,
+      ageLimits: ageLimitsEnabled ? ageLimits : null,
       faq,
     });
 
@@ -219,6 +223,8 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
   const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
   const checkin = formData.get("checkin") as string || null;
   const checkout = formData.get("checkout") as string || null;
+  const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
+  const ageLimits = formData.get("ageLimits") as string || null;
   const faq = formData.get("faq") as string || null;
 
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -278,6 +284,8 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
         checkin,
         checkout,
+        ageLimitsEnabled,
+        ageLimits: ageLimitsEnabled ? ageLimits : null,
         faq,
       })
       .where(eq(courses.id, courseId));

@@ -393,19 +393,20 @@ describe("CourseForm Component", () => {
     expect(screen.queryByLabelText("Certifier Name")).toBeNull();
     
     // Toggle Certified Trainer
-    const switches = screen.getAllByRole("switch");
-    const trainerSwitch = switches[0];
+    const trainerSwitch = screen.getByText("Certified Dog Trainer").closest(".space-y-4")?.querySelector("button[role='switch']");
+    expect(trainerSwitch).toBeDefined();
     await act(async () => {
-      fireEvent.click(trainerSwitch);
+      fireEvent.click(trainerSwitch!);
     });
 
     expect(screen.getByLabelText("Certifier Name")).toBeDefined();
 
     // Toggle Dedicated Field
-    const fieldSwitch = switches[1];
+    const fieldSwitch = screen.getByText("Dedicated Training Field").closest(".space-y-4")?.querySelector("button[role='switch']");
+    expect(fieldSwitch).toBeDefined();
     expect(screen.queryByLabelText("Address")).toBeNull();
     await act(async () => {
-      fireEvent.click(fieldSwitch);
+      fireEvent.click(fieldSwitch!);
     });
     expect(screen.getByLabelText("Address")).toBeDefined();
   });
@@ -520,6 +521,51 @@ describe("CourseForm Component", () => {
     expect(onCancel).toHaveBeenCalled();
 
     window.confirm = originalConfirm;
+  });
+
+  it("should render and manage Age Limits toggles and checkboxes correctly", async () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Verify age limits details checkbox options are hidden initially
+    expect(screen.queryByText("Select Age Phases")).toBeNull();
+
+    // Toggle Age Limits switch
+    const ageLimitsSwitch = screen.getByText("Age Limits").closest(".space-y-4")?.querySelector("button[role='switch']");
+    expect(ageLimitsSwitch).toBeDefined();
+    await act(async () => {
+      fireEvent.click(ageLimitsSwitch!);
+    });
+
+    // Option phase checkboxes should be visible
+    expect(screen.getByText("Select Age Phases")).toBeDefined();
+    expect(screen.getByText("Puppyhood (8 Weeks to 5 Months)")).toBeDefined();
+    expect(screen.getByText("Adolescence / Teenage Phase (5 Months to 12–18 Months)")).toBeDefined();
+    expect(screen.getByText("Adulthood & Senior Years (1 Year +)")).toBeDefined();
+
+    // Check puppyhood and teenage phases
+    const puppyCheckbox = screen.getByText("Puppyhood (8 Weeks to 5 Months)").closest("label")?.querySelector("input[type='checkbox']") as HTMLInputElement;
+    const teenCheckbox = screen.getByText("Adolescence / Teenage Phase (5 Months to 12–18 Months)").closest("label")?.querySelector("input[type='checkbox']") as HTMLInputElement;
+    expect(puppyCheckbox).toBeDefined();
+    expect(teenCheckbox).toBeDefined();
+
+    expect(puppyCheckbox.checked).toBe(false);
+    await act(async () => {
+      fireEvent.click(puppyCheckbox);
+    });
+    expect(puppyCheckbox.checked).toBe(true);
+
+    await act(async () => {
+      fireEvent.click(teenCheckbox);
+    });
+    expect(teenCheckbox.checked).toBe(true);
   });
 });
 

@@ -95,6 +95,8 @@ export const courses = pgTable("courses", {
   personalizedMealPlanDetails: text("personalized_meal_plan_details"),
   checkin: text("checkin"),
   checkout: text("checkout"),
+  ageLimitsEnabled: boolean("age_limits_enabled").default(false).notNull(),
+  ageLimits: text("age_limits"),
   faq: text("faq"),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

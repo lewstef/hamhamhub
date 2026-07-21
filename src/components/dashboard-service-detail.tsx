@@ -6,7 +6,7 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,8 @@ interface Course {
   personalizedMealPlanDetails?: string | null;
   checkin?: string | null;
   checkout?: string | null;
+  ageLimitsEnabled?: boolean | null;
+  ageLimits?: string | null;
   faq?: string | null;
 }
 
@@ -348,6 +350,12 @@ export function DashboardServiceDetail({
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
                                 <Award className="size-2.5" />
                                 Certified
+                              </span>
+                            )}
+                            {course.ageLimitsEnabled && course.ageLimits && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/10 text-violet-600 border border-violet-500/20" title={course.ageLimits}>
+                                <Users className="size-2.5" />
+                                Ages: {course.ageLimits.split(",").length} {course.ageLimits.split(",").length === 1 ? "Phase" : "Phases"}
                               </span>
                             )}
                             {course.dedicatedField && (
