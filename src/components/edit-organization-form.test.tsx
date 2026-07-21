@@ -86,8 +86,8 @@ describe("EditOrganizationForm Component", () => {
     expect(screen.getByRole("button", { name: "Subscription" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Services" })).toBeDefined();
     
-    // Email is on Settings tab, shouldn't be visible yet
-    expect(screen.queryByText(dummyOrganization.email)).toBeNull();
+    // Email is now on Information tab, so it should be visible
+    expect(screen.getByText(dummyOrganization.email)).toBeDefined();
 
     // Switch to Billing tab to verify address
     const billingTabBtn = screen.getByRole("button", { name: "Billing" });
@@ -241,12 +241,12 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(infoTabBtn);
 
     // Phone modal
-    const editPhoneBtn = screen.getByRole("button", { name: "Edit Phone number" });
+    const editPhoneBtn = screen.getByRole("button", { name: "Edit Phone" });
     fireEvent.click(editPhoneBtn);
-    expect(screen.getByLabelText("Phone number")).toBeDefined();
+    expect(screen.getByLabelText("Phone")).toBeDefined();
     const cancelPhone = screen.getAllByRole("button", { name: /cancel/i })[0];
     fireEvent.click(cancelPhone);
-    expect(screen.queryByLabelText("Phone number")).toBeNull();
+    expect(screen.queryByLabelText("Phone")).toBeNull();
   });
 
   it("should render Subscription tab content", () => {
@@ -454,7 +454,7 @@ describe("EditOrganizationForm Component", () => {
     );
 
     // Open phone modal
-    const editPhoneBtn = screen.getByRole("button", { name: "Edit Phone number" });
+    const editPhoneBtn = screen.getByRole("button", { name: "Edit Phone" });
     fireEvent.click(editPhoneBtn);
 
     // Placeholder for USA should be +1 (555) 000-0000
@@ -731,5 +731,46 @@ describe("EditOrganizationForm Component", () => {
 
     // Press Escape to dismiss dropdown if open
     fireEvent.keyDown(countyInput, { key: "Escape" });
+  });
+
+  it("should render Email and Description rows in Information tab, and open description modal with WYSIWYG editor", () => {
+    const orgWithDescription = {
+      ...dummyOrganization,
+      email: "rescue@happy.org",
+      phoneNumber: "0755555555",
+      description: "<p>Happy paws is a dog rescue agency.</p>",
+    };
+
+    render(
+      <EditOrganizationForm
+        organization={orgWithDescription}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Verify information tab shows name, email, phone, description preview
+    expect(screen.getByText("rescue@happy.org")).toBeDefined();
+    expect(screen.getByText("Phone")).toBeDefined();
+    expect(screen.getByText("Happy paws is a dog rescue agency.")).toBeDefined();
+
+    // Click to open Edit Description modal
+    const editDescBtn = screen.getByRole("button", { name: "Edit Description" });
+    fireEvent.click(editDescBtn);
+
+    // Modal title should be present
+    expect(screen.getByText("Edit Description")).toBeDefined();
+    // WYSIWYG editor's contenteditable should contain description content
+    const editable = document.querySelector("[contenteditable]") as HTMLDivElement;
+    expect(editable).toBeDefined();
+    expect(editable.innerHTML).toContain("Happy paws is a dog rescue agency.");
+
+    // Click Cancel to close Description modal
+    const cancelDescBtn = screen.getAllByRole("button", { name: "Cancel" })[0];
+    fireEvent.click(cancelDescBtn);
+
+    // Click to open Edit Email modal
+    const editEmailBtn = screen.getByRole("button", { name: "Edit Email" });
+    fireEvent.click(editEmailBtn);
+    expect(screen.getByLabelText("Email Address")).toBeDefined();
   });
 });

@@ -84,6 +84,10 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **FAQ Accordion Builder & Display**: Interactive FAQ Q&A list builder situated underneath the Terms of Participation section in the Course Form (`CourseForm`). Renders as a sleek, custom collapsible accordion structure inside expandable course detail drawers on the dynamic services settings page.
 - **Unsaved Changes Safeguard**: Checks if any input fields in the Course Configurator (`CourseForm`) are dirty. Prompts a native confirm dialog if the user clicks the "Back" button, and registers a browser `beforeunload` listener to warn the user if they attempt to reload or close the tab.
 - **Renamed Account Settings & Dedicated Billing Tab**: Renamed dashboard and backoffice settings tabs ("Account information" to "Information", "Account settings" to "Settings") and extracted the organization's address parameters into a new dedicated "Billing" tab. Updated routes to `/dashboard/account/information`, `/dashboard/account/settings`, `/dashboard/account/billing` for the dashboard, and `/backoffice/organizations/information/[id]`, `/backoffice/organizations/settings/[id]`, `/backoffice/organizations/billing/[id]` for the backoffice.
+- **Profile Information Updates**:
+  - Added **Email** row to the Information tab page, linking to the pre-existing email edit modal.
+  - Renamed **"Phone number"** row and input labels to **"Phone"**.
+  - Added a new rich-text **Description** field (persisted under `description` in database schema) edited using the pre-existing custom `WysiwygEditor` inside a new dedicated edit modal popup. Renders a plain-text preview on the card view.
 - **Two-Column Billing Cards & Primary / Secondary Contact Reorganization**:
   - The "Billing" tab splits content into a two-column layout on large screens: **Company information** card (Company name, Tax ID, Trade Registry Number, EUID, Address, Bank, and Bank Account Number) and **Contact information** card (Primary Contact Person and Secondary Contact Person).
   - Primary Contact Person: Name (`*`), Phone (`*`), Email (`*`) — all mandatory.

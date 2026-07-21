@@ -297,6 +297,20 @@ describe("Organization Server Actions", () => {
       expect(mockUpdate).toHaveBeenCalled();
     });
 
+    it("should successfully persist description field", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("name", "Desc Org");
+      formData.append("organizationCategory", "ngo");
+      formData.append("description", "<p>A dynamic organization description.</p>");
+
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await updateOrganizationAction(null, formData);
+      expect(result).toEqual({ success: true });
+      expect(mockUpdate).toHaveBeenCalled();
+    });
+
     it("should successfully persist company billing and contact details fields", async () => {
       const formData = new FormData();
       formData.append("id", "comp-id");

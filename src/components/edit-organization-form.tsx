@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Eye, EyeOff, Search, Check, User, ChevronRight, ChevronDown, X, Key, Shield, Mail, Home, Building, Map, Globe, Hash, MapPin, Phone, Lock, Settings } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
+import { WysiwygEditor } from "./wysiwyg-editor";
 import { ROMANIAN_COUNTIES, getCountyLocalities } from "@/config/romanian-territory";
 
 interface Organization {
@@ -32,6 +33,7 @@ interface Organization {
   youtube?: string | null;
   website?: string | null;
   googleBusinessProfile?: string | null;
+  description?: string | null;
   createdAt?: Date | string | null;
   enabledServices?: string | null;
   enabledCourses?: string | null;
@@ -163,6 +165,8 @@ export function EditOrganizationForm({
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [showPrimaryContactModal, setShowPrimaryContactModal] = useState(false);
   const [showSecondaryContactModal, setShowSecondaryContactModal] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [editDescription, setEditDescription] = useState(organization.description || "");
 
   // Form states and actions
   const [personalState, personalAction, personalPending] = useActionState(updateOrganizationAction, null);
@@ -414,6 +418,7 @@ export function EditOrganizationForm({
       setShowBillingModal(false);
       setShowPrimaryContactModal(false);
       setShowSecondaryContactModal(false);
+      setShowDescriptionModal(false);
       router.refresh();
     }
   }, [personalState, router]);
@@ -448,6 +453,10 @@ export function EditOrganizationForm({
     setLocalitySearch(organization.addressCity || "");
     setEditLocality(organization.addressCity || "");
   }, [organization.addressState, organization.addressCity]);
+
+  useEffect(() => {
+    setEditDescription(organization.description || "");
+  }, [organization.description]);
 
   useEffect(() => {
     setCountryHighlightIndex(0);
@@ -635,17 +644,49 @@ export function EditOrganizationForm({
                 <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
               </button>
 
-              {/* Phone Number Row */}
+              {/* Email Row */}
               <button
                 type="button"
-                onClick={() => setShowPhoneModal(true)}
-                aria-label="Edit Phone number"
+                onClick={() => setShowEmailModal(true)}
+                aria-label="Edit Email"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
               >
                 <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Phone number</span>
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Email</span>
+                  <span className="text-sm text-foreground/90">{organization.email || "-"}</span>
+                </div>
+                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              {/* Phone Row */}
+              <button
+                type="button"
+                onClick={() => setShowPhoneModal(true)}
+                aria-label="Edit Phone"
+                disabled={isPending}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+              >
+                <div className="flex flex-1 items-center">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Phone</span>
                   <span className="text-sm text-foreground/90">{organization.phoneNumber || "-"}</span>
+                </div>
+                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              {/* Description Row */}
+              <button
+                type="button"
+                onClick={() => setShowDescriptionModal(true)}
+                aria-label="Edit Description"
+                disabled={isPending}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+              >
+                <div className="flex flex-1 items-center">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Description</span>
+                  <span className="text-sm text-foreground/90 truncate max-w-xs sm:max-w-md md:max-w-lg">
+                    {organization.description ? organization.description.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() || "-" : "-"}
+                  </span>
                 </div>
                 <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
               </button>
@@ -1549,7 +1590,7 @@ export function EditOrganizationForm({
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="phoneNumber" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Phone number
+                      Phone
                     </Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
@@ -2148,6 +2189,57 @@ export function EditOrganizationForm({
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
                   <Button type="button" variant="outline" onClick={() => setShowSecondaryContactModal(false)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* POPUP 9: Edit Description Details */}
+      {showDescriptionModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Settings className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit Description</CardTitle>
+                <CardDescription className="text-xs">Update your organization's public rich-text profile description.</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+              <input type="hidden" name="description" value={editDescription} />
+
+              <CardContent className="p-6 space-y-6">
+                {personalState?.error && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalState.error}
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium normal-case text-muted-foreground/80">
+                    Description
+                  </Label>
+                  <WysiwygEditor
+                    value={editDescription}
+                    onChange={setEditDescription}
+                    placeholder="Provide a detailed description of your organization, services, and operations..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => setShowDescriptionModal(false)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>

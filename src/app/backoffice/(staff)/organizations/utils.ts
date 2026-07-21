@@ -40,6 +40,7 @@ export async function getOrganizationData(id: string) {
       youtube: users.youtube,
       website: users.website,
       googleBusinessProfile: users.googleBusinessProfile,
+      description: users.description,
       createdAt: users.createdAt,
       enabledServices: users.enabledServices,
       enabledCourses: users.enabledCourses,

@@ -43,6 +43,7 @@ export async function getDashboardAccountData() {
       youtube: users.youtube,
       website: users.website,
       googleBusinessProfile: users.googleBusinessProfile,
+      description: users.description,
       createdAt: users.createdAt,
       enabledServices: users.enabledServices,
       enabledCourses: users.enabledCourses,

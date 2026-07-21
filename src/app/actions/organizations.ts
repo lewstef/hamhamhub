@@ -285,6 +285,10 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
       updateData.phoneNumber = (formData.get("phoneNumber") as string) || null;
     }
 
+    if (formData.has("description")) {
+      updateData.description = (formData.get("description") as string) || null;
+    }
+
     if (
       formData.has("addressLine") ||
       formData.has("addressCity") ||
