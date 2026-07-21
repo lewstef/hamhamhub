@@ -41,6 +41,9 @@ export const users = pgTable("users", {
   billingContactName: text("billing_contact_name"),
   billingContactPhone: text("billing_contact_phone"),
   billingContactEmail: text("billing_contact_email"),
+  billingSecondaryContactName: text("billing_secondary_contact_name"),
+  billingSecondaryContactPhone: text("billing_secondary_contact_phone"),
+  billingSecondaryContactEmail: text("billing_secondary_contact_email"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

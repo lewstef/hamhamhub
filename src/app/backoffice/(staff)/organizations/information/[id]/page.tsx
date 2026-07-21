@@ -15,7 +15,7 @@ export default async function AccountInformationPage({ params }: PageProps) {
   const { organization, organizationCategoryList, servicesList } = await getOrganizationData(id);
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full">
       <EditOrganizationForm
         organization={organization}
         organizationCategoryList={organizationCategoryList}

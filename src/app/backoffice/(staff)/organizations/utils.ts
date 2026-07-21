@@ -52,6 +52,9 @@ export async function getOrganizationData(id: string) {
       billingContactName: users.billingContactName,
       billingContactPhone: users.billingContactPhone,
       billingContactEmail: users.billingContactEmail,
+      billingSecondaryContactName: users.billingSecondaryContactName,
+      billingSecondaryContactPhone: users.billingSecondaryContactPhone,
+      billingSecondaryContactEmail: users.billingSecondaryContactEmail,
     })
     .from(users)
     .where(eq(users.id, id))

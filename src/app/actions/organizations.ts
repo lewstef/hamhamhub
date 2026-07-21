@@ -252,6 +252,9 @@ export async function createOrganizationAction(prevState: unknown, formData: For
  * @param formData.billingContactName - Billing contact person name (optional)
  * @param formData.billingContactPhone - Billing contact phone number (optional)
  * @param formData.billingContactEmail - Billing contact email address (optional)
+ * @param formData.billingSecondaryContactName - Secondary contact person name (optional)
+ * @param formData.billingSecondaryContactPhone - Secondary contact phone number (optional)
+ * @param formData.billingSecondaryContactEmail - Secondary contact email address (optional)
  *
  * @returns `{ success: true }` on success
  * @returns `{ error: string }` on validation or database query failure
@@ -304,11 +307,11 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
       ].filter(Boolean);
 
       updateData.address = parts.join(", ") || null;
-      updateData.addressCountry = addressCountry || null;
-      updateData.addressState = addressState || null;
-      updateData.addressCity = addressCity || null;
-      updateData.addressLine = addressLine || null;
-      updateData.addressZip = addressZip || null;
+      updateData.addressLine = addressLine?.trim() || null;
+      updateData.addressCity = addressCity?.trim() || null;
+      updateData.addressState = addressState?.trim() || null;
+      updateData.addressZip = addressZip?.trim() || null;
+      updateData.addressCountry = addressCountry?.trim() || null;
     }
 
     if (formData.has("facebook")) {

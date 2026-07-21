@@ -84,11 +84,20 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **FAQ Accordion Builder & Display**: Interactive FAQ Q&A list builder situated underneath the Terms of Participation section in the Course Form (`CourseForm`). Renders as a sleek, custom collapsible accordion structure inside expandable course detail drawers on the dynamic services settings page.
 - **Unsaved Changes Safeguard**: Checks if any input fields in the Course Configurator (`CourseForm`) are dirty. Prompts a native confirm dialog if the user clicks the "Back" button, and registers a browser `beforeunload` listener to warn the user if they attempt to reload or close the tab.
 - **Renamed Account Settings & Dedicated Billing Tab**: Renamed dashboard and backoffice settings tabs ("Account information" to "Information", "Account settings" to "Settings") and extracted the organization's address parameters into a new dedicated "Billing" tab. Updated routes to `/dashboard/account/information`, `/dashboard/account/settings`, `/dashboard/account/billing` for the dashboard, and `/backoffice/organizations/information/[id]`, `/backoffice/organizations/settings/[id]`, `/backoffice/organizations/billing/[id]` for the backoffice.
-- **Two-Column Billing Cards & Premium Fields**:
-  - The "Billing" tab splits content into a two-column layout on large screens: **Company information** card (Company name, Tax ID, Trade Registry Number, EUID, Address, Bank, and Bank Account Number) and **Contact information** card (Contact person name, Contact person phone, and Contact person email).
+- **Two-Column Billing Cards & Primary / Secondary Contact Reorganization**:
+  - The "Billing" tab splits content into a two-column layout on large screens: **Company information** card (Company name, Tax ID, Trade Registry Number, EUID, Address, Bank, and Bank Account Number) and **Contact information** card (Primary Contact Person and Secondary Contact Person).
+  - Primary Contact Person: Name (`*`), Phone (`*`), Email (`*`) — all mandatory.
+  - Secondary Contact Person: Name, Phone, Email — optional secondary contact backup.
+  - Simplified clean field labels (`Name`, `Phone`, `Email`) under explicit section headers ("Primary Contact Person" and "Secondary Contact Person (Optional)").
   - Marked all required fields dynamically with a red asterisk `*` and native validation.
   - Added a search dropdown selector containing all major Romanian banks with a dropdown indicator and quick-reset clear button.
-  - Optimized wrapper layouts to allow full-width page stretching on `/dashboard/account/*` subpages, while constraining single-column forms to `max-w-4xl` and allowing the two-column Billing view to split 50%-50% across the entire width of the page.
+  - Optimized wrapper layouts to allow full-width page stretching on `/dashboard/account/*` and `/backoffice/organizations/*` subpages, while constraining single-column forms to `max-w-4xl` and allowing the two-column Billing view to split 50%-50% across the entire width of the page.
+- **Romanian Territory Searchable Dependent Dropdowns with Keyboard Navigation & Auto-Focus Jump**:
+  - Built a comprehensive territory dictionary (`src/config/romanian-territory.ts`) mapping all 42 Romanian Counties to their respective cities, municipalities, towns, and communes.
+  - Form address County (`addressState`) renders as a searchable dropdown listing all 42 Romanian counties with real-time text filtering and quick reset (`X`) clear button.
+  - Locality (`addressCity`) renders as a searchable dependent dropdown input populated dynamically based on the selected county.
+  - Implemented full keyboard navigation (`ArrowDown`, `ArrowUp`, `Enter`, `Escape`, mouse hover sync) for all search dropdown inputs.
+  - Automatically shifts focus directly to the Locality input field and opens its search dropdown as soon as a County is selected.
 
 ---
 
@@ -200,7 +209,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (364 tests across 32 test files)
+# Run all tests (415 tests across 33 test files)
 npm run test
 
 # Run with coverage report
@@ -219,5 +228,5 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 | Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types`, `courses` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
 | Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor` |
-| Config & utilities | `config/service-types`, `config/dog-training`, `lib/utils` |
+| Config & utilities | `config/service-types`, `config/dog-training`, `config/romanian-territory`, `lib/utils` |
 | Hooks | `use-mobile` |

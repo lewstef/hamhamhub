@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Eye, EyeOff, Search, Check, User, ChevronRight, ChevronDown, X, Key, Shield, Mail, Home, Building, Map, Globe, Hash, MapPin, Phone, Lock, Settings } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
+import { ROMANIAN_COUNTIES, getCountyLocalities } from "@/config/romanian-territory";
 
 interface Organization {
   id: string;
@@ -43,6 +44,9 @@ interface Organization {
   billingContactName?: string | null;
   billingContactPhone?: string | null;
   billingContactEmail?: string | null;
+  billingSecondaryContactName?: string | null;
+  billingSecondaryContactPhone?: string | null;
+  billingSecondaryContactEmail?: string | null;
 }
 
 interface OrganizationCategory {
@@ -180,6 +184,33 @@ export function EditOrganizationForm({
   const [showBankDropdown, setShowBankDropdown] = useState(false);
   const bankDropdownRef = useRef<HTMLDivElement>(null);
 
+  // County search & select state
+  const [countySearch, setCountySearch] = useState(organization.addressState || "");
+  const [editCounty, setEditCounty] = useState(organization.addressState || "");
+  const [showCountyDropdown, setShowCountyDropdown] = useState(false);
+  const countyDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Locality search & select state
+  const [localitySearch, setLocalitySearch] = useState(organization.addressCity || "");
+  const [editLocality, setEditLocality] = useState(organization.addressCity || "");
+  const [showLocalityDropdown, setShowLocalityDropdown] = useState(false);
+  const localityDropdownRef = useRef<HTMLDivElement>(null);
+  const localityInputRef = useRef<HTMLInputElement>(null);
+
+  const availableLocalities = getCountyLocalities(editCounty);
+
+  const selectCounty = (c: string) => {
+    setEditCounty(c);
+    setCountySearch(c);
+    setShowCountyDropdown(false);
+    setEditLocality("");
+    setLocalitySearch("");
+    setShowLocalityDropdown(true);
+    setTimeout(() => {
+      localityInputRef.current?.focus();
+    }, 0);
+  };
+
   const [enabledServiceIds, setEnabledServiceIds] = useState<string[]>(
     organization.enabledServices
       ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
@@ -205,6 +236,12 @@ export function EditOrganizationForm({
   const isPasswordSubmitDisabled =
     isPending || !passwordsMatch || passwordVal === "" || passwordVal.length < 6 || confirmPasswordVal === "";
 
+  // Keyboard highlight indexes
+  const [countryHighlightIndex, setCountryHighlightIndex] = useState(0);
+  const [bankHighlightIndex, setBankHighlightIndex] = useState(0);
+  const [countyHighlightIndex, setCountyHighlightIndex] = useState(0);
+  const [localityHighlightIndex, setLocalityHighlightIndex] = useState(0);
+
   const filteredCountries = COUNTRIES.filter((c) =>
     c.toLowerCase().includes((countrySearch || "").toLowerCase())
   );
@@ -212,6 +249,144 @@ export function EditOrganizationForm({
   const filteredBanks = ROMANIAN_BANKS.filter((b) =>
     b.toLowerCase().includes((bankSearch || "").toLowerCase())
   );
+
+  const filteredCounties = ROMANIAN_COUNTIES.filter((c) =>
+    c.toLowerCase().includes((countySearch || "").toLowerCase())
+  );
+
+  const filteredLocalities = availableLocalities.filter((loc) =>
+    loc.toLowerCase().includes((localitySearch || "").toLowerCase())
+  );
+
+  const handleCountryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showCountryDropdown) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setShowCountryDropdown(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setCountryHighlightIndex((prev) =>
+        prev < filteredCountries.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setCountryHighlightIndex((prev) =>
+        prev > 0 ? prev - 1 : filteredCountries.length - 1
+      );
+    } else if (e.key === "Enter") {
+      if (countryHighlightIndex >= 0 && countryHighlightIndex < filteredCountries.length) {
+        e.preventDefault();
+        const selected = filteredCountries[countryHighlightIndex];
+        setEditCountry(selected);
+        setCountrySearch(selected);
+        setShowCountryDropdown(false);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setShowCountryDropdown(false);
+    }
+  };
+
+  const handleBankKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showBankDropdown) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setShowBankDropdown(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setBankHighlightIndex((prev) =>
+        prev < filteredBanks.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setBankHighlightIndex((prev) =>
+        prev > 0 ? prev - 1 : filteredBanks.length - 1
+      );
+    } else if (e.key === "Enter") {
+      if (bankHighlightIndex >= 0 && bankHighlightIndex < filteredBanks.length) {
+        e.preventDefault();
+        const selected = filteredBanks[bankHighlightIndex];
+        setEditBank(selected);
+        setBankSearch(selected);
+        setShowBankDropdown(false);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setShowBankDropdown(false);
+    }
+  };
+
+  const handleCountyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showCountyDropdown) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setShowCountyDropdown(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setCountyHighlightIndex((prev) =>
+        prev < filteredCounties.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setCountyHighlightIndex((prev) =>
+        prev > 0 ? prev - 1 : filteredCounties.length - 1
+      );
+    } else if (e.key === "Enter") {
+      if (countyHighlightIndex >= 0 && countyHighlightIndex < filteredCounties.length) {
+        e.preventDefault();
+        const selected = filteredCounties[countyHighlightIndex];
+        selectCounty(selected);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setShowCountyDropdown(false);
+    }
+  };
+
+  const handleLocalityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showLocalityDropdown && editCounty) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setShowLocalityDropdown(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setLocalityHighlightIndex((prev) =>
+        prev < filteredLocalities.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setLocalityHighlightIndex((prev) =>
+        prev > 0 ? prev - 1 : filteredLocalities.length - 1
+      );
+    } else if (e.key === "Enter") {
+      if (localityHighlightIndex >= 0 && localityHighlightIndex < filteredLocalities.length) {
+        e.preventDefault();
+        const selected = filteredLocalities[localityHighlightIndex];
+        setEditLocality(selected);
+        setLocalitySearch(selected);
+        setShowLocalityDropdown(false);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setShowLocalityDropdown(false);
+    }
+  };
 
   // Phone pattern check
   const selectedCountry = organization.addressCountry;
@@ -265,6 +440,29 @@ export function EditOrganizationForm({
     setEditBank(organization.billingBankName || "");
   }, [organization.billingBankName]);
 
+  useEffect(() => {
+    setCountySearch(organization.addressState || "");
+    setEditCounty(organization.addressState || "");
+    setLocalitySearch(organization.addressCity || "");
+    setEditLocality(organization.addressCity || "");
+  }, [organization.addressState, organization.addressCity]);
+
+  useEffect(() => {
+    setCountryHighlightIndex(0);
+  }, [countrySearch]);
+
+  useEffect(() => {
+    setBankHighlightIndex(0);
+  }, [bankSearch]);
+
+  useEffect(() => {
+    setCountyHighlightIndex(0);
+  }, [countySearch]);
+
+  useEffect(() => {
+    setLocalityHighlightIndex(0);
+  }, [localitySearch]);
+
   // Auto-close Account modals on success & refresh data
   useEffect(() => {
     if (accountState?.success) {
@@ -284,6 +482,12 @@ export function EditOrganizationForm({
       }
       if (bankDropdownRef.current && !bankDropdownRef.current.contains(event.target as Node)) {
         setShowBankDropdown(false);
+      }
+      if (countyDropdownRef.current && !countyDropdownRef.current.contains(event.target as Node)) {
+        setShowCountyDropdown(false);
+      }
+      if (localityDropdownRef.current && !localityDropdownRef.current.contains(event.target as Node)) {
+        setShowLocalityDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -615,50 +819,107 @@ export function EditOrganizationForm({
             </div>
             <CardContent className="p-0">
               <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
-                The primary contact person details for this organization
+                Primary and secondary contact persons for this organization
               </div>
-              <div className="divide-y divide-border/50">
-                {/* Contact Person Name Row */}
+
+              {/* Primary Contact Person Section */}
+              <div className="px-6 py-2.5 bg-muted/20 border-b border-border/50 text-xs font-bold uppercase tracking-wider text-muted-foreground/90">
+                Primary Contact Person
+              </div>
+              <div className="divide-y divide-border/50 border-b border-border/50">
+                {/* Primary Contact Name */}
                 <button
                   type="button"
                   onClick={() => setShowContactModal(true)}
-                  aria-label="Edit Contact Person Name"
+                  aria-label="Edit Primary Contact Person Name"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
                 >
                   <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Contact person name</span>
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Name</span>
                     <span className="text-sm text-foreground/90">{organization.billingContactName || "-"}</span>
                   </div>
                   <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                 </button>
 
-                {/* Contact Person Phone Row */}
+                {/* Primary Contact Phone */}
                 <button
                   type="button"
                   onClick={() => setShowContactModal(true)}
-                  aria-label="Edit Contact Person Phone"
+                  aria-label="Edit Primary Contact Person Phone"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
                 >
                   <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Contact person phone</span>
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Phone</span>
                     <span className="text-sm text-foreground/90">{organization.billingContactPhone || "-"}</span>
                   </div>
                   <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                 </button>
 
-                {/* Contact Person Email Row */}
+                {/* Primary Contact Email */}
                 <button
                   type="button"
                   onClick={() => setShowContactModal(true)}
-                  aria-label="Edit Contact Person Email"
+                  aria-label="Edit Primary Contact Person Email"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
                 >
                   <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Contact person email</span>
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Email</span>
                     <span className="text-sm text-foreground/90">{organization.billingContactEmail || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+              </div>
+
+              {/* Secondary Contact Person Section */}
+              <div className="px-6 py-2.5 bg-muted/20 border-b border-border/50 text-xs font-bold uppercase tracking-wider text-muted-foreground/90 flex items-center justify-between">
+                <span>Secondary Contact Person</span>
+                <span className="text-[10px] font-normal normal-case text-muted-foreground/70">(Optional)</span>
+              </div>
+              <div className="divide-y divide-border/50">
+                {/* Secondary Contact Name */}
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  aria-label="Edit Secondary Contact Person Name"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Name</span>
+                    <span className="text-sm text-foreground/90">{organization.billingSecondaryContactName || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Secondary Contact Phone */}
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  aria-label="Edit Secondary Contact Person Phone"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Phone</span>
+                    <span className="text-sm text-foreground/90">{organization.billingSecondaryContactPhone || "-"}</span>
+                  </div>
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+
+                {/* Secondary Contact Email */}
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(true)}
+                  aria-label="Edit Secondary Contact Person Email"
+                  disabled={isPending}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
+                >
+                  <div className="flex flex-1 items-center">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Email</span>
+                    <span className="text-sm text-foreground/90">{organization.billingSecondaryContactEmail || "-"}</span>
                   </div>
                   <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                 </button>
@@ -1050,6 +1311,7 @@ export function EditOrganizationForm({
               <input type="hidden" name="name" value={organization.name} />
               <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
               <input type="hidden" name="phoneNumber" value={organization.phoneNumber || ""} />
+              <input type="hidden" name="addressCountry" value="Romania" />
 
               <CardContent className="p-6 space-y-4 bg-muted/5">
                 {personalState?.error && (
@@ -1057,7 +1319,146 @@ export function EditOrganizationForm({
                     {personalState.error}
                   </div>
                 )}
-                <div className="space-y-4">
+                 <div className="space-y-4">
+                  {/* County & Locality */}
+                  <div className="grid gap-4 grid-cols-2">
+                    {/* County Search Select */}
+                    <div className="space-y-1.5 relative" ref={countyDropdownRef}>
+                      <input type="hidden" name="addressState" value={editCounty} />
+                      <Label htmlFor="addressState" className="text-sm font-medium normal-case text-muted-foreground/80">
+                        County
+                      </Label>
+                      <div className="relative">
+                        <Map className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                        <Input
+                          id="addressState"
+                          type="text"
+                          value={countySearch}
+                          onChange={(e) => {
+                            setCountySearch(e.target.value);
+                            setEditCounty(e.target.value);
+                            setShowCountyDropdown(true);
+                          }}
+                          onFocus={() => setShowCountyDropdown(true)}
+                          onKeyDown={handleCountyKeyDown}
+                          placeholder="Search county..."
+                          className="pl-9 pr-10 focus-visible:ring-primary/20"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                          {countySearch && (
+                            <button
+                              type="button"
+                              aria-label="Clear county selection"
+                              onClick={() => {
+                                setCountySearch("");
+                                setEditCounty("");
+                                setLocalitySearch("");
+                                setEditLocality("");
+                                setShowCountyDropdown(false);
+                              }}
+                              className="text-muted-foreground/60 hover:text-foreground/90 transition-colors p-0.5"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          )}
+                          <ChevronDown className="size-4 text-muted-foreground/60 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {showCountyDropdown && filteredCounties.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
+                          {filteredCounties.map((c, index) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => selectCounty(c)}
+                              onMouseEnter={() => setCountyHighlightIndex(index)}
+                              className={`w-full text-left px-3 py-2.5 text-sm rounded-lg transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0 ${
+                                countyHighlightIndex === index
+                                  ? "bg-accent text-accent-foreground"
+                                  : "text-popover-foreground hover:bg-accent/80 hover:text-accent-foreground"
+                              }`}
+                            >
+                              <span>{c}</span>
+                              {editCounty === c && <Check className="size-4 text-primary" />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Locality Search Select */}
+                    <div className="space-y-1.5 relative" ref={localityDropdownRef}>
+                      <input type="hidden" name="addressCity" value={editLocality} />
+                      <Label htmlFor="addressCity" className="text-sm font-medium normal-case text-muted-foreground/80">
+                        Locality
+                      </Label>
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                        <Input
+                          id="addressCity"
+                          ref={localityInputRef}
+                          type="text"
+                          value={localitySearch}
+                          disabled={!editCounty}
+                          onChange={(e) => {
+                            setLocalitySearch(e.target.value);
+                            setEditLocality(e.target.value);
+                            setShowLocalityDropdown(true);
+                          }}
+                          onFocus={() => {
+                            if (editCounty) setShowLocalityDropdown(true);
+                          }}
+                          onKeyDown={handleLocalityKeyDown}
+                          placeholder={editCounty ? "Search locality..." : "Select county first..."}
+                          className="pl-9 pr-10 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                          {localitySearch && (
+                            <button
+                              type="button"
+                              aria-label="Clear locality selection"
+                              onClick={() => {
+                                setLocalitySearch("");
+                                setEditLocality("");
+                                setShowLocalityDropdown(false);
+                              }}
+                              className="text-muted-foreground/60 hover:text-foreground/90 transition-colors p-0.5"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          )}
+                          <ChevronDown className="size-4 text-muted-foreground/60 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {showLocalityDropdown && editCounty && filteredLocalities.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
+                          {filteredLocalities.map((loc, index) => (
+                            <button
+                              key={loc}
+                              type="button"
+                              onClick={() => {
+                                setEditLocality(loc);
+                                setLocalitySearch(loc);
+                                setShowLocalityDropdown(false);
+                              }}
+                              onMouseEnter={() => setLocalityHighlightIndex(index)}
+                              className={`w-full text-left px-3 py-2.5 text-sm rounded-lg transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0 ${
+                                localityHighlightIndex === index
+                                  ? "bg-accent text-accent-foreground"
+                                  : "text-popover-foreground hover:bg-accent/80 hover:text-accent-foreground"
+                              }`}
+                            >
+                              <span>{loc}</span>
+                              {editLocality === loc && <Check className="size-4 text-primary" />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Street Address */}
                   <div className="space-y-1.5">
                     <Label htmlFor="addressLine" className="text-sm font-medium normal-case text-muted-foreground/80">
@@ -1076,44 +1477,7 @@ export function EditOrganizationForm({
                     </div>
                   </div>
 
-                  {/* City & State */}
-                  <div className="grid gap-4 grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="addressCity" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        City
-                      </Label>
-                      <div className="relative">
-                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                        <Input
-                          id="addressCity"
-                          name="addressCity"
-                          type="text"
-                          defaultValue={organization.addressCity || ""}
-                          placeholder="City"
-                          className="pl-9 focus-visible:ring-primary/20"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="addressState" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        State / Region / Province
-                      </Label>
-                      <div className="relative">
-                        <Map className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                        <Input
-                          id="addressState"
-                          name="addressState"
-                          type="text"
-                          defaultValue={organization.addressState || ""}
-                          placeholder="State / Region"
-                          className="pl-9 focus-visible:ring-primary/20"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Zip Code & Country */}
+                  {/* Zip Code */}
                   <div className="grid gap-4 grid-cols-2">
                     <div className="space-y-1.5">
                       <Label htmlFor="addressZip" className="text-sm font-medium normal-case text-muted-foreground/80">
@@ -1130,50 +1494,6 @@ export function EditOrganizationForm({
                           className="pl-9 focus-visible:ring-primary/20"
                         />
                       </div>
-                    </div>
-
-                    {/* Country select with suggestions */}
-                    <div className="space-y-1.5 relative" ref={dropdownRef}>
-                      <Label htmlFor="addressCountry" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        Country
-                      </Label>
-                      <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                        <Input
-                          id="addressCountry"
-                          name="addressCountry"
-                          type="text"
-                          value={countrySearch}
-                          onChange={(e) => {
-                            setCountrySearch(e.target.value);
-                            setEditCountry(e.target.value);
-                            setShowCountryDropdown(true);
-                          }}
-                          onFocus={() => setShowCountryDropdown(true)}
-                          placeholder="Search country..."
-                          className="pl-9 focus-visible:ring-primary/20"
-                        />
-                      </div>
-
-                      {showCountryDropdown && filteredCountries.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
-                          {filteredCountries.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              onClick={() => {
-                                setEditCountry(c);
-                                setCountrySearch(c);
-                                setShowCountryDropdown(false);
-                              }}
-                              className="w-full text-left px-3 py-2.5 text-sm rounded-lg text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0"
-                            >
-                              <span>{c}</span>
-                              {editCountry === c && <Check className="size-4 text-primary" />}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -1582,6 +1902,7 @@ export function EditOrganizationForm({
                           setShowBankDropdown(true);
                         }}
                         onFocus={() => setShowBankDropdown(true)}
+                        onKeyDown={handleBankKeyDown}
                         placeholder="Search or select bank..."
                         className="pl-9 pr-10 focus-visible:ring-primary/20"
                       />
@@ -1606,7 +1927,7 @@ export function EditOrganizationForm({
 
                     {showBankDropdown && filteredBanks.length > 0 && (
                       <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
-                        {filteredBanks.map((b) => (
+                        {filteredBanks.map((b, index) => (
                           <button
                             key={b}
                             type="button"
@@ -1615,7 +1936,12 @@ export function EditOrganizationForm({
                               setBankSearch(b);
                               setShowBankDropdown(false);
                             }}
-                            className="w-full text-left px-3 py-2.5 text-sm rounded-lg text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0"
+                            onMouseEnter={() => setBankHighlightIndex(index)}
+                            className={`w-full text-left px-3 py-2.5 text-sm rounded-lg transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0 ${
+                              bankHighlightIndex === index
+                                ? "bg-accent text-accent-foreground"
+                                : "text-popover-foreground hover:bg-accent/80 hover:text-accent-foreground"
+                            }`}
                           >
                             <span>{b}</span>
                             {editBank === b && <Check className="size-4 text-primary" />}
@@ -1656,14 +1982,14 @@ export function EditOrganizationForm({
       {/* POPUP 7: Edit Contact Details */}
       {showContactModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+          <Card className="w-full max-w-lg shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
                 <User className="size-5" />
               </div>
               <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Contact details</CardTitle>
-                <CardDescription className="text-xs">Update your organization's primary contact details.</CardDescription>
+                <CardTitle className="text-base font-semibold">Edit Contact Details</CardTitle>
+                <CardDescription className="text-xs">Update primary and secondary contact persons for your organization.</CardDescription>
               </div>
             </CardHeader>
             <form action={personalAction}>
@@ -1671,16 +1997,21 @@ export function EditOrganizationForm({
               <input type="hidden" name="name" value={organization.name} />
               <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
 
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="p-6 space-y-6">
                 {personalState?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {personalState.error}
                   </div>
                 )}
+                
+                {/* SECTION 1: Primary Contact Person */}
                 <div className="space-y-4">
+                  <div className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border/40 pb-1.5">
+                    Primary Contact Person
+                  </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="billingContactName" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Contact person name <span className="text-destructive font-semibold">*</span>
+                      Name <span className="text-destructive font-semibold">*</span>
                     </Label>
                     <Input
                       id="billingContactName"
@@ -1689,13 +2020,14 @@ export function EditOrganizationForm({
                       key={organization.billingContactName || ""}
                       defaultValue={organization.billingContactName || ""}
                       required
+                      placeholder="e.g. Jane Doe"
                       className="focus-visible:ring-primary/20"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label htmlFor="billingContactPhone" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Contact person phone <span className="text-destructive font-semibold">*</span>
+                      Phone <span className="text-destructive font-semibold">*</span>
                     </Label>
                     <Input
                       id="billingContactPhone"
@@ -1704,13 +2036,14 @@ export function EditOrganizationForm({
                       key={organization.billingContactPhone || ""}
                       defaultValue={organization.billingContactPhone || ""}
                       required
+                      placeholder="+40 700 000 000"
                       className="focus-visible:ring-primary/20"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label htmlFor="billingContactEmail" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Contact person email <span className="text-destructive font-semibold">*</span>
+                      Email <span className="text-destructive font-semibold">*</span>
                     </Label>
                     <Input
                       id="billingContactEmail"
@@ -1719,10 +2052,67 @@ export function EditOrganizationForm({
                       key={organization.billingContactEmail || ""}
                       defaultValue={organization.billingContactEmail || ""}
                       required
+                      placeholder="jane@organization.org"
                       className="focus-visible:ring-primary/20"
                     />
                   </div>
                 </div>
+
+                {/* SECTION 2: Secondary Contact Person */}
+                <div className="space-y-4 pt-2 border-t border-border/50">
+                  <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/90">
+                      Secondary Contact Person
+                    </span>
+                    <span className="text-[11px] text-muted-foreground/70 font-medium">(Optional)</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingSecondaryContactName" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Name
+                    </Label>
+                    <Input
+                      id="billingSecondaryContactName"
+                      name="billingSecondaryContactName"
+                      type="text"
+                      key={organization.billingSecondaryContactName || ""}
+                      defaultValue={organization.billingSecondaryContactName || ""}
+                      placeholder="e.g. John Smith"
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingSecondaryContactPhone" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Phone
+                    </Label>
+                    <Input
+                      id="billingSecondaryContactPhone"
+                      name="billingSecondaryContactPhone"
+                      type="text"
+                      key={organization.billingSecondaryContactPhone || ""}
+                      defaultValue={organization.billingSecondaryContactPhone || ""}
+                      placeholder="+40 700 000 001"
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="billingSecondaryContactEmail" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Email
+                    </Label>
+                    <Input
+                      id="billingSecondaryContactEmail"
+                      name="billingSecondaryContactEmail"
+                      type="email"
+                      key={organization.billingSecondaryContactEmail || ""}
+                      defaultValue={organization.billingSecondaryContactEmail || ""}
+                      placeholder="john@organization.org"
+                      className="focus-visible:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
                   <Button type="button" variant="outline" onClick={() => setShowContactModal(false)} disabled={isPending}>
                     Cancel

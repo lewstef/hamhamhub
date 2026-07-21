@@ -601,4 +601,117 @@ describe("EditOrganizationForm Component", () => {
     const cancelBtn = screen.getByRole("button", { name: "Cancel" });
     fireEvent.click(cancelBtn);
   });
+
+  it("should render Primary and Secondary Contact Person fields in Contact details modal", () => {
+    const orgWithSecondaryContact = {
+      ...dummyOrganization,
+      billingContactName: "Jane Primary",
+      billingContactPhone: "0711111111",
+      billingContactEmail: "jane@primary.org",
+      billingSecondaryContactName: "John Secondary",
+      billingSecondaryContactPhone: "0722222222",
+      billingSecondaryContactEmail: "john@secondary.org",
+    };
+
+    render(
+      <EditOrganizationForm
+        organization={orgWithSecondaryContact}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    const billingTabBtn = screen.getByRole("button", { name: "Billing" });
+    fireEvent.click(billingTabBtn);
+
+    // Verify card shows both Primary and Secondary contact info
+    expect(screen.getByText("Jane Primary")).toBeDefined();
+    expect(screen.getByText("John Secondary")).toBeDefined();
+
+    // Click to open Edit Contact details modal
+    const editContactBtn = screen.getByRole("button", { name: "Edit Primary Contact Person Name" });
+    fireEvent.click(editContactBtn);
+
+    const primaryNameInput = document.getElementById("billingContactName") as HTMLInputElement;
+    const secondaryNameInput = document.getElementById("billingSecondaryContactName") as HTMLInputElement;
+
+    expect(primaryNameInput.value).toBe("Jane Primary");
+    expect(secondaryNameInput.value).toBe("John Secondary");
+    expect(primaryNameInput.hasAttribute("required")).toBe(true);
+    expect(secondaryNameInput.hasAttribute("required")).toBe(false);
+  });
+
+  it("should handle searchable dependent Romanian County and Locality dropdown inputs in Address modal", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Switch to Billing tab and open Address modal
+    const billingTabBtn = screen.getByRole("button", { name: "Billing" });
+    fireEvent.click(billingTabBtn);
+
+    const editAddressBtn = screen.getByRole("button", { name: "Edit Address" });
+    fireEvent.click(editAddressBtn);
+
+    const countyInput = document.getElementById("addressState") as HTMLInputElement;
+    const localityInput = document.getElementById("addressCity") as HTMLInputElement;
+
+    expect(countyInput).toBeDefined();
+    expect(localityInput).toBeDefined();
+
+    // Search County "Cluj"
+    fireEvent.change(countyInput, { target: { value: "Cluj" } });
+    const clujOption = screen.getByRole("button", { name: "Cluj" });
+    fireEvent.click(clujOption);
+    expect(countyInput.value).toBe("Cluj");
+
+    // Locality input should now be enabled and searchable
+    expect(localityInput.disabled).toBe(false);
+    fireEvent.change(localityInput, { target: { value: "Cluj-Napoca" } });
+    const localityOption = screen.getByRole("button", { name: "Cluj-Napoca" });
+    fireEvent.click(localityOption);
+    expect(localityInput.value).toBe("Cluj-Napoca");
+
+    // Test clear buttons
+    const clearLocalityBtn = screen.getByRole("button", { name: "Clear locality selection" });
+    fireEvent.click(clearLocalityBtn);
+    expect(localityInput.value).toBe("");
+
+    const clearCountyBtn = screen.getByRole("button", { name: "Clear county selection" });
+    fireEvent.click(clearCountyBtn);
+    expect(countyInput.value).toBe("");
+  });
+
+  it("should handle keyboard navigation (ArrowDown, ArrowUp, Enter, Escape) on searchable dropdown inputs", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Switch to Billing tab and open Address modal
+    const billingTabBtn = screen.getByRole("button", { name: "Billing" });
+    fireEvent.click(billingTabBtn);
+
+    const editAddressBtn = screen.getByRole("button", { name: "Edit Address" });
+    fireEvent.click(editAddressBtn);
+
+    const countyInput = document.getElementById("addressState") as HTMLInputElement;
+
+    // Focus and press ArrowDown to open dropdown
+    fireEvent.change(countyInput, { target: { value: "" } });
+    fireEvent.focus(countyInput);
+    fireEvent.keyDown(countyInput, { key: "ArrowDown" });
+    expect(screen.getByRole("button", { name: "Alba" })).toBeDefined();
+
+    // Press ArrowDown to navigate down and Enter to select
+    fireEvent.keyDown(countyInput, { key: "ArrowDown" });
+    fireEvent.keyDown(countyInput, { key: "Enter" });
+
+    // Press Escape to dismiss dropdown if open
+    fireEvent.keyDown(countyInput, { key: "Escape" });
+  });
 });
