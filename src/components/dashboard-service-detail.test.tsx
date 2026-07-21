@@ -602,7 +602,7 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Add Course")).toBeDefined();
   });
 
-  it("should open collapsible drawer and show details, terms, and toggle FAQ accordion answers", async () => {
+  it("should NOT open collapsible drawer or show details, terms, and FAQs on service row click", async () => {
     const coursesWithFaq = [
       {
         id: "course-abc",
@@ -634,21 +634,14 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.queryByText("Terms of Participation")).toBeNull();
     expect(screen.queryByText("Are treats allowed?")).toBeNull();
 
-    // Click the course row header (the course name text) to toggle details
+    // Click the course row header (the course name text)
     const courseRowHeader = screen.getByText("Agility Pro");
     fireEvent.click(courseRowHeader);
 
-    // Details drawer should be expanded
-    expect(screen.getByText("Description & Details")).toBeDefined();
-    expect(screen.getByText("Terms of Participation")).toBeDefined();
-    
-    // FAQs section questions should be visible
-    expect(screen.getByText("Are treats allowed?")).toBeDefined();
-    expect(screen.getByText("What is the age limit?")).toBeDefined();
-
-    // FAQ answers should be statically visible immediately (no accordion collapsible functionality)
-    expect(screen.getByText("Yes, healthy soft treats are recommended.")).toBeDefined();
-    expect(screen.getByText("Dogs must be at least 1 year old.")).toBeDefined();
+    // Details and FAQs should still NOT be rendered
+    expect(screen.queryByText("Description & Details")).toBeNull();
+    expect(screen.queryByText("Terms of Participation")).toBeNull();
+    expect(screen.queryByText("Are treats allowed?")).toBeNull();
   });
 
   it("should rollback toggle state when toggleOrganizationServiceAction returns an error", async () => {

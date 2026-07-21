@@ -321,8 +321,7 @@ export function DashboardServiceDetail({
                         }`}
                       >
                         <div
-                          className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/5 transition-colors cursor-pointer"
-                          onClick={() => course.id && setExpandedCourseId(expandedCourseId === course.id ? null : course.id)}
+                          className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/5 transition-colors"
                         >
                           {/* Left: drag handle + name + chips */}
                           <div className="flex flex-wrap items-center gap-2 min-w-0">
@@ -429,68 +428,6 @@ export function DashboardServiceDetail({
                             </Button>
                           </div>
                         </div>
-
-                        {/* Collapsible Panel */}
-                        {expandedCourseId === course.id && (
-                          <div className="px-5 pb-5 pt-2 border-t border-border/40 bg-muted/5 animate-in fade-in slide-in-from-top-1 duration-200">
-                            <div className="space-y-4">
-                              {/* Details */}
-                              {course.details && (
-                                <div className="space-y-1.5">
-                                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description & Details</h4>
-                                  <div 
-                                    className="text-xs text-foreground/90 leading-relaxed prose prose-sm dark:prose-invert max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: course.details }}
-                                  />
-                                </div>
-                              )}
-  
-                              {/* Terms of Participation */}
-                              {course.termsOfParticipation && (
-                                <div className="space-y-1.5">
-                                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Terms of Participation</h4>
-                                  <div 
-                                    className="text-xs text-foreground/90 leading-relaxed prose prose-sm dark:prose-invert max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: course.termsOfParticipation }}
-                                  />
-                                </div>
-                              )}
-  
-                              {/* FAQs Section */}
-                              {(() => {
-                                let parsedFaqs: Array<{ question: string; answer: string }> = [];
-                                if (course.faq) {
-                                  try {
-                                    const parsed = JSON.parse(course.faq);
-                                    if (Array.isArray(parsed)) {
-                                      parsedFaqs = parsed;
-                                    }
-                                  } catch (e) {
-                                    console.error("Failed to parse FAQ:", e);
-                                  }
-                                }
-  
-                                if (parsedFaqs.length === 0) return null;
-  
-                                return (
-                                  <div className="space-y-2 pt-3 border-t border-border/40" data-testid="faq-accordion">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Frequently Asked Questions</h4>
-                                    <div className="space-y-2">
-                                      {parsedFaqs.map((faq, fIdx) => (
-                                        <FAQAccordionRow key={fIdx} question={faq.question} answer={faq.answer} />
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
-                              })()}
-  
-                              {/* Empty state details */}
-                              {!course.details && !course.termsOfParticipation && (!course.faq || JSON.parse(course.faq || "[]").length === 0) && (
-                                <p className="text-xs text-muted-foreground italic">No extra details, terms of participation, or FAQs configured.</p>
-                              )}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -556,20 +493,3 @@ export function DashboardServiceDetail({
     </div>
   );
 }
-
-/**
- * FAQAccordionRow Component
- *
- * Renders an individual FAQ item inside the course details panel statically.
- */
-function FAQAccordionRow({ question, answer }: { question: string; answer: string }) {
-  return (
-    <div className="border border-border/80 rounded-xl bg-card overflow-hidden shadow-sm transition-all duration-200 p-4 space-y-2">
-      <h5 className="font-bold text-xs text-foreground/95">{question || "Untitled Question"}</h5>
-      <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium border-t border-border/30 pt-2">
-        {answer || "No answer provided."}
-      </p>
-    </div>
-  );
-}
-
