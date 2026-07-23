@@ -49,7 +49,7 @@ describe("EditOrganizationForm Component", () => {
     name: "Happy Paws Rescue",
     email: "paws@ngo.org",
     organizationCategory: "ngo",
-    phoneNumber: "123456789",
+    phoneNumber: "0724247122",
     addressLine: "123 Bark Lane",
     addressCity: "Dogtown",
     addressState: "PA",
@@ -773,4 +773,56 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(editEmailBtn);
     expect(screen.getByLabelText("Email Address")).toBeDefined();
   });
+
+  it("should open and close Description and Category edit modals on the Information tab", () => {
+    const orgWithDescription = {
+      ...dummyOrganization,
+      description: "<p>Happy paws description</p>",
+    };
+
+    render(
+      <EditOrganizationForm
+        organization={orgWithDescription}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Open Edit Description modal
+    const editDescBtn = screen.getByRole("button", { name: "Edit Description" });
+    fireEvent.click(editDescBtn);
+
+    // Modal title should be present
+    expect(screen.getAllByText("Edit Description").length).toBeGreaterThanOrEqual(1);
+
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelBtn);
+
+    // Open Edit Category modal
+    const editCatBtn = screen.getByRole("button", { name: "Edit Category" });
+    fireEvent.click(editCatBtn);
+
+    expect(screen.getAllByText("Edit Category").length).toBeGreaterThanOrEqual(1);
+
+    const cancelCat = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelCat);
+  });
+
+  it("should render with activeTabProp 'billing' and show billing tab content", () => {
+    const orgWithBilling = {
+      ...dummyOrganization,
+      billingCompanyName: "PawsCorp SRL",
+    };
+
+    render(
+      <EditOrganizationForm
+        organization={orgWithBilling}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="billing"
+      />
+    );
+
+    // When activeTabProp='billing', the billing tab content should be shown
+    expect(screen.getByText("PawsCorp SRL")).toBeDefined();
+  });
 });
+

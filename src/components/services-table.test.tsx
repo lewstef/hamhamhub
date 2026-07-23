@@ -266,7 +266,7 @@ describe("ServicesTable Component", () => {
 
   it("should show custom icon and descriptions based on service names", () => {
     const specialServiceList = [
-      { id: "s-sport", name: "Dog Sports Training", organizationCategory: "ngo" },
+      { id: "s-sport", name: "Dog sports training", organizationCategory: "ngo" },
       { id: "s-walking", name: "Dog Walking", organizationCategory: "dog_service_provider" },
       { id: "s-general", name: "Special Therapy Service", organizationCategory: "ngo" },
     ];

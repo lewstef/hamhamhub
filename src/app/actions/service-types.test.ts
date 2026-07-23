@@ -61,16 +61,17 @@ describe("Service Types Server Actions", () => {
         .mockResolvedValueOnce([
           { id: "dog_training", name: "Dog training", description: "DB Desc" },
           { id: "dog_boarding", name: "Dog boarding", description: "DB Desc" },
-          { id: "sport_dog_training", name: "Dog Sports Training", description: "DB Desc" },
+          { id: "sport_dog_training", name: "Dog sports training", description: "DB Desc" },
           { id: "dog_walking", name: "Dog walking", description: "DB Desc" },
+          { id: "dog_grooming", name: "Dog grooming", description: "DB Desc" },
         ]);
 
-      mockInsert.mockResolvedValueOnce({ count: 4 });
+      mockInsert.mockResolvedValueOnce({ count: 5 });
 
       const result = await getServiceTypesAction();
 
       expect(mockInsert).toHaveBeenCalled();
-      expect(result.length).toBe(4);
+      expect(result.length).toBe(5);
       expect(result[0].name).toBe("Dog training");
       expect(result[0].description).toBe("DB Desc");
       // Check that field configuration is preserved

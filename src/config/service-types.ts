@@ -72,7 +72,7 @@ export const serviceTypesList: ServiceType[] = [
   },
   {
     id: "sport_dog_training",
-    name: "Dog Sports Training",
+    name: "Dog sports training",
     description: "Advanced training for dog sports such as Agility, IGP/Schutzhund, Obedience, or Flyball.",
     applicableTo: ["dog_service_provider", "cynological_association"],
     fields: [
@@ -130,5 +130,12 @@ export const serviceTypesList: ServiceType[] = [
         required: false,
       },
     ],
+  },
+  {
+    id: "dog_grooming",
+    name: "Dog grooming",
+    description: "Full grooming, bathing, hair trimming, nail clipping, and hygienic care for dogs.",
+    applicableTo: ["dog_service_provider"],
+    fields: [],
   },
 ];

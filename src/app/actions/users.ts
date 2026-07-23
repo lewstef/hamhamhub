@@ -6,12 +6,13 @@ import { eq, and, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { isValidEmail } from "@/lib/validation";
 
 /**
  * Creates a new end-user account (role = "user").
  *
  * @param formData.name     - Display name (required)
- * @param formData.email    - Unique login email (required)
+ * @param formData.email    - Unique login email (required, validated format)
  * @param formData.password - Min 6 characters (required)
  *
  * @returns `{ success: true }` on success
@@ -25,6 +26,10 @@ export async function createUserAction(prevState: unknown, formData: FormData) {
 
   if (!name || !email || !password) {
     return { error: "All fields are required" };
+  }
+
+  if (!isValidEmail(email)) {
+    return { error: "Please enter a valid email address." };
   }
 
   if (password.length < 6) {
@@ -66,7 +71,7 @@ export async function createUserAction(prevState: unknown, formData: FormData) {
  *
  * @param formData.id    - Existing user ID (required)
  * @param formData.name  - New display name (required)
- * @param formData.email - New unique email (required)
+ * @param formData.email - New unique email (required, validated format)
  *
  * @returns `{ error: string }` on validation or DB failure
  * @returns Never returns on success — issues a server-side `redirect()` to `/backoffice/users`
@@ -80,6 +85,10 @@ export async function updateUserAction(prevState: unknown, formData: FormData) {
 
   if (!id || !name || !email) {
     return { error: "All fields are required" };
+  }
+
+  if (!isValidEmail(email)) {
+    return { error: "Please enter a valid email address." };
   }
 
   try {

@@ -36,6 +36,7 @@ vi.mock("lucide-react", () => ({
   CheckCircle: () => <div data-testid="check-circle-2" />,
   Info: () => <div data-testid="info" />,
   AlertCircle: () => <div data-testid="alert-circle" />,
+  Users: () => <div data-testid="users" />,
 }));
 
 vi.mock("@/app/actions/organizations", () => ({
@@ -146,10 +147,10 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText(/No courses created yet/)).toBeDefined();
   });
 
-  it("should render Dog Sports Training service details correctly, showing Add Dog Sport and correct empty state", () => {
+  it("should render Dog sports training service details correctly, showing Add Dog Sport and correct empty state", () => {
     const sportService = {
       id: "srv-sport-dog-training",
-      name: "Dog Sports Training",
+      name: "Dog sports training",
       description: "Advanced training for dog sports.",
     };
 
@@ -163,11 +164,35 @@ describe("DashboardServiceDetail Component", () => {
       />
     );
 
-    expect(screen.getByText("Dog Sports Training")).toBeDefined();
+    expect(screen.getByText("Dog sports training")).toBeDefined();
     expect(screen.queryByText(/Template Identifier:/)).toBeNull();
     expect(screen.queryByRole("switch")).toBeNull();
     expect(screen.getByText("Add Dog Sport")).toBeDefined();
     expect(screen.getByText(/No dog sports created yet/)).toBeDefined();
+  });
+
+  it("should render Dog grooming service details correctly, showing Add Grooming service and correct empty state", () => {
+    const groomingService = {
+      id: "srv-dog-grooming",
+      name: "Dog grooming",
+      description: "Full grooming and hygienic care.",
+    };
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={groomingService}
+        initialIsEnabled={true}
+        slug="dog-grooming"
+        courses={[]}
+      />
+    );
+
+    expect(screen.getByText("Dog grooming")).toBeDefined();
+    expect(screen.queryByText(/Template Identifier:/)).toBeNull();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.getByText("Add Grooming service")).toBeDefined();
+    expect(screen.getByText(/No grooming services created yet/)).toBeDefined();
   });
 
   it("should display pricing formatted with suffix according to priceType", () => {
@@ -730,5 +755,80 @@ describe("DashboardServiceDetail Component", () => {
     await vi.waitFor(() => {
       expect(deleteCourseAction).toHaveBeenCalledWith("c-1");
     });
+  });
+
+  it("should render age limits badge showing number of phases when ageLimitsEnabled is true", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          {
+            id: "c-1",
+            name: "All Ages Agility",
+            certifiedTrainer: false,
+            dedicatedField: false,
+            parking: false,
+            ageLimitsEnabled: true,
+            ageLimits: "Puppyhood (8 Weeks to 5 Months),Adolescence / Teenage Phase (5 Months to 12–18 Months)",
+          },
+        ]}
+      />
+    );
+
+    // Badge should show "2 Phases" (two comma-separated values)
+    expect(screen.getByText("Ages: 2 Phases")).toBeDefined();
+  });
+
+  it("should render age limits badge showing '1 Phase' (singular) when only one phase is set", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          {
+            id: "c-2",
+            name: "Puppy Only",
+            certifiedTrainer: false,
+            dedicatedField: false,
+            parking: false,
+            ageLimitsEnabled: true,
+            ageLimits: "Puppyhood (8 Weeks to 5 Months)",
+          },
+        ]}
+      />
+    );
+
+    // Badge should show "1 Phase" (singular)
+    expect(screen.getByText("Ages: 1 Phase")).toBeDefined();
+  });
+
+  it("should NOT render age limits badge when ageLimitsEnabled is false", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          {
+            id: "c-3",
+            name: "No Age Limits",
+            certifiedTrainer: false,
+            dedicatedField: false,
+            parking: false,
+            ageLimitsEnabled: false,
+            ageLimits: "Puppyhood (8 Weeks to 5 Months)",
+          },
+        ]}
+      />
+    );
+
+    // Badge must be absent when the feature is disabled
+    expect(screen.queryByText(/Ages:/)).toBeNull();
   });
 });

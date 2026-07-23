@@ -567,5 +567,31 @@ describe("CourseForm Component", () => {
     });
     expect(teenCheckbox.checked).toBe(true);
   });
+
+  it("should render clean Grooming service form without trainer and facility attribute toggles", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-grooming"
+        itemNoun="Grooming service"
+        serviceSlug="dog-grooming"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    expect(screen.getByText("Create New Grooming service")).toBeDefined();
+    expect(screen.queryByText("Certified Dog Trainer")).toBeNull();
+    expect(screen.queryByText("Trainer & Facility Attributes")).toBeNull();
+    expect(screen.queryByText("Facility Attributes")).toBeNull();
+    expect(screen.queryByText("Boarding Details")).toBeNull();
+
+    // Verify Grooming billing frequency options
+    const select = screen.getByLabelText("Billing Frequency") as HTMLSelectElement;
+    expect(select).toBeDefined();
+    expect(screen.getByText("Per Grooming service")).toBeDefined();
+    expect(screen.getByText("Per Session")).toBeDefined();
+    expect(screen.getByText("Per Hour")).toBeDefined();
+  });
 });
 

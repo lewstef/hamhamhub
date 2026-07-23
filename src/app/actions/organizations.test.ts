@@ -260,12 +260,50 @@ describe("Organization Server Actions", () => {
       expect(result).toEqual({ error: "A valid Organization Category is required" });
     });
 
+    it("should return error if phone number is not a valid 10-digit Romanian format", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("name", "Org Name");
+      formData.append("organizationCategory", "ngo");
+      formData.append("phoneNumber", "+40724247122");
+
+      const result = await updateOrganizationAction(null, formData);
+      expect(result).toEqual({ error: "Please enter a valid 10-digit Romanian phone number (e.g., 0723456789)." });
+    });
+
+    it("should return error if website URL is invalid format or missing http(s) scheme", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("name", "Org Name");
+      formData.append("organizationCategory", "ngo");
+      formData.append("website", "invalid-website-url");
+
+      const result = await updateOrganizationAction(null, formData);
+      expect(result).toEqual({ error: "Please enter a valid website URL starting with http:// or https:// (e.g., https://example.com)." });
+    });
+
+    it("should return error if social profile URLs (Facebook, Instagram, TikTok, LinkedIn) are invalid format", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("name", "Org Name");
+      formData.append("organizationCategory", "ngo");
+      formData.append("facebook", "invalid-fb");
+
+      const resFb = await updateOrganizationAction(null, formData);
+      expect(resFb).toEqual({ error: "Please enter a valid Facebook URL starting with http:// or https:// (e.g., https://facebook.com/yourpage)." });
+
+      formData.delete("facebook");
+      formData.append("linkedin", "invalid-linkedin");
+      const resLi = await updateOrganizationAction(null, formData);
+      expect(resLi).toEqual({ error: "Please enter a valid LinkedIn URL starting with http:// or https:// (e.g., https://linkedin.com/in/yourprofile)." });
+    });
+
     it("should successfully update and return success", async () => {
       const formData = new FormData();
       formData.append("id", "comp-id");
       formData.append("name", "Org Name");
       formData.append("organizationCategory", "ngo");
-      formData.append("phoneNumber", "+15551234");
+      formData.append("phoneNumber", "0724247122");
       formData.append("addressCountry", "Romania");
 
       mockUpdate.mockResolvedValueOnce({ count: 1 });
@@ -618,6 +656,54 @@ describe("Organization Server Actions", () => {
  
       const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", true);
       expect(result).toEqual({ error: "Failed to toggle course. Please try again." });
+    });
+  });
+
+  describe("changeOrganizationPasswordAction — additional branches", () => {
+    it("should return error if only one of password/confirmPassword is provided", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("password", "onlypassword");
+      // confirmPassword not appended — triggers the "All password fields are required" guard
+      const result = await changeOrganizationPasswordAction(null, formData);
+      expect(result).toEqual({ error: "All password fields are required" });
+    });
+
+    it("should return error if org is not found when verifying current password", async () => {
+      const formData = new FormData();
+      formData.append("id", "org-id");
+      formData.append("password", "newsecurepassword");
+      formData.append("confirmPassword", "newsecurepassword");
+      formData.append("currentPassword", "somepassword");
+
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "org-id", role: "organization", name: "Org" },
+        expires: "expires-date",
+      });
+
+      mockSelect.mockResolvedValueOnce([]); // org not found in DB lookup
+      const result = await changeOrganizationPasswordAction(null, formData);
+      expect(result).toEqual({ error: "Organization not found" });
+    });
+
+    it("should return error on DB failure during password change", async () => {
+      const formData = new FormData();
+      formData.append("id", "comp-id");
+      formData.append("password", "validpassword");
+      formData.append("confirmPassword", "validpassword");
+      mockUpdate.mockRejectedValueOnce(new Error("DB connection lost"));
+      const result = await changeOrganizationPasswordAction(null, formData);
+      expect(result).toEqual({ error: "Something went wrong. Please try again." });
+    });
+  });
+
+  describe("deleteEmployeeAction — additional user action branches", () => {
+    it("should return error if user ID is missing in deleteUserAction analog", async () => {
+      // Tests the missing-ID guard in employees.ts (line 238-239)
+      // Already tested in employees.test.ts; this covers deleteOrganizationAction missing ID
+      const formData = new FormData();
+      const result = await deleteOrganizationAction(null, formData);
+      expect(result).toEqual({ error: "Organization ID is required" });
     });
   });
 });

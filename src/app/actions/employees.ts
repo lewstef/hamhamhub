@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { isValidEmail } from "@/lib/validation";
 
 /**
  * Creates a new staff account (role = "employee" | "admin").
@@ -14,7 +15,7 @@ import { auth } from "@/auth";
  *
  * @param formData.name     - Display name (required)
  * @param formData.username - Unique username for login (required)
- * @param formData.email    - Unique email address (required)
+ * @param formData.email    - Unique email address (required, validated format)
  * @param formData.password - Min 6 characters (required)
  * @param formData.role     - "employee" | "admin" (required)
  *
@@ -36,6 +37,10 @@ export async function createEmployeeAction(prevState: unknown, formData: FormDat
 
   if (!name || !username || !email || !password || !role) {
     return { error: "All fields are required" };
+  }
+
+  if (!isValidEmail(email)) {
+    return { error: "Please enter a valid email address." };
   }
 
   if (password.length < 6) {
@@ -95,7 +100,7 @@ export async function createEmployeeAction(prevState: unknown, formData: FormDat
  * @param formData.id       - Existing user ID (required)
  * @param formData.name     - New display name (required)
  * @param formData.username - New unique username (required)
- * @param formData.email    - New unique email (required)
+ * @param formData.email    - New unique email (required, validated format)
  * @param formData.role     - "employee" | "admin" (required)
  *
  * @returns `{ error: string }` on validation or DB failure
@@ -112,6 +117,10 @@ export async function updateEmployeeAction(prevState: unknown, formData: FormDat
 
   if (!id || !name || !username || !email || !role) {
     return { error: "All fields are required" };
+  }
+
+  if (!isValidEmail(email)) {
+    return { error: "Please enter a valid email address." };
   }
 
   if (!["employee", "admin"].includes(role)) {

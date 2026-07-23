@@ -20,6 +20,7 @@ import {
   Home,
   Activity,
   Footprints,
+  Scissors,
   Check,
   Search,
   GripVertical,
@@ -66,6 +67,13 @@ interface ServicesTableProps {
 
 const getServiceDetails = (name: string) => {
   const normalized = name.toLowerCase();
+  if (normalized.includes("grooming")) {
+    return {
+      description: "Full grooming, bathing, hair trimming, nail clipping, and hygienic care.",
+      icon: <Scissors className="size-4 text-pink-500" />,
+      colorClass: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-500/20",
+    };
+  }
   if (normalized.includes("training") && normalized.includes("sport")) {
     return {
       description: "Advanced canine sports, agility, and competition coaching.",

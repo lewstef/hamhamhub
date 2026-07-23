@@ -141,7 +141,7 @@ export function DashboardServicesList({
               </div>
 
               <div className="flex items-center gap-3">
-                {isEnabled && s.slug === "dog-training" && getSortedCourses(s.coursesOrder).length > 0 && (
+                {isEnabled && (s.slug === "dog-training" || s.slug === "dog-grooming" || s.slug === "dog-boarding" || s.slug === "sport-dog-training") && getSortedCourses(s.coursesOrder).length > 0 && (
                   <button
                     type="button"
                     onClick={() => toggleExpand(s.id)}

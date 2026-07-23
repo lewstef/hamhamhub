@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useRef, useEffect, useTransition } from "react";
+import { useState, useActionState, useRef, useEffect, useTransition, useCallback } from "react";
 import { updateOrganizationAction, changeOrganizationPasswordAction, toggleOrganizationServiceAction, toggleOrganizationCourseAction } from "@/app/actions/organizations";
 import { getSortedCourses } from "@/config/dog-training";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -125,7 +125,7 @@ const COUNTRY_PHONE_PATTERNS: Record<string, { prefix: string; placeholder: stri
   "United States": { prefix: "+1", placeholder: "+1 (555) 000-0000" },
   "Canada": { prefix: "+1", placeholder: "+1 (555) 000-0000" },
   "United Kingdom": { prefix: "+44", placeholder: "+44 7700 900077" },
-  "Romania": { prefix: "+40", placeholder: "+40 722 123 456" },
+  "Romania": { prefix: "+40", placeholder: "0723456789" },
   "Germany": { prefix: "+49", placeholder: "+49 170 1234567" },
   "France": { prefix: "+33", placeholder: "+33 6 12 34 56 78" },
   "Australia": { prefix: "+61", placeholder: "+61 491 570 156" },
@@ -158,6 +158,11 @@ export function EditOrganizationForm({
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [showWebsiteModal, setShowWebsiteModal] = useState(false);
+  const [showFacebookModal, setShowFacebookModal] = useState(false);
+  const [showInstagramModal, setShowInstagramModal] = useState(false);
+  const [showTikTokModal, setShowTikTokModal] = useState(false);
+  const [showLinkedinModal, setShowLinkedinModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showRecoveryEmailModal, setShowRecoveryEmailModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -171,6 +176,54 @@ export function EditOrganizationForm({
   // Form states and actions
   const [personalState, personalAction, personalPending] = useActionState(updateOrganizationAction, null);
   const [accountState, accountAction, accountPending] = useActionState(changeOrganizationPasswordAction, null);
+
+  const [personalError, setPersonalError] = useState<string | null>(null);
+  const [accountError, setAccountError] = useState<string | null>(null);
+
+  const openModal = (setModalState: React.Dispatch<React.SetStateAction<boolean>>) => {
+    setPersonalError(null);
+    setAccountError(null);
+    setModalState(true);
+  };
+
+  const closeAllModals = useCallback(() => {
+    setPersonalError(null);
+    setAccountError(null);
+    setShowNameModal(false);
+    setShowCategoryModal(false);
+    setShowAddressModal(false);
+    setShowPhoneModal(false);
+    setShowWebsiteModal(false);
+    setShowFacebookModal(false);
+    setShowInstagramModal(false);
+    setShowTikTokModal(false);
+    setShowLinkedinModal(false);
+    setShowEmailModal(false);
+    setShowRecoveryEmailModal(false);
+    setShowPasswordModal(false);
+    setShowSocialModal(false);
+    setShowBillingModal(false);
+    setShowPrimaryContactModal(false);
+    setShowSecondaryContactModal(false);
+    setShowDescriptionModal(false);
+  }, []);
+
+  const closeModal = (setModalState: React.Dispatch<React.SetStateAction<boolean>>) => {
+    setPersonalError(null);
+    setAccountError(null);
+    setModalState(false);
+  };
+
+  // Handle ESC key press to close all open modals
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        closeAllModals();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [closeAllModals]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -396,7 +449,7 @@ export function EditOrganizationForm({
   // Phone pattern check
   const selectedCountry = organization.addressCountry;
   const phonePatternInfo = selectedCountry ? COUNTRY_PHONE_PATTERNS[selectedCountry] : null;
-  const phonePlaceholder = phonePatternInfo?.placeholder || "+1 (555) 000-0000";
+  const phonePlaceholder = phonePatternInfo?.placeholder || "0723456789";
 
   // Format registration date
   const formattedRegistrationDate = organization.createdAt
@@ -407,13 +460,21 @@ export function EditOrganizationForm({
       })
     : "-";
 
-  // Auto-close Personal Info modals on success & refresh data
+  // Sync personalState error & auto-close Personal Info modals on success
   useEffect(() => {
-    if (personalState?.success) {
+    if (personalState?.error) {
+      setPersonalError(personalState.error);
+    } else if (personalState?.success) {
+      setPersonalError(null);
       setShowNameModal(false);
       setShowCategoryModal(false);
       setShowAddressModal(false);
       setShowPhoneModal(false);
+      setShowWebsiteModal(false);
+      setShowFacebookModal(false);
+      setShowInstagramModal(false);
+      setShowTikTokModal(false);
+      setShowLinkedinModal(false);
       setShowSocialModal(false);
       setShowBillingModal(false);
       setShowPrimaryContactModal(false);
@@ -474,9 +535,12 @@ export function EditOrganizationForm({
     setLocalityHighlightIndex(0);
   }, [localitySearch]);
 
-  // Auto-close Account modals on success & refresh data
+  // Sync accountState error & auto-close Account modals on success
   useEffect(() => {
-    if (accountState?.success) {
+    if (accountState?.error) {
+      setAccountError(accountState.error);
+    } else if (accountState?.success) {
+      setAccountError(null);
       setShowEmailModal(false);
       setShowRecoveryEmailModal(false);
       setShowPasswordModal(false);
@@ -632,7 +696,7 @@ export function EditOrganizationForm({
               {/* Name Row */}
               <button
                 type="button"
-                onClick={() => setShowNameModal(true)}
+                onClick={() => openModal(setShowNameModal)}
                 aria-label="Edit Name"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -647,7 +711,7 @@ export function EditOrganizationForm({
               {/* Email Row */}
               <button
                 type="button"
-                onClick={() => setShowEmailModal(true)}
+                onClick={() => openModal(setShowEmailModal)}
                 aria-label="Edit Email"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -662,7 +726,7 @@ export function EditOrganizationForm({
               {/* Phone Row */}
               <button
                 type="button"
-                onClick={() => setShowPhoneModal(true)}
+                onClick={() => openModal(setShowPhoneModal)}
                 aria-label="Edit Phone"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -674,10 +738,85 @@ export function EditOrganizationForm({
                 <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
               </button>
 
+              {/* Website Row */}
+              <button
+                type="button"
+                onClick={() => openModal(setShowWebsiteModal)}
+                aria-label="Edit Website"
+                disabled={isPending}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
+              >
+                <div className="flex flex-1 items-center">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Website</span>
+                  <span className="text-sm text-foreground/90">{organization.website || "-"}</span>
+                </div>
+                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              {/* Facebook Row */}
+              <button
+                type="button"
+                onClick={() => openModal(setShowFacebookModal)}
+                aria-label="Edit Facebook"
+                disabled={isPending}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
+              >
+                <div className="flex flex-1 items-center">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Facebook</span>
+                  <span className="text-sm text-foreground/90">{organization.facebook || "-"}</span>
+                </div>
+                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              {/* Instagram Row */}
+              <button
+                type="button"
+                onClick={() => openModal(setShowInstagramModal)}
+                aria-label="Edit Instagram"
+                disabled={isPending}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
+              >
+                <div className="flex flex-1 items-center">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Instagram</span>
+                  <span className="text-sm text-foreground/90">{organization.instagram || "-"}</span>
+                </div>
+                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              {/* TikTok Row */}
+              <button
+                type="button"
+                onClick={() => openModal(setShowTikTokModal)}
+                aria-label="Edit TikTok"
+                disabled={isPending}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
+              >
+                <div className="flex flex-1 items-center">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">TikTok</span>
+                  <span className="text-sm text-foreground/90">{organization.tiktok || "-"}</span>
+                </div>
+                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
+              {/* LinkedIn Row */}
+              <button
+                type="button"
+                onClick={() => openModal(setShowLinkedinModal)}
+                aria-label="Edit LinkedIn"
+                disabled={isPending}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
+              >
+                <div className="flex flex-1 items-center">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">LinkedIn</span>
+                  <span className="text-sm text-foreground/90">{organization.linkedin || "-"}</span>
+                </div>
+                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+              </button>
+
               {/* Description Row */}
               <button
                 type="button"
-                onClick={() => setShowDescriptionModal(true)}
+                onClick={() => openModal(setShowDescriptionModal)}
                 aria-label="Edit Description"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -694,7 +833,7 @@ export function EditOrganizationForm({
               {/* Category Row */}
               <button
                 type="button"
-                onClick={() => setShowCategoryModal(true)}
+                onClick={() => openModal(setShowCategoryModal)}
                 aria-label="Edit Category"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -747,7 +886,7 @@ export function EditOrganizationForm({
                 {/* Company Name Row */}
                 <button
                   type="button"
-                  onClick={() => setShowBillingModal(true)}
+                  onClick={() => openModal(setShowBillingModal)}
                   aria-label="Edit Billing Company Name"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -762,7 +901,7 @@ export function EditOrganizationForm({
                 {/* Tax ID Row */}
                 <button
                   type="button"
-                  onClick={() => setShowBillingModal(true)}
+                  onClick={() => openModal(setShowBillingModal)}
                   aria-label="Edit Billing Tax ID"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -777,7 +916,7 @@ export function EditOrganizationForm({
                 {/* Trade Registry Number Row */}
                 <button
                   type="button"
-                  onClick={() => setShowBillingModal(true)}
+                  onClick={() => openModal(setShowBillingModal)}
                   aria-label="Edit Billing Trade Registry Number"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -792,7 +931,7 @@ export function EditOrganizationForm({
                 {/* EUID Row */}
                 <button
                   type="button"
-                  onClick={() => setShowBillingModal(true)}
+                  onClick={() => openModal(setShowBillingModal)}
                   aria-label="Edit Billing EUID"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -807,7 +946,7 @@ export function EditOrganizationForm({
                 {/* Address Row */}
                 <button
                   type="button"
-                  onClick={() => setShowAddressModal(true)}
+                  onClick={() => openModal(setShowAddressModal)}
                   aria-label="Edit Address"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -822,7 +961,7 @@ export function EditOrganizationForm({
                 {/* Bank Row */}
                 <button
                   type="button"
-                  onClick={() => setShowBillingModal(true)}
+                  onClick={() => openModal(setShowBillingModal)}
                   aria-label="Edit Billing Bank"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -837,7 +976,7 @@ export function EditOrganizationForm({
                 {/* Bank Account Number Row */}
                 <button
                   type="button"
-                  onClick={() => setShowBillingModal(true)}
+                  onClick={() => openModal(setShowBillingModal)}
                   aria-label="Edit Billing Bank Account Number"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -873,7 +1012,7 @@ export function EditOrganizationForm({
                 {/* Primary Contact Name */}
                 <button
                   type="button"
-                  onClick={() => setShowPrimaryContactModal(true)}
+                  onClick={() => openModal(setShowPrimaryContactModal)}
                   aria-label="Edit Primary Contact Person Name"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -888,7 +1027,7 @@ export function EditOrganizationForm({
                 {/* Primary Contact Phone */}
                 <button
                   type="button"
-                  onClick={() => setShowPrimaryContactModal(true)}
+                  onClick={() => openModal(setShowPrimaryContactModal)}
                   aria-label="Edit Primary Contact Person Phone"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -903,7 +1042,7 @@ export function EditOrganizationForm({
                 {/* Primary Contact Email */}
                 <button
                   type="button"
-                  onClick={() => setShowPrimaryContactModal(true)}
+                  onClick={() => openModal(setShowPrimaryContactModal)}
                   aria-label="Edit Primary Contact Person Email"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -925,7 +1064,7 @@ export function EditOrganizationForm({
                 {/* Secondary Contact Name */}
                 <button
                   type="button"
-                  onClick={() => setShowSecondaryContactModal(true)}
+                  onClick={() => openModal(setShowSecondaryContactModal)}
                   aria-label="Edit Secondary Contact Person Name"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -940,7 +1079,7 @@ export function EditOrganizationForm({
                 {/* Secondary Contact Phone */}
                 <button
                   type="button"
-                  onClick={() => setShowSecondaryContactModal(true)}
+                  onClick={() => openModal(setShowSecondaryContactModal)}
                   aria-label="Edit Secondary Contact Person Phone"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -955,7 +1094,7 @@ export function EditOrganizationForm({
                 {/* Secondary Contact Email */}
                 <button
                   type="button"
-                  onClick={() => setShowSecondaryContactModal(true)}
+                  onClick={() => openModal(setShowSecondaryContactModal)}
                   aria-label="Edit Secondary Contact Person Email"
                   disabled={isPending}
                   className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -989,7 +1128,7 @@ export function EditOrganizationForm({
               {/* Email Row */}
               <button
                 type="button"
-                onClick={() => setShowEmailModal(true)}
+                onClick={() => openModal(setShowEmailModal)}
                 aria-label="Edit Email"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -1004,7 +1143,7 @@ export function EditOrganizationForm({
               {/* Recovery Email Row */}
               <button
                 type="button"
-                onClick={() => setShowRecoveryEmailModal(true)}
+                onClick={() => openModal(setShowRecoveryEmailModal)}
                 aria-label="Edit Recovery email"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -1019,7 +1158,7 @@ export function EditOrganizationForm({
               {/* Password Row */}
               <button
                 type="button"
-                onClick={() => setShowPasswordModal(true)}
+                onClick={() => openModal(setShowPasswordModal)}
                 aria-label="Edit Password"
                 disabled={isPending}
                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
@@ -1214,7 +1353,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 1: Edit Name (Identity) */}
       {showNameModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1236,9 +1375,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="addressZip" value={organization.addressZip || ""} />
 
               <CardContent className="p-6 space-y-4">
-                {personalState?.error && (
+                {personalError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalState.error}
+                    {personalError}
                   </div>
                 )}
                 <div className="space-y-4">
@@ -1260,7 +1399,7 @@ export function EditOrganizationForm({
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowNameModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowNameModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -1275,7 +1414,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 1.5: Edit Category */}
       {showCategoryModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1297,9 +1436,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="addressZip" value={organization.addressZip || ""} />
 
               <CardContent className="p-6 space-y-4">
-                {personalState?.error && (
+                {personalError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalState.error}
+                    {personalError}
                   </div>
                 )}
                 <div className="space-y-4">
@@ -1323,7 +1462,7 @@ export function EditOrganizationForm({
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowCategoryModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowCategoryModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -1339,7 +1478,7 @@ export function EditOrganizationForm({
       {/* POPUP 2: Edit Address */}
       {/* POPUP 4: Edit Address Details */}
       {showAddressModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-2xl shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1358,9 +1497,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="addressCountry" value="Romania" />
 
               <CardContent className="p-6 space-y-4 bg-muted/5">
-                {personalState?.error && (
+                {personalError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalState.error}
+                    {personalError}
                   </div>
                 )}
                  <div className="space-y-4">
@@ -1545,7 +1684,7 @@ export function EditOrganizationForm({
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowAddressModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowAddressModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -1560,7 +1699,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 3: Edit Phone Number */}
       {showPhoneModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1582,9 +1721,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="addressZip" value={organization.addressZip || ""} />
 
               <CardContent className="p-6 space-y-4">
-                {personalState?.error && (
+                {personalError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalState.error}
+                    {personalError}
                   </div>
                 )}
                 <div className="space-y-4">
@@ -1611,7 +1750,304 @@ export function EditOrganizationForm({
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowPhoneModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowPhoneModal)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* POPUP 3.5: Edit Website */}
+      {showWebsiteModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
+          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Globe className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit Website</CardTitle>
+                <CardDescription className="text-xs">Update organization official website URL address.</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+              <input type="hidden" name="phoneNumber" value={organization.phoneNumber || ""} />
+              <input type="hidden" name="description" value={organization.description || ""} />
+
+              <CardContent className="p-6 space-y-4">
+                {personalError && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalError}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="website" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Website
+                    </Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                      <Input
+                        id="website"
+                        name="website"
+                        type="url"
+                        defaultValue={organization.website || ""}
+                        placeholder="https://example.com"
+                        className="pl-9 focus-visible:ring-primary/20"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      (e.g., https://example.com)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowWebsiteModal)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* POPUP 3.6: Edit Facebook */}
+      {showFacebookModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
+          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Globe className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit Facebook Page</CardTitle>
+                <CardDescription className="text-xs">Update organization official Facebook URL.</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+
+              <CardContent className="p-6 space-y-4">
+                {personalError && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalError}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="facebook" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Facebook URL
+                    </Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                      <Input
+                        id="facebook"
+                        name="facebook"
+                        type="url"
+                        defaultValue={organization.facebook || ""}
+                        placeholder="https://facebook.com/yourpage"
+                        className="pl-9 focus-visible:ring-primary/20"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      (e.g., https://facebook.com/yourpage)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowFacebookModal)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* POPUP 3.7: Edit Instagram */}
+      {showInstagramModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
+          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Globe className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit Instagram Profile</CardTitle>
+                <CardDescription className="text-xs">Update organization official Instagram URL.</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+
+              <CardContent className="p-6 space-y-4">
+                {personalError && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalError}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="instagram" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      Instagram URL
+                    </Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                      <Input
+                        id="instagram"
+                        name="instagram"
+                        type="url"
+                        defaultValue={organization.instagram || ""}
+                        placeholder="https://instagram.com/yourpage"
+                        className="pl-9 focus-visible:ring-primary/20"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      (e.g., https://instagram.com/yourpage)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowInstagramModal)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* POPUP 3.8: Edit TikTok */}
+      {showTikTokModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
+          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Globe className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit TikTok Profile</CardTitle>
+                <CardDescription className="text-xs">Update organization official TikTok URL.</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+
+              <CardContent className="p-6 space-y-4">
+                {personalError && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalError}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="tiktok" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      TikTok URL
+                    </Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                      <Input
+                        id="tiktok"
+                        name="tiktok"
+                        type="url"
+                        defaultValue={organization.tiktok || ""}
+                        placeholder="https://tiktok.com/@yourpage"
+                        className="pl-9 focus-visible:ring-primary/20"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      (e.g., https://tiktok.com/@yourpage)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowTikTokModal)} disabled={isPending}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* POPUP 3.9: Edit LinkedIn */}
+      {showLinkedinModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
+          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Globe className="size-5" />
+              </div>
+              <div className="flex flex-col">
+                <CardTitle className="text-base font-semibold">Edit LinkedIn Page</CardTitle>
+                <CardDescription className="text-xs">Update organization official LinkedIn URL.</CardDescription>
+              </div>
+            </CardHeader>
+            <form action={personalAction}>
+              <input type="hidden" name="id" value={organization.id} />
+              <input type="hidden" name="name" value={organization.name} />
+              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
+
+              <CardContent className="p-6 space-y-4">
+                {personalError && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {personalError}
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="linkedin" className="text-sm font-medium normal-case text-muted-foreground/80">
+                      LinkedIn URL
+                    </Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                      <Input
+                        id="linkedin"
+                        name="linkedin"
+                        type="url"
+                        defaultValue={organization.linkedin || ""}
+                        placeholder="https://linkedin.com/in/yourprofile"
+                        className="pl-9 focus-visible:ring-primary/20"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      (e.g., https://linkedin.com/in/yourprofile)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowLinkedinModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -1626,7 +2062,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 4: Edit Email */}
       {showEmailModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1641,9 +2077,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="id" value={organization.id} />
               <input type="hidden" name="recoveryEmail" value={organization.recoveryEmail || ""} />
               <CardContent className="p-6 space-y-4">
-                {accountState?.error && (
+                {accountError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {accountState.error}
+                    {accountError}
                   </div>
                 )}
                 <div className="space-y-4">
@@ -1665,7 +2101,7 @@ export function EditOrganizationForm({
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowEmailModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowEmailModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -1680,7 +2116,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 4.5: Edit Recovery Email */}
       {showRecoveryEmailModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1695,9 +2131,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="id" value={organization.id} />
               <input type="hidden" name="email" value={organization.email || ""} />
               <CardContent className="p-6 space-y-4">
-                {accountState?.error && (
+                {accountError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {accountState.error}
+                    {accountError}
                   </div>
                 )}
                 <div className="space-y-4">
@@ -1719,7 +2155,7 @@ export function EditOrganizationForm({
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowRecoveryEmailModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowRecoveryEmailModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -1734,7 +2170,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 5: Edit Password */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1751,9 +2187,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="recoveryEmail" value={organization.recoveryEmail || ""} />
 
               <CardContent className="p-6 space-y-4">
-                {accountState?.error && (
+                {accountError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {accountState.error}
+                    {accountError}
                   </div>
                 )}
                 <div className="space-y-4">
@@ -1833,7 +2269,7 @@ export function EditOrganizationForm({
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowPasswordModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowPasswordModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPasswordSubmitDisabled}>
@@ -1847,7 +2283,7 @@ export function EditOrganizationForm({
       )}
       {/* POPUP 6: Edit Billing Details */}
       {showBillingModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -1864,9 +2300,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
 
               <CardContent className="p-6 space-y-4">
-                {personalState?.error && (
+                {personalError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalState.error}
+                    {personalError}
                   </div>
                 )}
                 <div className="space-y-4">
@@ -2013,7 +2449,7 @@ export function EditOrganizationForm({
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowBillingModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowBillingModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -2028,7 +2464,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 7: Edit Primary Contact Details */}
       {showPrimaryContactModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-lg shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -2045,9 +2481,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
 
               <CardContent className="p-6 space-y-6">
-                {personalState?.error && (
+                {personalError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalState.error}
+                    {personalError}
                   </div>
                 )}
                 
@@ -2079,7 +2515,7 @@ export function EditOrganizationForm({
                       key={organization.billingContactPhone || ""}
                       defaultValue={organization.billingContactPhone || ""}
                       required
-                      placeholder="+40 700 000 000"
+                      placeholder="0723456789"
                       className="focus-visible:ring-primary/20"
                     />
                   </div>
@@ -2102,7 +2538,7 @@ export function EditOrganizationForm({
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowPrimaryContactModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowPrimaryContactModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -2117,7 +2553,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 8: Edit Secondary Contact Details */}
       {showSecondaryContactModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-lg shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -2134,9 +2570,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
 
               <CardContent className="p-6 space-y-6">
-                {personalState?.error && (
+                {personalError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalState.error}
+                    {personalError}
                   </div>
                 )}
                 
@@ -2166,7 +2602,7 @@ export function EditOrganizationForm({
                       type="text"
                       key={organization.billingSecondaryContactPhone || ""}
                       defaultValue={organization.billingSecondaryContactPhone || ""}
-                      placeholder="+40 700 000 001"
+                      placeholder="0723456789"
                       className="focus-visible:ring-primary/20"
                     />
                   </div>
@@ -2188,7 +2624,7 @@ export function EditOrganizationForm({
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowSecondaryContactModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowSecondaryContactModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>
@@ -2203,7 +2639,7 @@ export function EditOrganizationForm({
 
       {/* POPUP 9: Edit Description Details */}
       {showDescriptionModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
           <Card className="w-full max-w-2xl shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
             <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -2221,9 +2657,9 @@ export function EditOrganizationForm({
               <input type="hidden" name="description" value={editDescription} />
 
               <CardContent className="p-6 space-y-6">
-                {personalState?.error && (
+                {personalError && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalState.error}
+                    {personalError}
                   </div>
                 )}
                 
@@ -2239,7 +2675,7 @@ export function EditOrganizationForm({
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowDescriptionModal(false)} disabled={isPending}>
+                  <Button type="button" variant="outline" onClick={() => closeModal(setShowDescriptionModal)} disabled={isPending}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isPending}>

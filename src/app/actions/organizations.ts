@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { isValidEmail, isValidRomanianPhone, isValidUrl } from "@/lib/validation";
 
 /**
  * Returns all organization categories from the database.
@@ -103,7 +104,7 @@ export async function updateOrganizationCategoryAction(prevState: unknown, formD
   const description = formData.get("description") as string;
 
   if (!id || !name || name.trim() === "") {
-    return { error: "Organization category name is required." };
+    return { error: "Category ID and name are required." };
   }
 
   try {
@@ -124,13 +125,13 @@ export async function updateOrganizationCategoryAction(prevState: unknown, formD
 }
 
 /**
- * Deletes an organization category by ID.
- * Refuses deletion if any organization account is currently assigned to this category.
+ * Deletes an existing organization category.
+ * Fails if any organization is currently assigned to this category.
  *
  * @param formData.id - Category ID to delete (required)
  *
- * @returns `{ success: true }` on successful deletion
- * @returns `{ error: string }` if ID is missing, category is in use, or DB failure
+ * @returns `{ success: true }` on success
+ * @returns `{ error: string }` if category is in use or DB fails
  * @sideEffect Revalidates `/backoffice/organizations`
  */
 export async function deleteOrganizationCategoryAction(prevState: unknown, formData: FormData) {
@@ -152,6 +153,7 @@ export async function deleteOrganizationCategoryAction(prevState: unknown, formD
     }
 
     await db.delete(organizationCategories).where(eq(organizationCategories.id, id));
+
     revalidatePath("/backoffice/organizations");
     return { success: true };
   } catch (error) {
@@ -162,10 +164,9 @@ export async function deleteOrganizationCategoryAction(prevState: unknown, formD
 
 /**
  * Creates a new organization account (role = "organization").
- * Validates that the given category is a known organization category.
  *
  * @param formData.name                 - Organization display name (required)
- * @param formData.email                - Unique login email (required)
+ * @param formData.email                - Unique login email (required, validated format)
  * @param formData.password             - Min 6 characters (required)
  * @param formData.organizationCategory - Must be a valid category ID (required)
  *
@@ -181,6 +182,10 @@ export async function createOrganizationAction(prevState: unknown, formData: For
 
   if (!name || !email || !password || !organizationCategory) {
     return { error: "All fields are required" };
+  }
+
+  if (!isValidEmail(email)) {
+    return { error: "Please enter a valid email address." };
   }
 
   try {
@@ -231,7 +236,7 @@ export async function createOrganizationAction(prevState: unknown, formData: For
  * @param formData.id - Organization user ID (required)
  * @param formData.name - New display name (required)
  * @param formData.organizationCategory - Must be a valid category ID (required)
- * @param formData.phoneNumber - Contact phone number (optional)
+ * @param formData.phoneNumber - Contact phone number (optional, validated 10-digit Romanian format)
  * @param formData.description - Rich-text organization description, stored as HTML string (optional)
  * @param formData.addressLine - Street address line (optional)
  * @param formData.addressCity - City name (optional)
@@ -251,11 +256,11 @@ export async function createOrganizationAction(prevState: unknown, formData: For
  * @param formData.billingBankName - Bank name from Romania (optional)
  * @param formData.billingBankAccountNumber - Bank account IBAN (optional)
  * @param formData.billingContactName - Billing contact person name (optional)
- * @param formData.billingContactPhone - Billing contact phone number (optional)
- * @param formData.billingContactEmail - Billing contact email address (optional)
+ * @param formData.billingContactPhone - Billing contact phone number (optional, validated 10-digit Romanian format)
+ * @param formData.billingContactEmail - Billing contact email address (optional, validated email format)
  * @param formData.billingSecondaryContactName - Secondary contact person name (optional)
- * @param formData.billingSecondaryContactPhone - Secondary contact phone number (optional)
- * @param formData.billingSecondaryContactEmail - Secondary contact email address (optional)
+ * @param formData.billingSecondaryContactPhone - Secondary contact phone number (optional, validated 10-digit Romanian format)
+ * @param formData.billingSecondaryContactEmail - Secondary contact email address (optional, validated email format)
  *
  * @returns `{ success: true }` on success
  * @returns `{ error: string }` on validation or database query failure
@@ -283,7 +288,11 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
     };
 
     if (formData.has("phoneNumber")) {
-      updateData.phoneNumber = (formData.get("phoneNumber") as string) || null;
+      const val = (formData.get("phoneNumber") as string) || null;
+      if (val && !isValidRomanianPhone(val)) {
+        return { error: "Please enter a valid 10-digit Romanian phone number (e.g., 0723456789)." };
+      }
+      updateData.phoneNumber = val;
     }
 
     if (formData.has("description")) {
@@ -320,22 +329,53 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
     }
 
     if (formData.has("facebook")) {
-      updateData.facebook = (formData.get("facebook") as string) || null;
+      const val = (formData.get("facebook") as string)?.trim() || null;
+      if (val && !isValidUrl(val)) {
+        return { error: "Please enter a valid Facebook URL starting with http:// or https:// (e.g., https://facebook.com/yourpage)." };
+      }
+      updateData.facebook = val;
     }
     if (formData.has("instagram")) {
-      updateData.instagram = (formData.get("instagram") as string) || null;
+      const val = (formData.get("instagram") as string)?.trim() || null;
+      if (val && !isValidUrl(val)) {
+        return { error: "Please enter a valid Instagram URL starting with http:// or https:// (e.g., https://instagram.com/yourpage)." };
+      }
+      updateData.instagram = val;
     }
     if (formData.has("tiktok")) {
-      updateData.tiktok = (formData.get("tiktok") as string) || null;
+      const val = (formData.get("tiktok") as string)?.trim() || null;
+      if (val && !isValidUrl(val)) {
+        return { error: "Please enter a valid TikTok URL starting with http:// or https:// (e.g., https://tiktok.com/@yourpage)." };
+      }
+      updateData.tiktok = val;
+    }
+    if (formData.has("linkedin")) {
+      const val = (formData.get("linkedin") as string)?.trim() || null;
+      if (val && !isValidUrl(val)) {
+        return { error: "Please enter a valid LinkedIn URL starting with http:// or https:// (e.g., https://linkedin.com/in/yourprofile)." };
+      }
+      updateData.linkedin = val;
     }
     if (formData.has("youtube")) {
-      updateData.youtube = (formData.get("youtube") as string) || null;
+      const val = (formData.get("youtube") as string)?.trim() || null;
+      if (val && !isValidUrl(val)) {
+        return { error: "Please enter a valid YouTube URL starting with http:// or https:// (e.g., https://youtube.com/@channel)." };
+      }
+      updateData.youtube = val;
     }
     if (formData.has("website")) {
-      updateData.website = (formData.get("website") as string) || null;
+      const val = (formData.get("website") as string)?.trim() || null;
+      if (val && !isValidUrl(val)) {
+        return { error: "Please enter a valid website URL starting with http:// or https:// (e.g., https://example.com)." };
+      }
+      updateData.website = val;
     }
     if (formData.has("googleBusinessProfile")) {
-      updateData.googleBusinessProfile = (formData.get("googleBusinessProfile") as string) || null;
+      const val = (formData.get("googleBusinessProfile") as string)?.trim() || null;
+      if (val && !isValidUrl(val)) {
+        return { error: "Please enter a valid Google Business Profile URL starting with http:// or https://." };
+      }
+      updateData.googleBusinessProfile = val;
     }
     if (formData.has("billingCompanyName")) {
       updateData.billingCompanyName = (formData.get("billingCompanyName") as string) || null;
@@ -359,19 +399,35 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
       updateData.billingContactName = (formData.get("billingContactName") as string) || null;
     }
     if (formData.has("billingContactPhone")) {
-      updateData.billingContactPhone = (formData.get("billingContactPhone") as string) || null;
+      const val = (formData.get("billingContactPhone") as string) || null;
+      if (val && !isValidRomanianPhone(val)) {
+        return { error: "Please enter a valid 10-digit Romanian phone number (e.g., 0723456789)." };
+      }
+      updateData.billingContactPhone = val;
     }
     if (formData.has("billingContactEmail")) {
-      updateData.billingContactEmail = (formData.get("billingContactEmail") as string) || null;
+      const val = (formData.get("billingContactEmail") as string) || null;
+      if (val && !isValidEmail(val)) {
+        return { error: "Please enter a valid billing contact email address." };
+      }
+      updateData.billingContactEmail = val;
     }
     if (formData.has("billingSecondaryContactName")) {
       updateData.billingSecondaryContactName = (formData.get("billingSecondaryContactName") as string) || null;
     }
     if (formData.has("billingSecondaryContactPhone")) {
-      updateData.billingSecondaryContactPhone = (formData.get("billingSecondaryContactPhone") as string) || null;
+      const val = (formData.get("billingSecondaryContactPhone") as string) || null;
+      if (val && !isValidRomanianPhone(val)) {
+        return { error: "Please enter a valid 10-digit Romanian phone number (e.g., 0723456789)." };
+      }
+      updateData.billingSecondaryContactPhone = val;
     }
     if (formData.has("billingSecondaryContactEmail")) {
-      updateData.billingSecondaryContactEmail = (formData.get("billingSecondaryContactEmail") as string) || null;
+      const val = (formData.get("billingSecondaryContactEmail") as string) || null;
+      if (val && !isValidEmail(val)) {
+        return { error: "Please enter a valid secondary contact email address." };
+      }
+      updateData.billingSecondaryContactEmail = val;
     }
 
     await db
@@ -400,8 +456,8 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
  * Changes the password, email, and recovery email for an existing organization account.
  *
  * @param formData.id              - Organization user ID (required)
- * @param formData.email           - Unique login email (optional/required)
- * @param formData.recoveryEmail   - Recovery email (optional)
+ * @param formData.email           - Unique login email (optional/required, validated format)
+ * @param formData.recoveryEmail   - Recovery email (optional, validated format)
  * @param formData.password        - New password, min 6 characters (optional)
  * @param formData.confirmPassword - Must match `password` exactly (optional)
  *
@@ -425,6 +481,9 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
     const updateData: Partial<typeof users.$inferInsert> = {};
 
     if (email) {
+      if (!isValidEmail(email)) {
+        return { error: "Please enter a valid email address." };
+      }
       // Check if email is taken by another user
       const [existingEmail] = await db
         .select()
@@ -439,6 +498,9 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
     }
 
     if (recoveryEmail !== null) {
+      if (recoveryEmail && !isValidEmail(recoveryEmail)) {
+        return { error: "Please enter a valid recovery email address." };
+      }
       updateData.recoveryEmail = recoveryEmail || null;
     }
 

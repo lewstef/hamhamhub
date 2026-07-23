@@ -89,6 +89,16 @@ describe("User Server Actions", () => {
       expect(result).toEqual({ error: "All fields are required" });
     });
 
+    it("should return error if email is invalid or missing TLD", async () => {
+      const formData = new FormData();
+      formData.append("name", "Jane Doe");
+      formData.append("email", "invalid-email-no-tld");
+      formData.append("password", "123456");
+
+      const result = await createUserAction(null, formData);
+      expect(result).toEqual({ error: "Please enter a valid email address." });
+    });
+
     it("should return error if password is less than 6 characters", async () => {
       const formData = new FormData();
       formData.append("name", "Jane Doe");
@@ -231,6 +241,30 @@ describe("User Server Actions", () => {
       expect(mockDelete).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/users");
       expect(result).toEqual({ success: true });
+    });
+
+    it("should return error if user ID is missing", async () => {
+      const formData = new FormData();
+      const result = await deleteUserAction(null, formData);
+      expect(result).toEqual({ error: "User ID is required" });
+    });
+
+    it("should return error if user is not found", async () => {
+      const formData = new FormData();
+      formData.append("id", "nonexistent-id");
+      mockSelect.mockResolvedValueOnce([]);
+      const result = await deleteUserAction(null, formData);
+      expect(result).toEqual({ error: "User not found." });
+      expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it("should return error on DB failure during delete", async () => {
+      const formData = new FormData();
+      formData.append("id", "user-id");
+      mockSelect.mockResolvedValueOnce([{ role: "user" }]);
+      mockDelete.mockRejectedValueOnce(new Error("DB connection lost"));
+      const result = await deleteUserAction(null, formData);
+      expect(result).toEqual({ error: "Could not delete user. Please try again." });
     });
   });
 });

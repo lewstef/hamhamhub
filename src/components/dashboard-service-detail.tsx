@@ -119,8 +119,15 @@ export function DashboardServiceDetail({
   const isDogTraining = service.name.toLowerCase() === "dog training";
   const isSportDogTraining = service.name.toLowerCase() === "dog sports training";
   const isDogBoarding = service.name.toLowerCase() === "dog boarding";
-  const isDynamicCourses = isDogTraining || isSportDogTraining || isDogBoarding;
-  const itemNoun = isSportDogTraining ? "Dog Sport" : isDogBoarding ? "Boarding service" : "Course";
+  const isDogGrooming = service.name.toLowerCase() === "dog grooming";
+  const isDynamicCourses = isDogTraining || isSportDogTraining || isDogBoarding || isDogGrooming;
+  const itemNoun = isSportDogTraining
+    ? "Dog Sport"
+    : isDogBoarding
+    ? "Boarding service"
+    : isDogGrooming
+    ? "Grooming service"
+    : "Course";
 
   const handleToggle = () => {
     const nextState = !isEnabled;
@@ -243,7 +250,7 @@ export function DashboardServiceDetail({
               <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
                 {service.name}
               </CardTitle>
-              {!isDynamicCourses && slug !== "dog-boarding" && (
+              {!isDynamicCourses && (
                 <CardDescription className="text-sm">
                   Service Template Identifier: {service.id}
                 </CardDescription>
@@ -269,7 +276,7 @@ export function DashboardServiceDetail({
 
         <CardContent className="space-y-6">
           {/* Toggle Control Area (Hidden for dynamic course services since they list custom items) */}
-          {!isDynamicCourses && slug !== "dog-boarding" && (
+          {!isDynamicCourses && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/20 gap-4">
               <div className="space-y-1">
                 <span className="text-sm font-semibold text-foreground">

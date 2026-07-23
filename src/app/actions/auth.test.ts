@@ -101,14 +101,18 @@ describe("Core Auth Server Actions", () => {
     });
 
     describe("Standard User Registration", () => {
-      it("should return error if email is missing", async () => {
+      it("should return error if email is missing or invalid TLD format", async () => {
         const formData = new FormData();
         formData.append("name", "John");
         formData.append("password", "123456");
         formData.append("roleType", "user");
 
-        const result = await signUpAction(null, formData);
-        expect(result).toEqual({ error: "Email is required" });
+        let result = await signUpAction(null, formData);
+        expect(result).toEqual({ error: "Please enter a valid email address." });
+
+        formData.append("email", "invalid-email-no-tld");
+        result = await signUpAction(null, formData);
+        expect(result).toEqual({ error: "Please enter a valid email address." });
       });
 
       it("should return error if email is already registered", async () => {

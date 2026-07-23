@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DashboardServicesList } from "@/components/dashboard-services-list";
+import { getServiceTypesAction } from "@/app/actions/service-types";
 
 export const metadata = {
   title: "Services - Dashboard",
@@ -38,6 +39,26 @@ export default async function DashboardServicesPage() {
   // Get all services belonging to this organization category joined with their descriptions
   let matchingServices: { id: string; name: string; slug: string; description: string; coursesOrder?: string | null }[] = [];
   if (organization.organizationCategory) {
+    const serviceTypeList = await getServiceTypesAction();
+    const applicableTypes = serviceTypeList.filter((st) => st.applicableTo.includes(organization.organizationCategory!));
+
+    const existingServices = await db
+      .select({ name: services.name })
+      .from(services)
+      .where(eq(services.organizationCategory, organization.organizationCategory));
+
+    const existingNames = new Set(existingServices.map((s) => s.name));
+    const missing = applicableTypes.filter((st) => !existingNames.has(st.name));
+
+    if (missing.length > 0) {
+      await db.insert(services).values(
+        missing.map((st) => ({
+          name: st.name,
+          organizationCategory: organization.organizationCategory!,
+        }))
+      );
+    }
+
     matchingServices = await db
       .select({
         id: services.id,
@@ -51,13 +72,16 @@ export default async function DashboardServicesPage() {
       .where(eq(services.organizationCategory, organization.organizationCategory))
       .orderBy(services.sortOrder)
       .then((rows) =>
-        rows.map((r) => ({
-          id: r.id,
-          name: r.name,
-          slug: (r.serviceTypeId || "").replace(/_/g, "-"),
-          description: r.description || "Operational service listing.",
-          coursesOrder: r.coursesOrder,
-        }))
+        rows.map((r) => {
+          const fallbackSlug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+          return {
+            id: r.id,
+            name: r.name,
+            slug: r.serviceTypeId ? r.serviceTypeId.replace(/_/g, "-") : fallbackSlug,
+            description: r.description || "Operational service listing.",
+            coursesOrder: r.coursesOrder,
+          };
+        })
       );
   }
 

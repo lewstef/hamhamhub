@@ -141,9 +141,11 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
     revalidatePath("/dashboard/services/dog-boarding");
+    revalidatePath("/dashboard/services/dog-grooming");
     revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
     return { success: true };
   } catch (error) {
     console.error("Failed to create course:", error);
@@ -297,9 +299,11 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
     revalidatePath("/dashboard/services/dog-boarding");
+    revalidatePath("/dashboard/services/dog-grooming");
     revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
     return { success: true };
   } catch (error) {
     console.error("Failed to update course:", error);
@@ -344,9 +348,11 @@ export async function deleteCourseAction(courseId: string) {
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
     revalidatePath("/dashboard/services/dog-boarding");
+    revalidatePath("/dashboard/services/dog-grooming");
     revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete course:", error);
@@ -388,9 +394,11 @@ export async function reorderOrgCoursesAction(orderedCourseIds: string[]) {
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
     revalidatePath("/dashboard/services/dog-boarding");
+    revalidatePath("/dashboard/services/dog-grooming");
     revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
     revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
     return { success: true };
   } catch (error) {
     console.error("Failed to reorder organization courses:", error);

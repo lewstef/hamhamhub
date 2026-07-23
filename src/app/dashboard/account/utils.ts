@@ -40,6 +40,7 @@ export async function getDashboardAccountData() {
       facebook: users.facebook,
       instagram: users.instagram,
       tiktok: users.tiktok,
+      linkedin: users.linkedin,
       youtube: users.youtube,
       website: users.website,
       googleBusinessProfile: users.googleBusinessProfile,
@@ -84,13 +85,16 @@ export async function getDashboardAccountData() {
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
       .where(eq(services.organizationCategory, organization.organizationCategory))
       .then((rows) =>
-        rows.map((r) => ({
-          id: r.id,
-          name: r.name,
-          organizationCategory: r.organizationCategory,
-          slug: (r.serviceTypeId || "").replace(/_/g, "-"),
-          description: r.description || "Operational service listing.",
-        }))
+        rows.map((r) => {
+          const fallbackSlug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+          return {
+            id: r.id,
+            name: r.name,
+            organizationCategory: r.organizationCategory,
+            slug: r.serviceTypeId ? r.serviceTypeId.replace(/_/g, "-") : fallbackSlug,
+            description: r.description || "Operational service listing.",
+          };
+        })
       );
   }
 

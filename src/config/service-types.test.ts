@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { serviceTypesList, type ServiceType, type FormField } from "./service-types";
 
 describe("serviceTypesList config", () => {
-  it("should export exactly 4 service types", () => {
-    expect(serviceTypesList).toHaveLength(4);
+  it("should export exactly 5 service types", () => {
+    expect(serviceTypesList).toHaveLength(5);
   });
 
   it("should have a unique id for every service type", () => {
@@ -30,8 +30,8 @@ describe("serviceTypesList config", () => {
     }
   });
 
-  it("should have at least one field for every service type", () => {
-    for (const st of serviceTypesList) {
+  it("should have at least one field for configurable service types", () => {
+    for (const st of serviceTypesList.filter((s) => s.id !== "dog_grooming")) {
       expect(st.fields.length).toBeGreaterThan(0);
     }
   });
@@ -110,6 +110,14 @@ describe("serviceTypesList config", () => {
   it("should include a 'sport_dog_training' service type applicable to cynological associations", () => {
     const sdt = serviceTypesList.find((s) => s.id === "sport_dog_training");
     expect(sdt).toBeDefined();
+    expect(sdt!.name).toBe("Dog sports training");
     expect(sdt!.applicableTo).toContain("cynological_association");
+  });
+
+  it("should include a 'dog_grooming' service type applicable to dog_service_provider", () => {
+    const dg = serviceTypesList.find((s) => s.id === "dog_grooming");
+    expect(dg).toBeDefined();
+    expect(dg!.name).toBe("Dog grooming");
+    expect(dg!.applicableTo).toContain("dog_service_provider");
   });
 });

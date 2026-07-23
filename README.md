@@ -111,6 +111,9 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Implemented full keyboard navigation (`ArrowDown`, `ArrowUp`, `Enter`, `Escape`, mouse hover sync) for all search dropdown inputs.
   - Automatically shifts focus directly to the Locality input field and opens its search dropdown as soon as a County is selected.
   - Configured Edit Address Details modal to enforce County, Locality, and Street Address as mandatory (marked with red asterisk `*` and native form validation) while leaving the Zip Code optional and renamed to "Zip code".
+- **Centralized Email TLD & 10-Digit Romanian Phone Validations (`src/lib/validation.ts`)**:
+  - Implemented strict email validation (`isValidEmail`) enforcing standard RFC email format with valid domain TLD extensions of at least 2 characters (e.g., `.com`, `.ro`, `.org`).
+  - Implemented simple 10-digit Romanian phone number validation (`isValidRomanianPhone`) enforcing 10-digit format starting with `0` (`07xxxxxxx`, `02xxxxxxx`, `03xxxxxxx`). Strictly rejects country prefixes (`+4`/`+40`), spaces, dots, hyphens, and non-numeric characters. Enforced across all server actions (`organizations`, `users`, `employees`, `auth`) and form controls.
 
 ---
 
@@ -125,7 +128,9 @@ The backoffice system integrates completely dynamic configuration layers for bus
 - Dynamic color badges represent distinct category types (e.g. green for NGO, blue for Kennel, purple for Association, indigo for Provider).
 
 ### B. Service Types Configuration (`/backoffice/services/types`)
-- Custom names and descriptions for service templates (Obedience training, Boarding, Walking, etc.) are managed in the database `service_types` table.
+- Custom names and descriptions for service templates (Dog training, Dog boarding, Dog sports training, Dog walking, Dog grooming, etc.) are managed in the database `service_types` table.
+- Added **Dog grooming** as a core sub-service under **Dog service provider** (`applicableTo: ["dog_service_provider"]`) with dedicated dynamic offerings management page (`/dashboard/services/dog-grooming`). Cleared irrelevant training and facility attribute toggles (Certified Trainer, Dedicated Field, Parking, Medication, Daily Walks, Meal Plan, Age Limits, Check-in/out), providing a clean form focused on Grooming Service Name, Pricing (per service/session/hour), Details, Terms, and FAQs.
+- Renamed "Dog Sports Training" to **"Dog sports training"** to align with standardized lowercase naming conventions across all service templates.
 - Admin can modify names and descriptions through an edit popup, instantly propagating updates to page views and validation rules.
 
 ### C. Services Directory (`/backoffice/services`)
@@ -141,7 +146,7 @@ The backoffice system integrates completely dynamic configuration layers for bus
 ### A. Client Dashboard (Pet Owners & Organizations)
 - **Hamster Telemetry Stream**: Standard users are presented with a real-time hamster monitoring grid (tracking Cage synced configurations, wheel RPM, food level indicators, and live activity streams for hamsters like Biscuit or Peanut).
 - **Unified Organization Form (`EditOrganizationForm`)**: An advanced multi-tab settings panel containing:
-  - *Personal Info*: Organization names, categories, recovery emails, social profile widgets (Facebook, Instagram, TikTok, website, GBP), and full address structures with country-specific dropdown search matching.
+  - *Personal Info*: Organization names, categories, primary contact phone, **Website** field (positioned under Phone with strict URL validation requiring `http://` or `https://`), recovery emails, social profile widgets (Facebook, Instagram, TikTok, website, GBP), and full address structures with country-specific dropdown search matching.
   - *Localized Address Validation*: Form matches phone pattern inputs against target countries (e.g., +40 for Romania, +44 for UK).
   - *Account Settings*: Interactive password reset forms complete with real-time Password Strength Check indicators.
   - *Subscription Details*: Telemetry license tier indicators and plans.

@@ -6,13 +6,14 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { isValidEmail } from "@/lib/validation";
 
 /**
  * Registers a new user or staff account.
  *
  * User registration (roleType !== "staff"):
  * @param formData.name     - Display name (required)
- * @param formData.email    - Unique login email (required)
+ * @param formData.email    - Unique login email (required, validated format)
  * @param formData.password - Min 6 characters (required)
  * @param formData.roleType - Must be absent or any value other than "staff" to register as user
  *
@@ -49,8 +50,8 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
     // Standard User registration
     const email = formData.get("email") as string;
 
-    if (!email) {
-      return { error: "Email is required" };
+    if (!email || !isValidEmail(email)) {
+      return { error: "Please enter a valid email address." };
     }
 
     // Check if email exists
@@ -81,7 +82,7 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
 
 /**
  * Authenticates a user or staff member via NextAuth Credentials provider.
- * Enforces email format for user/organization logins.
+ * Enforces email format with valid TLD for user/organization logins.
  *
  * @param formData.identifier - Email address (for users/organizations) or username (for staff)
  * @param formData.password   - Account password (required)
@@ -100,7 +101,7 @@ export async function loginAction(prevState: unknown, formData: FormData) {
     return { error: "All fields are required" };
   }
 
-  if (loginType === "user" && !identifier.includes("@")) {
+  if (loginType === "user" && !isValidEmail(identifier)) {
     return { error: "Invalid email format." };
   }
 

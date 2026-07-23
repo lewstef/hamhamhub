@@ -58,20 +58,22 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
   const dbId = slug.replace(/-/g, "_");
 
   // Fetch the specific service details
-  const [service] = await db
+  const allCatServices = await db
     .select({
       id: services.id,
       name: services.name,
+      serviceTypeId: serviceTypes.id,
       description: serviceTypes.description,
       coursesOrder: services.coursesOrder,
     })
     .from(services)
     .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
-    .where(and(
-      eq(serviceTypes.id, dbId),
-      eq(services.organizationCategory, organization.organizationCategory || "")
-    ))
-    .limit(1);
+    .where(eq(services.organizationCategory, organization.organizationCategory || ""));
+
+  const service = allCatServices.find((s) => {
+    const sSlug = s.serviceTypeId ? s.serviceTypeId.replace(/_/g, "-") : s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+    return sSlug === slug || s.serviceTypeId === dbId || s.id === slug;
+  });
 
   if (!service) {
     notFound();
@@ -108,18 +110,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
         )
       )
       .orderBy(courses.sortOrder, courses.createdAt);
-  } else if (slug === "sport-dog-training") {
-    orgCourses = await db
-      .select()
-      .from(courses)
-      .where(
-        and(
-          eq(courses.organizationId, organization.id),
-          eq(courses.serviceId, service.id)
-        )
-      )
-      .orderBy(courses.sortOrder, courses.createdAt);
-  } else if (slug === "dog-boarding") {
+  } else if (slug === "sport-dog-training" || slug === "dog-boarding" || slug === "dog-grooming") {
     orgCourses = await db
       .select()
       .from(courses)

@@ -93,6 +93,18 @@ describe("Employee Server Actions", () => {
       expect(result).toEqual({ error: "All fields are required" });
     });
 
+    it("should return error if email format or TLD is invalid", async () => {
+      const formData = new FormData();
+      formData.append("name", "John Doe");
+      formData.append("username", "johndoe");
+      formData.append("email", "john@invalid-tld");
+      formData.append("password", "123456");
+      formData.append("role", "employee");
+
+      const result = await createEmployeeAction(null, formData);
+      expect(result).toEqual({ error: "Please enter a valid email address." });
+    });
+
     it("should return error if password is less than 6 characters", async () => {
       const formData = new FormData();
       formData.append("name", "John Doe");
@@ -302,6 +314,52 @@ describe("Employee Server Actions", () => {
       expect(mockDelete).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/employees");
       expect(result).toEqual({ success: true });
+    });
+
+    it("should return error if employee ID is missing", async () => {
+      const formData = new FormData();
+      const result = await deleteEmployeeAction(null, formData);
+      expect(result).toEqual({ error: "Employee ID is required" });
+    });
+
+    it("should return error if employee is not found", async () => {
+      const formData = new FormData();
+      formData.append("id", "nonexistent-id");
+      mockSelect.mockResolvedValueOnce([]);
+      const result = await deleteEmployeeAction(null, formData);
+      expect(result).toEqual({ error: "Employee not found." });
+      expect(mockDelete).not.toHaveBeenCalled();
+    });
+
+    it("should return error on DB failure during delete", async () => {
+      const formData = new FormData();
+      formData.append("id", "some-id");
+      mockSelect.mockResolvedValueOnce([{ username: "trainer" }]);
+      mockDelete.mockRejectedValueOnce(new Error("DB connection lost"));
+      const result = await deleteEmployeeAction(null, formData);
+      expect(result).toEqual({ error: "Could not delete employee. Please try again." });
+    });
+  });
+
+  describe("changeEmployeePasswordAction — additional branches", () => {
+    it("should return error if ID is missing", async () => {
+      const formData = new FormData();
+      formData.append("password", "somepass");
+      formData.append("confirmPassword", "somepass");
+      const result = await changeEmployeePasswordAction(null, formData);
+      expect(result).toEqual({ error: "All fields are required" });
+    });
+
+    it("should return error on DB failure during password update", async () => {
+      const formData = new FormData();
+      formData.append("id", "user-id");
+      formData.append("password", "validpassword");
+      formData.append("confirmPassword", "validpassword");
+
+      mockUpdate.mockRejectedValueOnce(new Error("DB connection lost"));
+
+      const result = await changeEmployeePasswordAction(null, formData);
+      expect(result).toEqual({ error: "Something went wrong. Please try again." });
     });
   });
 });

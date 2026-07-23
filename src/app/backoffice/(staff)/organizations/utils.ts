@@ -3,6 +3,7 @@ import { users, services, serviceTypes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getOrganizationCategories } from "@/app/actions/organizations";
+import { getServiceTypesAction } from "@/app/actions/service-types";
 
 /**
  * Fetches organization details for the backoffice admin management pages.
@@ -37,6 +38,7 @@ export async function getOrganizationData(id: string) {
       facebook: users.facebook,
       instagram: users.instagram,
       tiktok: users.tiktok,
+      linkedin: users.linkedin,
       youtube: users.youtube,
       website: users.website,
       googleBusinessProfile: users.googleBusinessProfile,
@@ -71,6 +73,26 @@ export async function getOrganizationData(id: string) {
   // Fetch all services matching organization category
   let servicesList: any[] = [];
   if (organization.organizationCategory) {
+    const serviceTypeList = await getServiceTypesAction();
+    const applicableTypes = serviceTypeList.filter((st) => st.applicableTo.includes(organization.organizationCategory!));
+
+    const existingServices = await db
+      .select({ name: services.name })
+      .from(services)
+      .where(eq(services.organizationCategory, organization.organizationCategory));
+
+    const existingNames = new Set(existingServices.map((s) => s.name));
+    const missing = applicableTypes.filter((st) => !existingNames.has(st.name));
+
+    if (missing.length > 0) {
+      await db.insert(services).values(
+        missing.map((st) => ({
+          name: st.name,
+          organizationCategory: organization.organizationCategory!,
+        }))
+      );
+    }
+
     const rawServices = await db
       .select({
         id: services.id,
@@ -85,10 +107,13 @@ export async function getOrganizationData(id: string) {
       .where(eq(services.organizationCategory, organization.organizationCategory))
       .orderBy(services.sortOrder);
 
-    servicesList = rawServices.map((s) => ({
-      ...s,
-      slug: s.slug ? s.slug.replace(/_/g, "-") : null,
-    }));
+    servicesList = rawServices.map((s) => {
+      const fallbackSlug = s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+      return {
+        ...s,
+        slug: s.slug ? s.slug.replace(/_/g, "-") : fallbackSlug,
+      };
+    });
   }
 
   return {

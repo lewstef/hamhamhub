@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   facebook: text("facebook"),
   instagram: text("instagram"),
   tiktok: text("tiktok"),
+  linkedin: text("linkedin"),
   youtube: text("youtube"),
   website: text("website"),
   googleBusinessProfile: text("google_business_profile"),

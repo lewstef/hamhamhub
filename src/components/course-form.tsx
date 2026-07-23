@@ -87,6 +87,7 @@ interface CourseFormProps {
 export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse, onCancel, onSubmitSuccess, serviceSlug }: CourseFormProps) {
   const isEdit = !!initialCourse?.id;
   const isBoarding = serviceSlug === "dog-boarding";
+  const isGrooming = serviceSlug === "dog-grooming" || itemNoun === "Grooming service";
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -110,7 +111,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
   const [details, setDetails] = useState(initialCourse?.details || "");
   const [termsOfParticipation, setTermsOfParticipation] = useState(initialCourse?.termsOfParticipation || "");
   const [price, setPrice] = useState(initialCourse?.price || "");
-  const [priceType, setPriceType] = useState(initialCourse?.priceType || (itemNoun === "Boarding service" ? "night" : "course"));
+  const [priceType, setPriceType] = useState(initialCourse?.priceType || (isBoarding ? "night" : isGrooming ? "service" : "course"));
   const [medicationAdministration, setMedicationAdministration] = useState(initialCourse?.medicationAdministration || false);
   const [medicationAdministrationDetails, setMedicationAdministrationDetails] = useState(initialCourse?.medicationAdministrationDetails || "");
   const [dailyWalks, setDailyWalks] = useState(initialCourse?.dailyWalks || 1);
@@ -315,6 +316,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                   ? "e.g. Agility, IGP, Obedience"
                   : itemNoun === "Boarding service"
                   ? "e.g. Standard Room, VIP Cabin"
+                  : isGrooming
+                  ? "e.g. Full Grooming & Bath"
                   : "e.g. Puppy Socialization Class"
               }
               value={name}
@@ -325,10 +328,11 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
           </div>
 
           {/* Toggle groups */}
-          <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
-              {itemNoun === "Boarding service" ? "Facility Attributes" : "Trainer & Facility Attributes"}
-            </h3>
+          {!isGrooming && (
+            <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
+                {itemNoun === "Boarding service" ? "Facility Attributes" : "Trainer & Facility Attributes"}
+              </h3>
 
             {/* Certified Trainer Toggle */}
             {itemNoun !== "Boarding service" && (
@@ -555,6 +559,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
               )}
             </div>
           </div>
+          )}
 
           {itemNoun === "Boarding service" && (
             <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
@@ -882,6 +887,12 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                       <option value="day">Per Day</option>
                       <option value="month">Per Month</option>
                       <option value="service">Per Boarding service</option>
+                    </>
+                  ) : itemNoun === "Grooming service" ? (
+                    <>
+                      <option value="service">Per Grooming service</option>
+                      <option value="session">Per Session</option>
+                      <option value="hour">Per Hour</option>
                     </>
                   ) : (
                     <>
