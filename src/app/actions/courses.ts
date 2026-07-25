@@ -90,16 +90,45 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
   const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
   const checkin = formData.get("checkin") as string || null;
   const checkout = formData.get("checkout") as string || null;
+  const checkinWeekend = formData.get("checkinWeekend") as string || null;
+  const checkoutWeekend = formData.get("checkoutWeekend") as string || null;
+  const schedule = formData.get("schedule") as string || null;
   const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
   const ageLimits = formData.get("ageLimits") as string || null;
   const faq = formData.get("faq") as string || null;
 
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
   if (checkin && !timeRegex.test(checkin)) {
-    return { error: "Invalid check-in time format. Use hh:mm (24h)." };
+    return { error: "Invalid work week check-in time format. Use hh:mm (24h)." };
   }
   if (checkout && !timeRegex.test(checkout)) {
-    return { error: "Invalid check-out time format. Use hh:mm (24h)." };
+    return { error: "Invalid work week check-out time format. Use hh:mm (24h)." };
+  }
+  if (checkinWeekend && !timeRegex.test(checkinWeekend)) {
+    return { error: "Invalid weekend check-in time format. Use hh:mm (24h)." };
+  }
+  if (checkoutWeekend && !timeRegex.test(checkoutWeekend)) {
+    return { error: "Invalid weekend check-out time format. Use hh:mm (24h)." };
+  }
+
+  if (schedule) {
+    try {
+      const parsedSchedule = JSON.parse(schedule);
+      if (Array.isArray(parsedSchedule)) {
+        for (const item of parsedSchedule) {
+          if (item && item.enabled) {
+            if (item.checkin && !timeRegex.test(item.checkin)) {
+              return { error: `Invalid check-in time format for ${item.label || item.day}. Use hh:mm (24h).` };
+            }
+            if (item.checkout && !timeRegex.test(item.checkout)) {
+              return { error: `Invalid check-out time format for ${item.label || item.day}. Use hh:mm (24h).` };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      return { error: "Invalid schedule JSON format." };
+    }
   }
 
   if (!name) {
@@ -133,6 +162,9 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
       checkin,
       checkout,
+      checkinWeekend,
+      checkoutWeekend,
+      schedule,
       ageLimitsEnabled,
       ageLimits: ageLimitsEnabled ? ageLimits : null,
       faq,
@@ -229,16 +261,45 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
   const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
   const checkin = formData.get("checkin") as string || null;
   const checkout = formData.get("checkout") as string || null;
+  const checkinWeekend = formData.get("checkinWeekend") as string || null;
+  const checkoutWeekend = formData.get("checkoutWeekend") as string || null;
+  const schedule = formData.get("schedule") as string || null;
   const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
   const ageLimits = formData.get("ageLimits") as string || null;
   const faq = formData.get("faq") as string || null;
 
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
   if (checkin && !timeRegex.test(checkin)) {
-    return { error: "Invalid check-in time format. Use hh:mm (24h)." };
+    return { error: "Invalid work week check-in time format. Use hh:mm (24h)." };
   }
   if (checkout && !timeRegex.test(checkout)) {
-    return { error: "Invalid check-out time format. Use hh:mm (24h)." };
+    return { error: "Invalid work week check-out time format. Use hh:mm (24h)." };
+  }
+  if (checkinWeekend && !timeRegex.test(checkinWeekend)) {
+    return { error: "Invalid weekend check-in time format. Use hh:mm (24h)." };
+  }
+  if (checkoutWeekend && !timeRegex.test(checkoutWeekend)) {
+    return { error: "Invalid weekend check-out time format. Use hh:mm (24h)." };
+  }
+
+  if (schedule) {
+    try {
+      const parsedSchedule = JSON.parse(schedule);
+      if (Array.isArray(parsedSchedule)) {
+        for (const item of parsedSchedule) {
+          if (item && item.enabled) {
+            if (item.checkin && !timeRegex.test(item.checkin)) {
+              return { error: `Invalid check-in time format for ${item.label || item.day}. Use hh:mm (24h).` };
+            }
+            if (item.checkout && !timeRegex.test(item.checkout)) {
+              return { error: `Invalid check-out time format for ${item.label || item.day}. Use hh:mm (24h).` };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      return { error: "Invalid schedule JSON format." };
+    }
   }
 
   if (!courseId) {
@@ -290,6 +351,9 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
         checkin,
         checkout,
+        checkinWeekend,
+        checkoutWeekend,
+        schedule,
         ageLimitsEnabled,
         ageLimits: ageLimitsEnabled ? ageLimits : null,
         faq,

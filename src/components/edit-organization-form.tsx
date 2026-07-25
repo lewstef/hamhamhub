@@ -30,6 +30,7 @@ interface Organization {
   facebook?: string | null;
   instagram?: string | null;
   tiktok?: string | null;
+  linkedin?: string | null;
   youtube?: string | null;
   website?: string | null;
   googleBusinessProfile?: string | null;

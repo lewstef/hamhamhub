@@ -36,9 +36,105 @@ interface Course {
   personalizedMealPlanDetails?: string | null;
   checkin?: string | null;
   checkout?: string | null;
+  checkinWeekend?: string | null;
+  checkoutWeekend?: string | null;
+  schedule?: string | null;
   ageLimitsEnabled?: boolean | null;
   ageLimits?: string | null;
   faq?: string | null;
+}
+
+const DAY_SHORT_NAMES: Record<string, string> = {
+  monday: "Mon",
+  tuesday: "Tue",
+  wednesday: "Wed",
+  thursday: "Thu",
+  friday: "Fri",
+  saturday: "Sat",
+  sunday: "Sun",
+};
+
+export interface FormattedScheduleGroup {
+  dayRangeLabel: string;
+  enabled: boolean;
+  checkin: string;
+  checkout: string;
+}
+
+export function parseScheduleGroups(
+  scheduleJson?: string | null,
+  fallbackCheckin?: string | null,
+  fallbackCheckout?: string | null,
+  fallbackCheckinWeekend?: string | null,
+  fallbackCheckoutWeekend?: string | null
+): FormattedScheduleGroup[] {
+  if (scheduleJson) {
+    try {
+      const parsed = JSON.parse(scheduleJson);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const groups: FormattedScheduleGroup[] = [];
+        let currentGroup: { days: string[]; enabled: boolean; checkin: string; checkout: string } | null = null;
+
+        for (const item of parsed) {
+          const shortName = DAY_SHORT_NAMES[item.day] || item.label || item.day;
+          const key = `${item.enabled}:${item.checkin}:${item.checkout}`;
+
+          if (!currentGroup) {
+            currentGroup = { days: [shortName], enabled: item.enabled, checkin: item.checkin, checkout: item.checkout };
+          } else {
+            const prevKey = `${currentGroup.enabled}:${currentGroup.checkin}:${currentGroup.checkout}`;
+            if (key === prevKey) {
+              currentGroup.days.push(shortName);
+            } else {
+              const rangeLabel =
+                currentGroup.days.length === 1
+                  ? currentGroup.days[0]
+                  : `${currentGroup.days[0]}–${currentGroup.days[currentGroup.days.length - 1]}`;
+              groups.push({
+                dayRangeLabel: rangeLabel,
+                enabled: currentGroup.enabled,
+                checkin: currentGroup.checkin,
+                checkout: currentGroup.checkout,
+              });
+              currentGroup = { days: [shortName], enabled: item.enabled, checkin: item.checkin, checkout: item.checkout };
+            }
+          }
+        }
+        if (currentGroup) {
+          const rangeLabel =
+            currentGroup.days.length === 1
+              ? currentGroup.days[0]
+              : `${currentGroup.days[0]}–${currentGroup.days[currentGroup.days.length - 1]}`;
+          groups.push({
+            dayRangeLabel: rangeLabel,
+            enabled: currentGroup.enabled,
+            checkin: currentGroup.checkin,
+            checkout: currentGroup.checkout,
+          });
+        }
+        return groups;
+      }
+    } catch (e) {}
+  }
+
+  const res: FormattedScheduleGroup[] = [];
+  if (fallbackCheckin || fallbackCheckout) {
+    res.push({
+      dayRangeLabel: "Mon–Fri",
+      enabled: true,
+      checkin: fallbackCheckin || "",
+      checkout: fallbackCheckout || "",
+    });
+  }
+  if (fallbackCheckinWeekend || fallbackCheckoutWeekend) {
+    res.push({
+      dayRangeLabel: "Sat–Sun",
+      enabled: true,
+      checkin: fallbackCheckinWeekend || "",
+      checkout: fallbackCheckoutWeekend || "",
+    });
+  }
+  return res;
 }
 
 interface Service {
@@ -345,11 +441,32 @@ export function DashboardServiceDetail({
                             </div>
                             <span className="text-sm font-bold text-foreground">
                               {course.name}
-                              {slug === "dog-boarding" && (course.checkin || course.checkout) && (
-                                <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
-                                  {course.checkin ? `In: ${course.checkin}` : ""}
-                                  {course.checkin && course.checkout ? " • " : ""}
-                                  {course.checkout ? `Out: ${course.checkout}` : ""}
+                              {slug === "dog-boarding" && (
+                                <span className="inline-flex flex-wrap items-center gap-1.5 ml-2">
+                                  {parseScheduleGroups(
+                                    course.schedule,
+                                    course.checkin,
+                                    course.checkout,
+                                    course.checkinWeekend,
+                                    course.checkoutWeekend
+                                  ).map((grp, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border"
+                                      title={`${grp.dayRangeLabel} operating hours`}
+                                    >
+                                      <span className="font-semibold text-foreground/80">{grp.dayRangeLabel}:</span>{" "}
+                                      {grp.enabled ? (
+                                        <>
+                                          {grp.checkin ? `In: ${grp.checkin}` : ""}
+                                          {grp.checkin && grp.checkout ? " • " : ""}
+                                          {grp.checkout ? `Out: ${grp.checkout}` : ""}
+                                        </>
+                                      ) : (
+                                        <span className="italic">Closed</span>
+                                      )}
+                                    </span>
+                                  ))}
                                 </span>
                               )}
                             </span>

@@ -572,7 +572,84 @@ describe("DashboardServiceDetail Component", () => {
       />
     );
 
-    expect(screen.getByText("In: 09:00")).toBeDefined();
+    expect(screen.getByText("Mon–Fri:")).toBeDefined();
+    expect(screen.getByText((content) => content.includes("In: 09:00"))).toBeDefined();
+  });
+
+  it("should display Work week and Weekend checkin/checkout badges for dog boarding", () => {
+    const boardingService = {
+      id: "srv-dog-boarding",
+      name: "Dog Boarding",
+      description: "Stays.",
+    };
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={boardingService}
+        initialIsEnabled={true}
+        slug="dog-boarding"
+        courses={[
+          {
+            id: "b-1",
+            name: "Basic Stay",
+            certifiedTrainer: false,
+            dedicatedField: false,
+            parking: false,
+            checkin: "08:00",
+            checkout: "18:00",
+            checkinWeekend: "09:00",
+            checkoutWeekend: "16:00",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("Mon–Fri:")).toBeDefined();
+    expect(screen.getByText("Sat–Sun:")).toBeDefined();
+  });
+
+  it("should display day-specific schedule badges for dog boarding", () => {
+    const boardingService = {
+      id: "srv-dog-boarding",
+      name: "Dog Boarding",
+      description: "Stays.",
+    };
+
+    const customSchedule = JSON.stringify([
+      { day: "monday", label: "Monday", enabled: true, checkin: "08:00", checkout: "18:00" },
+      { day: "tuesday", label: "Tuesday", enabled: true, checkin: "08:00", checkout: "18:00" },
+      { day: "wednesday", label: "Wednesday", enabled: true, checkin: "08:00", checkout: "18:00" },
+      { day: "thursday", label: "Thursday", enabled: true, checkin: "08:00", checkout: "18:00" },
+      { day: "friday", label: "Friday", enabled: true, checkin: "08:00", checkout: "14:00" },
+      { day: "saturday", label: "Saturday", enabled: true, checkin: "09:00", checkout: "16:00" },
+      { day: "sunday", label: "Sunday", enabled: false, checkin: "09:00", checkout: "16:00" },
+    ]);
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={boardingService}
+        initialIsEnabled={true}
+        slug="dog-boarding"
+        courses={[
+          {
+            id: "b-1",
+            name: "Custom Stay",
+            certifiedTrainer: false,
+            dedicatedField: false,
+            parking: false,
+            schedule: customSchedule,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("Mon–Thu:")).toBeDefined();
+    expect(screen.getByText("Fri:")).toBeDefined();
+    expect(screen.getByText("Sat:")).toBeDefined();
+    expect(screen.getByText("Sun:")).toBeDefined();
+    expect(screen.getByText("Closed")).toBeDefined();
   });
 
   it("should close the CourseForm and return to list when onCancel (Back button) is triggered", () => {

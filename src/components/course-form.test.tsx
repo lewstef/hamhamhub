@@ -229,22 +229,31 @@ describe("CourseForm Component", () => {
     expect(mealInput).toBeDefined();
     fireEvent.change(mealInput, { target: { value: "Raw diet raw food storage" } });
 
-    // Check-in / Check-out time inputs and datalist
-    const checkinInput = screen.getByLabelText("Check-in Time") as HTMLInputElement;
-    const checkoutInput = screen.getByLabelText("Check-out Time") as HTMLInputElement;
+    // Daily Operating Schedule section
+    expect(screen.getByText("Daily Operating Schedule")).toBeDefined();
+    expect(screen.getByText("Copy Mon to Mon–Fri")).toBeDefined();
+    expect(screen.getByText("Copy Mon to All")).toBeDefined();
 
-    expect(checkinInput).toBeDefined();
-    expect(checkinInput.value).toBe("08:00");
-    expect(checkinInput.getAttribute("list")).toBe("time-options");
-    expect(checkinInput.getAttribute("pattern")).toBe("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$");
+    const checkinInputs = screen.getAllByLabelText("Check-in Time") as HTMLInputElement[];
+    const checkoutInputs = screen.getAllByLabelText("Check-out Time") as HTMLInputElement[];
 
-    expect(checkoutInput).toBeDefined();
-    expect(checkoutInput.value).toBe("18:00");
-    expect(checkoutInput.getAttribute("list")).toBe("time-options");
-    expect(checkoutInput.getAttribute("pattern")).toBe("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$");
+    expect(checkinInputs.length).toBe(7);
+    expect(checkoutInputs.length).toBe(7);
 
-    fireEvent.change(checkinInput, { target: { value: "09:30" } });
-    expect(checkinInput.value).toBe("09:30");
+    // Monday default
+    expect(checkinInputs[0].value).toBe("08:00");
+    expect(checkoutInputs[0].value).toBe("18:00");
+
+    // Saturday default
+    expect(checkinInputs[5].value).toBe("09:00");
+    expect(checkoutInputs[5].value).toBe("16:00");
+
+    // Test updating Monday and using "Copy Mon to All" button
+    fireEvent.change(checkinInputs[0], { target: { value: "07:30" } });
+    expect(checkinInputs[0].value).toBe("07:30");
+
+    fireEvent.click(screen.getByText("Copy Mon to All"));
+    expect(checkinInputs[5].value).toBe("07:30");
   });
 
   it("should render Edit Course terminology and values in edit mode", () => {

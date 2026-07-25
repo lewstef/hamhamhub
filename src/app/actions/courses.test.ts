@@ -120,6 +120,12 @@ describe("Courses Server Actions", () => {
       formData.append("personalizedMealPlanDetails", "Raw BARF mix twice a day");
       formData.append("checkin", "08:30");
       formData.append("checkout", "18:00");
+      formData.append("checkinWeekend", "09:30");
+      formData.append("checkoutWeekend", "16:30");
+      const testSchedule = JSON.stringify([
+        { day: "monday", label: "Monday", enabled: true, checkin: "08:30", checkout: "18:00" },
+      ]);
+      formData.append("schedule", testSchedule);
 
       const result = await createCourseAction(null, formData);
       expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
@@ -135,8 +141,23 @@ describe("Courses Server Actions", () => {
         personalizedMealPlanDetails: "Raw BARF mix twice a day",
         checkin: "08:30",
         checkout: "18:00",
+        checkinWeekend: "09:30",
+        checkoutWeekend: "16:30",
+        schedule: testSchedule,
       }));
       expect(result).toEqual({ success: true });
+    });
+
+    it("should fail schedule time format validation", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const formData = new FormData();
+      formData.append("name", "VIP Stay");
+      formData.append("schedule", JSON.stringify([
+        { day: "tuesday", label: "Tuesday", enabled: true, checkin: "25:00", checkout: "18:00" }
+      ]));
+
+      const result = await createCourseAction(null, formData);
+      expect(result).toEqual({ error: "Invalid check-in time format for Tuesday. Use hh:mm (24h)." });
     });
 
     it("should fail check-in format validation", async () => {
@@ -146,7 +167,7 @@ describe("Courses Server Actions", () => {
       formData.append("checkin", "25:00");
 
       const result = await createCourseAction(null, formData);
-      expect(result).toEqual({ error: "Invalid check-in time format. Use hh:mm (24h)." });
+      expect(result).toEqual({ error: "Invalid work week check-in time format. Use hh:mm (24h)." });
     });
 
     it("should fail check-out format validation", async () => {
@@ -156,7 +177,27 @@ describe("Courses Server Actions", () => {
       formData.append("checkout", "18:65");
 
       const result = await createCourseAction(null, formData);
-      expect(result).toEqual({ error: "Invalid check-out time format. Use hh:mm (24h)." });
+      expect(result).toEqual({ error: "Invalid work week check-out time format. Use hh:mm (24h)." });
+    });
+
+    it("should fail weekend check-in format validation", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const formData = new FormData();
+      formData.append("name", "VIP Stay");
+      formData.append("checkinWeekend", "25:00");
+
+      const result = await createCourseAction(null, formData);
+      expect(result).toEqual({ error: "Invalid weekend check-in time format. Use hh:mm (24h)." });
+    });
+
+    it("should fail weekend check-out format validation", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const formData = new FormData();
+      formData.append("name", "VIP Stay");
+      formData.append("checkoutWeekend", "18:65");
+
+      const result = await createCourseAction(null, formData);
+      expect(result).toEqual({ error: "Invalid weekend check-out time format. Use hh:mm (24h)." });
     });
 
     it("should fail if organization ID is missing for admin", async () => {

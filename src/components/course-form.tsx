@@ -33,9 +33,57 @@ interface Course {
   personalizedMealPlanDetails?: string | null;
   checkin?: string | null;
   checkout?: string | null;
+  checkinWeekend?: string | null;
+  checkoutWeekend?: string | null;
+  schedule?: string | null;
   ageLimitsEnabled?: boolean | null;
   ageLimits?: string | null;
   faq?: string | null;
+}
+
+export type DayKey = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+
+export interface DayScheduleItem {
+  day: DayKey;
+  label: string;
+  enabled: boolean;
+  checkin: string;
+  checkout: string;
+}
+
+export const DEFAULT_WEEKLY_SCHEDULE: DayScheduleItem[] = [
+  { day: "monday", label: "Monday", enabled: true, checkin: "08:00", checkout: "18:00" },
+  { day: "tuesday", label: "Tuesday", enabled: true, checkin: "08:00", checkout: "18:00" },
+  { day: "wednesday", label: "Wednesday", enabled: true, checkin: "08:00", checkout: "18:00" },
+  { day: "thursday", label: "Thursday", enabled: true, checkin: "08:00", checkout: "18:00" },
+  { day: "friday", label: "Friday", enabled: true, checkin: "08:00", checkout: "18:00" },
+  { day: "saturday", label: "Saturday", enabled: true, checkin: "09:00", checkout: "16:00" },
+  { day: "sunday", label: "Sunday", enabled: true, checkin: "09:00", checkout: "16:00" },
+];
+
+export function getInitialWeeklySchedule(initialCourse?: Course | null): DayScheduleItem[] {
+  if (initialCourse?.schedule) {
+    try {
+      const parsed = JSON.parse(initialCourse.schedule);
+      if (Array.isArray(parsed) && parsed.length === 7) {
+        return parsed;
+      }
+    } catch (e) {}
+  }
+  const workIn = initialCourse?.checkin || "08:00";
+  const workOut = initialCourse?.checkout || "18:00";
+  const weekIn = initialCourse?.checkinWeekend || "09:00";
+  const weekOut = initialCourse?.checkoutWeekend || "16:00";
+
+  return [
+    { day: "monday", label: "Monday", enabled: true, checkin: workIn, checkout: workOut },
+    { day: "tuesday", label: "Tuesday", enabled: true, checkin: workIn, checkout: workOut },
+    { day: "wednesday", label: "Wednesday", enabled: true, checkin: workIn, checkout: workOut },
+    { day: "thursday", label: "Thursday", enabled: true, checkin: workIn, checkout: workOut },
+    { day: "friday", label: "Friday", enabled: true, checkin: workIn, checkout: workOut },
+    { day: "saturday", label: "Saturday", enabled: true, checkin: weekIn, checkout: weekOut },
+    { day: "sunday", label: "Sunday", enabled: true, checkin: weekIn, checkout: weekOut },
+  ];
 }
 
 // Pre-populates 30-minute interval suggestions (00:00 to 23:30) for check-in/check-out combobox selectors
@@ -120,9 +168,40 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
   const [personalizedMealPlan, setPersonalizedMealPlan] = useState(initialCourse?.personalizedMealPlan || false);
   const [personalizedMealPlanDetails, setPersonalizedMealPlanDetails] = useState(initialCourse?.personalizedMealPlanDetails || "");
   
-  // Boarding check-in and check-out times in 24-hour (hh:mm) format
+  // Boarding check-in and check-out times in 24-hour (hh:mm) format (Work week & Weekend)
   const [checkin, setCheckin] = useState(initialCourse?.checkin || "08:00");
   const [checkout, setCheckout] = useState(initialCourse?.checkout || "18:00");
+  const [checkinWeekend, setCheckinWeekend] = useState(initialCourse?.checkinWeekend || "09:00");
+  const [checkoutWeekend, setCheckoutWeekend] = useState(initialCourse?.checkoutWeekend || "16:00");
+
+  // 7-Day Day-Specific Schedule state
+  const [weeklySchedule, setWeeklySchedule] = useState<DayScheduleItem[]>(() =>
+    getInitialWeeklySchedule(initialCourse)
+  );
+
+  const handleUpdateDaySchedule = (dayKey: DayKey, field: keyof DayScheduleItem, value: any) => {
+    setWeeklySchedule((prev) =>
+      prev.map((item) => (item.day === dayKey ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const handleCopyMonToWorkweek = () => {
+    const mon = weeklySchedule.find((item) => item.day === "monday") || weeklySchedule[0];
+    setWeeklySchedule((prev) =>
+      prev.map((item) =>
+        item.day === "saturday" || item.day === "sunday"
+          ? item
+          : { ...item, checkin: mon.checkin, checkout: mon.checkout, enabled: mon.enabled }
+      )
+    );
+  };
+
+  const handleCopyMonToAll = () => {
+    const mon = weeklySchedule.find((item) => item.day === "monday") || weeklySchedule[0];
+    setWeeklySchedule((prev) =>
+      prev.map((item) => ({ ...item, checkin: mon.checkin, checkout: mon.checkout, enabled: mon.enabled }))
+    );
+  };
 
   // FAQ Builder State
   const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>(() => {
@@ -190,6 +269,9 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     personalizedMealPlanDetails !== (initialCourse?.personalizedMealPlanDetails || "") ||
     checkin !== (initialCourse?.checkin || "08:00") ||
     checkout !== (initialCourse?.checkout || "18:00") ||
+    checkinWeekend !== (initialCourse?.checkinWeekend || "09:00") ||
+    checkoutWeekend !== (initialCourse?.checkoutWeekend || "16:00") ||
+    JSON.stringify(weeklySchedule) !== JSON.stringify(getInitialWeeklySchedule(initialCourse)) ||
     JSON.stringify(faqs) !== initialFaqStr;
 
   // Safeguard: Ask before leaving page when there are unsaved changes
@@ -256,8 +338,13 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     formData.append("personalizedMealPlan", String(personalizedMealPlan));
     formData.append("personalizedMealPlanDetails", personalizedMealPlanDetails);
     if (isBoarding) {
-      formData.append("checkin", checkin);
-      formData.append("checkout", checkout);
+      const mon = weeklySchedule.find((item) => item.day === "monday");
+      const sat = weeklySchedule.find((item) => item.day === "saturday");
+      formData.append("checkin", mon?.checkin || checkin);
+      formData.append("checkout", mon?.checkout || checkout);
+      formData.append("checkinWeekend", sat?.checkin || checkinWeekend);
+      formData.append("checkoutWeekend", sat?.checkout || checkoutWeekend);
+      formData.append("schedule", JSON.stringify(weeklySchedule));
     }
     formData.append("faq", JSON.stringify(faqs));
 
@@ -716,37 +803,107 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                 <>
                   <div className="h-px bg-border/60" />
 
-                  {/* Checkin / Checkout time pickers */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="checkin">Check-in Time</Label>
-                      <Input
-                        id="checkin"
-                        type="text"
-                        list="time-options"
-                        value={checkin}
-                        onChange={(e) => setCheckin(e.target.value)}
-                        pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-                        placeholder="e.g. 08:00"
-                        title="Please enter a valid time in 24-hour hh:mm format."
-                        className="bg-background font-mono"
-                        required
-                      />
+                  {/* 7-Day Day-Specific Schedule Section */}
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/40 pb-3">
+                      <div>
+                        <Label className="text-base font-bold text-foreground">Daily Operating Schedule</Label>
+                        <p className="text-xs text-muted-foreground">Specify day-specific check-in and check-out times (Monday to Sunday)</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopyMonToWorkweek}
+                          className="text-xs h-7 px-2.5"
+                          title="Copy Monday check-in/out times to Tuesday through Friday"
+                        >
+                          Copy Mon to Mon–Fri
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopyMonToAll}
+                          className="text-xs h-7 px-2.5"
+                          title="Copy Monday check-in/out times to all days of the week"
+                        >
+                          Copy Mon to All
+                        </Button>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="checkout">Check-out Time</Label>
-                      <Input
-                        id="checkout"
-                        type="text"
-                        list="time-options"
-                        value={checkout}
-                        onChange={(e) => setCheckout(e.target.value)}
-                        pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-                        placeholder="e.g. 18:00"
-                        title="Please enter a valid time in 24-hour hh:mm format."
-                        className="bg-background font-mono"
-                        required
-                      />
+
+                    <div className="grid grid-cols-1 gap-3">
+                      {weeklySchedule.map((item) => (
+                        <div
+                          key={item.day}
+                          className={`p-3 rounded-lg border transition-colors ${
+                            item.enabled ? "bg-muted/10 border-border/70" : "bg-muted/5 border-border/30 opacity-60"
+                          }`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-[130px]">
+                              <input
+                                type="checkbox"
+                                id={`schedule-enable-${item.day}`}
+                                checked={item.enabled}
+                                onChange={(e) => handleUpdateDaySchedule(item.day, "enabled", e.target.checked)}
+                                className="size-4 rounded border-input text-primary focus:ring-primary/20 cursor-pointer"
+                              />
+                              <Label
+                                htmlFor={`schedule-enable-${item.day}`}
+                                className={`text-sm font-semibold cursor-pointer select-none ${
+                                  item.enabled ? "text-foreground" : "text-muted-foreground line-through"
+                                }`}
+                              >
+                                {item.label}
+                              </Label>
+                            </div>
+
+                            {item.enabled ? (
+                              <div className="grid grid-cols-2 gap-3 flex-1 sm:max-w-md">
+                                <div className="space-y-1">
+                                  <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                                    Check-in Time
+                                  </Label>
+                                  <Input
+                                    id={`checkin-${item.day}`}
+                                    type="text"
+                                    list="time-options"
+                                    value={item.checkin}
+                                    onChange={(e) => handleUpdateDaySchedule(item.day, "checkin", e.target.value)}
+                                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+                                    placeholder="08:00"
+                                    title="Please enter a valid time in 24-hour hh:mm format."
+                                    className="h-8 bg-background font-mono text-xs"
+                                    required={item.enabled}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                                    Check-out Time
+                                  </Label>
+                                  <Input
+                                    id={`checkout-${item.day}`}
+                                    type="text"
+                                    list="time-options"
+                                    value={item.checkout}
+                                    onChange={(e) => handleUpdateDaySchedule(item.day, "checkout", e.target.value)}
+                                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+                                    placeholder="18:00"
+                                    title="Please enter a valid time in 24-hour hh:mm format."
+                                    className="h-8 bg-background font-mono text-xs"
+                                    required={item.enabled}
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs italic text-muted-foreground py-1">Closed for check-in / check-out</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </>
