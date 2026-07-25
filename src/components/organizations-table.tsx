@@ -322,9 +322,20 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                             </span>
                           </td>
                           <td className="px-5 py-3 max-w-0">
-                            <span title={o.email ?? undefined} className="block truncate text-muted-foreground font-mono text-xs">
-                              {o.email || "—"}
-                            </span>
+                            {o.email ? (
+                              <a
+                                href={`mailto:${o.email}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={o.email}
+                                className="block truncate text-primary hover:underline font-mono text-xs"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {o.email}
+                              </a>
+                            ) : (
+                              <span className="block truncate text-muted-foreground font-mono text-xs">—</span>
+                            )}
                           </td>
                           <td className="px-5 py-3 max-w-0">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wide border uppercase ${getCategoryBadgeStyles(o.organizationCategory)}`}>

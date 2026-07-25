@@ -138,6 +138,33 @@ const COUNTRY_PHONE_PATTERNS: Record<string, { prefix: string; placeholder: stri
   "Brazil": { prefix: "+55", placeholder: "+55 11 98765-4321" },
 };
 
+function formatUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
+function renderLinkValue(value: string | null | undefined, type: "link" | "email" | "phone" = "link") {
+  if (!value || !value.trim()) return <span className="text-sm text-foreground/90 font-medium">-</span>;
+  const trimmed = value.trim();
+  const href = type === "email" ? `mailto:${trimmed}` : type === "phone" ? `tel:${trimmed}` : formatUrl(trimmed) || "#";
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-sm text-primary hover:underline font-medium truncate max-w-xs sm:max-w-md md:max-w-lg"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {trimmed}
+    </a>
+  );
+}
+
 export function EditOrganizationForm({
   organization,
   organizationCategoryList,
@@ -694,158 +721,188 @@ export function EditOrganizationForm({
             </div>
             <div className="divide-y divide-border/50">
               {/* Name Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowNameModal)}
-                aria-label="Edit Name"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Name</span>
-                  <span className="text-sm font-semibold text-foreground">{organization.name}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Name</span>
+                  <span className="text-sm font-semibold text-foreground truncate">{organization.name}</span>
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowNameModal)}
+                  aria-label="Edit Name"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Name"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Email Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowEmailModal)}
-                aria-label="Edit Email"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Email</span>
-                  <span className="text-sm text-foreground/90">{organization.email || "-"}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Email</span>
+                  {renderLinkValue(organization.email, "email")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowEmailModal)}
+                  aria-label="Edit Email"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Email"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Phone Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowPhoneModal)}
-                aria-label="Edit Phone"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Phone</span>
-                  <span className="text-sm text-foreground/90">{organization.phoneNumber || "-"}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Phone</span>
+                  {renderLinkValue(organization.phoneNumber, "phone")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowPhoneModal)}
+                  aria-label="Edit Phone"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Phone"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Website Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowWebsiteModal)}
-                aria-label="Edit Website"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Website</span>
-                  <span className="text-sm text-foreground/90">{organization.website || "-"}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Website</span>
+                  {renderLinkValue(organization.website, "link")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowWebsiteModal)}
+                  aria-label="Edit Website"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Website"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Facebook Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowFacebookModal)}
-                aria-label="Edit Facebook"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Facebook</span>
-                  <span className="text-sm text-foreground/90">{organization.facebook || "-"}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Facebook</span>
+                  {renderLinkValue(organization.facebook, "link")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowFacebookModal)}
+                  aria-label="Edit Facebook"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Facebook"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Instagram Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowInstagramModal)}
-                aria-label="Edit Instagram"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Instagram</span>
-                  <span className="text-sm text-foreground/90">{organization.instagram || "-"}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Instagram</span>
+                  {renderLinkValue(organization.instagram, "link")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowInstagramModal)}
+                  aria-label="Edit Instagram"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Instagram"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* TikTok Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowTikTokModal)}
-                aria-label="Edit TikTok"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">TikTok</span>
-                  <span className="text-sm text-foreground/90">{organization.tiktok || "-"}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">TikTok</span>
+                  {renderLinkValue(organization.tiktok, "link")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowTikTokModal)}
+                  aria-label="Edit TikTok"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit TikTok"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* LinkedIn Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowLinkedinModal)}
-                aria-label="Edit LinkedIn"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed border-t border-border/40"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">LinkedIn</span>
-                  <span className="text-sm text-foreground/90">{organization.linkedin || "-"}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">LinkedIn</span>
+                  {renderLinkValue(organization.linkedin, "link")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowLinkedinModal)}
+                  aria-label="Edit LinkedIn"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit LinkedIn"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Description Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowDescriptionModal)}
-                aria-label="Edit Description"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Description</span>
-                  <span className="text-sm text-foreground/90 truncate max-w-xs sm:max-w-md md:max-w-lg">
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Description</span>
+                  <span className="text-sm text-foreground/90 font-medium truncate max-w-xs sm:max-w-md md:max-w-lg">
                     {organization.description ? organization.description.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() || "-" : "-"}
                   </span>
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowDescriptionModal)}
+                  aria-label="Edit Description"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Description"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Category Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowCategoryModal)}
-                aria-label="Edit Category"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Category</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Category</span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                     {selectedCategoryName}
                   </span>
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowCategoryModal)}
+                  aria-label="Edit Category"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Category"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Member since Row */}
               <div className="w-full flex items-center justify-between px-6 py-4 text-left">
@@ -884,109 +941,130 @@ export function EditOrganizationForm({
               </div>
               <div className="divide-y divide-border/50">
                 {/* Company Name Row */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowBillingModal)}
-                  aria-label="Edit Billing Company Name"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Company name</span>
-                    <span className="text-sm text-foreground/90">{organization.billingCompanyName || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Company name</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingCompanyName || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowBillingModal)}
+                    aria-label="Edit Billing Company Name"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Billing Company Name"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Tax ID Row */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowBillingModal)}
-                  aria-label="Edit Billing Tax ID"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Tax ID</span>
-                    <span className="text-sm text-foreground/90">{organization.billingTaxId || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Tax ID</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingTaxId || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowBillingModal)}
+                    aria-label="Edit Billing Tax ID"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Billing Tax ID"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Trade Registry Number Row */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowBillingModal)}
-                  aria-label="Edit Billing Trade Registry Number"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Trade Registry Number</span>
-                    <span className="text-sm text-foreground/90">{organization.billingTradeRegistryNumber || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Trade Registry Number</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingTradeRegistryNumber || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowBillingModal)}
+                    aria-label="Edit Billing Trade Registry Number"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Billing Trade Registry Number"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* EUID Row */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowBillingModal)}
-                  aria-label="Edit Billing EUID"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">EUID</span>
-                    <span className="text-sm text-foreground/90">{organization.billingEuid || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">EUID</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingEuid || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowBillingModal)}
+                    aria-label="Edit Billing EUID"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Billing EUID"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Address Row */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowAddressModal)}
-                  aria-label="Edit Address"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Address</span>
-                    <span className="text-sm text-foreground/90">{organization.address || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Address</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.address || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowAddressModal)}
+                    aria-label="Edit Address"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Address"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Bank Row */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowBillingModal)}
-                  aria-label="Edit Billing Bank"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Bank</span>
-                    <span className="text-sm text-foreground/90">{organization.billingBankName || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Bank</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingBankName || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowBillingModal)}
+                    aria-label="Edit Billing Bank"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Billing Bank"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Bank Account Number Row */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowBillingModal)}
-                  aria-label="Edit Billing Bank Account Number"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Bank Account Number</span>
-                    <span className="text-sm text-foreground/90">{organization.billingBankAccountNumber || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Bank Account Number</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingBankAccountNumber || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowBillingModal)}
+                    aria-label="Edit Billing Bank Account Number"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Billing Bank Account Number"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1010,49 +1088,58 @@ export function EditOrganizationForm({
               </div>
               <div className="divide-y divide-border/50 border-b border-border/50">
                 {/* Primary Contact Name */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowPrimaryContactModal)}
-                  aria-label="Edit Primary Contact Person Name"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Name</span>
-                    <span className="text-sm text-foreground/90">{organization.billingContactName || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Name</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingContactName || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowPrimaryContactModal)}
+                    aria-label="Edit Primary Contact Person Name"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Primary Contact Person Name"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Primary Contact Phone */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowPrimaryContactModal)}
-                  aria-label="Edit Primary Contact Person Phone"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Phone</span>
-                    <span className="text-sm text-foreground/90">{organization.billingContactPhone || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Phone</span>
+                    {renderLinkValue(organization.billingContactPhone, "phone")}
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowPrimaryContactModal)}
+                    aria-label="Edit Primary Contact Person Phone"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Primary Contact Person Phone"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Primary Contact Email */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowPrimaryContactModal)}
-                  aria-label="Edit Primary Contact Person Email"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Email</span>
-                    <span className="text-sm text-foreground/90">{organization.billingContactEmail || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Email</span>
+                    {renderLinkValue(organization.billingContactEmail, "email")}
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowPrimaryContactModal)}
+                    aria-label="Edit Primary Contact Person Email"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Primary Contact Person Email"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
               </div>
 
               {/* Secondary Contact Person Section */}
@@ -1062,49 +1149,58 @@ export function EditOrganizationForm({
               </div>
               <div className="divide-y divide-border/50">
                 {/* Secondary Contact Name */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowSecondaryContactModal)}
-                  aria-label="Edit Secondary Contact Person Name"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Name</span>
-                    <span className="text-sm text-foreground/90">{organization.billingSecondaryContactName || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Name</span>
+                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingSecondaryContactName || "-"}</span>
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowSecondaryContactModal)}
+                    aria-label="Edit Secondary Contact Person Name"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Secondary Contact Person Name"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Secondary Contact Phone */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowSecondaryContactModal)}
-                  aria-label="Edit Secondary Contact Person Phone"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Phone</span>
-                    <span className="text-sm text-foreground/90">{organization.billingSecondaryContactPhone || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Phone</span>
+                    {renderLinkValue(organization.billingSecondaryContactPhone, "phone")}
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowSecondaryContactModal)}
+                    aria-label="Edit Secondary Contact Person Phone"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Secondary Contact Person Phone"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
 
                 {/* Secondary Contact Email */}
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowSecondaryContactModal)}
-                  aria-label="Edit Secondary Contact Person Email"
-                  disabled={isPending}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-                >
-                  <div className="flex flex-1 items-center">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Email</span>
-                    <span className="text-sm text-foreground/90">{organization.billingSecondaryContactEmail || "-"}</span>
+                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                  <div className="flex flex-1 items-center min-w-0 pr-4">
+                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Email</span>
+                    {renderLinkValue(organization.billingSecondaryContactEmail, "email")}
                   </div>
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal(setShowSecondaryContactModal)}
+                    aria-label="Edit Secondary Contact Person Email"
+                    disabled={isPending}
+                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                    title="Edit Secondary Contact Person Email"
+                  >
+                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                  </button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1126,49 +1222,58 @@ export function EditOrganizationForm({
             </div>
             <div className="divide-y divide-border/50">
               {/* Email Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowEmailModal)}
-                aria-label="Edit Email"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Email</span>
-                  <span className="text-sm font-semibold text-foreground">{organization.email}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Email</span>
+                  {renderLinkValue(organization.email, "email")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowEmailModal)}
+                  aria-label="Edit Email"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Email"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Recovery Email Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowRecoveryEmailModal)}
-                aria-label="Edit Recovery email"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Recovery email</span>
-                  <span className="text-sm text-foreground/90">{organization.recoveryEmail || "-"}</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Recovery email</span>
+                  {renderLinkValue(organization.recoveryEmail, "email")}
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowRecoveryEmailModal)}
+                  aria-label="Edit Recovery email"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Recovery email"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
 
               {/* Password Row */}
-              <button
-                type="button"
-                onClick={() => openModal(setShowPasswordModal)}
-                aria-label="Edit Password"
-                disabled={isPending}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left focus:outline-none cursor-pointer group disabled:cursor-not-allowed"
-              >
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Password</span>
+              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
+                <div className="flex flex-1 items-center min-w-0 pr-4">
+                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Password</span>
                   <span className="text-sm font-mono text-foreground/80">••••••••</span>
                 </div>
-                <ChevronRight className="size-4.5 text-primary opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => openModal(setShowPasswordModal)}
+                  aria-label="Edit Password"
+                  disabled={isPending}
+                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+                  title="Edit Password"
+                >
+                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>
