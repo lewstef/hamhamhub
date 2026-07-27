@@ -11,6 +11,7 @@ import {
   Search,
   X,
   Briefcase,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -71,6 +72,14 @@ const menuData: NavSection[] = [
     items: [
       { label: "Manage Services", href: "/backoffice/services" },
       { label: "Service types", href: "/backoffice/services/types" },
+    ],
+  },
+  {
+    id: "system",
+    title: "System",
+    icon: Settings,
+    items: [
+      { label: "SMTP", href: "/backoffice/system/smtp" },
     ],
   },
 ];

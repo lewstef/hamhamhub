@@ -131,6 +131,7 @@ describe("BackofficeSidebar Component", () => {
     // "Users" appears as both a section title and a child nav item
     expect(screen.getAllByText("Users").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Services")).toBeDefined();
+    expect(screen.getByText("System")).toBeDefined();
   });
 
   it("should render child items when sections are expanded (expanded sidebar)", () => {
@@ -139,6 +140,7 @@ describe("BackofficeSidebar Component", () => {
     expect(screen.getByText("Organizations")).toBeDefined();
     expect(screen.getByText("Manage Services")).toBeDefined();
     expect(screen.getByText("Service types")).toBeDefined();
+    expect(screen.getByText("SMTP")).toBeDefined();
   });
 
   it("should filter sections by section title (case-insensitive)", () => {
