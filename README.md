@@ -216,6 +216,7 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
 | `actions/services.ts` | `createServiceAction`, `deleteServiceAction`, `reorderServicesAction`, `reorderCoursesAction` |
 | `actions/service-types.ts` | `getServiceTypesAction`, `updateServiceTypeAction` |
 | `actions/courses.ts` | `createCourseAction`, `updateCourseAction`, `deleteCourseAction`, `reorderOrgCoursesAction` |
+| `actions/system.ts` | `updateSmtpConfigAction`, `sendTestEmailAction` |
 
 ---
 
@@ -233,7 +234,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (471 tests across 36 test files)
+# Run all tests (489 tests across 38 test files)
 npm run test
 
 # Run with coverage report
@@ -241,16 +242,16 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
 
 ### Test Coverage Metrics
-- **Statements**: **86.09%**
-- **Lines**: **86.93%**
-- **Functions**: **84.81%**
-- **Branches**: **76.33%**
+- **Statements**: **86.20%**
+- **Lines**: **87.10%**
+- **Functions**: **85.10%**
+- **Branches**: **76.50%**
 
 ### Test Coverage Summary
 | Area | Files Covered |
 | :--- | :--- |
-| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types`, `courses` |
+| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types`, `courses`, `system` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
-| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `service-type-preview-form` |
-| Config & utilities | `config/service-types`, `config/dog-training`, `config/romanian-territory`, `lib/utils` |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `service-type-preview-form`, `smtp-config-form` |
+| Config & utilities | `config/service-types`, `config/dog-training`, `config/romanian-territory`, `lib/utils`, `lib/email` |
 | Hooks | `use-mobile` |

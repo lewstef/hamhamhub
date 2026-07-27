@@ -2,11 +2,15 @@
 
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { db } from "@/db";
+import { systemSettings } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { sendMail } from "@/lib/email";
 
 /**
  * Server Action to update SMTP configuration settings.
  *
- * Checks administrator authorization session before validating and updating SMTP host, port, security, credentials, and sender options.
+ * Checks administrator authorization session before validating and updating SMTP host, port, security, credentials, and sender options in the database.
  *
  * @param {any} prevState - Previous action state object containing success status or error message.
  * @param {FormData} formData - The FormData object submitted by the client.
@@ -23,7 +27,7 @@ import { revalidatePath } from "next/cache";
  * - Returns `{ error: string }` if unauthorized, input is invalid, or server operation fails.
  *
  * @sideEffects
- * - Revalidates path `/backoffice/system/smtp-config` on successful update.
+ * - Revalidates path `/backoffice/system/smtp` on successful update.
  *
  * @redirects
  * - None. Returns action status object.
@@ -66,8 +70,35 @@ export async function updateSmtpConfigAction(
       return { error: "A valid Sender Email address is required." };
     }
 
-    // Process & store SMTP configuration (Simulated environment variable or config persistence)
-    revalidatePath("/backoffice/system/smtp-config");
+    const payload = JSON.stringify({
+      smtpHost,
+      smtpPort,
+      smtpSecurity,
+      smtpUsername,
+      smtpPassword,
+      senderName,
+      senderEmail,
+    });
+
+    const existing = await db
+      .select()
+      .from(systemSettings)
+      .where(eq(systemSettings.key, "smtp_config"))
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      await db
+        .update(systemSettings)
+        .set({ value: payload })
+        .where(eq(systemSettings.key, "smtp_config"));
+    } else {
+      await db.insert(systemSettings).values({
+        key: "smtp_config",
+        value: payload,
+      });
+    }
+
+    revalidatePath("/backoffice/system/smtp");
     return { success: true };
   } catch (err: any) {
     console.error("Failed to update SMTP configuration:", err);
@@ -78,7 +109,7 @@ export async function updateSmtpConfigAction(
 /**
  * Server Action to dispatch a test email using current SMTP configuration settings.
  *
- * Checks administrator authorization before validating recipient email address and triggering a test connection.
+ * Checks administrator authorization before validating recipient email address and triggering a test connection via Nodemailer.
  *
  * @param {any} prevState - Previous action state object containing success status or error message.
  * @param {FormData} formData - The FormData object submitted by the client.
@@ -89,7 +120,7 @@ export async function updateSmtpConfigAction(
  * - Returns `{ error: string }` if unauthorized, email address is invalid, or connection test fails.
  *
  * @sideEffects
- * - None.
+ * - Dispatches a test email via `sendMail()`.
  *
  * @redirects
  * - None. Returns action status object.
@@ -114,7 +145,24 @@ export async function sendTestEmailAction(
       return { error: "A valid target recipient email address is required for test emails." };
     }
 
-    // Execute test email transport test
+    const result = await sendMail({
+      to: testRecipientEmail,
+      subject: "HamHamHub SMTP Verification Test",
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #6366f1;">HamHamHub SMTP Verification Success</h2>
+          <p>This email confirms that your SMTP server settings are correctly configured and operational.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #777;">Sent automatically from HamHamHub Backoffice System.</p>
+        </div>
+      `,
+      text: "HamHamHub SMTP Verification Success. Your SMTP server settings are operational.",
+    });
+
+    if (!result.success) {
+      return { error: result.error || "Failed to deliver test email over SMTP." };
+    }
+
     return { success: true };
   } catch (err: any) {
     console.error("Failed to send test email:", err);

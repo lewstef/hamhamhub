@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { updateSmtpConfigAction, sendTestEmailAction } from "./system";
 import { auth } from "@/auth";
+import { sendMail } from "@/lib/email";
 
 vi.mock("@/auth", () => ({
   auth: vi.fn(),
@@ -8,6 +9,30 @@ vi.mock("@/auth", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
+}));
+
+vi.mock("@/db", () => ({
+  db: {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({
+          limit: vi.fn().mockResolvedValue([]),
+        })),
+      })),
+    })),
+    insert: vi.fn(() => ({
+      values: vi.fn().mockResolvedValue({}),
+    })),
+    update: vi.fn(() => ({
+      set: vi.fn(() => ({
+        where: vi.fn().mockResolvedValue({}),
+      })),
+    })),
+  },
+}));
+
+vi.mock("@/lib/email", () => ({
+  sendMail: vi.fn(),
 }));
 
 describe("System Server Actions — SMTP Config", () => {
@@ -138,6 +163,8 @@ describe("System Server Actions — SMTP Config", () => {
       vi.mocked(auth).mockResolvedValue({
         user: { role: "admin" },
       } as any);
+      vi.mocked(sendMail).mockResolvedValue({ success: true, messageId: "test-msg-123" });
+
       const formData = new FormData();
       formData.append("testRecipientEmail", "admin@test.com");
 
