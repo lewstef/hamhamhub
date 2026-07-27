@@ -172,4 +172,37 @@ describe("WysiwygEditor Component", () => {
     fireEvent.keyDown(editable, { key: "u", ctrlKey: true });
     expect(document.execCommand).toHaveBeenCalledWith("underline", false, "");
   });
+
+  it("should trigger bold, italic, and underline commands when MetaKey (Cmd)+B, Cmd+I, or Cmd+U is pressed", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+
+    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
+    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
+
+    // Press Cmd+B
+    fireEvent.keyDown(editable, { key: "b", metaKey: true });
+    expect(document.execCommand).toHaveBeenCalledWith("bold", false, "");
+
+    // Press Cmd+I
+    fireEvent.keyDown(editable, { key: "i", metaKey: true });
+    expect(document.execCommand).toHaveBeenCalledWith("italic", false, "");
+
+    // Press Cmd+U
+    fireEvent.keyDown(editable, { key: "u", metaKey: true });
+    expect(document.execCommand).toHaveBeenCalledWith("underline", false, "");
+  });
+
+  it("should not execute formatting commands when non-shortcut keys or standard keys without Ctrl/Cmd are pressed", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+
+    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
+    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
+
+    // Press standard key 'a' without Ctrl/Cmd
+    fireEvent.keyDown(editable, { key: "a" });
+    // Press Ctrl+X (unhandled shortcut)
+    fireEvent.keyDown(editable, { key: "x", ctrlKey: true });
+
+    expect(document.execCommand).not.toHaveBeenCalled();
+  });
 });

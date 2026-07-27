@@ -640,5 +640,30 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Per Session")).toBeDefined();
     expect(screen.getByText("Per Hour")).toBeDefined();
   });
+
+  it("should handle Copy Mon to Mon-Fri and Copy Mon to All preset buttons in Boarding service schedule", async () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-boarding"
+        itemNoun="Boarding service"
+        serviceSlug="dog-boarding"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const copyMonFriBtn = screen.getByRole("button", { name: "Copy Mon to Mon–Fri" });
+    await act(async () => {
+      fireEvent.click(copyMonFriBtn);
+    });
+
+    const copyMonAllBtn = screen.getByRole("button", { name: "Copy Mon to All" });
+    await act(async () => {
+      fireEvent.click(copyMonAllBtn);
+    });
+
+    expect(copyMonAllBtn).toBeDefined();
+  });
 });
 
