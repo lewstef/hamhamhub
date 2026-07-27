@@ -233,7 +233,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (415 tests across 33 test files)
+# Run all tests (471 tests across 36 test files)
 npm run test
 
 # Run with coverage report
@@ -241,16 +241,16 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
 
 ### Test Coverage Metrics
-- **Statements**: 85.00%
-- **Branches**: 78.60%
-- **Functions**: 79.46%
-- **Lines**: 85.73%
+- **Statements**: **86.09%**
+- **Lines**: **86.93%**
+- **Functions**: **84.81%**
+- **Branches**: **76.33%**
 
 ### Test Coverage Summary
 | Area | Files Covered |
 | :--- | :--- |
 | Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types`, `courses` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
-| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor` |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `service-type-preview-form` |
 | Config & utilities | `config/service-types`, `config/dog-training`, `config/romanian-territory`, `lib/utils` |
 | Hooks | `use-mobile` |
