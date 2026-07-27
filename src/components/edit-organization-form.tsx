@@ -13,6 +13,7 @@ import { Eye, EyeOff, Search, Check, User, ChevronRight, ChevronDown, X, Key, Sh
 import { PasswordStrength } from "@/components/password-strength";
 import { WysiwygEditor } from "./wysiwyg-editor";
 import { ROMANIAN_COUNTIES, getCountyLocalities } from "@/config/romanian-territory";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface Organization {
   id: string;
@@ -1552,19 +1553,16 @@ export function EditOrganizationForm({
                     <Label htmlFor="organizationCategory" className="text-sm font-medium normal-case text-muted-foreground/80">
                       Organization Category
                     </Label>
-                    <select
+                    <CustomSelect
                       id="organizationCategory"
                       name="organizationCategory"
                       defaultValue={organization.organizationCategory || ""}
                       required
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      {organizationCategoryList.map((t) => (
-                        <option key={t.id} value={t.id} className="bg-popover text-popover-foreground">
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={organizationCategoryList.map((t) => ({
+                        value: t.id,
+                        label: t.name,
+                      }))}
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">

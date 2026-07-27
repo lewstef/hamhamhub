@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface Employee {
   id: string;
@@ -104,17 +105,17 @@ export function EditEmployeeForm({ employee }: EditEmployeeFormProps) {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="role" className="text-xs font-bold uppercase tracking-wider">Role</Label>
-                  <select
+                  <CustomSelect
                     id="role"
                     name="role"
                     defaultValue={employee.role}
                     required
                     disabled={isPending}
-                    className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-                  >
-                    <option value="employee">Employee</option>
-                    <option value="admin">Administrator</option>
-                  </select>
+                    options={[
+                      { value: "employee", label: "Employee" },
+                      { value: "admin", label: "Administrator" },
+                    ]}
+                  />
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">

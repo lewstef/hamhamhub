@@ -28,6 +28,8 @@ import { auth } from "@/auth";
  * @param formData.termsOfParticipation - Offering terms and prerequisites
  * @param formData.medicationAdministration - Boolean string for boarding meds administration
  * @param formData.medicationAdministrationDetails - Instructions for medication administration
+ * @param formData.webCam - Boolean string for boarding webcam availability
+ * @param formData.webCamDetails - Access instructions or stream details for webcam
  * @param formData.dailyWalks - Integer string (1-4) representing daily walk frequency
  * @param formData.ownerCommunication - Boolean string for owner updates communication
  * @param formData.ownerCommunicationDetails - Delivery methods for owner communication
@@ -82,6 +84,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
 
   const medicationAdministration = formData.get("medicationAdministration") === "true";
   const medicationAdministrationDetails = formData.get("medicationAdministrationDetails") as string;
+  const webCam = formData.get("webCam") === "true";
+  const webCamDetails = formData.get("webCamDetails") as string;
   const dailyWalksStr = formData.get("dailyWalks") as string;
   const dailyWalks = dailyWalksStr ? parseInt(dailyWalksStr, 10) : null;
   const ownerCommunication = formData.get("ownerCommunication") === "true";
@@ -123,6 +127,9 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
             if (item.checkout && !timeRegex.test(item.checkout)) {
               return { error: `Invalid check-out time format for ${item.label || item.day}. Use hh:mm (24h).` };
             }
+            if (item.checkin && item.checkout && item.checkout <= item.checkin) {
+              return { error: `Check-out time cannot be before or equal to check-in time for ${item.label || item.day}.` };
+            }
           }
         }
       }
@@ -155,6 +162,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       priceType,
       medicationAdministration,
       medicationAdministrationDetails: medicationAdministration ? medicationAdministrationDetails : null,
+      webCam,
+      webCamDetails: webCam ? webCamDetails : null,
       dailyWalks,
       ownerCommunication,
       ownerCommunicationDetails: ownerCommunication ? ownerCommunicationDetails : null,
@@ -208,6 +217,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
  * @param formData.termsOfParticipation - Offering terms and prerequisites
  * @param formData.medicationAdministration - Boolean string for boarding meds administration
  * @param formData.medicationAdministrationDetails - Instructions for medication administration
+ * @param formData.webCam - Boolean string for boarding webcam availability
+ * @param formData.webCamDetails - Access instructions or stream details for webcam
  * @param formData.dailyWalks - Integer string (1-4) representing daily walk frequency
  * @param formData.ownerCommunication - Boolean string for owner updates communication
  * @param formData.ownerCommunicationDetails - Delivery methods for owner communication
@@ -253,6 +264,8 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
 
   const medicationAdministration = formData.get("medicationAdministration") === "true";
   const medicationAdministrationDetails = formData.get("medicationAdministrationDetails") as string;
+  const webCam = formData.get("webCam") === "true";
+  const webCamDetails = formData.get("webCamDetails") as string;
   const dailyWalksStr = formData.get("dailyWalks") as string;
   const dailyWalks = dailyWalksStr ? parseInt(dailyWalksStr, 10) : null;
   const ownerCommunication = formData.get("ownerCommunication") === "true";
@@ -293,6 +306,9 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
             }
             if (item.checkout && !timeRegex.test(item.checkout)) {
               return { error: `Invalid check-out time format for ${item.label || item.day}. Use hh:mm (24h).` };
+            }
+            if (item.checkin && item.checkout && item.checkout <= item.checkin) {
+              return { error: `Check-out time cannot be before or equal to check-in time for ${item.label || item.day}.` };
             }
           }
         }
@@ -344,6 +360,8 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         priceType,
         medicationAdministration,
         medicationAdministrationDetails: medicationAdministration ? medicationAdministrationDetails : null,
+        webCam,
+        webCamDetails: webCam ? webCamDetails : null,
         dailyWalks,
         ownerCommunication,
         ownerCommunicationDetails: ownerCommunication ? ownerCommunicationDetails : null,

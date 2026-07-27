@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useRef, useTransition } from "react";
 import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, ChevronDown } from "lucide-react";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface Course {
   id?: string;
@@ -26,6 +27,8 @@ interface Course {
   priceType?: string | null;
   medicationAdministration?: boolean | null;
   medicationAdministrationDetails?: string | null;
+  webCam?: boolean | null;
+  webCamDetails?: string | null;
   dailyWalks?: number | null;
   ownerCommunication?: boolean | null;
   ownerCommunicationDetails?: string | null;
@@ -92,6 +95,104 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
   const minutes = (i % 2 === 0 ? "00" : "30");
   return `${hours}:${minutes}`;
 });
+
+function getCheckinOptions(): string[] {
+  return timeOptions;
+}
+
+function getCheckoutOptions(checkinTime: string): string[] {
+  const index = timeOptions.indexOf(checkinTime);
+  if (index !== -1 && index < timeOptions.length - 1) {
+    return timeOptions.slice(index + 1);
+  }
+  return timeOptions;
+}
+
+interface TimePickerSelectProps {
+  id: string;
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  placeholder?: string;
+  required?: boolean;
+  className?: string;
+  hasError?: boolean;
+}
+
+function TimePickerSelect({
+  id,
+  value,
+  onChange,
+  options,
+  placeholder = "08:00",
+  required = false,
+  className = "",
+  hasError = false,
+}: TimePickerSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <div className="relative flex items-center">
+        <Input
+          id={id}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+          pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+          placeholder={placeholder}
+          title="Please enter a valid time in 24-hour hh:mm format."
+          className={`h-8 pr-7 bg-background font-mono text-xs ${hasError ? "border-destructive focus-visible:ring-destructive" : ""} ${className}`}
+          required={required}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="absolute right-1.5 p-1 text-muted-foreground hover:text-foreground rounded transition-colors focus:outline-none"
+          title="Toggle time dropdown (next 5 options)"
+          aria-label="Toggle time options dropdown"
+        >
+          <ChevronDown className="size-3.5" />
+        </button>
+      </div>
+
+      {isOpen && options.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 w-full min-w-[110px] max-h-[155px] overflow-y-auto custom-scrollbar bg-popover border border-border shadow-md rounded-md py-1 z-50 animate-in fade-in-50 zoom-in-95">
+          {options.map((time) => (
+            <button
+              key={time}
+              type="button"
+              className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors hover:bg-accent hover:text-accent-foreground ${
+                time === value ? "bg-accent/60 font-bold text-primary" : "text-popover-foreground"
+              }`}
+              onClick={() => {
+                onChange(time);
+                setIsOpen(false);
+              }}
+            >
+              {time}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Props for the CourseForm component.
@@ -162,6 +263,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
   const [priceType, setPriceType] = useState(initialCourse?.priceType || (isBoarding ? "night" : isGrooming ? "service" : "course"));
   const [medicationAdministration, setMedicationAdministration] = useState(initialCourse?.medicationAdministration || false);
   const [medicationAdministrationDetails, setMedicationAdministrationDetails] = useState(initialCourse?.medicationAdministrationDetails || "");
+  const [webCam, setWebCam] = useState(initialCourse?.webCam || false);
+  const [webCamDetails, setWebCamDetails] = useState(initialCourse?.webCamDetails || "");
   const [dailyWalks, setDailyWalks] = useState(initialCourse?.dailyWalks || 1);
   const [ownerCommunication, setOwnerCommunication] = useState(initialCourse?.ownerCommunication || false);
   const [ownerCommunicationDetails, setOwnerCommunicationDetails] = useState(initialCourse?.ownerCommunicationDetails || "");
@@ -262,6 +365,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     priceType !== (initialCourse?.priceType || (itemNoun === "Boarding service" ? "night" : "course")) ||
     medicationAdministration !== (initialCourse?.medicationAdministration || false) ||
     medicationAdministrationDetails !== (initialCourse?.medicationAdministrationDetails || "") ||
+    webCam !== (initialCourse?.webCam || false) ||
+    webCamDetails !== (initialCourse?.webCamDetails || "") ||
     dailyWalks !== (initialCourse?.dailyWalks || 1) ||
     ownerCommunication !== (initialCourse?.ownerCommunication || false) ||
     ownerCommunicationDetails !== (initialCourse?.ownerCommunicationDetails || "") ||
@@ -332,12 +437,23 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     formData.append("termsOfParticipation", termsOfParticipation);
     formData.append("medicationAdministration", String(medicationAdministration));
     formData.append("medicationAdministrationDetails", medicationAdministrationDetails);
+    formData.append("webCam", String(webCam));
+    formData.append("webCamDetails", webCamDetails);
     formData.append("dailyWalks", String(dailyWalks));
     formData.append("ownerCommunication", String(ownerCommunication));
     formData.append("ownerCommunicationDetails", ownerCommunicationDetails);
     formData.append("personalizedMealPlan", String(personalizedMealPlan));
     formData.append("personalizedMealPlanDetails", personalizedMealPlanDetails);
     if (isBoarding) {
+      for (const item of weeklySchedule) {
+        if (item.enabled && item.checkin && item.checkout) {
+          if (item.checkout <= item.checkin) {
+            setError(`Check-out time cannot be before or equal to check-in time for ${item.label}.`);
+            return;
+          }
+        }
+      }
+
       const mon = weeklySchedule.find((item) => item.day === "monday");
       const sat = weeklySchedule.find((item) => item.day === "saturday");
       formData.append("checkin", mon?.checkin || checkin);
@@ -697,20 +813,63 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
 
               <div className="h-px bg-border/60" />
 
+              {/* Web Cam Toggle */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-sm font-bold text-foreground">Web cam</span>
+                    <p className="text-xs text-muted-foreground">
+                      Do you offer live video/webcam access to owners?
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={webCam}
+                    onClick={() => setWebCam(!webCam)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      webCam ? "bg-primary" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
+                        webCam ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {webCam && (
+                  <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
+                    <Label htmlFor="webcam-details">Web cam Access Instructions</Label>
+                    <Input
+                      id="webcam-details"
+                      type="text"
+                      placeholder="e.g. live stream link provided upon check-in, 24/7 access"
+                      value={webCamDetails}
+                      onChange={(e) => setWebCamDetails(e.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="h-px bg-border/60" />
+
               {/* Daily Walks Dropdown */}
               <div className="space-y-2">
                 <Label htmlFor="daily-walks">Daily Walks</Label>
-                <select
+                <CustomSelect
                   id="daily-walks"
                   value={dailyWalks}
-                  onChange={(e) => setDailyWalks(parseInt(e.target.value, 10))}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 font-bold focus:outline-none"
-                >
-                  <option value={1}>1 walk per day</option>
-                  <option value={2}>2 walks per day</option>
-                  <option value={3}>3 walks per day</option>
-                  <option value={4}>4 walks per day</option>
-                </select>
+                  onChange={(val) => setDailyWalks(parseInt(val, 10))}
+                  options={[
+                    { value: 1, label: "1 walk per day" },
+                    { value: 2, label: "2 walks per day" },
+                    { value: 3, label: "3 walks per day" },
+                    { value: 4, label: "4 walks per day" },
+                  ]}
+                />
               </div>
 
               <div className="h-px bg-border/60" />
@@ -862,41 +1021,41 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                             </div>
 
                             {item.enabled ? (
-                              <div className="grid grid-cols-2 gap-3 flex-1 sm:max-w-md">
-                                <div className="space-y-1">
-                                  <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                    Check-in Time
-                                  </Label>
-                                  <Input
-                                    id={`checkin-${item.day}`}
-                                    type="text"
-                                    list="time-options"
-                                    value={item.checkin}
-                                    onChange={(e) => handleUpdateDaySchedule(item.day, "checkin", e.target.value)}
-                                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-                                    placeholder="08:00"
-                                    title="Please enter a valid time in 24-hour hh:mm format."
-                                    className="h-8 bg-background font-mono text-xs"
-                                    required={item.enabled}
-                                  />
+                              <div className="flex flex-col gap-1 flex-1 sm:max-w-md">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                                      Check-in Time
+                                    </Label>
+                                    <TimePickerSelect
+                                      id={`checkin-${item.day}`}
+                                      value={item.checkin}
+                                      onChange={(val) => handleUpdateDaySchedule(item.day, "checkin", val)}
+                                      options={getCheckinOptions()}
+                                      placeholder="08:00"
+                                      required={item.enabled}
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                                      Check-out Time
+                                    </Label>
+                                    <TimePickerSelect
+                                      id={`checkout-${item.day}`}
+                                      value={item.checkout}
+                                      onChange={(val) => handleUpdateDaySchedule(item.day, "checkout", val)}
+                                      options={getCheckoutOptions(item.checkin)}
+                                      placeholder="18:00"
+                                      required={item.enabled}
+                                      hasError={!!(item.checkin && item.checkout && item.checkout <= item.checkin)}
+                                    />
+                                  </div>
                                 </div>
-                                <div className="space-y-1">
-                                  <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                    Check-out Time
-                                  </Label>
-                                  <Input
-                                    id={`checkout-${item.day}`}
-                                    type="text"
-                                    list="time-options"
-                                    value={item.checkout}
-                                    onChange={(e) => handleUpdateDaySchedule(item.day, "checkout", e.target.value)}
-                                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-                                    placeholder="18:00"
-                                    title="Please enter a valid time in 24-hour hh:mm format."
-                                    className="h-8 bg-background font-mono text-xs"
-                                    required={item.enabled}
-                                  />
-                                </div>
+                                {item.checkin && item.checkout && item.checkout <= item.checkin && (
+                                  <p className="text-[11px] text-destructive font-semibold mt-0.5">
+                                    Check-out time cannot be before or equal to check-in time.
+                                  </p>
+                                )}
                               </div>
                             ) : (
                               <span className="text-xs italic text-muted-foreground py-1">Closed for check-in / check-out</span>
@@ -1032,32 +1191,30 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
               </div>
               <div className="space-y-2">
                 <Label htmlFor="course-price-type">Billing Frequency</Label>
-                <select
+                <CustomSelect
                   id="course-price-type"
                   value={priceType}
-                  onChange={(e) => setPriceType(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 font-bold focus:outline-none"
-                >
-                  {itemNoun === "Boarding service" ? (
-                    <>
-                      <option value="night">Per Night</option>
-                      <option value="day">Per Day</option>
-                      <option value="month">Per Month</option>
-                      <option value="service">Per Boarding service</option>
-                    </>
-                  ) : itemNoun === "Grooming service" ? (
-                    <>
-                      <option value="service">Per Grooming service</option>
-                      <option value="session">Per Session</option>
-                      <option value="hour">Per Hour</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="course">Per {itemNoun}</option>
-                      <option value="month">Per Month</option>
-                    </>
-                  )}
-                </select>
+                  onChange={(val) => setPriceType(val)}
+                  options={
+                    itemNoun === "Boarding service"
+                      ? [
+                          { value: "night", label: "Per Night" },
+                          { value: "day", label: "Per Day" },
+                          { value: "month", label: "Per Month" },
+                          { value: "service", label: "Per Boarding service" },
+                        ]
+                      : itemNoun === "Grooming service"
+                      ? [
+                          { value: "service", label: "Per Grooming service" },
+                          { value: "session", label: "Per Session" },
+                          { value: "hour", label: "Per Hour" },
+                        ]
+                      : [
+                          { value: "course", label: `Per ${itemNoun}` },
+                          { value: "month", label: "Per Month" },
+                        ]
+                  }
+                />
               </div>
             </div>
           </div>

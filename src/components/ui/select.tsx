@@ -187,6 +187,8 @@ function SelectScrollDownButton({
   )
 }
 
+export { CustomSelect } from "./custom-select";
+
 export {
   Select,
   SelectContent,

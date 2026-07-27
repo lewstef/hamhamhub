@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { ArrowLeft, Eye, CheckCircle2 } from "lucide-react";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 /**
  * Props for the ServiceTypePreviewForm component.
@@ -104,21 +105,15 @@ export function ServiceTypePreviewForm({ serviceType }: ServiceTypePreviewFormPr
                       className="flex w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors resize-none"
                     />
                   ) : field.type === "select" ? (
-                    <select
+                    <CustomSelect
                       id={field.name}
                       name={field.name}
                       required={field.required}
-                      defaultValue=""
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      className="flex h-9 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-                    >
-                      <option value="" disabled>Select {field.label.toLowerCase()}...</option>
-                      {field.options?.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder={`Select ${field.label.toLowerCase()}...`}
+                      onChange={(val) => handleChange(field.name, val)}
+                      value={String(formData[field.name] || "")}
+                      options={field.options || []}
+                    />
                   ) : field.type === "checkbox" ? (
                     <div className="flex items-center gap-2 py-1">
                       <input

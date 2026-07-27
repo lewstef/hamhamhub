@@ -11,6 +11,7 @@ vi.mock("lucide-react", () => ({
   AlertCircle: () => <div data-testid="alert-circle" />,
   Plus: () => <div data-testid="plus" />,
   Trash2: () => <div data-testid="trash2" />,
+  ChevronDown: () => <div data-testid="chevron-down" />,
 }));
 
 vi.mock("@/db", () => ({
@@ -69,7 +70,7 @@ describe("CourseForm Component", () => {
     expect(screen.getByPlaceholderText("e.g. Puppy Socialization Class")).toBeDefined();
     expect(screen.getByText("Course Information and Details")).toBeDefined();
     expect(screen.getByText("Create Course")).toBeDefined();
-    expect(screen.getByText("Per Course")).toBeDefined();
+    expect(screen.getAllByText("Per Course")[0]).toBeDefined();
   });
 
   it("should render Dog Sport dynamic terminology correctly", () => {
@@ -89,7 +90,7 @@ describe("CourseForm Component", () => {
     expect(screen.getByPlaceholderText("e.g. Agility, IGP, Obedience")).toBeDefined();
     expect(screen.getByText("Dog Sport Information and Details")).toBeDefined();
     expect(screen.getByText("Create Dog Sport")).toBeDefined();
-    expect(screen.getByText("Per Dog Sport")).toBeDefined();
+    expect(screen.getAllByText("Per Dog Sport")[0]).toBeDefined();
   });
 
   it("should select priceType correctly and trigger createCourseAction on submit", async () => {
@@ -197,6 +198,22 @@ describe("CourseForm Component", () => {
     expect(medsInput).toBeDefined();
     fireEvent.change(medsInput, { target: { value: "Give twice daily with wet food" } });
 
+    // Web cam details input is hidden initially
+    expect(screen.queryByLabelText("Web cam Access Instructions")).toBeNull();
+
+    // Find and click the Web cam switch button
+    const webcamSection = screen.getByText("Web cam").closest(".space-y-4");
+    const webcamSwitch = webcamSection?.querySelector("button[role='switch']");
+    expect(webcamSwitch).toBeDefined();
+    await act(async () => {
+      fireEvent.click(webcamSwitch!);
+    });
+
+    // Web cam instructions input should be displayed now
+    const webcamInput = screen.getByLabelText("Web cam Access Instructions");
+    expect(webcamInput).toBeDefined();
+    fireEvent.change(webcamInput, { target: { value: "Live stream access link" } });
+
     // Communication with Owner details input is hidden initially
     expect(screen.queryByLabelText("Communication Updates Details")).toBeNull();
 
@@ -254,6 +271,27 @@ describe("CourseForm Component", () => {
 
     fireEvent.click(screen.getByText("Copy Mon to All"));
     expect(checkinInputs[5].value).toBe("07:30");
+  });
+
+  it("should show validation error when check-out time is before or equal to check-in time", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-boarding"
+        itemNoun="Boarding service"
+        serviceSlug="dog-boarding"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const checkinInputs = screen.getAllByLabelText("Check-in Time") as HTMLInputElement[];
+    const checkoutInputs = screen.getAllByLabelText("Check-out Time") as HTMLInputElement[];
+
+    fireEvent.change(checkinInputs[0], { target: { value: "18:00" } });
+    fireEvent.change(checkoutInputs[0], { target: { value: "08:00" } });
+
+    expect(screen.getByText("Check-out time cannot be before or equal to check-in time.")).toBeDefined();
   });
 
   it("should render Edit Course terminology and values in edit mode", () => {
@@ -598,7 +636,7 @@ describe("CourseForm Component", () => {
     // Verify Grooming billing frequency options
     const select = screen.getByLabelText("Billing Frequency") as HTMLSelectElement;
     expect(select).toBeDefined();
-    expect(screen.getByText("Per Grooming service")).toBeDefined();
+    expect(screen.getAllByText("Per Grooming service")[0]).toBeDefined();
     expect(screen.getByText("Per Session")).toBeDefined();
     expect(screen.getByText("Per Hour")).toBeDefined();
   });

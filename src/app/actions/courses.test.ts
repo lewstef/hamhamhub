@@ -113,6 +113,8 @@ describe("Courses Server Actions", () => {
       formData.append("priceType", "night");
       formData.append("medicationAdministration", "true");
       formData.append("medicationAdministrationDetails", "Give pill after meals");
+      formData.append("webCam", "true");
+      formData.append("webCamDetails", "Live webcam stream link");
       formData.append("dailyWalks", "3");
       formData.append("ownerCommunication", "true");
       formData.append("ownerCommunicationDetails", "WhatsApp photo at noon");
@@ -134,6 +136,8 @@ describe("Courses Server Actions", () => {
         priceType: "night",
         medicationAdministration: true,
         medicationAdministrationDetails: "Give pill after meals",
+        webCam: true,
+        webCamDetails: "Live webcam stream link",
         dailyWalks: 3,
         ownerCommunication: true,
         ownerCommunicationDetails: "WhatsApp photo at noon",

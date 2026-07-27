@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { CustomSelect } from "@/components/ui/custom-select";
 import { Plus, X, Trash2, Pencil, ChevronLeft, ChevronRight, Eye, EyeOff, Search, Building2, Layers } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
 
@@ -674,20 +675,17 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                     <Label htmlFor="organizationCategory" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Organization Category
                     </Label>
-                    <select
+                    <CustomSelect
                       id="organizationCategory"
                       name="organizationCategory"
                       defaultValue={organizationCategoryList[0]?.id || ""}
                       required
                       disabled={isAnyPending}
-                      className="flex h-9 w-full rounded-xl border border-input bg-transparent px-2.5 py-1 text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
-                    >
-                      {organizationCategoryList.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={organizationCategoryList.map((t) => ({
+                        value: t.id,
+                        label: t.name,
+                      }))}
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-border/60 mt-6">

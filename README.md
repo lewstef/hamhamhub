@@ -75,6 +75,7 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 ---
 
 ## 3. UI Features
+- **Sleek Custom Scrollbar Design System**: Applied a unified, thin, pill-thumb scrollbar system across Webkit and Firefox browsers (`globals.css`), blending glassmorphic opacity values in light and dark modes with primary accent color transitions on hover. Replaced hidden sidebar scrollbars with custom scrollbars for smooth navigation.
 - **Persistent User Theme**: Toggle theme changes via the top-header switcher. Settings sync directly to the database user record (`users.theme`), completely avoiding flash layout mismatches or cookies.
 - **Collapsible Sidebar Tree**: Fully responsive sidebar with collapsible navigation groups, active route tracking, and real-time menu search filtering.
 - **Credential Protection**: All creation popups include `Confirm Password` fields with client-side match checking and `Eye`/`EyeOff` visibility toggles.
@@ -90,8 +91,12 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Added a new rich-text **Description** field (persisted under `description` in database schema) edited using the pre-existing custom `WysiwygEditor` inside a new dedicated edit modal popup. Renders a plain-text preview on the card view.
   - **End-Area Chevron Edit Controls & Clickable External Links**: Replaced whole-row button triggers across `/backoffice/organizations/*` and `/dashboard/account/*` cards with dedicated end-area chevron edit buttons. Field labels and values remain clean and non-interactive for clicking except for Email (renders `mailto:` link opening in a new tab), Phone numbers (renders `tel:` link opening in a new tab), and Website / Social profile URLs (renders `https://` link opening in a new tab). Also updated the main Organizations Directory table (`OrganizationsTable`) email column to render clickable `mailto:` links opening in a new tab.
 - **Flat Service Lists & Boarding-only Time Pickers**:
-  - Removed course collapsible detail panel drawers entirely on training, sports, and boarding services detail views to present clean, flat entry list rows. Key attribute badges (Certified, Field, Parking, Meds, Walks, Updates, Meal Plan, Price) render directly inside the rows.
+  - Removed course collapsible detail panel drawers entirely on training, sports, and boarding services detail views to present clean, flat entry list rows. Key attribute badges (Certified, Field, Parking, Meds, Web Cam, Walks, Updates, Meal Plan, Price) render directly inside the rows.
   - Restricted "Check-in Time" and "Check-out Time" picker inputs and badges to only display for the Dog Boarding service (`slug === "dog-boarding"`).
+  - Built custom `TimePickerSelect` inputs with chevron toggles for the Daily Operating Schedule that render all time options in a scrollable dropdown container showing **5 visible items at a time** so users can scroll to inspect and select any option.
+- **Unified Custom Dropdowns (`CustomSelect`)**: Replaced all native browser `<select>` elements across the entire platform (Daily Walks, Billing Frequency, Organization Category, Staff Role, and Service Template preview dropdowns) with a reusable, accessible custom dropdown component (`CustomSelect`). Features animated popover menus with thin custom scrollbars (`custom-scrollbar`), hover state highlights, selected checkmark indicators, outside-click auto-dismissal, and a synchronized hidden native select element ensuring seamless HTML form submission and test compatibility.
+  - Enforced strict client-side and server-side validation ensuring check-out time cannot be before or equal to check-in time (`checkout > checkin`).
+  - Added **Web cam** boolean switch (`webCam`) and optional access instructions text input (`webCamDetails`) strictly scoped to the Dog Boarding service (`/dashboard/services/dog-boarding`). Renders a teal `Web Cam` badge on active entries.
 - **Service Age Limits Switch & Checkboxes Option Group**:
   - Added a new database-backed `Age limits` boolean switch (`ageLimitsEnabled`) and text field (`ageLimits`) to courses schema.
   - Shows when editing or adding courses for "Dog training" and "Dog sports training" services.

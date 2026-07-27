@@ -22,6 +22,7 @@ vi.mock("lucide-react", () => ({
   Footprints: () => <div data-testid="footprints" />,
   Camera: () => <div data-testid="camera" />,
   Utensils: () => <div data-testid="utensils" />,
+  Video: () => <div data-testid="video" />,
   ChevronDown: () => <div data-testid="chevron-down" />,
   ChevronUp: () => <div data-testid="chevron-up" />,
   // WysiwygEditor icons
@@ -312,6 +313,8 @@ describe("DashboardServiceDetail Component", () => {
         priceType: "night",
         medicationAdministration: true,
         medicationAdministrationDetails: "Twice daily",
+        webCam: true,
+        webCamDetails: "24/7 stream",
         dailyWalks: 3,
         ownerCommunication: true,
         ownerCommunicationDetails: "WhatsApp photos",
@@ -333,6 +336,7 @@ describe("DashboardServiceDetail Component", () => {
     );
 
     expect(screen.getByText("Meds Administered")).toBeDefined();
+    expect(screen.getByText("Web Cam")).toBeDefined();
     expect(screen.getByText("3 Walks")).toBeDefined();
     expect(screen.getByText("Updates Sent")).toBeDefined();
     expect(screen.getByText("Meal Plan")).toBeDefined();

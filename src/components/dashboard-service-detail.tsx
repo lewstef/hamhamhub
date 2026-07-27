@@ -6,7 +6,7 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,8 @@ interface Course {
   priceType?: string | null;
   medicationAdministration?: boolean | null;
   medicationAdministrationDetails?: string | null;
+  webCam?: boolean | null;
+  webCamDetails?: string | null;
   dailyWalks?: number | null;
   ownerCommunication?: boolean | null;
   ownerCommunicationDetails?: string | null;
@@ -498,6 +500,12 @@ export function DashboardServiceDetail({
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-600 border border-red-500/20" title={course.medicationAdministrationDetails || ""}>
                                 <Pill className="size-2.5" />
                                 Meds Administered
+                              </span>
+                            )}
+                            {course.webCam && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-600 border border-teal-500/20" title={course.webCamDetails || ""}>
+                                <Video className="size-2.5" />
+                                Web Cam
                               </span>
                             )}
                             {course.dailyWalks && (
