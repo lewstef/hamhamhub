@@ -168,4 +168,42 @@ describe("CustomSelect Component", () => {
     const trigger = screen.getByRole("button", { name: "2" });
     expect(trigger).toBeDefined();
   });
+
+  it("updates internal state in uncontrolled mode when an option is selected", () => {
+    const { container } = render(
+      <CustomSelect
+        id="test-select"
+        defaultValue="opt1"
+        options={options}
+      />
+    );
+
+    const trigger = screen.getByRole("button", { name: "Option One" });
+    fireEvent.click(trigger);
+
+    const popover = container.querySelector(".custom-scrollbar");
+    const optionBtns = popover?.querySelectorAll("button");
+    if (optionBtns && optionBtns[1]) {
+      fireEvent.click(optionBtns[1]);
+    }
+
+    expect(screen.getByRole("button", { name: "Option Two" })).toBeDefined();
+  });
+
+  it("triggers handleSelect when hidden select element fires change event", () => {
+    const onChange = vi.fn();
+    render(
+      <CustomSelect
+        id="test-select"
+        value="opt1"
+        onChange={onChange}
+        options={options}
+      />
+    );
+
+    const hiddenSelect = document.getElementById("test-select") as HTMLSelectElement;
+    fireEvent.change(hiddenSelect, { target: { value: "opt2" } });
+
+    expect(onChange).toHaveBeenCalledWith("opt2");
+  });
 });
