@@ -49,6 +49,8 @@ vi.mock("@/components/ui/sidebar", () => ({
     children,
     onClick,
     render: renderProp,
+    isActive,
+    tooltip,
     ...props
   }: {
     children: React.ReactNode;
@@ -60,7 +62,7 @@ vi.mock("@/components/ui/sidebar", () => ({
     "aria-expanded"?: boolean;
   }) => {
     if (renderProp) {
-      return React.cloneElement(renderProp, props, children);
+      return React.cloneElement(renderProp, { ...props, "data-active": isActive }, children);
     }
     return <button onClick={onClick}>{children}</button>;
   },
@@ -73,6 +75,7 @@ vi.mock("@/components/ui/sidebar", () => ({
   SidebarMenuSubButton: ({
     children,
     render: renderProp,
+    isActive,
     ...props
   }: {
     children: React.ReactNode;
@@ -80,7 +83,7 @@ vi.mock("@/components/ui/sidebar", () => ({
     isActive?: boolean;
   }) => {
     if (renderProp) {
-      return React.cloneElement(renderProp, props, children);
+      return React.cloneElement(renderProp, { ...props, "data-active": isActive }, children);
     }
     return <span>{children}</span>;
   },

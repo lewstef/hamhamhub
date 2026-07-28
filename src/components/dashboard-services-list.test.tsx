@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import React from "react";
 import { DashboardServicesList } from "./dashboard-services-list";
 import {
@@ -114,7 +114,9 @@ describe("DashboardServicesList Component", () => {
     expect(switches.length).toBeGreaterThan(1);
 
     // Click first course switch (index 1)
-    fireEvent.click(switches[1]);
+    await act(async () => {
+      fireEvent.click(switches[1]);
+    });
 
     expect(toggleOrganizationCourseAction).toHaveBeenCalledWith("org-123", "course-basic", true);
   });
@@ -139,7 +141,9 @@ describe("DashboardServicesList Component", () => {
 
     // Toggle course off
     const switches = screen.getAllByRole("switch");
-    fireEvent.click(switches[1]); // course switch
+    await act(async () => {
+      fireEvent.click(switches[1]); // course switch
+    });
 
     expect(toggleOrganizationCourseAction).toHaveBeenCalledWith("org-123", "course-basic", false);
   });
@@ -195,12 +199,14 @@ describe("DashboardServicesList Component", () => {
     );
 
     const switches = screen.getAllByRole("switch");
-    fireEvent.click(switches[0]);
+    await act(async () => {
+      fireEvent.click(switches[0]);
+    });
 
     expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-1", true);
   });
 
-  it("should optimistically show Active badge when a disabled service is toggled on", () => {
+  it("should optimistically show Active badge when a disabled service is toggled on", async () => {
     vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ success: true });
 
     render(
@@ -215,9 +221,11 @@ describe("DashboardServicesList Component", () => {
     expect(screen.queryByText("Active")).toBeNull();
 
     const toggle = screen.getByRole("switch");
-    fireEvent.click(toggle);
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
 
-    // Optimistic update: Active badge appears before server responds
+    // Active badge appears
     expect(screen.getByText("Active")).toBeDefined();
   });
 
@@ -234,7 +242,7 @@ describe("DashboardServicesList Component", () => {
     expect(screen.getAllByRole("button", { name: "Edit" }).length).toBe(1);
   });
 
-  it("should toggle a service off (disable) when an enabled service switch is clicked", () => {
+  it("should toggle a service off (disable) when an enabled service switch is clicked", async () => {
     vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ success: true });
 
     render(
@@ -249,7 +257,9 @@ describe("DashboardServicesList Component", () => {
     expect(screen.getByText("Active")).toBeDefined();
 
     const toggle = screen.getByRole("switch");
-    fireEvent.click(toggle);
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
 
     // After optimistic update, Active badge should disappear
     expect(screen.queryByText("Active")).toBeNull();
@@ -271,10 +281,12 @@ describe("DashboardServicesList Component", () => {
     expect(screen.queryByText("Active")).toBeNull();
 
     const toggle = screen.getByRole("switch");
-    fireEvent.click(toggle);
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
 
-    // Optimistically enabled
-    expect(screen.getByText("Active")).toBeDefined();
+    // Rolls back to not active
+    expect(screen.queryByText("Active")).toBeNull();
     expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-1", true);
   });
 
@@ -290,9 +302,6 @@ describe("DashboardServicesList Component", () => {
       />
     );
 
-    // Only the service toggle is shown, no course switches (getSortedCourses returns [])
-    // But we can still verify the action binding by calling handleToggleCourse indirectly
-    // through initialEnabledCourseIds state. Just verify the component renders with the prop.
     expect(screen.getAllByRole("switch").length).toBeGreaterThan(0);
   });
 
@@ -306,11 +315,10 @@ describe("DashboardServicesList Component", () => {
       />
     );
 
-    // Just verify the component renders without error with pre-populated course IDs
     expect(screen.getByText("Dog Boarding")).toBeDefined();
   });
 
-  it("should add serviceId to expandedIds when enabling a previously disabled service", () => {
+  it("should add serviceId to expandedIds when enabling a previously disabled service", async () => {
     vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ success: true });
 
     render(
@@ -326,13 +334,15 @@ describe("DashboardServicesList Component", () => {
     // Initially no Edit button (service not enabled)
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
 
-    // Toggle service on — this hits the !isCurrentlyEnabled branch in handleToggle
+    // Toggle service on
     const toggle = screen.getByRole("switch");
-    fireEvent.click(toggle);
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
 
-    // Active badge should appear (optimistic update)
+    // Active badge should appear
     expect(screen.getByText("Active")).toBeDefined();
-    // Edit button should now appear (isEnabled is true)
+    // Edit button should now appear
     expect(screen.getByRole("button", { name: "Edit" })).toBeDefined();
   });
 });

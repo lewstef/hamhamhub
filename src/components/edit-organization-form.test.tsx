@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import React from "react";
 import { EditOrganizationForm } from "./edit-organization-form";
 import { toggleOrganizationServiceAction, updateOrganizationAction, changeOrganizationPasswordAction } from "@/app/actions/organizations";
@@ -206,7 +206,9 @@ describe("EditOrganizationForm Component", () => {
 
     // Click the toggle switch
     const toggle = screen.getByRole("switch");
-    fireEvent.click(toggle);
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
 
     expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-id-123", "s-1", true);
   });
@@ -376,7 +378,9 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(servicesTabBtn);
 
     const toggle = screen.getByRole("switch");
-    fireEvent.click(toggle);
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
 
     expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-id-123", "s-2", true);
   });

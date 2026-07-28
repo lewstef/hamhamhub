@@ -125,7 +125,9 @@ describe("DashboardServiceDetail Component", () => {
     );
 
     const toggleBtn = screen.getByRole("switch");
-    fireEvent.click(toggleBtn);
+    await act(async () => {
+      fireEvent.click(toggleBtn);
+    });
 
     expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-dog-walking", true);
   });
@@ -483,7 +485,9 @@ describe("DashboardServiceDetail Component", () => {
     // The modal has a "Delete" confirm button
     const allDeleteBtns = screen.getAllByRole("button", { name: "Delete" });
     // The last one is the confirm button inside the modal
-    fireEvent.click(allDeleteBtns[allDeleteBtns.length - 1]);
+    await act(async () => {
+      fireEvent.click(allDeleteBtns[allDeleteBtns.length - 1]);
+    });
 
     expect(deleteCourseAction).toHaveBeenCalledWith("c-1");
   });
@@ -766,10 +770,12 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Inactive")).toBeDefined();
 
     const toggle = screen.getByRole("switch");
-    fireEvent.click(toggle);
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
 
-    // Optimistically shows Active
-    expect(screen.getByText("Active")).toBeDefined();
+    // After action error, rolls back to Inactive
+    expect(screen.getByText("Inactive")).toBeDefined();
     expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-dog-walking", true);
   });
 
@@ -831,7 +837,9 @@ describe("DashboardServiceDetail Component", () => {
 
     // Confirm delete
     const allDeleteBtns = screen.getAllByRole("button", { name: "Delete" });
-    fireEvent.click(allDeleteBtns[allDeleteBtns.length - 1]);
+    await act(async () => {
+      fireEvent.click(allDeleteBtns[allDeleteBtns.length - 1]);
+    });
 
     await vi.waitFor(() => {
       expect(deleteCourseAction).toHaveBeenCalledWith("c-1");
