@@ -97,9 +97,23 @@ function SidebarProvider({
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
-        event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+        event.key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT.toLowerCase() &&
         (event.metaKey || event.ctrlKey)
       ) {
+        // Do not toggle sidebar if user is typing in an editable field or WYSIWYG area
+        const target = (event.target || document.activeElement) as HTMLElement | null
+        const isEditable =
+          target &&
+          (target.isContentEditable ||
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            Boolean(target.closest("[contenteditable='true']")) ||
+            Boolean(target.closest("[data-wysiwyg='true']")))
+
+        if (isEditable) {
+          return
+        }
+
         event.preventDefault()
         toggleSidebar()
       }

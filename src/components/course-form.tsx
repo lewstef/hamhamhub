@@ -1142,13 +1142,11 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor={`faq-a-${index}`} className="text-xs font-semibold">Answer</Label>
-                          <textarea
-                            id={`faq-a-${index}`}
-                            placeholder="e.g. Yes, all dogs must have up-to-date DHPP and Rabies vaccines."
+                          <Label className="text-xs font-semibold">Answer</Label>
+                          <WysiwygEditor
                             value={faq.answer}
-                            onChange={(e) => handleUpdateFaq(index, "answer", e.target.value)}
-                            className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs outline-none placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors resize-y font-medium"
+                            onChange={(val) => handleUpdateFaq(index, "answer", val)}
+                            placeholder="e.g. Yes, all dogs must have up-to-date DHPP and Rabies vaccines."
                           />
                         </div>
                       </div>

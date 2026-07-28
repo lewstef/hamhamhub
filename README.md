@@ -123,6 +123,16 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Clean Modal Reinitialization Lifecycle**:
   - Enforced dynamic modal session key tracking (`key={modalKey}`) across all creation, editing, testing, and deletion dialogs (`SmtpConfigForm`, `EmployeesTable`, `UsersTable`, `OrganizationsTable`, `ServicesTable`, `ServiceTypesTable`, `EditOrganizationForm`).
   - Automatically unmounts and remounts clean component instances upon opening, clearing stale inputs, password visibility toggles, and previous server action error/success result banners.
+- **Organization Password Change Security Email Notification**:
+  - When an organization updates its main account password (`/dashboard/account/security`), `changeOrganizationPasswordAction` automatically dispatches a HTML security alert email (`sendMail`) to the account's primary email address.
+  - The notification includes the recipient name, target email address, UTC timestamp of change, and a security warning advising the organization to contact support or reset their password if the change was unauthorized.
+- **WYSIWYG Editor Keyboard Shortcut Isolation**:
+  - Prevented the global sidebar toggle shortcut (`Ctrl + B` / `Cmd + B`) from expanding or collapsing the sidebar when focus is active inside a WYSIWYG editor (`WysiwygEditor`), contenteditable area, `<input>`, or `<textarea>`.
+  - Added event propagation suppression (`e.stopPropagation()` & `e.nativeEvent.stopImmediatePropagation()`) in `WysiwygEditor` for `Ctrl + B`, `Ctrl + I`, and `Ctrl + U` formatting commands.
+  - Added target check in `SidebarProvider` (`src/components/ui/sidebar.tsx`) to ignore sidebar toggle shortcuts when the user is inside an editable input field or element tagged with `data-wysiwyg="true"`.
+- **FAQ Section Rich-Text WYSIWYG Editor**:
+  - Replaced the plain `<textarea>` for FAQ item answers in `CourseForm` (`src/components/course-form.tsx`) with the full `WysiwygEditor` component.
+  - Enables rich text formatting (bold, italic, underline, lists, remove formatting) for all FAQ item answers when managing course, boarding, grooming, or dog sport service offerings.
 
 ---
 

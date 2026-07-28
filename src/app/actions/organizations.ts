@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { isValidEmail, isValidRomanianPhone, isValidUrl } from "@/lib/validation";
+import { sendMail } from "@/lib/email";
 
 /**
  * Returns all organization categories from the database.
@@ -454,16 +455,30 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
 
 /**
  * Changes the password, email, and recovery email for an existing organization account.
+ * Dispatches a password change security notification email to the primary account email when password is updated.
  *
- * @param formData.id              - Organization user ID (required)
- * @param formData.email           - Unique login email (optional/required, validated format)
- * @param formData.recoveryEmail   - Recovery email (optional, validated format)
- * @param formData.password        - New password, min 6 characters (optional)
- * @param formData.confirmPassword - Must match `password` exactly (optional)
+ * @param {unknown} prevState - Previous action state object.
+ * @param {FormData} formData - Form data containing organization fields.
+ * @param {string} formData.id - Organization user ID (required).
+ * @param {string} [formData.email] - Unique login email (optional, validated email format).
+ * @param {string} [formData.recoveryEmail] - Recovery email address (optional, validated email format).
+ * @param {string} [formData.password] - New password, minimum 6 characters (optional).
+ * @param {string} [formData.confirmPassword] - Password confirmation matching `password` (optional).
+ * @param {string} [formData.currentPassword] - Current password (required when organization role changes own password).
  *
- * @returns `{ success: true }` on successful update
- * @returns `{ error: string }` on validation or DB failure
- * @sideEffect Revalidates `/backoffice/organizations`
+ * @returns {Promise<{ success?: boolean; error?: string }>}
+ * - Returns `{ success: true }` on successful update.
+ * - Returns `{ error: string }` on validation error, incorrect current password, or database error.
+ *
+ * @sideEffects
+ * - Revalidates Next.js path caches for `/backoffice/organizations` and `/dashboard/account`.
+ * - Dispatches a security notification email via Nodemailer `sendMail` to the primary account email if password is changed.
+ *
+ * @redirects
+ * - None. Returns action status object.
+ *
+ * @securityGuards
+ * - Verifies current password match if authenticated user role is `"organization"`.
  */
 export async function changeOrganizationPasswordAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
@@ -504,6 +519,10 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
       updateData.recoveryEmail = recoveryEmail || null;
     }
 
+    let orgUserEmail: string | null | undefined;
+    let orgUserName: string | null | undefined;
+    let isPasswordChanged = false;
+
     if (password || confirmPassword) {
       if (!password || !confirmPassword) {
         return { error: "All password fields are required" };
@@ -524,7 +543,7 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
         }
 
         const [orgUser] = await db
-          .select({ password: users.password })
+          .select({ password: users.password, email: users.email, name: users.name })
           .from(users)
           .where(eq(users.id, id))
           .limit(1);
@@ -537,10 +556,14 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
         if (!isMatch) {
           return { error: "Incorrect current password" };
         }
+
+        orgUserEmail = orgUser.email;
+        orgUserName = orgUser.name;
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
       updateData.password = hashedPassword;
+      isPasswordChanged = true;
     }
 
     if (Object.keys(updateData).length > 0) {
@@ -548,6 +571,40 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
         .update(users)
         .set(updateData)
         .where(eq(users.id, id));
+    }
+
+    // Send email notification to primary account email when password is changed
+    if (isPasswordChanged) {
+      const recipientEmail = updateData.email || orgUserEmail;
+      if (recipientEmail && isValidEmail(recipientEmail)) {
+        const recipientName = orgUserName || "Organization";
+        const timestamp = new Date().toUTCString();
+
+        try {
+          await sendMail({
+            to: recipientEmail,
+            subject: "Security Notification: Password Changed for your HamHamHub Account",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
+                <div style="background-color: #4f46e5; padding: 16px 24px; border-radius: 8px 8px 0 0; text-align: center;">
+                  <h2 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: bold;">HamHamHub Security Alert</h2>
+                </div>
+                <div style="padding: 24px; color: #1f2937; line-height: 1.6;">
+                  <p style="font-size: 16px; font-weight: bold; margin-top: 0;">Hello ${recipientName},</p>
+                  <p>The password for your HamHamHub organization account (<strong>${recipientEmail}</strong>) was successfully changed on <strong>${timestamp}</strong>.</p>
+                  <div style="background-color: #f3f4f6; padding: 14px 16px; border-left: 4px solid #4f46e5; border-radius: 4px; font-size: 13px; color: #374151; margin: 20px 0;">
+                    <strong>Security Notice:</strong> If you initiated this password change, no further action is required. If you did NOT perform this update, please reset your password immediately or contact platform support.
+                  </div>
+                  <p style="margin-bottom: 0; font-size: 14px; color: #6b7280;">Best regards,<br>The HamHamHub Team</p>
+                </div>
+              </div>
+            `,
+            text: `Hello ${recipientName},\n\nThe password for your HamHamHub organization account (${recipientEmail}) was successfully changed on ${timestamp}.\n\nIf you initiated this change, no action is required. If you did not perform this update, please reset your password immediately.\n\nBest regards,\nThe HamHamHub Team`,
+          });
+        } catch (mailErr) {
+          console.error("Failed to send password change notification email:", mailErr);
+        }
+      }
     }
 
     revalidatePath("/backoffice/organizations");

@@ -55,19 +55,25 @@ export function WysiwygEditor({ value, onChange, placeholder = "Start typing..."
       const key = e.key.toLowerCase();
       if (key === "b") {
         e.preventDefault();
+        e.stopPropagation();
+        e.nativeEvent?.stopImmediatePropagation?.();
         executeCommand("bold");
       } else if (key === "i") {
         e.preventDefault();
+        e.stopPropagation();
+        e.nativeEvent?.stopImmediatePropagation?.();
         executeCommand("italic");
       } else if (key === "u") {
         e.preventDefault();
+        e.stopPropagation();
+        e.nativeEvent?.stopImmediatePropagation?.();
         executeCommand("underline");
       }
     }
   };
 
   return (
-    <div className="border border-border rounded-xl bg-card shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all duration-200">
+    <div data-wysiwyg="true" className="border border-border rounded-xl bg-card shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all duration-200">
       {/* Toolbar */}
       <div className="flex items-center gap-1 p-2 bg-muted/40 border-b border-border/80 flex-wrap">
         <button
@@ -144,6 +150,7 @@ export function WysiwygEditor({ value, onChange, placeholder = "Start typing..."
       <div
         ref={editorRef}
         contentEditable
+        data-wysiwyg="true"
         onInput={handleInput}
         onKeyDown={handleKeyDown}
         className="p-4 min-h-[140px] max-h-[300px] overflow-y-auto focus:outline-none text-sm text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none"

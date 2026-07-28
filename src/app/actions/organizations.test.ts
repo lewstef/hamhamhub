@@ -24,6 +24,12 @@ const mockInsert = vi.fn();
 const mockUpdate = vi.fn();
 const mockDelete = vi.fn();
 
+import { sendMail } from "@/lib/email";
+
+vi.mock("@/lib/email", () => ({
+  sendMail: vi.fn().mockResolvedValue({ success: true }),
+}));
+
 vi.mock("@/auth", () => ({
   signIn: vi.fn(),
   auth: vi.fn(),
@@ -107,6 +113,10 @@ vi.mock("bcryptjs", () => ({
 describe("Organization Server Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSelect.mockReset();
+    mockInsert.mockReset();
+    mockUpdate.mockReset();
+    mockDelete.mockReset();
     mockCategorySelect.mockReturnValue(undefined);
   });
 
@@ -496,6 +506,32 @@ describe("Organization Server Actions", () => {
 
       expect(mockUpdate).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations");
+    });
+
+    it("should dispatch security notification email to primary account email when password is changed", async () => {
+      const formData = new FormData();
+      formData.append("id", "org-id");
+      formData.append("password", "newpassword123");
+      formData.append("confirmPassword", "newpassword123");
+      formData.append("currentPassword", "oldpassword123");
+
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "org-id", role: "organization", name: "Org User" },
+        expires: "expires-date",
+      });
+
+      mockSelect.mockResolvedValueOnce([{ password: "hashed_oldpassword123", email: "primary@orgdomain.com", name: "Primary Org" }]);
+      mockUpdate.mockResolvedValueOnce({ count: 1 });
+
+      const result = await changeOrganizationPasswordAction(null, formData);
+
+      expect(result).toEqual({ success: true });
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "primary@orgdomain.com",
+          subject: expect.stringContaining("Security Notification"),
+        })
+      );
     });
   });
 

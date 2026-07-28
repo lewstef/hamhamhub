@@ -484,7 +484,7 @@ describe("CourseForm Component", () => {
     expect(screen.queryByText('No FAQs added yet. Click "Add FAQ" below to start.')).toBeNull();
     
     const questionInput = screen.getByLabelText("Question");
-    const answerInput = screen.getByLabelText("Answer");
+    const answerInput = screen.getByPlaceholderText("e.g. Yes, all dogs must have up-to-date DHPP and Rabies vaccines.");
 
     // Edit Question and Answer
     fireEvent.change(questionInput, { target: { value: "Vaccine requirement?" } });

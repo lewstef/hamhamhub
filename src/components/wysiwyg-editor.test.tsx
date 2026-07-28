@@ -205,4 +205,18 @@ describe("WysiwygEditor Component", () => {
 
     expect(document.execCommand).not.toHaveBeenCalled();
   });
+
+  it("should stop event propagation when Ctrl+B is pressed so parent listeners do not trigger", () => {
+    document.execCommand = vi.fn().mockReturnValue(true);
+
+    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
+    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
+
+    const event = new KeyboardEvent("keydown", { key: "b", ctrlKey: true, bubbles: true });
+    const stopSpy = vi.spyOn(event, "stopPropagation");
+
+    editable.dispatchEvent(event);
+
+    expect(stopSpy).toHaveBeenCalled();
+  });
 });
