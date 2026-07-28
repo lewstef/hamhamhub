@@ -40,16 +40,49 @@ export function UsersTable({ userList }: UsersTableProps) {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [formModalKey, setFormModalKey] = useState(0);
+  const [deleteModalKey, setDeleteModalKey] = useState(0);
+  const [createSubmitted, setCreateSubmitted] = useState(false);
+  const [deleteSubmitted, setDeleteSubmitted] = useState(false);
+
+  const openFormModal = () => {
+    setCreateSubmitted(false);
+    setPasswordVal("");
+    setConfirmPasswordVal("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setFormModalKey((prev) => prev + 1);
+    setShowForm(true);
+  };
+
+  const closeFormModal = () => {
+    setShowForm(false);
+    setCreateSubmitted(false);
+    setPasswordVal("");
+    setConfirmPasswordVal("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  const openDeleteModal = (id: string) => {
+    setDeleteTargetId(id);
+    setDeleteSubmitted(false);
+    setDeleteModalKey((prev) => prev + 1);
+    setShowDeleteConfirm(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteConfirm(false);
+    setDeleteTargetId(null);
+    setDeleteSubmitted(false);
+  };
+
   // Close form on successful creation
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        setShowForm(false);
+        closeFormModal();
         formRef.current?.reset();
-        setPasswordVal("");
-        setConfirmPasswordVal("");
-        setShowPassword(false);
-        setShowConfirmPassword(false);
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -59,8 +92,7 @@ export function UsersTable({ userList }: UsersTableProps) {
   useEffect(() => {
     if (deleteState && (deleteState as { success?: boolean }).success) {
       const timer = setTimeout(() => {
-        setShowDeleteConfirm(false);
-        setDeleteTargetId(null);
+        closeDeleteModal();
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -107,7 +139,7 @@ export function UsersTable({ userList }: UsersTableProps) {
           />
         </div>
         <div className="shrink-0">
-          <Button onClick={() => setShowForm(true)} className="gap-2">
+          <Button onClick={openFormModal} className="gap-2">
             <Plus className="size-4" />
             Create User
           </Button>
@@ -116,16 +148,10 @@ export function UsersTable({ userList }: UsersTableProps) {
 
       {/* Create User Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div key={formModalKey} className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="relative w-full max-w-md shadow-2xl">
             <button
-              onClick={() => {
-                setShowForm(false);
-                setPasswordVal("");
-                setConfirmPasswordVal("");
-                setShowPassword(false);
-                setShowConfirmPassword(false);
-              }}
+              onClick={closeFormModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -136,9 +162,9 @@ export function UsersTable({ userList }: UsersTableProps) {
                 Add credentials to create a new user account.
               </CardDescription>
             </CardHeader>
-            <form ref={formRef} action={formAction}>
+            <form ref={formRef} action={(formData) => { setCreateSubmitted(true); formAction(formData); }}>
               <CardContent className="p-6 space-y-4">
-                {state?.error && (
+                {createSubmitted && state?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {state.error}
                   </div>
@@ -229,13 +255,7 @@ export function UsersTable({ userList }: UsersTableProps) {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowForm(false);
-                      setPasswordVal("");
-                      setConfirmPasswordVal("");
-                      setShowPassword(false);
-                      setShowConfirmPassword(false);
-                    }}
+                    onClick={closeFormModal}
                     disabled={isAnyPending}
                   >
                     Cancel
@@ -252,13 +272,10 @@ export function UsersTable({ userList }: UsersTableProps) {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && deleteTargetId && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div key={deleteModalKey} className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="relative w-full max-w-sm shadow-2xl">
             <button
-              onClick={() => {
-                setShowDeleteConfirm(false);
-                setDeleteTargetId(null);
-              }}
+              onClick={closeDeleteModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -269,10 +286,10 @@ export function UsersTable({ userList }: UsersTableProps) {
                 Are you sure you want to permanently delete this user? This action cannot be undone.
               </CardDescription>
             </CardHeader>
-            <form action={deleteAction}>
+            <form action={(formData) => { setDeleteSubmitted(true); deleteAction(formData); }}>
               <input type="hidden" name="id" value={deleteTargetId} />
               <CardContent className="p-6 space-y-4">
-                {deleteState?.error && (
+                {deleteSubmitted && deleteState?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {deleteState.error}
                   </div>
@@ -281,10 +298,7 @@ export function UsersTable({ userList }: UsersTableProps) {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setDeleteTargetId(null);
-                    }}
+                    onClick={closeDeleteModal}
                     disabled={deletePending}
                   >
                     Cancel
@@ -368,10 +382,7 @@ export function UsersTable({ userList }: UsersTableProps) {
                           variant="destructive"
                           size="icon-sm"
                           type="button"
-                          onClick={() => {
-                            setDeleteTargetId(u.id);
-                            setShowDeleteConfirm(true);
-                          }}
+                          onClick={() => openDeleteModal(u.id)}
                         >
                           <Trash2 className="size-3" />
                         </Button>

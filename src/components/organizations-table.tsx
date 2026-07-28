@@ -70,16 +70,78 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [formModalKey, setFormModalKey] = useState(0);
+  const [categoryModalKey, setCategoryModalKey] = useState(0);
+  const [editCategoryModalKey, setEditCategoryModalKey] = useState(0);
+  const [deleteModalKey, setDeleteModalKey] = useState(0);
+
+  const [createSubmitted, setCreateSubmitted] = useState(false);
+  const [categorySubmitted, setCategorySubmitted] = useState(false);
+  const [editCategorySubmitted, setEditCategorySubmitted] = useState(false);
+  const [deleteSubmitted, setDeleteSubmitted] = useState(false);
+
+  const openFormModal = () => {
+    setCreateSubmitted(false);
+    setPasswordVal("");
+    setConfirmPasswordVal("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setFormModalKey((prev) => prev + 1);
+    setShowForm(true);
+  };
+
+  const closeFormModal = () => {
+    setShowForm(false);
+    setCreateSubmitted(false);
+    setPasswordVal("");
+    setConfirmPasswordVal("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  const openCategoryModal = () => {
+    setCategorySubmitted(false);
+    setCategoryModalKey((prev) => prev + 1);
+    setShowCategoryForm(true);
+  };
+
+  const closeCategoryModal = () => {
+    setShowCategoryForm(false);
+    setCategorySubmitted(false);
+  };
+
+  const openEditCategoryModal = (cat: OrganizationCategory) => {
+    setEditCategoryTarget(cat);
+    setEditCategorySubmitted(false);
+    setEditCategoryModalKey((prev) => prev + 1);
+    setShowEditCategoryForm(true);
+  };
+
+  const closeEditCategoryModal = () => {
+    setShowEditCategoryForm(false);
+    setEditCategoryTarget(null);
+    setEditCategorySubmitted(false);
+  };
+
+  const openDeleteModal = (id: string) => {
+    setDeleteTargetId(id);
+    setDeleteSubmitted(false);
+    setDeleteModalKey((prev) => prev + 1);
+    setShowDeleteConfirm(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteConfirm(false);
+    setDeleteTargetId(null);
+    setDeleteSubmitted(false);
+  };
+
   // Close form on successful creation
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        setShowForm(false);
+        closeFormModal();
         formRef.current?.reset();
-        setPasswordVal("");
-        setConfirmPasswordVal("");
-        setShowPassword(false);
-        setShowConfirmPassword(false);
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -89,7 +151,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
   useEffect(() => {
     if (categoryState?.success) {
       const timer = setTimeout(() => {
-        setShowCategoryForm(false);
+        closeCategoryModal();
         categoryFormRef.current?.reset();
       }, 0);
       return () => clearTimeout(timer);
@@ -100,8 +162,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
   useEffect(() => {
     if (editCategoryState?.success) {
       const timer = setTimeout(() => {
-        setShowEditCategoryForm(false);
-        setEditCategoryTarget(null);
+        closeEditCategoryModal();
         editCategoryFormRef.current?.reset();
       }, 0);
       return () => clearTimeout(timer);
@@ -112,8 +173,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
   useEffect(() => {
     if (deleteState && (deleteState as { success?: boolean }).success) {
       const timer = setTimeout(() => {
-        setShowDeleteConfirm(false);
-        setDeleteTargetId(null);
+        closeDeleteModal();
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -256,7 +316,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                 className="pl-9 h-9 text-xs transition-shadow focus-visible:ring-primary/20 rounded-xl"
               />
             </div>
-            <Button onClick={() => setShowForm(true)} size="sm" className="gap-2 cursor-pointer h-9 px-4 rounded-xl shrink-0">
+            <Button onClick={openFormModal} size="sm" className="gap-2 cursor-pointer h-9 px-4 rounded-xl shrink-0">
               <Plus className="size-3.5" />
               Create Organization
             </Button>
@@ -275,7 +335,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                 className="pl-9 h-9 text-xs transition-shadow focus-visible:ring-primary/20 rounded-xl"
               />
             </div>
-            <Button onClick={() => setShowCategoryForm(true)} size="sm" className="gap-2 cursor-pointer h-9 px-4 rounded-xl shrink-0">
+            <Button onClick={openCategoryModal} size="sm" className="gap-2 cursor-pointer h-9 px-4 rounded-xl shrink-0">
               <Plus className="size-3.5" />
               Add Category
             </Button>
@@ -361,10 +421,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                               size="icon-sm"
                               type="button"
                               className="rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer"
-                              onClick={() => {
-                                setDeleteTargetId(o.id);
-                                setShowDeleteConfirm(true);
-                              }}
+                              onClick={() => openDeleteModal(o.id)}
                               title="Delete Organization"
                             >
                               <Trash2 className="size-3.5" />
@@ -473,10 +530,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                               size="icon-sm"
                               type="button"
                               className="rounded-lg border-border/80 hover:bg-primary/5 hover:text-primary transition-colors cursor-pointer"
-                              onClick={() => {
-                                setEditCategoryTarget(category);
-                                setShowEditCategoryForm(true);
-                              }}
+                              onClick={() => openEditCategoryModal(category)}
                               title="Edit Category"
                             >
                               <Pencil className="size-3" />
@@ -561,16 +615,10 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
 
       {/* Create Organization Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div key={formModalKey} className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <Card className="relative w-full max-w-md shadow-2xl rounded-2xl animate-in fade-in zoom-in-95 duration-200">
             <button
-              onClick={() => {
-                setShowForm(false);
-                setPasswordVal("");
-                setConfirmPasswordVal("");
-                setShowPassword(false);
-                setShowConfirmPassword(false);
-              }}
+              onClick={closeFormModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -581,9 +629,9 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                 Enter name and login credentials to create an organization profile.
               </CardDescription>
             </CardHeader>
-            <form ref={formRef} action={formAction}>
+            <form ref={formRef} action={(formData) => { setCreateSubmitted(true); formAction(formData); }}>
               <CardContent className="p-6 space-y-4">
-                {state?.error && (
+                {createSubmitted && state?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {state.error}
                   </div>
@@ -692,13 +740,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowForm(false);
-                      setPasswordVal("");
-                      setConfirmPasswordVal("");
-                      setShowPassword(false);
-                      setShowConfirmPassword(false);
-                    }}
+                    onClick={closeFormModal}
                     disabled={isAnyPending}
                     className="rounded-xl h-9 text-xs font-semibold"
                   >
@@ -716,10 +758,10 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
 
       {/* Add Category Modal */}
       {showCategoryForm && (
-        <div className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div key={categoryModalKey} className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <Card className="relative w-full max-w-md shadow-2xl rounded-2xl animate-in fade-in zoom-in-95 duration-200">
             <button
-              onClick={() => setShowCategoryForm(false)}
+              onClick={closeCategoryModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -730,9 +772,9 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                 Create a new dynamic category for partner organizations.
               </CardDescription>
             </CardHeader>
-            <form ref={categoryFormRef} action={categoryFormAction}>
+            <form ref={categoryFormRef} action={(formData) => { setCategorySubmitted(true); categoryFormAction(formData); }}>
               <CardContent className="p-6 space-y-4">
-                {(categoryState as any)?.error && (
+                {categorySubmitted && (categoryState as any)?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {(categoryState as any).error}
                   </div>
@@ -769,7 +811,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowCategoryForm(false)}
+                    onClick={closeCategoryModal}
                     disabled={isCategoryPending}
                     className="rounded-xl h-9 text-xs font-semibold"
                   >
@@ -787,13 +829,10 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
 
       {/* Edit Category Modal */}
       {showEditCategoryForm && editCategoryTarget && (
-        <div className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div key={editCategoryModalKey} className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <Card className="relative w-full max-w-md shadow-2xl rounded-2xl animate-in fade-in zoom-in-95 duration-200">
             <button
-              onClick={() => {
-                setShowEditCategoryForm(false);
-                setEditCategoryTarget(null);
-              }}
+              onClick={closeEditCategoryModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -804,10 +843,10 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                 Update name and description details for category "{editCategoryTarget.id}".
               </CardDescription>
             </CardHeader>
-            <form ref={editCategoryFormRef} action={editCategoryFormAction}>
+            <form ref={editCategoryFormRef} action={(formData) => { setEditCategorySubmitted(true); editCategoryFormAction(formData); }}>
               <input type="hidden" name="id" value={editCategoryTarget.id} />
               <CardContent className="p-6 space-y-4">
-                {(editCategoryState as any)?.error && (
+                {editCategorySubmitted && (editCategoryState as any)?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {(editCategoryState as any).error}
                   </div>
@@ -845,10 +884,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowEditCategoryForm(false);
-                      setEditCategoryTarget(null);
-                    }}
+                    onClick={closeEditCategoryModal}
                     disabled={isEditCategoryPending}
                     className="rounded-xl h-9 text-xs font-semibold"
                   >
@@ -866,13 +902,10 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && deleteTargetId && (
-        <div className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div key={deleteModalKey} className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <Card className="relative w-full max-w-sm shadow-2xl rounded-2xl animate-in fade-in zoom-in-95 duration-200">
             <button
-              onClick={() => {
-                setShowDeleteConfirm(false);
-                setDeleteTargetId(null);
-              }}
+              onClick={closeDeleteModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -883,10 +916,10 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                 Are you sure you want to permanently delete this organization? This action cannot be undone.
               </CardDescription>
             </CardHeader>
-            <form action={deleteAction}>
+            <form action={(formData) => { setDeleteSubmitted(true); deleteAction(formData); }}>
               <input type="hidden" name="id" value={deleteTargetId} />
               <CardContent className="p-6 space-y-4">
-                {deleteState?.error && (
+                {deleteSubmitted && deleteState?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {deleteState.error}
                   </div>
@@ -895,10 +928,7 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setDeleteTargetId(null);
-                    }}
+                    onClick={closeDeleteModal}
                     disabled={deletePending}
                     className="rounded-xl h-9 text-xs font-semibold"
                   >

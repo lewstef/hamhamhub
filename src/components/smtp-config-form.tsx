@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useActionState } from "react";
+import React, { useState, useActionState, useEffect } from "react";
 import { updateSmtpConfigAction, sendTestEmailAction } from "@/app/actions/system";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ interface SmtpConfigFormProps {
     smtpHost: string;
     smtpPort: string;
     smtpSecurity: string;
-    smtpUsername: string;
+    smtpUsername?: string;
     senderName: string;
     senderEmail: string;
   };
@@ -35,6 +35,33 @@ export function SmtpConfigForm({ initialConfig }: SmtpConfigFormProps) {
   const [senderName, setSenderName] = useState(initialConfig?.senderName || "HamHamHub System");
   const [senderEmail, setSenderEmail] = useState(initialConfig?.senderEmail || "no-reply@hamhamhub.ro");
   const [testRecipient, setTestRecipient] = useState("");
+
+  useEffect(() => {
+    if (initialConfig) {
+      if (initialConfig.smtpHost) setHost(initialConfig.smtpHost);
+      if (initialConfig.smtpPort) setPort(initialConfig.smtpPort);
+      if (initialConfig.smtpSecurity) setSecurity(initialConfig.smtpSecurity);
+      if (initialConfig.smtpUsername !== undefined) setUsername(initialConfig.smtpUsername);
+      if (initialConfig.senderName) setSenderName(initialConfig.senderName);
+      if (initialConfig.senderEmail) setSenderEmail(initialConfig.senderEmail);
+    }
+  }, [initialConfig]);
+
+  const [testModalKey, setTestModalKey] = useState(0);
+  const [testSubmitted, setTestSubmitted] = useState(false);
+
+  const openTestModal = () => {
+    setTestRecipient("");
+    setTestSubmitted(false);
+    setTestModalKey((prev) => prev + 1);
+    setTestModalOpen(true);
+  };
+
+  const closeTestModal = () => {
+    setTestModalOpen(false);
+    setTestRecipient("");
+    setTestSubmitted(false);
+  };
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -212,7 +239,7 @@ export function SmtpConfigForm({ initialConfig }: SmtpConfigFormProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setTestModalOpen(true)}
+            onClick={openTestModal}
             className="gap-2"
           >
             <Send className="size-4" />
@@ -227,7 +254,7 @@ export function SmtpConfigForm({ initialConfig }: SmtpConfigFormProps) {
 
       {/* Test Email Modal */}
       {testModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div key={testModalKey} className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-fadeIn">
             <div className="space-y-1">
               <h3 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -239,19 +266,25 @@ export function SmtpConfigForm({ initialConfig }: SmtpConfigFormProps) {
               </p>
             </div>
 
-            {testState?.error && (
+            {testSubmitted && testState?.error && (
               <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                 {testState.error}
               </div>
             )}
 
-            {testState?.success && (
+            {testSubmitted && testState?.success && (
               <div className="p-3 text-xs font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
                 Test email sent successfully! Transport connection verified.
               </div>
             )}
 
-            <form action={testAction} className="space-y-4">
+            <form
+              action={(formData) => {
+                setTestSubmitted(true);
+                testAction(formData);
+              }}
+              className="space-y-4"
+            >
               <div className="space-y-1.5">
                 <Label htmlFor="testRecipientEmail" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Recipient Email Address
@@ -272,7 +305,7 @@ export function SmtpConfigForm({ initialConfig }: SmtpConfigFormProps) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setTestModalOpen(false)}
+                  onClick={closeTestModal}
                 >
                   Cancel
                 </Button>

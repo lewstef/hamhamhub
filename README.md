@@ -120,6 +120,9 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Centralized Email TLD & 10-Digit Romanian Phone Validations (`src/lib/validation.ts`)**:
   - Implemented strict email validation (`isValidEmail`) enforcing standard RFC email format with valid domain TLD extensions of at least 2 characters (e.g., `.com`, `.ro`, `.org`).
   - Implemented simple 10-digit Romanian phone number validation (`isValidRomanianPhone`) enforcing 10-digit format starting with `0` (`07xxxxxxx`, `02xxxxxxx`, `03xxxxxxx`). Strictly rejects country prefixes (`+4`/`+40`), spaces, dots, hyphens, and non-numeric characters. Enforced across all server actions (`organizations`, `users`, `employees`, `auth`) and form controls.
+- **Clean Modal Reinitialization Lifecycle**:
+  - Enforced dynamic modal session key tracking (`key={modalKey}`) across all creation, editing, testing, and deletion dialogs (`SmtpConfigForm`, `EmployeesTable`, `UsersTable`, `OrganizationsTable`, `ServicesTable`, `ServiceTypesTable`, `EditOrganizationForm`).
+  - Automatically unmounts and remounts clean component instances upon opening, clearing stale inputs, password visibility toggles, and previous server action error/success result banners.
 
 ---
 

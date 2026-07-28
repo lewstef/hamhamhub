@@ -159,11 +159,34 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
     setSelectedServiceNames(registered);
   }, [formOrgCategory, serviceList]);
 
+  const [formModalKey, setFormModalKey] = useState(0);
+  const [deleteModalKey, setDeleteModalKey] = useState(0);
+  const [createSubmitted, setCreateSubmitted] = useState(false);
+  const [deleteSubmitted, setDeleteSubmitted] = useState(false);
+
+  const closeFormModal = () => {
+    setShowForm(false);
+    setCreateSubmitted(false);
+  };
+
+  const openDeleteModal = (id: string) => {
+    setDeleteTargetId(id);
+    setDeleteSubmitted(false);
+    setDeleteModalKey((prev) => prev + 1);
+    setShowDeleteConfirm(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteConfirm(false);
+    setDeleteTargetId(null);
+    setDeleteSubmitted(false);
+  };
+
   // Close form on successful creation
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        setShowForm(false);
+        closeFormModal();
         formRef.current?.reset();
       }, 0);
       return () => clearTimeout(timer);
@@ -174,8 +197,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
   useEffect(() => {
     if (deleteState && (deleteState as { success?: boolean }).success) {
       const timer = setTimeout(() => {
-        setShowDeleteConfirm(false);
-        setDeleteTargetId(null);
+        closeDeleteModal();
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -194,6 +216,8 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
       .filter((s) => s.organizationCategory === nextCategory)
       .map((s) => s.name);
     setSelectedServiceNames(registered);
+    setCreateSubmitted(false);
+    setFormModalKey((prev) => prev + 1);
     setShowForm(true);
   };
 
@@ -467,10 +491,10 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
 
       {/* Create Service Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div key={formModalKey} className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="relative w-full max-w-lg shadow-2xl">
             <button
-              onClick={() => setShowForm(false)}
+              onClick={closeFormModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -486,14 +510,14 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                 Select one or more service types to register under this category. Already-registered types are locked.
               </CardDescription>
             </CardHeader>
-            <form ref={formRef} action={formAction}>
+            <form ref={formRef} action={(formData) => { setCreateSubmitted(true); formAction(formData); }}>
               {/* Hidden Inputs for Form Submission (Submit only new selections) */}
               {selectedServiceNames.map((name) => (
                 <input key={name} type="hidden" name="name" value={name} />
               ))}
               
               <CardContent className="p-6 space-y-4">
-                {state?.error && (
+                {createSubmitted && state?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {state.error}
                   </div>
@@ -565,7 +589,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowForm(false)}
+                    onClick={closeFormModal}
                     disabled={isAnyPending}
                   >
                     Cancel
@@ -582,13 +606,10 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && deleteTargetId && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div key={deleteModalKey} className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="relative w-full max-w-sm shadow-2xl">
             <button
-              onClick={() => {
-                setShowDeleteConfirm(false);
-                setDeleteTargetId(null);
-              }}
+              onClick={closeDeleteModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -599,10 +620,10 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                 Are you sure you want to delete this service? This will remove it from the master directory.
               </CardDescription>
             </CardHeader>
-            <form action={deleteAction}>
+            <form action={(formData) => { setDeleteSubmitted(true); deleteAction(formData); }}>
               <input type="hidden" name="id" value={deleteTargetId} />
               <CardContent className="p-6 space-y-4">
-                {deleteState?.error && (
+                {deleteSubmitted && deleteState?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {deleteState.error}
                   </div>
@@ -611,10 +632,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setDeleteTargetId(null);
-                    }}
+                    onClick={closeDeleteModal}
                     disabled={deletePending}
                   >
                     Cancel

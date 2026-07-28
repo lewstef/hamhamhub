@@ -206,18 +206,36 @@ export function EditOrganizationForm({
   const [personalState, personalAction, personalPending] = useActionState(updateOrganizationAction, null);
   const [accountState, accountAction, accountPending] = useActionState(changeOrganizationPasswordAction, null);
 
+  const [modalSessionKey, setModalSessionKey] = useState(0);
+  const [personalSubmitted, setPersonalSubmitted] = useState(false);
+  const [accountSubmitted, setAccountSubmitted] = useState(false);
+
   const [personalError, setPersonalError] = useState<string | null>(null);
   const [accountError, setAccountError] = useState<string | null>(null);
 
   const openModal = (setModalState: React.Dispatch<React.SetStateAction<boolean>>) => {
     setPersonalError(null);
     setAccountError(null);
+    setPersonalSubmitted(false);
+    setAccountSubmitted(false);
+    setPasswordVal("");
+    setConfirmPasswordVal("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setEditDescription(organization.description || "");
+    setModalSessionKey((k) => k + 1);
     setModalState(true);
   };
 
   const closeAllModals = useCallback(() => {
     setPersonalError(null);
     setAccountError(null);
+    setPersonalSubmitted(false);
+    setAccountSubmitted(false);
+    setPasswordVal("");
+    setConfirmPasswordVal("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setShowNameModal(false);
     setShowCategoryModal(false);
     setShowAddressModal(false);
@@ -240,6 +258,12 @@ export function EditOrganizationForm({
   const closeModal = (setModalState: React.Dispatch<React.SetStateAction<boolean>>) => {
     setPersonalError(null);
     setAccountError(null);
+    setPersonalSubmitted(false);
+    setAccountSubmitted(false);
+    setPasswordVal("");
+    setConfirmPasswordVal("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setModalState(false);
   };
 

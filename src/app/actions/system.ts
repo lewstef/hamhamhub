@@ -70,21 +70,33 @@ export async function updateSmtpConfigAction(
       return { error: "A valid Sender Email address is required." };
     }
 
-    const payload = JSON.stringify({
-      smtpHost,
-      smtpPort,
-      smtpSecurity,
-      smtpUsername,
-      smtpPassword,
-      senderName,
-      senderEmail,
-    });
-
     const existing = await db
       .select()
       .from(systemSettings)
       .where(eq(systemSettings.key, "smtp_config"))
       .limit(1);
+
+    let finalPassword = smtpPassword;
+    if (!finalPassword && existing && existing.length > 0 && existing[0].value) {
+      try {
+        const parsed = JSON.parse(existing[0].value);
+        if (parsed.smtpPassword) {
+          finalPassword = parsed.smtpPassword;
+        }
+      } catch (e) {
+        // Fallback to empty string if JSON parse fails
+      }
+    }
+
+    const payload = JSON.stringify({
+      smtpHost,
+      smtpPort,
+      smtpSecurity,
+      smtpUsername,
+      smtpPassword: finalPassword,
+      senderName,
+      senderEmail,
+    });
 
     if (existing && existing.length > 0) {
       await db

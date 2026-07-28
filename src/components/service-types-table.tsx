@@ -35,6 +35,21 @@ export function ServiceTypesTable({ serviceTypesList }: ServiceTypesTableProps) 
   const [search, setSearch] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editTarget, setEditTarget] = useState<ServiceType | null>(null);
+  const [editModalKey, setEditModalKey] = useState(0);
+  const [editSubmitted, setEditSubmitted] = useState(false);
+
+  const openEditModal = (target: ServiceType) => {
+    setEditTarget(target);
+    setEditSubmitted(false);
+    setEditModalKey((prev) => prev + 1);
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditTarget(null);
+    setEditSubmitted(false);
+  };
 
   const [state, editFormAction, isPending] = useActionState(updateServiceTypeAction, null);
   const editFormRef = useRef<HTMLFormElement>(null);
@@ -43,8 +58,7 @@ export function ServiceTypesTable({ serviceTypesList }: ServiceTypesTableProps) 
   useEffect(() => {
     if (state?.success) {
       const timer = setTimeout(() => {
-        setShowEditModal(false);
-        setEditTarget(null);
+        closeEditModal();
         editFormRef.current?.reset();
       }, 0);
       return () => clearTimeout(timer);
@@ -106,23 +120,24 @@ export function ServiceTypesTable({ serviceTypesList }: ServiceTypesTableProps) 
                   </tr>
                 ) : (
                   filtered.map((item) => (
-                    <tr key={item.id} className="hover:bg-muted/40 transition-colors h-14">
-                      <td className="px-4 py-3 max-w-0 font-semibold text-foreground truncate" title={item.name}>
-                        {item.name}
+                    <tr key={item.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="px-4 py-3.5 max-w-0">
+                        <span title={item.name} className="block truncate font-semibold text-foreground">
+                          {item.name}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground truncate" title={item.description}>
-                        {item.description}
+                      <td className="px-4 py-3.5 max-w-0">
+                        <span title={item.description} className="block truncate text-muted-foreground text-xs">
+                          {item.description}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
                         <Button
                           variant="outline"
                           size="icon-sm"
                           type="button"
+                          onClick={() => openEditModal(item)}
                           className="rounded-lg border-border/80 hover:bg-primary/5 hover:text-primary transition-colors cursor-pointer"
-                          onClick={() => {
-                            setEditTarget(item);
-                            setShowEditModal(true);
-                          }}
                           title={`Edit ${item.name}`}
                         >
                           <Pencil className="size-3" />
@@ -146,13 +161,10 @@ export function ServiceTypesTable({ serviceTypesList }: ServiceTypesTableProps) 
 
       {/* Edit Service Type Modal */}
       {showEditModal && editTarget && (
-        <div className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div key={editModalKey} className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <Card className="relative w-full max-w-md shadow-2xl rounded-2xl animate-in fade-in zoom-in-95 duration-200">
             <button
-              onClick={() => {
-                setShowEditModal(false);
-                setEditTarget(null);
-              }}
+              onClick={closeEditModal}
               className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
             >
               <X className="size-4" />
@@ -163,10 +175,10 @@ export function ServiceTypesTable({ serviceTypesList }: ServiceTypesTableProps) 
                 Modify name and description for service type "{editTarget.id}".
               </CardDescription>
             </CardHeader>
-            <form ref={editFormRef} action={editFormAction}>
+            <form ref={editFormRef} action={(formData) => { setEditSubmitted(true); editFormAction(formData); }}>
               <input type="hidden" name="id" value={editTarget.id} />
               <CardContent className="p-6 space-y-4">
-                {state?.error && (
+                {editSubmitted && state?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {state.error}
                   </div>
@@ -204,10 +216,7 @@ export function ServiceTypesTable({ serviceTypesList }: ServiceTypesTableProps) 
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setEditTarget(null);
-                    }}
+                    onClick={closeEditModal}
                     disabled={isPending}
                     className="rounded-xl h-9 text-xs font-semibold"
                   >

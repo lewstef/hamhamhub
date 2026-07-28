@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { SmtpConfigForm } from "@/components/smtp-config-form";
+import { getActiveSmtpConfig } from "@/lib/email";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
@@ -12,6 +13,7 @@ export const metadata = {
 
 export default async function SmtpConfigPage() {
   const session = await auth();
+  const config = await getActiveSmtpConfig();
 
   return (
     <div className="space-y-6">
@@ -37,7 +39,7 @@ export default async function SmtpConfigPage() {
       </div>
 
       {/* Form Component */}
-      <SmtpConfigForm />
+      <SmtpConfigForm initialConfig={config} />
     </div>
   );
 }
