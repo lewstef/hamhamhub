@@ -61,6 +61,8 @@ export interface FormattedScheduleGroup {
   enabled: boolean;
   checkin: string;
   checkout: string;
+  /** Optional note attached to this schedule group, if all grouped days share the same note. */
+  note?: string;
 }
 
 export function parseScheduleGroups(
@@ -75,16 +77,17 @@ export function parseScheduleGroups(
       const parsed = JSON.parse(scheduleJson);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const groups: FormattedScheduleGroup[] = [];
-        let currentGroup: { days: string[]; enabled: boolean; checkin: string; checkout: string } | null = null;
+        let currentGroup: { days: string[]; enabled: boolean; checkin: string; checkout: string; note?: string } | null = null;
 
         for (const item of parsed) {
           const shortName = DAY_SHORT_NAMES[item.day] || item.label || item.day;
-          const key = `${item.enabled}:${item.checkin}:${item.checkout}`;
+          // Include note in the grouping key so days with different notes are never merged.
+          const key = `${item.enabled}:${item.checkin}:${item.checkout}:${item.note || ""}`;
 
           if (!currentGroup) {
-            currentGroup = { days: [shortName], enabled: item.enabled, checkin: item.checkin, checkout: item.checkout };
+            currentGroup = { days: [shortName], enabled: item.enabled, checkin: item.checkin, checkout: item.checkout, note: item.note };
           } else {
-            const prevKey = `${currentGroup.enabled}:${currentGroup.checkin}:${currentGroup.checkout}`;
+            const prevKey = `${currentGroup.enabled}:${currentGroup.checkin}:${currentGroup.checkout}:${currentGroup.note || ""}`;
             if (key === prevKey) {
               currentGroup.days.push(shortName);
             } else {
@@ -97,8 +100,9 @@ export function parseScheduleGroups(
                 enabled: currentGroup.enabled,
                 checkin: currentGroup.checkin,
                 checkout: currentGroup.checkout,
+                note: currentGroup.note,
               });
-              currentGroup = { days: [shortName], enabled: item.enabled, checkin: item.checkin, checkout: item.checkout };
+              currentGroup = { days: [shortName], enabled: item.enabled, checkin: item.checkin, checkout: item.checkout, note: item.note };
             }
           }
         }
@@ -112,6 +116,7 @@ export function parseScheduleGroups(
             enabled: currentGroup.enabled,
             checkin: currentGroup.checkin,
             checkout: currentGroup.checkout,
+            note: currentGroup.note,
           });
         }
         return groups;

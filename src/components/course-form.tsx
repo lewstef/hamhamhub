@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, ChevronDown, FileText, HelpCircle, DollarSign, Sliders, MapPin, Calendar, FileCheck } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, Sliders, MapPin, Calendar, FileCheck } from "lucide-react";
+import { TimePickerSelect, getCheckinOptions, getCheckoutOptions } from "@/components/ui/time-picker-select";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { DatePickerInput, parseDateString } from "@/components/ui/date-picker-input";
 
@@ -174,107 +175,158 @@ export function getInitialWeeklySchedule(initialCourse?: Course | null): DaySche
   ];
 }
 
-// Pre-populates 30-minute interval suggestions (00:00 to 23:30) for check-in/check-out combobox selectors
-const timeOptions = Array.from({ length: 48 }, (_, i) => {
-  const hours = Math.floor(i / 2).toString().padStart(2, "0");
-  const minutes = (i % 2 === 0 ? "00" : "30");
-  return `${hours}:${minutes}`;
-});
-
-function getCheckinOptions(): string[] {
-  return timeOptions;
+interface DayScheduleGridProps {
+  weeklySchedule: DayScheduleItem[];
+  /** When true, renders "Start"/"End" labels and "Closed" closed-state text instead of check-in/out terminology. */
+  isDogSport: boolean;
+  onUpdate: (dayKey: DayKey, field: keyof DayScheduleItem, value: any) => void;
+  onCopyMonToWorkweek: () => void;
+  onCopyMonToAll: () => void;
 }
 
-function getCheckoutOptions(checkinTime: string): string[] {
-  const index = timeOptions.indexOf(checkinTime);
-  if (index !== -1 && index < timeOptions.length - 1) {
-    return timeOptions.slice(index + 1);
-  }
-  return timeOptions;
-}
-
-interface TimePickerSelectProps {
-  id: string;
-  value: string;
-  onChange: (val: string) => void;
-  options: string[];
-  placeholder?: string;
-  required?: boolean;
-  className?: string;
-  hasError?: boolean;
-}
-
-function TimePickerSelect({
-  id,
-  value,
-  onChange,
-  options,
-  placeholder = "08:00",
-  required = false,
-  className = "",
-  hasError = false,
-}: TimePickerSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
+/**
+ * DayScheduleGrid Component
+ *
+ * Renders the 7-day weekly schedule editor with per-day toggles, start/end time pickers,
+ * and optional notes. Used in both the Dog Sport tabbed layout and the Boarding inline layout.
+ *
+ * @param props - {@link DayScheduleGridProps}
+ */
+function DayScheduleGrid({
+  weeklySchedule,
+  isDogSport,
+  onUpdate,
+  onCopyMonToWorkweek,
+  onCopyMonToAll,
+}: DayScheduleGridProps) {
   return (
-    <div ref={containerRef} className="relative w-full">
-      <div className="relative flex items-center">
-        <Input
-          id={id}
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setIsOpen(true)}
-          pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
-          placeholder={placeholder}
-          title="Please enter a valid time in 24-hour hh:mm format."
-          className={`h-8 pr-7 bg-background font-mono text-xs ${hasError ? "border-destructive focus-visible:ring-destructive" : ""} ${className}`}
-          required={required}
-        />
-        <button
-          type="button"
-          tabIndex={-1}
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="absolute right-1.5 p-1 text-muted-foreground hover:text-foreground rounded transition-colors focus:outline-none"
-          title="Toggle time dropdown (next 5 options)"
-          aria-label="Toggle time options dropdown"
-        >
-          <ChevronDown className="size-3.5" />
-        </button>
+    <>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/40 pb-3">
+        <div>
+          <Label className="text-base font-bold text-foreground">
+            {isDogSport ? "Schedule" : "Daily Operating Schedule"}
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            {isDogSport
+              ? "Specify day-specific operating schedule (Monday to Sunday)"
+              : "Specify day-specific check-in and check-out times (Monday to Sunday)"}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onCopyMonToWorkweek}
+            className="text-xs h-7 px-2.5"
+            title="Copy Monday check-in/out times to Tuesday through Friday"
+          >
+            Copy Mon to Mon–Fri
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onCopyMonToAll}
+            className="text-xs h-7 px-2.5"
+            title="Copy Monday check-in/out times to all days of the week"
+          >
+            Copy Mon to All
+          </Button>
+        </div>
       </div>
 
-      {isOpen && options.length > 0 && (
-        <div className="absolute top-full left-0 mt-1 w-full min-w-[110px] max-h-[155px] overflow-y-auto custom-scrollbar bg-popover border border-border shadow-md rounded-md py-1 z-50 animate-in fade-in-50 zoom-in-95">
-          {options.map((time) => (
-            <button
-              key={time}
-              type="button"
-              className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors hover:bg-accent hover:text-accent-foreground ${time === value ? "bg-accent/60 font-bold text-primary" : "text-popover-foreground"
-                }`}
-              onClick={() => {
-                onChange(time);
-                setIsOpen(false);
-              }}
-            >
-              {time}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      <div className="grid grid-cols-1 gap-3">
+        {weeklySchedule.map((item) => (
+          <div
+            key={item.day}
+            className={`p-3 rounded-lg border transition-colors ${
+              item.enabled ? "bg-muted/10 border-border/70" : "bg-muted/5 border-border/30 opacity-60"
+            }`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-[130px]">
+                <input
+                  type="checkbox"
+                  id={`schedule-enable-${item.day}`}
+                  checked={item.enabled}
+                  onChange={(e) => onUpdate(item.day, "enabled", e.target.checked)}
+                  className="size-4 rounded border-input text-primary focus:ring-primary/20 cursor-pointer"
+                />
+                <Label
+                  htmlFor={`schedule-enable-${item.day}`}
+                  className={`text-sm font-semibold cursor-pointer select-none ${
+                    item.enabled ? "text-foreground" : "text-muted-foreground line-through"
+                  }`}
+                >
+                  {item.label}
+                </Label>
+              </div>
+
+              {item.enabled ? (
+                <div className="flex flex-col gap-2.5 flex-1 w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                        {isDogSport ? "Start" : "Check-in Time"}
+                      </Label>
+                      <TimePickerSelect
+                        id={`checkin-${item.day}`}
+                        value={item.checkin}
+                        onChange={(val) => onUpdate(item.day, "checkin", val)}
+                        options={getCheckinOptions()}
+                        placeholder="08:00"
+                        required={item.enabled}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                        {isDogSport ? "End" : "Check-out Time"}
+                      </Label>
+                      <TimePickerSelect
+                        id={`checkout-${item.day}`}
+                        value={item.checkout}
+                        onChange={(val) => onUpdate(item.day, "checkout", val)}
+                        options={getCheckoutOptions(item.checkin)}
+                        placeholder="18:00"
+                        required={item.enabled}
+                        hasError={!!(item.checkin && item.checkout && item.checkout <= item.checkin)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor={`note-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                      Note / Schedule Remarks (Optional)
+                    </Label>
+                    <Input
+                      id={`note-${item.day}`}
+                      type="text"
+                      value={item.note || ""}
+                      onChange={(e) => onUpdate(item.day, "note", e.target.value)}
+                      placeholder="e.g. Group sessions only, advance registration required..."
+                      className="h-9 text-xs bg-background rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
+                    />
+                  </div>
+
+                  {item.checkin && item.checkout && item.checkout <= item.checkin && (
+                    <p className="text-[11px] text-destructive font-semibold mt-0.5">
+                      {isDogSport
+                        ? "End time cannot be before or equal to start time."
+                        : "Check-out time cannot be before or equal to check-in time."}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs italic text-muted-foreground py-1">
+                  {isDogSport ? "Closed" : "Closed for check-in / check-out"}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -1200,119 +1252,13 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
 
               {/* 7-Day Day-Specific Operating Schedule Section */}
               <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/40 pb-3">
-                  <div>
-                    <Label className="text-base font-bold text-foreground">{isDogSport ? "Schedule" : "Daily Operating Schedule"}</Label>
-                    <p className="text-xs text-muted-foreground">{isDogSport ? "Specify day-specific operating schedule (Monday to Sunday)" : "Specify day-specific check-in and check-out times (Monday to Sunday)"}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyMonToWorkweek}
-                      className="text-xs h-7 px-2.5"
-                      title="Copy Monday check-in/out times to Tuesday through Friday"
-                    >
-                      Copy Mon to Mon–Fri
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyMonToAll}
-                      className="text-xs h-7 px-2.5"
-                      title="Copy Monday check-in/out times to all days of the week"
-                    >
-                      Copy Mon to All
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3">
-                  {weeklySchedule.map((item) => (
-                    <div
-                      key={item.day}
-                      className={`p-3 rounded-lg border transition-colors ${item.enabled ? "bg-muted/10 border-border/70" : "bg-muted/5 border-border/30 opacity-60"
-                        }`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-[130px]">
-                          <input
-                            type="checkbox"
-                            id={`schedule-enable-${item.day}`}
-                            checked={item.enabled}
-                            onChange={(e) => handleUpdateDaySchedule(item.day, "enabled", e.target.checked)}
-                            className="size-4 rounded border-input text-primary focus:ring-primary/20 cursor-pointer"
-                          />
-                          <Label
-                            htmlFor={`schedule-enable-${item.day}`}
-                            className={`text-sm font-semibold cursor-pointer select-none ${item.enabled ? "text-foreground" : "text-muted-foreground line-through"
-                              }`}
-                          >
-                            {item.label}
-                          </Label>
-                        </div>
-
-                        {item.enabled ? (
-                          <div className="flex flex-col gap-2.5 flex-1 w-full">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                  {isDogSport ? "Start" : "Check-in Time"}
-                                </Label>
-                                <TimePickerSelect
-                                  id={`checkin-${item.day}`}
-                                  value={item.checkin}
-                                  onChange={(val) => handleUpdateDaySchedule(item.day, "checkin", val)}
-                                  options={getCheckinOptions()}
-                                  placeholder="08:00"
-                                  required={item.enabled}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                  {isDogSport ? "End" : "Check-out Time"}
-                                </Label>
-                                <TimePickerSelect
-                                  id={`checkout-${item.day}`}
-                                  value={item.checkout}
-                                  onChange={(val) => handleUpdateDaySchedule(item.day, "checkout", val)}
-                                  options={getCheckoutOptions(item.checkin)}
-                                  placeholder="18:00"
-                                  required={item.enabled}
-                                  hasError={!!(item.checkin && item.checkout && item.checkout <= item.checkin)}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-1">
-                              <Label htmlFor={`note-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                Note / Schedule Remarks (Optional)
-                              </Label>
-                              <Input
-                                id={`note-${item.day}`}
-                                type="text"
-                                value={item.note || ""}
-                                onChange={(e) => handleUpdateDaySchedule(item.day, "note", e.target.value)}
-                                placeholder="e.g. Group sessions only, advance registration required..."
-                                className="h-9 text-xs bg-background rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
-                              />
-                            </div>
-
-                            {item.checkin && item.checkout && item.checkout <= item.checkin && (
-                              <p className="text-[11px] text-destructive font-semibold mt-0.5">
-                                {isDogSport ? "End time cannot be before or equal to start time." : "Check-out time cannot be before or equal to check-in time."}
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs italic text-muted-foreground py-1">{isDogSport ? "Closed" : "Closed for check-in / check-out"}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <DayScheduleGrid
+                  weeklySchedule={weeklySchedule}
+                  isDogSport={isDogSport}
+                  onUpdate={handleUpdateDaySchedule}
+                  onCopyMonToWorkweek={handleCopyMonToWorkweek}
+                  onCopyMonToAll={handleCopyMonToAll}
+                />
 
                 {/* Closed Periods & Special Closures Section */}
                 <div className="space-y-4 pt-4 border-t border-border/60">
@@ -2142,128 +2088,16 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
 
                     {/* 7-Day Day-Specific Schedule Section */}
                     <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/40 pb-3">
-                        <div>
-                          <Label className="text-base font-bold text-foreground">{isDogSport ? "Schedule" : "Daily Operating Schedule"}</Label>
-                          <p className="text-xs text-muted-foreground">{isDogSport ? "Specify day-specific operating schedule (Monday to Sunday)" : "Specify day-specific check-in and check-out times (Monday to Sunday)"}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCopyMonToWorkweek}
-                            className="text-xs h-7 px-2.5"
-                            title="Copy Monday check-in/out times to Tuesday through Friday"
-                          >
-                            Copy Mon to Mon–Fri
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCopyMonToAll}
-                            className="text-xs h-7 px-2.5"
-                            title="Copy Monday check-in/out times to all days of the week"
-                          >
-                            Copy Mon to All
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-3">
-                        {weeklySchedule.map((item) => (
-                          <div
-                            key={item.day}
-                            className={`p-3 rounded-lg border transition-colors ${item.enabled ? "bg-muted/10 border-border/70" : "bg-muted/5 border-border/30 opacity-60"
-                              }`}
-                          >
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                              <div className="flex items-center gap-2.5 min-w-[130px]">
-                                <input
-                                  type="checkbox"
-                                  id={`schedule-enable-${item.day}`}
-                                  checked={item.enabled}
-                                  onChange={(e) => handleUpdateDaySchedule(item.day, "enabled", e.target.checked)}
-                                  className="size-4 rounded border-input text-primary focus:ring-primary/20 cursor-pointer"
-                                />
-                                <Label
-                                  htmlFor={`schedule-enable-${item.day}`}
-                                  className={`text-sm font-semibold cursor-pointer select-none ${item.enabled ? "text-foreground" : "text-muted-foreground line-through"
-                                    }`}
-                                >
-                                  {item.label}
-                                </Label>
-                              </div>
-
-                              {item.enabled ? (
-                                <div className="flex flex-col gap-2.5 flex-1 w-full">
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="space-y-1">
-                                      <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                        {isDogSport ? "Start" : "Check-in Time"}
-                                      </Label>
-                                      <TimePickerSelect
-                                        id={`checkin-${item.day}`}
-                                        value={item.checkin}
-                                        onChange={(val) => handleUpdateDaySchedule(item.day, "checkin", val)}
-                                        options={getCheckinOptions()}
-                                        placeholder="08:00"
-                                        required={item.enabled}
-                                      />
-                                    </div>
-                                    <div className="space-y-1">
-                                      <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                        {isDogSport ? "End" : "Check-out Time"}
-                                      </Label>
-                                      <TimePickerSelect
-                                        id={`checkout-${item.day}`}
-                                        value={item.checkout}
-                                        onChange={(val) => handleUpdateDaySchedule(item.day, "checkout", val)}
-                                        options={getCheckoutOptions(item.checkin)}
-                                        placeholder="18:00"
-                                        required={item.enabled}
-                                        hasError={!!(item.checkin && item.checkout && item.checkout <= item.checkin)}
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-1">
-                                    <Label htmlFor={`note-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                      Note / Schedule Remarks (Optional)
-                                    </Label>
-                                    <Input
-                                      id={`note-${item.day}`}
-                                      type="text"
-                                      value={item.note || ""}
-                                      onChange={(e) => handleUpdateDaySchedule(item.day, "note", e.target.value)}
-                                      placeholder="e.g. Group sessions only, advance registration required..."
-                                      className="h-9 text-xs bg-background rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
-                                    />
-                                  </div>
-
-                                  {item.checkin && item.checkout && item.checkout <= item.checkin && (
-                                    <p className="text-[11px] text-destructive font-semibold mt-0.5">
-                                      {isDogSport ? "End time cannot be before or equal to start time." : "Check-out time cannot be before or equal to check-in time."}
-                                    </p>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-xs italic text-muted-foreground py-1">{isDogSport ? "Closed" : "Closed for check-in / check-out"}</span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <DayScheduleGrid
+                        weeklySchedule={weeklySchedule}
+                        isDogSport={isDogSport}
+                        onUpdate={handleUpdateDaySchedule}
+                        onCopyMonToWorkweek={handleCopyMonToWorkweek}
+                        onCopyMonToAll={handleCopyMonToAll}
+                      />
                     </div>
                   </>
                 )}
-
-                <datalist id="time-options">
-                  {timeOptions.map((time) => (
-                    <option key={time} value={time} />
-                  ))}
-                </datalist>
               </div>
             )}
 

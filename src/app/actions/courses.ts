@@ -7,45 +7,162 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 
 /**
+ * Typed payload returned by {@link parseCourseFormData}.
+ * Contains all fields extracted from a course/boarding FormData submission.
+ */
+interface ParsedCourseData {
+  name: string;
+  price: string;
+  priceType: string;
+  serviceId: string | null;
+  certifiedTrainer: boolean;
+  certifierName: string;
+  dedicatedField: boolean;
+  trainingFieldDescription: string;
+  trainingFieldAddress: string;
+  trainingFieldGoogleBusinessProfile: string;
+  trainingFieldGoogleMapsLink: string;
+  parking: boolean;
+  parkingDescription: string;
+  details: string;
+  termsOfParticipation: string;
+  medicationAdministration: boolean;
+  medicationAdministrationDetails: string;
+  webCam: boolean;
+  webCamDetails: string;
+  dailyWalks: number | null;
+  ownerCommunication: boolean;
+  ownerCommunicationDetails: string;
+  personalizedMealPlan: boolean;
+  personalizedMealPlanDetails: string;
+  checkin: string | null;
+  checkout: string | null;
+  checkinWeekend: string | null;
+  checkoutWeekend: string | null;
+  schedule: string | null;
+  ageLimitsEnabled: boolean;
+  ageLimits: string | null;
+  faq: string | null;
+}
+
+/**
+ * Parses and validates all course/boarding fields from a FormData object.
+ *
+ * Performs time format validation for checkin/checkout fields and schedule items.
+ * Returns either a typed {@link ParsedCourseData} payload or an error string.
+ *
+ * @param formData - The raw FormData submitted by {@link CourseForm}.
+ * @returns `{ data: ParsedCourseData }` on success, or `{ error: string }` on validation failure.
+ */
+function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | { error: string } {
+  const name = formData.get("name") as string;
+  const price = formData.get("price") as string;
+  const priceType = (formData.get("priceType") as string) || "course";
+  const serviceId = (formData.get("serviceId") as string) || null;
+  const certifiedTrainer = formData.get("certifiedTrainer") === "true";
+  const certifierName = formData.get("certifierName") as string;
+  const dedicatedField = formData.get("dedicatedField") === "true";
+  const trainingFieldDescription = formData.get("trainingFieldDescription") as string;
+  const trainingFieldAddress = formData.get("trainingFieldAddress") as string;
+  const trainingFieldGoogleBusinessProfile = formData.get("trainingFieldGoogleBusinessProfile") as string;
+  const trainingFieldGoogleMapsLink = formData.get("trainingFieldGoogleMapsLink") as string;
+  const parking = formData.get("parking") === "true";
+  const parkingDescription = formData.get("parkingDescription") as string;
+  const details = formData.get("details") as string;
+  const termsOfParticipation = formData.get("termsOfParticipation") as string;
+  const medicationAdministration = formData.get("medicationAdministration") === "true";
+  const medicationAdministrationDetails = formData.get("medicationAdministrationDetails") as string;
+  const webCam = formData.get("webCam") === "true";
+  const webCamDetails = formData.get("webCamDetails") as string;
+  const dailyWalksStr = formData.get("dailyWalks") as string;
+  const dailyWalks = dailyWalksStr ? parseInt(dailyWalksStr, 10) : null;
+  const ownerCommunication = formData.get("ownerCommunication") === "true";
+  const ownerCommunicationDetails = formData.get("ownerCommunicationDetails") as string;
+  const personalizedMealPlan = formData.get("personalizedMealPlan") === "true";
+  const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
+  const checkin = (formData.get("checkin") as string) || null;
+  const checkout = (formData.get("checkout") as string) || null;
+  const checkinWeekend = (formData.get("checkinWeekend") as string) || null;
+  const checkoutWeekend = (formData.get("checkoutWeekend") as string) || null;
+  const schedule = (formData.get("schedule") as string) || null;
+  const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
+  const ageLimits = (formData.get("ageLimits") as string) || null;
+  const faq = (formData.get("faq") as string) || null;
+
+  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  if (checkin && !timeRegex.test(checkin)) {
+    return { error: "Invalid work week check-in time format. Use hh:mm (24h)." };
+  }
+  if (checkout && !timeRegex.test(checkout)) {
+    return { error: "Invalid work week check-out time format. Use hh:mm (24h)." };
+  }
+  if (checkinWeekend && !timeRegex.test(checkinWeekend)) {
+    return { error: "Invalid weekend check-in time format. Use hh:mm (24h)." };
+  }
+  if (checkoutWeekend && !timeRegex.test(checkoutWeekend)) {
+    return { error: "Invalid weekend check-out time format. Use hh:mm (24h)." };
+  }
+
+  if (schedule) {
+    try {
+      const parsedSchedule = JSON.parse(schedule);
+      if (Array.isArray(parsedSchedule)) {
+        for (const item of parsedSchedule) {
+          if (item && item.enabled) {
+            if (item.checkin && !timeRegex.test(item.checkin)) {
+              return { error: `Invalid check-in time format for ${item.label || item.day}. Use hh:mm (24h).` };
+            }
+            if (item.checkout && !timeRegex.test(item.checkout)) {
+              return { error: `Invalid check-out time format for ${item.label || item.day}. Use hh:mm (24h).` };
+            }
+            if (item.checkin && item.checkout && item.checkout <= item.checkin) {
+              return { error: `Check-out time cannot be before or equal to check-in time for ${item.label || item.day}.` };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      return { error: "Invalid schedule JSON format." };
+    }
+  }
+
+  return {
+    data: {
+      name, price, priceType, serviceId,
+      certifiedTrainer, certifierName,
+      dedicatedField, trainingFieldDescription, trainingFieldAddress,
+      trainingFieldGoogleBusinessProfile, trainingFieldGoogleMapsLink,
+      parking, parkingDescription, details, termsOfParticipation,
+      medicationAdministration, medicationAdministrationDetails,
+      webCam, webCamDetails, dailyWalks,
+      ownerCommunication, ownerCommunicationDetails,
+      personalizedMealPlan, personalizedMealPlanDetails,
+      checkin, checkout, checkinWeekend, checkoutWeekend,
+      schedule, ageLimitsEnabled, ageLimits, faq,
+    },
+  };
+}
+
+/** Shared path revalidation applied after any course create or update. */
+function revalidateCourseServicePaths() {
+  revalidatePath("/dashboard/services/dog-training");
+  revalidatePath("/dashboard/services/sport-dog-training");
+  revalidatePath("/dashboard/services/dog-boarding");
+  revalidatePath("/dashboard/services/dog-grooming");
+  revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
+  revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
+  revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
+  revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
+}
+
+/**
  * Creates a new offering (Course, Dog Sport, or Boarding Service) associated with the organization.
  *
  * @param prevState - Unused state placeholder
- * @param formData - The course/boarding form data
- * @param formData.name - Name of the offering (required)
- * @param formData.price - Price amount string (e.g. "150 RON") or serialized JSON string of multi-pricing tiers
- * @param formData.priceType - Suffix billing frequency (e.g. "course", "month", "night", "day", "session", "hour")
- * @param formData.schedule - Serialized JSON string representing weekly schedule array or schedule object containing weeklySchedule, closedPeriods, and specialOpenings
-
- * @param formData.serviceId - Linked service template UUID
- * @param formData.certifiedTrainer - Boolean string for training trainer certification
- * @param formData.certifierName - Trainer certification body name
- * @param formData.dedicatedField - Boolean string for training field availability
- * @param formData.trainingFieldDescription - Description of training field
- * @param formData.trainingFieldAddress - Address of training field
- * @param formData.trainingFieldGoogleBusinessProfile - Google Business Profile link of training field
- * @param formData.trainingFieldGoogleMapsLink - Google Maps link of training field
- * @param formData.parking - Boolean string for parking availability
- * @param formData.parkingDescription - Description of parking spaces
- * @param formData.details - Offering detailed description
- * @param formData.termsOfParticipation - Offering terms and prerequisites
- * @param formData.medicationAdministration - Boolean string for boarding meds administration
- * @param formData.medicationAdministrationDetails - Instructions for medication administration
- * @param formData.webCam - Boolean string for boarding webcam availability
- * @param formData.webCamDetails - Access instructions or stream details for webcam
- * @param formData.dailyWalks - Integer string (1-4) representing daily walk frequency
- * @param formData.ownerCommunication - Boolean string for owner updates communication
- * @param formData.ownerCommunicationDetails - Delivery methods for owner communication
- * @param formData.personalizedMealPlan - Boolean string for custom dietary meal plans
- * @param formData.personalizedMealPlanDetails - Custom meal planning specifications
- * @param formData.checkin - The check-in time, format: hh:mm (24h)
- * @param formData.checkout - The check-out time, format: hh:mm (24h)
- * @param formData.ageLimitsEnabled - Boolean string for age limits requirements
- * @param formData.ageLimits - Comma-separated selected age limits list
- * @param formData.faq - Serialized JSON string representing array of Frequently Asked Questions
- *
+ * @param formData - The course/boarding form data (see {@link parseCourseFormData} for accepted fields)
  * @returns `{ success: true }` on successful creation
  * @returns `{ error: string }` if name is missing, unauthorized access, or DB failure
- * @sideEffect Revalidates /dashboard/services/dog-training, /dashboard/services/sport-dog-training, /dashboard/services/dog-boarding, and matching backoffice paths
+ * @sideEffect Revalidates /dashboard/services/* and matching backoffice paths
  */
 export async function createCourseAction(prevState: unknown, formData: FormData) {
   const session = await auth();
@@ -68,127 +185,52 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
     }
   }
 
-  const name = formData.get("name") as string;
-  const price = formData.get("price") as string;
-  const priceType = formData.get("priceType") as string || "course";
-  const serviceId = formData.get("serviceId") as string || null;
-  const certifiedTrainer = formData.get("certifiedTrainer") === "true";
-  const certifierName = formData.get("certifierName") as string;
-  const dedicatedField = formData.get("dedicatedField") === "true";
-  const trainingFieldDescription = formData.get("trainingFieldDescription") as string;
-  const trainingFieldAddress = formData.get("trainingFieldAddress") as string;
-  const trainingFieldGoogleBusinessProfile = formData.get("trainingFieldGoogleBusinessProfile") as string;
-  const trainingFieldGoogleMapsLink = formData.get("trainingFieldGoogleMapsLink") as string;
-  const parking = formData.get("parking") === "true";
-  const parkingDescription = formData.get("parkingDescription") as string;
-  const details = formData.get("details") as string;
-  const termsOfParticipation = formData.get("termsOfParticipation") as string;
+  const parsed = parseCourseFormData(formData);
+  if ("error" in parsed) return parsed;
+  const d = parsed.data;
 
-  const medicationAdministration = formData.get("medicationAdministration") === "true";
-  const medicationAdministrationDetails = formData.get("medicationAdministrationDetails") as string;
-  const webCam = formData.get("webCam") === "true";
-  const webCamDetails = formData.get("webCamDetails") as string;
-  const dailyWalksStr = formData.get("dailyWalks") as string;
-  const dailyWalks = dailyWalksStr ? parseInt(dailyWalksStr, 10) : null;
-  const ownerCommunication = formData.get("ownerCommunication") === "true";
-  const ownerCommunicationDetails = formData.get("ownerCommunicationDetails") as string;
-  const personalizedMealPlan = formData.get("personalizedMealPlan") === "true";
-  const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
-  const checkin = formData.get("checkin") as string || null;
-  const checkout = formData.get("checkout") as string || null;
-  const checkinWeekend = formData.get("checkinWeekend") as string || null;
-  const checkoutWeekend = formData.get("checkoutWeekend") as string || null;
-  const schedule = formData.get("schedule") as string || null;
-  const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
-  const ageLimits = formData.get("ageLimits") as string || null;
-  const faq = formData.get("faq") as string || null;
-
-  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-  if (checkin && !timeRegex.test(checkin)) {
-    return { error: "Invalid work week check-in time format. Use hh:mm (24h)." };
-  }
-  if (checkout && !timeRegex.test(checkout)) {
-    return { error: "Invalid work week check-out time format. Use hh:mm (24h)." };
-  }
-  if (checkinWeekend && !timeRegex.test(checkinWeekend)) {
-    return { error: "Invalid weekend check-in time format. Use hh:mm (24h)." };
-  }
-  if (checkoutWeekend && !timeRegex.test(checkoutWeekend)) {
-    return { error: "Invalid weekend check-out time format. Use hh:mm (24h)." };
-  }
-
-  if (schedule) {
-    try {
-      const parsedSchedule = JSON.parse(schedule);
-      if (Array.isArray(parsedSchedule)) {
-        for (const item of parsedSchedule) {
-          if (item && item.enabled) {
-            if (item.checkin && !timeRegex.test(item.checkin)) {
-              return { error: `Invalid check-in time format for ${item.label || item.day}. Use hh:mm (24h).` };
-            }
-            if (item.checkout && !timeRegex.test(item.checkout)) {
-              return { error: `Invalid check-out time format for ${item.label || item.day}. Use hh:mm (24h).` };
-            }
-            if (item.checkin && item.checkout && item.checkout <= item.checkin) {
-              return { error: `Check-out time cannot be before or equal to check-in time for ${item.label || item.day}.` };
-            }
-          }
-        }
-      }
-    } catch (e) {
-      return { error: "Invalid schedule JSON format." };
-    }
-  }
-
-  if (!name) {
+  if (!d.name) {
     return { error: "Course name is required." };
   }
 
   try {
     await db.insert(courses).values({
       organizationId,
-      serviceId,
-      name,
-      certifiedTrainer,
-      certifierName: certifiedTrainer ? certifierName : null,
-      dedicatedField,
-      trainingFieldDescription: dedicatedField ? trainingFieldDescription : null,
-      trainingFieldAddress: dedicatedField ? trainingFieldAddress : null,
-      trainingFieldGoogleBusinessProfile: dedicatedField ? trainingFieldGoogleBusinessProfile : null,
-      trainingFieldGoogleMapsLink: dedicatedField ? trainingFieldGoogleMapsLink : null,
-      parking,
-      parkingDescription: parking ? parkingDescription : null,
-      details,
-      termsOfParticipation,
-      price,
-      priceType,
-      medicationAdministration,
-      medicationAdministrationDetails: medicationAdministration ? medicationAdministrationDetails : null,
-      webCam,
-      webCamDetails: webCam ? webCamDetails : null,
-      dailyWalks,
-      ownerCommunication,
-      ownerCommunicationDetails: ownerCommunication ? ownerCommunicationDetails : null,
-      personalizedMealPlan,
-      personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
-      checkin,
-      checkout,
-      checkinWeekend,
-      checkoutWeekend,
-      schedule,
-      ageLimitsEnabled,
-      ageLimits: ageLimitsEnabled ? ageLimits : null,
-      faq,
+      serviceId: d.serviceId,
+      name: d.name,
+      certifiedTrainer: d.certifiedTrainer,
+      certifierName: d.certifiedTrainer ? d.certifierName : null,
+      dedicatedField: d.dedicatedField,
+      trainingFieldDescription: d.dedicatedField ? d.trainingFieldDescription : null,
+      trainingFieldAddress: d.dedicatedField ? d.trainingFieldAddress : null,
+      trainingFieldGoogleBusinessProfile: d.dedicatedField ? d.trainingFieldGoogleBusinessProfile : null,
+      trainingFieldGoogleMapsLink: d.dedicatedField ? d.trainingFieldGoogleMapsLink : null,
+      parking: d.parking,
+      parkingDescription: d.parking ? d.parkingDescription : null,
+      details: d.details,
+      termsOfParticipation: d.termsOfParticipation,
+      price: d.price,
+      priceType: d.priceType,
+      medicationAdministration: d.medicationAdministration,
+      medicationAdministrationDetails: d.medicationAdministration ? d.medicationAdministrationDetails : null,
+      webCam: d.webCam,
+      webCamDetails: d.webCam ? d.webCamDetails : null,
+      dailyWalks: d.dailyWalks,
+      ownerCommunication: d.ownerCommunication,
+      ownerCommunicationDetails: d.ownerCommunication ? d.ownerCommunicationDetails : null,
+      personalizedMealPlan: d.personalizedMealPlan,
+      personalizedMealPlanDetails: d.personalizedMealPlan ? d.personalizedMealPlanDetails : null,
+      checkin: d.checkin,
+      checkout: d.checkout,
+      checkinWeekend: d.checkinWeekend,
+      checkoutWeekend: d.checkoutWeekend,
+      schedule: d.schedule,
+      ageLimitsEnabled: d.ageLimitsEnabled,
+      ageLimits: d.ageLimitsEnabled ? d.ageLimits : null,
+      faq: d.faq,
     });
 
-    revalidatePath("/dashboard/services/dog-training");
-    revalidatePath("/dashboard/services/sport-dog-training");
-    revalidatePath("/dashboard/services/dog-boarding");
-    revalidatePath("/dashboard/services/dog-grooming");
-    revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
+    revalidateCourseServicePaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to create course:", error);
@@ -200,41 +242,11 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
  * Updates an existing offering (Course, Dog Sport, or Boarding Service).
  *
  * @param prevState - Unused state placeholder
- * @param formData - The course/boarding form data
- * @param formData.id - ID of the course to update (required)
- * @param formData.name - Name of the offering (required)
- * @param formData.price - Price amount (e.g. "150 RON")
- * @param formData.priceType - Suffix billing frequency (e.g. "course", "month", "night", "day")
- * @param formData.serviceId - Linked service template UUID
- * @param formData.certifiedTrainer - Boolean string for training trainer certification
- * @param formData.certifierName - Trainer certification body name
- * @param formData.dedicatedField - Boolean string for training field availability
- * @param formData.trainingFieldDescription - Description of training field
- * @param formData.trainingFieldAddress - Address of training field
- * @param formData.trainingFieldGoogleBusinessProfile - Google Business Profile link of training field
- * @param formData.trainingFieldGoogleMapsLink - Google Maps link of training field
- * @param formData.parking - Boolean string for parking availability
- * @param formData.parkingDescription - Description of parking spaces
- * @param formData.details - Offering detailed description
- * @param formData.termsOfParticipation - Offering terms and prerequisites
- * @param formData.medicationAdministration - Boolean string for boarding meds administration
- * @param formData.medicationAdministrationDetails - Instructions for medication administration
- * @param formData.webCam - Boolean string for boarding webcam availability
- * @param formData.webCamDetails - Access instructions or stream details for webcam
- * @param formData.dailyWalks - Integer string (1-4) representing daily walk frequency
- * @param formData.ownerCommunication - Boolean string for owner updates communication
- * @param formData.ownerCommunicationDetails - Delivery methods for owner communication
- * @param formData.personalizedMealPlan - Boolean string for custom dietary meal plans
- * @param formData.personalizedMealPlanDetails - Custom meal planning specifications
- * @param formData.checkin - The check-in time, format: hh:mm (24h)
- * @param formData.checkout - The check-out time, format: hh:mm (24h)
- * @param formData.ageLimitsEnabled - Boolean string for age limits requirements
- * @param formData.ageLimits - Comma-separated selected age limits list
- * @param formData.faq - Serialized JSON string representing array of Frequently Asked Questions
- *
+ * @param formData - The course/boarding form data (see {@link parseCourseFormData} for accepted fields).
+ *   Also requires `formData.id` (the course ID to update).
  * @returns `{ success: true }` on successful update
  * @returns `{ error: string }` if name or id is missing, unauthorized access, or DB failure
- * @sideEffect Revalidates /dashboard/services/dog-training, /dashboard/services/sport-dog-training, /dashboard/services/dog-boarding, and matching backoffice paths
+ * @sideEffect Revalidates /dashboard/services/* and matching backoffice paths
  */
 export async function updateCourseAction(prevState: unknown, formData: FormData) {
   const session = await auth();
@@ -248,82 +260,15 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
   }
 
   const courseId = formData.get("id") as string;
-  const name = formData.get("name") as string;
-  const price = formData.get("price") as string;
-  const priceType = formData.get("priceType") as string || "course";
-  const serviceId = formData.get("serviceId") as string || null;
-  const certifiedTrainer = formData.get("certifiedTrainer") === "true";
-  const certifierName = formData.get("certifierName") as string;
-  const dedicatedField = formData.get("dedicatedField") === "true";
-  const trainingFieldDescription = formData.get("trainingFieldDescription") as string;
-  const trainingFieldAddress = formData.get("trainingFieldAddress") as string;
-  const trainingFieldGoogleBusinessProfile = formData.get("trainingFieldGoogleBusinessProfile") as string;
-  const trainingFieldGoogleMapsLink = formData.get("trainingFieldGoogleMapsLink") as string;
-  const parking = formData.get("parking") === "true";
-  const parkingDescription = formData.get("parkingDescription") as string;
-  const details = formData.get("details") as string;
-  const termsOfParticipation = formData.get("termsOfParticipation") as string;
-
-  const medicationAdministration = formData.get("medicationAdministration") === "true";
-  const medicationAdministrationDetails = formData.get("medicationAdministrationDetails") as string;
-  const webCam = formData.get("webCam") === "true";
-  const webCamDetails = formData.get("webCamDetails") as string;
-  const dailyWalksStr = formData.get("dailyWalks") as string;
-  const dailyWalks = dailyWalksStr ? parseInt(dailyWalksStr, 10) : null;
-  const ownerCommunication = formData.get("ownerCommunication") === "true";
-  const ownerCommunicationDetails = formData.get("ownerCommunicationDetails") as string;
-  const personalizedMealPlan = formData.get("personalizedMealPlan") === "true";
-  const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
-  const checkin = formData.get("checkin") as string || null;
-  const checkout = formData.get("checkout") as string || null;
-  const checkinWeekend = formData.get("checkinWeekend") as string || null;
-  const checkoutWeekend = formData.get("checkoutWeekend") as string || null;
-  const schedule = formData.get("schedule") as string || null;
-  const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
-  const ageLimits = formData.get("ageLimits") as string || null;
-  const faq = formData.get("faq") as string || null;
-
-  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-  if (checkin && !timeRegex.test(checkin)) {
-    return { error: "Invalid work week check-in time format. Use hh:mm (24h)." };
-  }
-  if (checkout && !timeRegex.test(checkout)) {
-    return { error: "Invalid work week check-out time format. Use hh:mm (24h)." };
-  }
-  if (checkinWeekend && !timeRegex.test(checkinWeekend)) {
-    return { error: "Invalid weekend check-in time format. Use hh:mm (24h)." };
-  }
-  if (checkoutWeekend && !timeRegex.test(checkoutWeekend)) {
-    return { error: "Invalid weekend check-out time format. Use hh:mm (24h)." };
-  }
-
-  if (schedule) {
-    try {
-      const parsedSchedule = JSON.parse(schedule);
-      if (Array.isArray(parsedSchedule)) {
-        for (const item of parsedSchedule) {
-          if (item && item.enabled) {
-            if (item.checkin && !timeRegex.test(item.checkin)) {
-              return { error: `Invalid check-in time format for ${item.label || item.day}. Use hh:mm (24h).` };
-            }
-            if (item.checkout && !timeRegex.test(item.checkout)) {
-              return { error: `Invalid check-out time format for ${item.label || item.day}. Use hh:mm (24h).` };
-            }
-            if (item.checkin && item.checkout && item.checkout <= item.checkin) {
-              return { error: `Check-out time cannot be before or equal to check-in time for ${item.label || item.day}.` };
-            }
-          }
-        }
-      }
-    } catch (e) {
-      return { error: "Invalid schedule JSON format." };
-    }
-  }
-
   if (!courseId) {
     return { error: "Course ID is required." };
   }
-  if (!name) {
+
+  const parsed = parseCourseFormData(formData);
+  if ("error" in parsed) return parsed;
+  const d = parsed.data;
+
+  if (!d.name) {
     return { error: "Course name is required." };
   }
 
@@ -345,49 +290,42 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
     await db
       .update(courses)
       .set({
-        name,
-        serviceId,
-        certifiedTrainer,
-        certifierName: certifiedTrainer ? certifierName : null,
-        dedicatedField,
-        trainingFieldDescription: dedicatedField ? trainingFieldDescription : null,
-        trainingFieldAddress: dedicatedField ? trainingFieldAddress : null,
-        trainingFieldGoogleBusinessProfile: dedicatedField ? trainingFieldGoogleBusinessProfile : null,
-        trainingFieldGoogleMapsLink: dedicatedField ? trainingFieldGoogleMapsLink : null,
-        parking,
-        parkingDescription: parking ? parkingDescription : null,
-        details,
-        termsOfParticipation,
-        price,
-        priceType,
-        medicationAdministration,
-        medicationAdministrationDetails: medicationAdministration ? medicationAdministrationDetails : null,
-        webCam,
-        webCamDetails: webCam ? webCamDetails : null,
-        dailyWalks,
-        ownerCommunication,
-        ownerCommunicationDetails: ownerCommunication ? ownerCommunicationDetails : null,
-        personalizedMealPlan,
-        personalizedMealPlanDetails: personalizedMealPlan ? personalizedMealPlanDetails : null,
-        checkin,
-        checkout,
-        checkinWeekend,
-        checkoutWeekend,
-        schedule,
-        ageLimitsEnabled,
-        ageLimits: ageLimitsEnabled ? ageLimits : null,
-        faq,
+        name: d.name,
+        serviceId: d.serviceId,
+        certifiedTrainer: d.certifiedTrainer,
+        certifierName: d.certifiedTrainer ? d.certifierName : null,
+        dedicatedField: d.dedicatedField,
+        trainingFieldDescription: d.dedicatedField ? d.trainingFieldDescription : null,
+        trainingFieldAddress: d.dedicatedField ? d.trainingFieldAddress : null,
+        trainingFieldGoogleBusinessProfile: d.dedicatedField ? d.trainingFieldGoogleBusinessProfile : null,
+        trainingFieldGoogleMapsLink: d.dedicatedField ? d.trainingFieldGoogleMapsLink : null,
+        parking: d.parking,
+        parkingDescription: d.parking ? d.parkingDescription : null,
+        details: d.details,
+        termsOfParticipation: d.termsOfParticipation,
+        price: d.price,
+        priceType: d.priceType,
+        medicationAdministration: d.medicationAdministration,
+        medicationAdministrationDetails: d.medicationAdministration ? d.medicationAdministrationDetails : null,
+        webCam: d.webCam,
+        webCamDetails: d.webCam ? d.webCamDetails : null,
+        dailyWalks: d.dailyWalks,
+        ownerCommunication: d.ownerCommunication,
+        ownerCommunicationDetails: d.ownerCommunication ? d.ownerCommunicationDetails : null,
+        personalizedMealPlan: d.personalizedMealPlan,
+        personalizedMealPlanDetails: d.personalizedMealPlan ? d.personalizedMealPlanDetails : null,
+        checkin: d.checkin,
+        checkout: d.checkout,
+        checkinWeekend: d.checkinWeekend,
+        checkoutWeekend: d.checkoutWeekend,
+        schedule: d.schedule,
+        ageLimitsEnabled: d.ageLimitsEnabled,
+        ageLimits: d.ageLimitsEnabled ? d.ageLimits : null,
+        faq: d.faq,
       })
       .where(eq(courses.id, courseId));
 
-    revalidatePath("/dashboard/services/dog-training");
-    revalidatePath("/dashboard/services/sport-dog-training");
-    revalidatePath("/dashboard/services/dog-boarding");
-    revalidatePath("/dashboard/services/dog-grooming");
-    revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
+    revalidateCourseServicePaths();
     return { success: true };
   } catch (error) {
     console.error("Failed to update course:", error);
