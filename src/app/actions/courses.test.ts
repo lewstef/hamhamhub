@@ -55,7 +55,7 @@ describe("Courses Server Actions", () => {
       formData.append("certifiedTrainer", "true");
       formData.append("certifierName", "SuperDog");
       formData.append("ageLimitsEnabled", "true");
-      formData.append("ageLimits", "Puppyhood (8 Weeks to 5 Months),Adulthood & Senior Years (1 Year +)");
+      formData.append("ageLimits", "Puppy (Up to 9 months),Senior (8+ years)");
       formData.append("dedicatedField", "true");
       formData.append("trainingFieldDescription", "A great field");
       formData.append("trainingFieldAddress", "123 Bark St");
@@ -70,7 +70,7 @@ describe("Courses Server Actions", () => {
         certifiedTrainer: true,
         certifierName: "SuperDog",
         ageLimitsEnabled: true,
-        ageLimits: "Puppyhood (8 Weeks to 5 Months),Adulthood & Senior Years (1 Year +)",
+        ageLimits: "Puppy (Up to 9 months),Senior (8+ years)",
         dedicatedField: true,
         trainingFieldDescription: "A great field",
         trainingFieldAddress: "123 Bark St",

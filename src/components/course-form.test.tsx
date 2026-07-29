@@ -12,6 +12,13 @@ vi.mock("lucide-react", () => ({
   Plus: () => <div data-testid="plus" />,
   Trash2: () => <div data-testid="trash2" />,
   ChevronDown: () => <div data-testid="chevron-down" />,
+  FileText: () => <div data-testid="file-text" />,
+  HelpCircle: () => <div data-testid="help-circle" />,
+  DollarSign: () => <div data-testid="dollar-sign" />,
+  Sliders: () => <div data-testid="sliders" />,
+  MapPin: () => <div data-testid="map-pin" />,
+  Calendar: () => <div data-testid="calendar" />,
+  FileCheck: () => <div data-testid="file-check" />,
 }));
 
 vi.mock("@/db", () => ({
@@ -69,28 +76,67 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Course Name")).toBeDefined();
     expect(screen.getByPlaceholderText("e.g. Puppy Socialization Class")).toBeDefined();
     expect(screen.getByText("Course Information and Details")).toBeDefined();
-    expect(screen.getByText("Create Course")).toBeDefined();
+    expect(screen.getAllByText("Create Course")[0]).toBeDefined();
     expect(screen.getAllByText("Per Course")[0]).toBeDefined();
   });
 
-  it("should render Dog Sport dynamic terminology correctly", () => {
+  it("should render Dog Sport dynamic terminology and 6-tab navigation correctly", () => {
     render(
       <CourseForm
         organizationId="org-1"
         serviceId="srv-sport-dog-training"
         itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
         onCancel={onCancel}
         onSubmitSuccess={onSubmitSuccess}
       />
     );
 
+    // Verify 6 Tab buttons
+    expect(screen.getByRole("button", { name: "General" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Terms of participation" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Pricing" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Schedule" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Location" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "FAQ" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Others" })).toBeNull();
+
+    // General tab content initially visible
     expect(screen.getByText("Back to Dog Sports List")).toBeDefined();
     expect(screen.getByText("Create New Dog Sport")).toBeDefined();
     expect(screen.getByText("Dog Sport Name")).toBeDefined();
     expect(screen.getByPlaceholderText("e.g. Agility, IGP, Obedience")).toBeDefined();
     expect(screen.getByText("Dog Sport Information and Details")).toBeDefined();
-    expect(screen.getByText("Create Dog Sport")).toBeDefined();
+    expect(screen.getAllByText("Create Dog Sport")[0]).toBeDefined();
+
+    // Switch to Terms of participation tab
+    fireEvent.click(screen.getByRole("button", { name: "Terms of participation" }));
+    expect(screen.getByText("Age Limits & Prerequisites")).toBeDefined();
+    expect(screen.getByText("Terms of Participation")).toBeDefined();
+
+    // Switch to Pricing tab
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+    expect(screen.getByText("Pricing Structure")).toBeDefined();
     expect(screen.getAllByText("Per Dog Sport")[0]).toBeDefined();
+
+    // Switch to Schedule tab
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+    expect(screen.getByText("Daily Operating Schedule")).toBeDefined();
+    expect(screen.getByText("Copy Mon to Mon–Fri")).toBeDefined();
+
+    // Switch to Location tab (contains Address, GBP, Maps, Dedicated Training Field, and Dedicated Parking)
+    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    expect(screen.getByText("Location & Map Details")).toBeDefined();
+    expect(screen.getByLabelText("Address")).toBeDefined();
+    expect(screen.getByLabelText("Google Business Profile")).toBeDefined();
+    expect(screen.getByLabelText("Google Maps Link")).toBeDefined();
+    expect(screen.getByText("Dedicated Training Field")).toBeDefined();
+    expect(screen.getByText("Dedicated Parking")).toBeDefined();
+
+    // Switch to FAQ tab (last position)
+    fireEvent.click(screen.getByRole("button", { name: "FAQ" }));
+    expect(screen.getByText("Add FAQ Item")).toBeDefined();
+    expect(screen.queryByText("Care & Sport Amenities")).toBeNull();
   });
 
   it("should select priceType correctly and trigger createCourseAction on submit", async () => {
@@ -115,7 +161,7 @@ describe("CourseForm Component", () => {
     const select = screen.getByLabelText("Billing Frequency");
     fireEvent.change(select, { target: { value: "month" } });
 
-    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    const submitBtn = screen.getAllByRole("button", { name: "Create Course" })[0];
     
     await act(async () => {
       fireEvent.click(submitBtn);
@@ -145,7 +191,7 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Boarding service Name")).toBeDefined();
     expect(screen.getByPlaceholderText("e.g. Standard Room, VIP Cabin")).toBeDefined();
     expect(screen.getByText("Boarding service Information and Details")).toBeDefined();
-    expect(screen.getByText("Create Boarding service")).toBeDefined();
+    expect(screen.getAllByText("Create Boarding service")[0]).toBeDefined();
 
     // Boarding frequency options
     expect(screen.getByText("Per Night")).toBeDefined();
@@ -323,7 +369,7 @@ describe("CourseForm Component", () => {
     );
 
     expect(screen.getByText("Edit Course: Agility Mastery")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Save Changes" })).toBeDefined();
+    expect(screen.getAllByRole("button", { name: "Save Changes" })[0]).toBeDefined();
     expect((screen.getByLabelText("Course Name") as HTMLInputElement).value).toBe("Agility Mastery");
     expect((screen.getByLabelText("Certifier Name") as HTMLInputElement).value).toBe("FCI");
     expect((screen.getByLabelText("Price Amount") as HTMLInputElement).value).toBe("200");
@@ -359,7 +405,7 @@ describe("CourseForm Component", () => {
     const nameInput = screen.getByLabelText("Course Name");
     fireEvent.change(nameInput, { target: { value: "   " } });
 
-    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    const submitBtn = screen.getAllByRole("button", { name: "Create Course" })[0];
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -383,7 +429,7 @@ describe("CourseForm Component", () => {
     const nameInput = screen.getByLabelText("Course Name");
     fireEvent.change(nameInput, { target: { value: "Fail Course" } });
 
-    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    const submitBtn = screen.getAllByRole("button", { name: "Create Course" })[0];
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -416,7 +462,7 @@ describe("CourseForm Component", () => {
     const nameInput = screen.getByLabelText("Course Name");
     fireEvent.change(nameInput, { target: { value: "Updated Name" } });
 
-    const submitBtn = screen.getByRole("button", { name: "Save Changes" });
+    const submitBtn = screen.getAllByRole("button", { name: "Save Changes" })[0];
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -494,7 +540,7 @@ describe("CourseForm Component", () => {
     const nameInput = screen.getByLabelText("Course Name");
     fireEvent.change(nameInput, { target: { value: "Advanced Agility" } });
 
-    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    const submitBtn = screen.getAllByRole("button", { name: "Create Course" })[0];
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -593,13 +639,14 @@ describe("CourseForm Component", () => {
 
     // Option phase checkboxes should be visible
     expect(screen.getByText("Select Age Phases")).toBeDefined();
-    expect(screen.getByText("Puppyhood (8 Weeks to 5 Months)")).toBeDefined();
-    expect(screen.getByText("Adolescence / Teenage Phase (5 Months to 12–18 Months)")).toBeDefined();
-    expect(screen.getByText("Adulthood & Senior Years (1 Year +)")).toBeDefined();
+    expect(screen.getByText("Puppy (Up to 9 months)")).toBeDefined();
+    expect(screen.getByText("Junior (9 to 18 months)")).toBeDefined();
+    expect(screen.getByText("Adult (18 months to 8 years)")).toBeDefined();
+    expect(screen.getByText("Senior (8+ years)")).toBeDefined();
 
-    // Check puppyhood and teenage phases
-    const puppyCheckbox = screen.getByText("Puppyhood (8 Weeks to 5 Months)").closest("label")?.querySelector("input[type='checkbox']") as HTMLInputElement;
-    const teenCheckbox = screen.getByText("Adolescence / Teenage Phase (5 Months to 12–18 Months)").closest("label")?.querySelector("input[type='checkbox']") as HTMLInputElement;
+    // Check puppy and junior phases
+    const puppyCheckbox = screen.getByText("Puppy (Up to 9 months)").closest("label")?.querySelector("input[type='checkbox']") as HTMLInputElement;
+    const teenCheckbox = screen.getByText("Junior (9 to 18 months)").closest("label")?.querySelector("input[type='checkbox']") as HTMLInputElement;
     expect(puppyCheckbox).toBeDefined();
     expect(teenCheckbox).toBeDefined();
 
@@ -665,5 +712,258 @@ describe("CourseForm Component", () => {
 
     expect(copyMonAllBtn).toBeDefined();
   });
+
+  it("should handle field edits and form submission across 6 tabs in Dog Sports Training mode", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sport-dog-training"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // 1. General Tab: Fill Name and enable Certified Trainer
+    const nameInput = screen.getByLabelText("Dog Sport Name");
+    fireEvent.change(nameInput, { target: { value: "Mondioring Level 1" } });
+
+    const certifiedTrainerToggle = screen.getAllByRole("switch")[0];
+    await act(async () => {
+      fireEvent.click(certifiedTrainerToggle);
+    });
+
+    const certifierInput = screen.getByLabelText("Certifier Name");
+    fireEvent.change(certifierInput, { target: { value: "FCI World Body" } });
+
+    // 2. Location Tab: Fill Address and Maps links
+    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    const addressInput = screen.getByLabelText("Address");
+    fireEvent.change(addressInput, { target: { value: "Str. Canine 15, Cluj" } });
+
+    const gbpInput = screen.getByLabelText("Google Business Profile");
+    fireEvent.change(gbpInput, { target: { value: "https://business.google.com/site/mondioring" } });
+
+    const mapsInput = screen.getByLabelText("Google Maps Link");
+    fireEvent.change(mapsInput, { target: { value: "https://maps.google.com/place/mondioring" } });
+
+    // 3. Pricing Tab: Fill Price Amount and Billing Frequency
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+    const priceInput = screen.getByLabelText("Price Amount");
+    fireEvent.change(priceInput, { target: { value: "400 RON" } });
+
+    const select = screen.getByLabelText("Billing Frequency");
+    fireEvent.change(select, { target: { value: "month" } });
+
+    // Submit form via action button
+    const submitBtn = screen.getAllByRole("button", { name: "Create Dog Sport" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    expect(passedFormData.get("name")).toBe("Mondioring Level 1");
+    expect(passedFormData.get("certifiedTrainer")).toBe("true");
+    expect(passedFormData.get("certifierName")).toBe("FCI World Body");
+    expect(passedFormData.get("trainingFieldAddress")).toBe("Str. Canine 15, Cluj");
+    expect(passedFormData.get("trainingFieldGoogleBusinessProfile")).toBe("https://business.google.com/site/mondioring");
+    expect(passedFormData.get("trainingFieldGoogleMapsLink")).toBe("https://maps.google.com/place/mondioring");
+    expect(passedFormData.get("price")).toBe("400 RON");
+    expect(passedFormData.get("priceType")).toBe("month");
+    expect(onSubmitSuccess).toHaveBeenCalled();
+  });
+
+  it("should persist entered inputs when navigating back and forth between tabs in Dog Sports mode", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sport-dog-training"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Fill Name in General tab
+    const nameInput = screen.getByLabelText("Dog Sport Name") as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: "IGP Tracking" } });
+
+    // Fill Location tab
+    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    const addressInput = screen.getByLabelText("Address") as HTMLInputElement;
+    fireEvent.change(addressInput, { target: { value: "Timisoara Field 4" } });
+
+    // Switch to Schedule tab
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+    expect(screen.getByText("Daily Operating Schedule")).toBeDefined();
+
+    // Navigate back to General tab — Name should be preserved
+    fireEvent.click(screen.getByRole("button", { name: "General" }));
+    expect((screen.getByLabelText("Dog Sport Name") as HTMLInputElement).value).toBe("IGP Tracking");
+
+    // Navigate back to Location tab — Address should be preserved
+    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    expect((screen.getByLabelText("Address") as HTMLInputElement).value).toBe("Timisoara Field 4");
+  });
+
+  it("should support adding, updating, and removing multi-pricing tiers", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sport-dog-training"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Set Name
+    const nameInput = screen.getByLabelText("Dog Sport Name");
+    fireEvent.change(nameInput, { target: { value: "Agility Multi Pricing" } });
+
+    // Go to Pricing tab
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+    expect(screen.getByText("Price Option #1")).toBeDefined();
+
+    // Fill tier 1
+    const price1 = screen.getByLabelText("Price Amount");
+    fireEvent.change(price1, { target: { value: "200 RON" } });
+
+    // Click Add Price Tier
+    const addTierBtn = screen.getByRole("button", { name: "Add Price Tier" });
+    fireEvent.click(addTierBtn);
+
+    expect(screen.getByText("Price Option #2")).toBeDefined();
+
+    // Fill tier 2
+    const price2 = screen.getByLabelText("Price Amount", { selector: "#course-price-1" });
+    fireEvent.change(price2, { target: { value: "800 RON" } });
+
+    const label2 = screen.getByLabelText("Label / Title (Optional)", { selector: "#course-price-label-1" });
+    fireEvent.change(label2, { target: { value: "Monthly Pass" } });
+
+    // Submit form
+    const submitBtn = screen.getAllByRole("button", { name: "Create Dog Sport" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    const priceJsonStr = passedFormData.get("price") as string;
+    expect(priceJsonStr).toContain("200 RON");
+    expect(priceJsonStr).toContain("800 RON");
+    expect(priceJsonStr).toContain("Monthly Pass");
+  });
+
+  it("should support adding and submitting closed periods in schedule", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sport-dog-training"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Set Name
+    const nameInput = screen.getByLabelText("Dog Sport Name");
+    fireEvent.change(nameInput, { target: { value: "Summer Dog Sport" } });
+
+    // Go to Schedule tab
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+    expect(screen.getByText("Closed Periods & Special Closures")).toBeDefined();
+
+    // Add closed period
+    const addClosedBtn = screen.getByRole("button", { name: "Add Closed Period" });
+    fireEvent.click(addClosedBtn);
+
+    expect(screen.getByText("Closed Period #1")).toBeDefined();
+
+    const titleInput = screen.getByLabelText("Closure Reason / Title");
+    fireEvent.change(titleInput, { target: { value: "Summer Break" } });
+
+    const startInput = screen.getByLabelText("Start Date");
+    fireEvent.change(startInput, { target: { value: "2026-08-01" } });
+
+    const endInput = screen.getByLabelText("End Date");
+    fireEvent.change(endInput, { target: { value: "2026-08-15" } });
+
+    // Submit form
+    const submitBtn = screen.getAllByRole("button", { name: "Create Dog Sport" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    const scheduleJsonStr = passedFormData.get("schedule") as string;
+    expect(scheduleJsonStr).toContain("Summer Break");
+    expect(scheduleJsonStr).toContain("2026-08-01");
+    expect(scheduleJsonStr).toContain("2026-08-15");
+  });
+
+  it("should support adding and submitting special opening dates in schedule", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sport-dog-training"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Set Name
+    const nameInput = screen.getByLabelText("Dog Sport Name");
+    fireEvent.change(nameInput, { target: { value: "Special Workshop Sport" } });
+
+    // Go to Schedule tab
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+    expect(screen.getByText("Special Openings & Extra Working Dates")).toBeDefined();
+
+    // Add special opening
+    const addSpecialBtn = screen.getByRole("button", { name: "Add Special Opening" });
+    fireEvent.click(addSpecialBtn);
+
+    expect(screen.getByText("Special Opening #1")).toBeDefined();
+
+    const titleInput = screen.getByLabelText("Opening Reason / Event Title");
+    fireEvent.change(titleInput, { target: { value: "Christmas Special Session" } });
+
+    const startInput = screen.getByLabelText("Start Date", { selector: "#special-opening-start-0" });
+    fireEvent.change(startInput, { target: { value: "2026-12-20" } });
+
+    const endInput = screen.getByLabelText("End Date", { selector: "#special-opening-end-0" });
+    fireEvent.change(endInput, { target: { value: "2026-12-20" } });
+
+    // Submit form
+    const submitBtn = screen.getAllByRole("button", { name: "Create Dog Sport" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    const scheduleJsonStr = passedFormData.get("schedule") as string;
+    expect(scheduleJsonStr).toContain("Christmas Special Session");
+    expect(scheduleJsonStr).toContain("2026-12-20");
+  });
 });
+
 

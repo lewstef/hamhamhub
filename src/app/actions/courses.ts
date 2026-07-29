@@ -12,8 +12,10 @@ import { auth } from "@/auth";
  * @param prevState - Unused state placeholder
  * @param formData - The course/boarding form data
  * @param formData.name - Name of the offering (required)
- * @param formData.price - Price amount (e.g. "150 RON")
- * @param formData.priceType - Suffix billing frequency (e.g. "course", "month", "night", "day")
+ * @param formData.price - Price amount string (e.g. "150 RON") or serialized JSON string of multi-pricing tiers
+ * @param formData.priceType - Suffix billing frequency (e.g. "course", "month", "night", "day", "session", "hour")
+ * @param formData.schedule - Serialized JSON string representing weekly schedule array or schedule object containing weeklySchedule, closedPeriods, and specialOpenings
+
  * @param formData.serviceId - Linked service template UUID
  * @param formData.certifiedTrainer - Boolean string for training trainer certification
  * @param formData.certifierName - Trainer certification body name

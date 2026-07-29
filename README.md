@@ -130,11 +130,14 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Prevented the global sidebar toggle shortcut (`Ctrl + B` / `Cmd + B`) from expanding or collapsing the sidebar when focus is active inside a WYSIWYG editor (`WysiwygEditor`), contenteditable area, `<input>`, or `<textarea>`.
   - Added event propagation suppression (`e.stopPropagation()` & `e.nativeEvent.stopImmediatePropagation()`) in `WysiwygEditor` for `Ctrl + B`, `Ctrl + I`, and `Ctrl + U` formatting commands.
   - Added target check in `SidebarProvider` (`src/components/ui/sidebar.tsx`) to ignore sidebar toggle shortcuts when the user is inside an editable input field or element tagged with `data-wysiwyg="true"`.
-- **FAQ Section Rich-Text WYSIWYG Editor**:
-  - Replaced the plain `<textarea>` for FAQ item answers in `CourseForm` (`src/components/course-form.tsx`) with the full `WysiwygEditor` component.
-  - Enables rich text formatting (bold, italic, underline, lists, remove formatting) for all FAQ item answers when managing course, boarding, grooming, or dog sport service offerings.
+- **Multi-Pricing Tiers, Closed Periods & Special Openings Schedule Builder**:
+  - **Multi-Pricing Tiers**: Allows organizations to configure multiple price tiers and billing frequencies (e.g. `2000 RON / course`, `800 RON / month`, `100 RON / session`) with optional tier labels (e.g., "Basic Package", "Monthly Pass") across `/dashboard/services/sport-dog-training` and all course offerings. Single-price offerings remain backward compatible with plain string values.
+  - **Closed Periods Schedule Builder**: Organizations can define special closed periods (vacation dates, seasonal breaks, or holiday closures with title, start date, and end date) within the Schedule tab. Displays rose `Closed: Reason (Start to End)` badges on service cards.
+  - **Special Openings Schedule Builder**: Organizations can specify special dates or holiday sessions when they ARE open (e.g. Christmas Special Session, Weekend Workshop with title, start date, end date, and optional check-in time). Displays emerald `Open: Reason (Start to End)` badges on service cards.
 
 ---
+
+
 
 ## 4. Dynamic Categories & Service Types
 
@@ -186,17 +189,24 @@ The backoffice system integrates completely dynamic configuration layers for bus
 
 ## 6. Dynamic Offerings & Cynological Offerings (Courses & Dog Sports)
 
-The platform supports dynamic, nested sub-offerings for specialized services, specifically **"Dog training"** and **"Dog Sports Training"**:
+The platform supports dynamic, nested sub-offerings for specialized services, specifically **"Dog training"** and **"Dog sports training"**:
 
-### A. Dynamic Noun Context-Switching
+### A. Dynamic Noun Context-Switching & Tabbed Form Architecture
 The application UI dynamically adjusts its user-facing terminology and input settings depending on the slug of the active service:
-- **Dog training** (`dog-training`): Configures and displays offerings as **"Courses"** (e.g. "Add Course", "Course Name").
-- **Dog Sports Training** (`sport-dog-training`): Configures and displays offerings as **"Dog Sports"** (e.g. "Add Dog Sport", "Dog Sport Name").
+- **Dog training** (`dog-training`): Configures and displays offerings as **"Courses"** (e.g. "Add Course", "Course Name") using a clean two-column layout.
+- **Dog sports training** (`sport-dog-training`): Configures and displays offerings as **"Dog Sports"** (e.g. "Add Dog Sport", "Dog Sport Name") using an interactive **6-Tab Navigation System**:
+  1. **General Tab**: Name, Certified Dog Trainer toggle & Certifier Institution, Dog Sport Information (WYSIWYG editor).
+  2. **Terms of participation Tab**: Age Limits switch & phase checkboxes (`Puppy (Up to 9 months)`, `Junior (9 to 18 months)`, `Adult (18 months to 8 years)`, `Senior (8+ years)`), Terms of Participation (WYSIWYG editor).
+  3. **Pricing Tab**: Price Amount & Billing Frequency selector (`Per Dog Sport`, `Per Month`, `Per Session`, `Per Hour`).
+  4. **Schedule Tab**: 7-Day Daily Operating Schedule with check-in/out time pickers and quick preset buttons (`Copy Mon to Mon–Fri` & `Copy Mon to All`).
+  5. **Location Tab**: Address, Google Business Profile link, Google Maps Link, **Dedicated Training Field** switch & Description, and **Dedicated Parking** switch & Description.
+  6. **FAQ Tab** (Last Tab): Interactive FAQ Q&A item builder with WYSIWYG answer fields. (Care & Boarding Amenities are strictly scoped to the Dog Boarding service).
 
-### B. Facility & Venue Attributes
+### B. Facility & Venue Attributes & Top Action Header
 Each course or dog sport is defined in a dynamic form featuring:
+- **Top Header Action Bar**: Prominently displays `Cancel` and `Save Changes` / `Create [ItemNoun]` buttons right at the top header for instant access without scrolling.
 - **Obedience & Certified Coaching**: Toggleable trainer certifications with certifier name tracking.
-- **Dedicated Venues**: An address field, Google Business Profile (GBP) link, and Google Maps embed link (grouped under "Dedicated Training Field").
+- **Dedicated Venues & Location**: Address, Google Business Profile (GBP) link, and Google Maps link.
 - **Parking Accommodations**: Switchable parking toggle with descriptive details.
 - **WYSIWYG Descriptions**: Text styling editors for program details and participation terms.
 
@@ -247,7 +257,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (489 tests across 38 test files)
+# Run all tests (493 tests across 39 test files)
 npm run test
 
 # Run with coverage report

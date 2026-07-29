@@ -38,6 +38,8 @@ vi.mock("lucide-react", () => ({
   Info: () => <div data-testid="info" />,
   AlertCircle: () => <div data-testid="alert-circle" />,
   Users: () => <div data-testid="users" />,
+  CalendarX: () => <div data-testid="calendar-x" />,
+  CalendarCheck: () => <div data-testid="calendar-check" />,
 }));
 
 vi.mock("@/app/actions/organizations", () => ({
@@ -703,7 +705,7 @@ describe("DashboardServiceDetail Component", () => {
     const nameInput = screen.getByLabelText("Course Name");
     fireEvent.change(nameInput, { target: { value: "New Agility" } });
 
-    const submitBtn = screen.getByRole("button", { name: "Create Course" });
+    const submitBtn = screen.getAllByRole("button", { name: "Create Course" })[0];
     await act(async () => {
       fireEvent.click(submitBtn);
     });
@@ -861,7 +863,7 @@ describe("DashboardServiceDetail Component", () => {
             dedicatedField: false,
             parking: false,
             ageLimitsEnabled: true,
-            ageLimits: "Puppyhood (8 Weeks to 5 Months),Adolescence / Teenage Phase (5 Months to 12–18 Months)",
+            ageLimits: "Puppy (Up to 9 months),Junior (9 to 18 months)",
           },
         ]}
       />
@@ -886,7 +888,7 @@ describe("DashboardServiceDetail Component", () => {
             dedicatedField: false,
             parking: false,
             ageLimitsEnabled: true,
-            ageLimits: "Puppyhood (8 Weeks to 5 Months)",
+            ageLimits: "Puppy (Up to 9 months)",
           },
         ]}
       />
@@ -911,7 +913,7 @@ describe("DashboardServiceDetail Component", () => {
             dedicatedField: false,
             parking: false,
             ageLimitsEnabled: false,
-            ageLimits: "Puppyhood (8 Weeks to 5 Months)",
+            ageLimits: "Puppy (Up to 9 months)",
           },
         ]}
       />
@@ -920,4 +922,47 @@ describe("DashboardServiceDetail Component", () => {
     // Badge must be absent when the feature is disabled
     expect(screen.queryByText(/Ages:/)).toBeNull();
   });
+
+  it("should render multi-pricing badges and closed period badges when present", () => {
+    const multiPriceJson = JSON.stringify([
+      { amount: "200 RON", type: "course", label: "Basic" },
+      { amount: "800 RON", type: "month", label: "Monthly" },
+    ]);
+    const scheduleWithClosedAndSpecialJson = JSON.stringify({
+      weeklySchedule: [],
+      closedPeriods: [
+        { title: "Summer Recess", startDate: "2026-08-01", endDate: "2026-08-15" },
+      ],
+      specialOpenings: [
+        { title: "Christmas Special", startDate: "2026-12-20", endDate: "2026-12-20", checkin: "09:00", checkout: "17:00" },
+      ],
+    });
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="sport-dog-training"
+        courses={[
+          {
+            id: "c-multi",
+            name: "Mondioring Pro",
+            certifiedTrainer: true,
+            dedicatedField: true,
+            parking: true,
+            price: multiPriceJson,
+            priceType: "course",
+            schedule: scheduleWithClosedAndSpecialJson,
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("Basic: 200 RON / course")).toBeDefined();
+    expect(screen.getByText("Monthly: 800 RON / month")).toBeDefined();
+    expect(screen.getByText("Closed: Summer Recess (2026-08-01 to 2026-08-15)")).toBeDefined();
+    expect(screen.getByText("Open: Christmas Special (2026-12-20 to 2026-12-20 • 09:00 - 17:00)")).toBeDefined();
+  });
 });
+

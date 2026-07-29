@@ -3,10 +3,10 @@
 import { useState, useTransition, useEffect } from "react";
 import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
 import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/courses";
-import { CourseForm } from "@/components/course-form";
+import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -526,11 +526,44 @@ export function DashboardServiceDetail({
                                 Meal Plan
                               </span>
                             )}
-                            {course.price && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20">
-                                {course.price} / {["month", "night", "day", "service"].includes(course.priceType || "") ? course.priceType : itemNoun.toLowerCase()}
+                            {parseClosedPeriods(course.schedule).map((period, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20"
+                                title={period.startDate && period.endDate ? `${period.startDate} to ${period.endDate}` : period.startDate || period.endDate || ""}
+                              >
+                                <CalendarX className="size-2.5" />
+                                Closed: {period.title || "Special Break"} ({period.startDate}{period.startDate && period.endDate ? " to " : ""}{period.endDate})
                               </span>
-                            )}
+                            ))}
+                            {parseSpecialOpenings(course.schedule).map((opening, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                                title={opening.startDate && opening.endDate ? `${opening.startDate} to ${opening.endDate}` : opening.startDate || opening.endDate || ""}
+                              >
+                                <CalendarCheck className="size-2.5" />
+                                Open: {opening.title || "Special Session"} ({opening.startDate}{opening.startDate && opening.endDate ? " to " : ""}{opening.endDate}{opening.checkin || opening.checkout ? ` • ${opening.checkin || ""}${opening.checkout ? ` - ${opening.checkout}` : ""}` : ""})
+                              </span>
+                            ))}
+                            {course.price &&
+                              parseCoursePricings(course.price, course.priceType, itemNoun.toLowerCase()).map((pTier, pIdx) => {
+                                if (!pTier.amount) return null;
+                                const typeLabel = ["month", "night", "day", "service", "session", "hour", "course"].includes(pTier.type || "")
+                                  ? pTier.type
+                                  : itemNoun.toLowerCase();
+                                const displayText = pTier.label
+                                  ? `${pTier.label}: ${pTier.amount} / ${typeLabel}`
+                                  : `${pTier.amount} / ${typeLabel}`;
+                                return (
+                                  <span
+                                    key={pIdx}
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-primary/10 text-primary border border-primary/20"
+                                  >
+                                    {displayText}
+                                  </span>
+                                );
+                              })}
                           </div>
   
                           {/* Right: action buttons */}                           <div
