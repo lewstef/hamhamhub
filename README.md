@@ -97,6 +97,14 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Unified Custom Dropdowns (`CustomSelect`)**: Replaced all native browser `<select>` elements across the entire platform (Daily Walks, Billing Frequency, Organization Category, Staff Role, and Service Template preview dropdowns) with a reusable, accessible custom dropdown component (`CustomSelect`). Features animated popover menus with thin custom scrollbars (`custom-scrollbar`), hover state highlights, selected checkmark indicators, outside-click auto-dismissal, and a synchronized hidden native select element ensuring seamless HTML form submission and test compatibility.
   - Enforced strict client-side and server-side validation ensuring check-out time cannot be before or equal to check-in time (`checkout > checkin`).
   - Added **Web cam** boolean switch (`webCam`) and optional access instructions text input (`webCamDetails`) strictly scoped to the Dog Boarding service (`/dashboard/services/dog-boarding`). Renders a teal `Web Cam` badge on active entries.
+- **Dog Sports Training MVP Subsystem**:
+  - Renamed "Daily operating Schedule" header to "Schedule" for Dog Sport services (`/dashboard/services/sport-dog-training`).
+  - Updated check-in and check-out field labels to **Start** and **End** across the Weekly Schedule, Special Openings, and summary views for Dog Sports.
+  - Added per-day **Note / Schedule Remarks** text inputs to every day row in the Schedule editor, enabling trainers to attach specific session remarks (e.g. "Group sessions only", "Advance registration required").
+  - Fixed `parseScheduleGroups` to include schedule notes in grouping keys so remarks are preserved in summary detail views.
+  - Built real-time Date Overlap Validation & Conflict Notifications that warn users if closed periods overlap with open operating dates.
+  - Constrained Start/End dropdown widths (`sm:w-36`) for a sleek, compact layout with 100% unified styling matching `CustomSelect` and `Input`.
+  - Removed the "Active" status badge on the Dog Sport Training dashboard view (`/dashboard/services/sport-dog-training`).
 - **Service Age Limits Switch & Checkboxes Option Group**:
   - Added a new database-backed `Age limits` boolean switch (`ageLimitsEnabled`) and text field (`ageLimits`) to courses schema.
   - Shows when editing or adding courses for "Dog training" and "Dog sports training" services.
