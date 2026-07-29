@@ -265,8 +265,8 @@ function DayScheduleGrid({
 
               {item.enabled ? (
                 <div className="flex flex-col gap-2.5 flex-1 w-full">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="space-y-1 w-full sm:w-36">
                       <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
                         {isDogSport ? "Start" : "Check-in Time"}
                       </Label>
@@ -279,7 +279,7 @@ function DayScheduleGrid({
                         required={item.enabled}
                       />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 w-full sm:w-36">
                       <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
                         {isDogSport ? "End" : "Check-out Time"}
                       </Label>
