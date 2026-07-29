@@ -8,6 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, ChevronDown, FileText, HelpCircle, DollarSign, Sliders, MapPin, Calendar, FileCheck } from "lucide-react";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { DatePickerInput, parseDateString } from "@/components/ui/date-picker-input";
+
+export function getComparableTimestamp(dateStr: string): number | null {
+  const parsed = parseDateString(dateStr);
+  if (!parsed) return null;
+  return Date.UTC(parsed.year, parsed.month, parsed.day);
+}
+
+
+
 
 interface Course {
   id?: string;
@@ -78,6 +88,7 @@ export interface ClosedPeriodItem {
   title: string;
   startDate: string;
   endDate: string;
+  note?: string;
 }
 
 export function parseClosedPeriods(scheduleJson?: string | null): ClosedPeriodItem[] {
@@ -98,6 +109,7 @@ export interface SpecialOpeningItem {
   endDate: string;
   checkin?: string;
   checkout?: string;
+  note?: string;
 }
 
 export function parseSpecialOpenings(scheduleJson?: string | null): SpecialOpeningItem[] {
@@ -121,6 +133,7 @@ export interface DayScheduleItem {
   enabled: boolean;
   checkin: string;
   checkout: string;
+  note?: string;
 }
 
 export const DEFAULT_WEEKLY_SCHEDULE: DayScheduleItem[] = [
@@ -368,6 +381,34 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     parseSpecialOpenings(initialCourse?.schedule)
   );
 
+  // Live schedule overlap conflict calculation
+  const scheduleOverlapError = React.useMemo(() => {
+    const activeClosed = closedPeriods.filter(
+      (item) => item.title.trim() !== "" || item.startDate.trim() !== "" || item.endDate.trim() !== ""
+    );
+    const activeOpen = specialOpenings.filter(
+      (item) => item.title.trim() !== "" || item.startDate.trim() !== "" || item.endDate.trim() !== ""
+    );
+
+    for (const closed of activeClosed) {
+      const cStart = getComparableTimestamp(closed.startDate);
+      const cEnd = getComparableTimestamp(closed.endDate);
+      if (cStart === null || cEnd === null) continue;
+
+      for (const openItem of activeOpen) {
+        const oStart = getComparableTimestamp(openItem.startDate);
+        const oEnd = getComparableTimestamp(openItem.endDate);
+        if (oStart === null || oEnd === null) continue;
+
+        if (cStart <= oEnd && oStart <= cEnd) {
+          return `Closed period "${closed.title}" (${closed.startDate} – ${closed.endDate}) overlaps with special opening "${openItem.title}" (${openItem.startDate} – ${openItem.endDate}).`;
+        }
+      }
+    }
+    return null;
+  }, [closedPeriods, specialOpenings]);
+
+
   const handleUpdateDaySchedule = (dayKey: DayKey, field: keyof DayScheduleItem, value: any) => {
     setWeeklySchedule((prev) =>
       prev.map((item) => (item.day === dayKey ? { ...item, [field]: value } : item))
@@ -603,14 +644,74 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
       }
     }
 
+    // Filter out empty closed period & special opening entries
+    const activeClosedPeriods = closedPeriods.filter(
+      (item) => item.title.trim() !== "" || item.startDate.trim() !== "" || item.endDate.trim() !== ""
+    );
+    for (const item of activeClosedPeriods) {
+      if (!item.title.trim() || !item.startDate.trim() || !item.endDate.trim()) {
+        setError(`All closed period entries must have a title, start date, and end date.`);
+        return;
+      }
+      const sTs = getComparableTimestamp(item.startDate);
+      const eTs = getComparableTimestamp(item.endDate);
+      if (sTs === null || eTs === null) {
+        setError(`Invalid date in closed period "${item.title}". Please use DD.MM.YYYY format (e.g. 25.12.2026).`);
+        return;
+      }
+      if (eTs < sTs) {
+        setError(`Closed period "${item.title}" end date cannot be before start date.`);
+        return;
+      }
+    }
+
+    const activeSpecialOpenings = specialOpenings.filter(
+      (item) => item.title.trim() !== "" || item.startDate.trim() !== "" || item.endDate.trim() !== ""
+    );
+    for (const item of activeSpecialOpenings) {
+      if (!item.title.trim() || !item.startDate.trim() || !item.endDate.trim()) {
+        setError(`All special opening entries must have a title, start date, and end date.`);
+        return;
+      }
+      const sTs = getComparableTimestamp(item.startDate);
+      const eTs = getComparableTimestamp(item.endDate);
+      if (sTs === null || eTs === null) {
+        setError(`Invalid date in special opening "${item.title}". Please use DD.MM.YYYY format (e.g. 25.12.2026).`);
+        return;
+      }
+      if (eTs < sTs) {
+        setError(`Special opening "${item.title}" end date cannot be before start date.`);
+        return;
+      }
+    }
+
+    // Validate closed periods do NOT overlap with special opening periods
+    for (const closed of activeClosedPeriods) {
+      const cStart = getComparableTimestamp(closed.startDate);
+      const cEnd = getComparableTimestamp(closed.endDate);
+      if (cStart === null || cEnd === null) continue;
+
+      for (const openItem of activeSpecialOpenings) {
+        const oStart = getComparableTimestamp(openItem.startDate);
+        const oEnd = getComparableTimestamp(openItem.endDate);
+        if (oStart === null || oEnd === null) continue;
+
+        // Overlap check (inclusive range overlap)
+        if (cStart <= oEnd && oStart <= cEnd) {
+          setError(`Closed period "${closed.title}" (${closed.startDate} – ${closed.endDate}) overlaps with special opening "${openItem.title}" (${openItem.startDate} – ${openItem.endDate}).`);
+          return;
+        }
+      }
+    }
+
     const mon = weeklySchedule.find((item) => item.day === "monday");
     const sat = weeklySchedule.find((item) => item.day === "saturday");
     formData.append("checkin", mon?.checkin || checkin);
     formData.append("checkout", mon?.checkout || checkout);
     formData.append("checkinWeekend", sat?.checkin || checkinWeekend);
     formData.append("checkoutWeekend", sat?.checkout || checkoutWeekend);
-    if (closedPeriods.length > 0 || specialOpenings.length > 0) {
-      formData.append("schedule", JSON.stringify({ weeklySchedule, closedPeriods, specialOpenings }));
+    if (activeClosedPeriods.length > 0 || activeSpecialOpenings.length > 0) {
+      formData.append("schedule", JSON.stringify({ weeklySchedule, closedPeriods: activeClosedPeriods, specialOpenings: activeSpecialOpenings }));
     } else {
       formData.append("schedule", JSON.stringify(weeklySchedule));
     }
@@ -718,13 +819,16 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
           <button
             type="button"
             onClick={() => setActiveTab("schedule")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === "schedule"
+            className={`relative px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === "schedule"
                 ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                 : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               }`}
           >
             <Calendar className="size-4" />
             Schedule
+            {scheduleOverlapError && (
+              <span className="size-2 rounded-full bg-destructive animate-pulse" title="Overlap Conflict Detected" />
+            )}
           </button>
           <button
             type="button"
@@ -1081,12 +1185,25 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
           {/* TAB 4: SCHEDULE */}
           {activeTab === "schedule" && (
             <div className="space-y-6 animate-in fade-in duration-200">
+              {scheduleOverlapError && (
+                <div
+                  data-testid="schedule-overlap-notification"
+                  className="p-4 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-3 shadow-sm animate-in fade-in duration-200"
+                >
+                  <AlertCircle className="size-5 shrink-0 mt-0.5" />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-bold uppercase tracking-wider">Date Overlap Conflict Notification</span>
+                    <span className="text-xs font-semibold">{scheduleOverlapError}</span>
+                  </div>
+                </div>
+              )}
+
               {/* 7-Day Day-Specific Operating Schedule Section */}
               <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/40 pb-3">
                   <div>
-                    <Label className="text-base font-bold text-foreground">Daily Operating Schedule</Label>
-                    <p className="text-xs text-muted-foreground">Specify day-specific check-in and check-out times (Monday to Sunday)</p>
+                    <Label className="text-base font-bold text-foreground">{isDogSport ? "Schedule" : "Daily Operating Schedule"}</Label>
+                    <p className="text-xs text-muted-foreground">{isDogSport ? "Specify day-specific operating schedule (Monday to Sunday)" : "Specify day-specific check-in and check-out times (Monday to Sunday)"}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -1138,11 +1255,11 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                         </div>
 
                         {item.enabled ? (
-                          <div className="flex flex-col gap-1 flex-1 sm:max-w-md">
-                            <div className="grid grid-cols-2 gap-3">
+                          <div className="flex flex-col gap-2.5 flex-1 w-full">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div className="space-y-1">
                                 <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                  Check-in Time
+                                  {isDogSport ? "Start" : "Check-in Time"}
                                 </Label>
                                 <TimePickerSelect
                                   id={`checkin-${item.day}`}
@@ -1155,7 +1272,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                               </div>
                               <div className="space-y-1">
                                 <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                  Check-out Time
+                                  {isDogSport ? "End" : "Check-out Time"}
                                 </Label>
                                 <TimePickerSelect
                                   id={`checkout-${item.day}`}
@@ -1168,14 +1285,29 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                 />
                               </div>
                             </div>
+
+                            <div className="space-y-1">
+                              <Label htmlFor={`note-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                                Note / Schedule Remarks (Optional)
+                              </Label>
+                              <Input
+                                id={`note-${item.day}`}
+                                type="text"
+                                value={item.note || ""}
+                                onChange={(e) => handleUpdateDaySchedule(item.day, "note", e.target.value)}
+                                placeholder="e.g. Group sessions only, advance registration required..."
+                                className="h-9 text-xs bg-background rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
+                              />
+                            </div>
+
                             {item.checkin && item.checkout && item.checkout <= item.checkin && (
                               <p className="text-[11px] text-destructive font-semibold mt-0.5">
-                                Check-out time cannot be before or equal to check-in time.
+                                {isDogSport ? "End time cannot be before or equal to start time." : "Check-out time cannot be before or equal to check-in time."}
                               </p>
                             )}
                           </div>
                         ) : (
-                          <span className="text-xs italic text-muted-foreground py-1">Closed for check-in / check-out</span>
+                          <span className="text-xs italic text-muted-foreground py-1">{isDogSport ? "Closed" : "Closed for check-in / check-out"}</span>
                         )}
                       </div>
                     </div>
@@ -1184,6 +1316,19 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
 
                 {/* Closed Periods & Special Closures Section */}
                 <div className="space-y-4 pt-4 border-t border-border/60">
+                  {scheduleOverlapError && (
+                    <div
+                      data-testid="schedule-overlap-notification-section"
+                      className="p-4 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-3 shadow-sm animate-in fade-in duration-200"
+                    >
+                      <AlertCircle className="size-5 shrink-0 mt-0.5" />
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold uppercase tracking-wider">Date Overlap Conflict Notification</span>
+                        <span className="text-xs font-semibold">{scheduleOverlapError}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-col gap-1">
                     <Label className="text-base font-bold text-foreground">Closed Periods & Special Closures</Label>
                     <p className="text-xs text-muted-foreground">
@@ -1216,38 +1361,50 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                               </Button>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="space-y-1">
+                                  <Label htmlFor={`closed-period-title-${index}`} className="text-xs font-semibold">Closure Reason / Title</Label>
+                                  <Input
+                                    id={`closed-period-title-${index}`}
+                                    type="text"
+                                    placeholder="e.g. Summer Vacation, Christmas Break"
+                                    value={period.title}
+                                    onChange={(e) => handleUpdateClosedPeriod(index, "title", e.target.value)}
+                                    className="bg-background text-xs font-semibold h-9"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <Label htmlFor={`closed-period-start-${index}`} className="text-xs font-semibold">Start Date</Label>
+                                  <DatePickerInput
+                                    id={`closed-period-start-${index}`}
+                                    value={period.startDate}
+                                    onChange={(val) => handleUpdateClosedPeriod(index, "startDate", val)}
+                                    placeholder="DD.MM.YYYY"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <Label htmlFor={`closed-period-end-${index}`} className="text-xs font-semibold">End Date</Label>
+                                  <DatePickerInput
+                                    id={`closed-period-end-${index}`}
+                                    value={period.endDate}
+                                    onChange={(val) => handleUpdateClosedPeriod(index, "endDate", val)}
+                                    placeholder="DD.MM.YYYY"
+                                  />
+                                </div>
+                              </div>
+
                               <div className="space-y-1">
-                                <Label htmlFor={`closed-period-title-${index}`} className="text-xs font-semibold">Closure Reason / Title</Label>
+                                <Label htmlFor={`closed-period-note-${index}`} className="text-xs font-medium text-muted-foreground">Note / Closure Remarks (Optional)</Label>
                                 <Input
-                                  id={`closed-period-title-${index}`}
+                                  id={`closed-period-note-${index}`}
                                   type="text"
-                                  placeholder="e.g. Summer Vacation, Christmas Break"
-                                  value={period.title}
-                                  onChange={(e) => handleUpdateClosedPeriod(index, "title", e.target.value)}
-                                  className="bg-background text-xs font-semibold"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <Label htmlFor={`closed-period-start-${index}`} className="text-xs font-semibold">Start Date</Label>
-                                <Input
-                                  id={`closed-period-start-${index}`}
-                                  type="date"
-                                  value={period.startDate}
-                                  onChange={(e) => handleUpdateClosedPeriod(index, "startDate", e.target.value)}
-                                  className="bg-background text-xs"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <Label htmlFor={`closed-period-end-${index}`} className="text-xs font-semibold">End Date</Label>
-                                <Input
-                                  id={`closed-period-end-${index}`}
-                                  type="date"
-                                  value={period.endDate}
-                                  onChange={(e) => handleUpdateClosedPeriod(index, "endDate", e.target.value)}
-                                  className="bg-background text-xs"
+                                  placeholder="e.g. Facility closed for annual renovation and staff training..."
+                                  value={period.note || ""}
+                                  onChange={(e) => handleUpdateClosedPeriod(index, "note", e.target.value)}
+                                  className="bg-background text-xs h-9 rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
                                 />
                               </div>
                             </div>
@@ -1303,60 +1460,72 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                               </Button>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                                <div className="space-y-1">
+                                  <Label htmlFor={`special-opening-title-${index}`} className="text-xs font-semibold">Opening Reason / Event Title</Label>
+                                  <Input
+                                    id={`special-opening-title-${index}`}
+                                    type="text"
+                                    placeholder="e.g. Christmas Special Session"
+                                    value={opening.title}
+                                    onChange={(e) => handleUpdateSpecialOpening(index, "title", e.target.value)}
+                                    className="bg-background text-xs font-semibold h-9"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <Label htmlFor={`special-opening-start-${index}`} className="text-xs font-semibold">Start Date</Label>
+                                  <DatePickerInput
+                                    id={`special-opening-start-${index}`}
+                                    value={opening.startDate}
+                                    onChange={(val) => handleUpdateSpecialOpening(index, "startDate", val)}
+                                    placeholder="DD.MM.YYYY"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <Label htmlFor={`special-opening-end-${index}`} className="text-xs font-semibold">End Date</Label>
+                                  <DatePickerInput
+                                    id={`special-opening-end-${index}`}
+                                    value={opening.endDate}
+                                    onChange={(val) => handleUpdateSpecialOpening(index, "endDate", val)}
+                                    placeholder="DD.MM.YYYY"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <Label htmlFor={`special-opening-checkin-${index}`} className="text-xs font-semibold">Start</Label>
+                                  <TimePickerSelect
+                                    id={`special-opening-checkin-${index}`}
+                                    value={opening.checkin || "09:00"}
+                                    onChange={(val) => handleUpdateSpecialOpening(index, "checkin", val)}
+                                    options={getCheckinOptions()}
+                                    placeholder="09:00"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <Label htmlFor={`special-opening-checkout-${index}`} className="text-xs font-semibold">End</Label>
+                                  <TimePickerSelect
+                                    id={`special-opening-checkout-${index}`}
+                                    value={opening.checkout || "17:00"}
+                                    onChange={(val) => handleUpdateSpecialOpening(index, "checkout", val)}
+                                    options={getCheckoutOptions(opening.checkin || "09:00")}
+                                    placeholder="17:00"
+                                  />
+                                </div>
+                              </div>
+
                               <div className="space-y-1">
-                                <Label htmlFor={`special-opening-title-${index}`} className="text-xs font-semibold">Opening Reason / Event Title</Label>
+                                <Label htmlFor={`special-opening-note-${index}`} className="text-xs font-medium text-muted-foreground">Note / Event Remarks (Optional)</Label>
                                 <Input
-                                  id={`special-opening-title-${index}`}
+                                  id={`special-opening-note-${index}`}
                                   type="text"
-                                  placeholder="e.g. Christmas Special Session"
-                                  value={opening.title}
-                                  onChange={(e) => handleUpdateSpecialOpening(index, "title", e.target.value)}
-                                  className="bg-background text-xs font-semibold"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <Label htmlFor={`special-opening-start-${index}`} className="text-xs font-semibold">Start Date</Label>
-                                <Input
-                                  id={`special-opening-start-${index}`}
-                                  type="date"
-                                  value={opening.startDate}
-                                  onChange={(e) => handleUpdateSpecialOpening(index, "startDate", e.target.value)}
-                                  className="bg-background text-xs"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <Label htmlFor={`special-opening-end-${index}`} className="text-xs font-semibold">End Date</Label>
-                                <Input
-                                  id={`special-opening-end-${index}`}
-                                  type="date"
-                                  value={opening.endDate}
-                                  onChange={(e) => handleUpdateSpecialOpening(index, "endDate", e.target.value)}
-                                  className="bg-background text-xs"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <Label htmlFor={`special-opening-checkin-${index}`} className="text-xs font-semibold">Check-in</Label>
-                                <TimePickerSelect
-                                  id={`special-opening-checkin-${index}`}
-                                  value={opening.checkin || "09:00"}
-                                  onChange={(val) => handleUpdateSpecialOpening(index, "checkin", val)}
-                                  options={getCheckinOptions()}
-                                  placeholder="09:00"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <Label htmlFor={`special-opening-checkout-${index}`} className="text-xs font-semibold">Check-out</Label>
-                                <TimePickerSelect
-                                  id={`special-opening-checkout-${index}`}
-                                  value={opening.checkout || "17:00"}
-                                  onChange={(val) => handleUpdateSpecialOpening(index, "checkout", val)}
-                                  options={getCheckoutOptions(opening.checkin || "09:00")}
-                                  placeholder="17:00"
+                                  placeholder="e.g. Special weekend workshop session, pre-registration required..."
+                                  value={opening.note || ""}
+                                  onChange={(e) => handleUpdateSpecialOpening(index, "note", e.target.value)}
+                                  className="bg-background text-xs h-9 rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
                                 />
                               </div>
                             </div>
@@ -1975,8 +2144,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                     <div className="space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/40 pb-3">
                         <div>
-                          <Label className="text-base font-bold text-foreground">Daily Operating Schedule</Label>
-                          <p className="text-xs text-muted-foreground">Specify day-specific check-in and check-out times (Monday to Sunday)</p>
+                          <Label className="text-base font-bold text-foreground">{isDogSport ? "Schedule" : "Daily Operating Schedule"}</Label>
+                          <p className="text-xs text-muted-foreground">{isDogSport ? "Specify day-specific operating schedule (Monday to Sunday)" : "Specify day-specific check-in and check-out times (Monday to Sunday)"}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -2028,11 +2197,11 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                               </div>
 
                               {item.enabled ? (
-                                <div className="flex flex-col gap-1 flex-1 sm:max-w-md">
-                                  <div className="grid grid-cols-2 gap-3">
+                                <div className="flex flex-col gap-2.5 flex-1 w-full">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="space-y-1">
                                       <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                        Check-in Time
+                                        {isDogSport ? "Start" : "Check-in Time"}
                                       </Label>
                                       <TimePickerSelect
                                         id={`checkin-${item.day}`}
@@ -2045,7 +2214,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                     </div>
                                     <div className="space-y-1">
                                       <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                                        Check-out Time
+                                        {isDogSport ? "End" : "Check-out Time"}
                                       </Label>
                                       <TimePickerSelect
                                         id={`checkout-${item.day}`}
@@ -2058,14 +2227,29 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                       />
                                     </div>
                                   </div>
+
+                                  <div className="space-y-1">
+                                    <Label htmlFor={`note-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
+                                      Note / Schedule Remarks (Optional)
+                                    </Label>
+                                    <Input
+                                      id={`note-${item.day}`}
+                                      type="text"
+                                      value={item.note || ""}
+                                      onChange={(e) => handleUpdateDaySchedule(item.day, "note", e.target.value)}
+                                      placeholder="e.g. Group sessions only, advance registration required..."
+                                      className="h-9 text-xs bg-background rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
+                                    />
+                                  </div>
+
                                   {item.checkin && item.checkout && item.checkout <= item.checkin && (
                                     <p className="text-[11px] text-destructive font-semibold mt-0.5">
-                                      Check-out time cannot be before or equal to check-in time.
+                                      {isDogSport ? "End time cannot be before or equal to start time." : "Check-out time cannot be before or equal to check-in time."}
                                     </p>
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-xs italic text-muted-foreground py-1">Closed for check-in / check-out</span>
+                                <span className="text-xs italic text-muted-foreground py-1">{isDogSport ? "Closed" : "Closed for check-in / check-out"}</span>
                               )}
                             </div>
                           </div>
@@ -2281,24 +2465,36 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
             </div>
 
             {/* Submit Actions */}
-            <div className="flex items-center gap-3">
-              <Button
-                type="submit"
-                className="flex-1 font-bold h-11 shadow-md shadow-primary/10"
-                disabled={isPending}
-              >
-                {isPending && <Loader2 className="mr-2 size-4.5 animate-spin" />}
-                {isEdit ? "Save Changes" : `Create ${itemNoun}`}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                className="h-11 font-semibold"
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
+            <div className="space-y-3">
+              {(error || scheduleOverlapError) && (
+                <div
+                  data-testid="bottom-submit-notification"
+                  className="p-3.5 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-2.5 text-xs font-semibold shadow-sm animate-in fade-in duration-150"
+                >
+                  <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                  <span>{error || scheduleOverlapError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="submit"
+                  className="flex-1 font-bold h-11 shadow-md shadow-primary/10"
+                  disabled={isPending}
+                >
+                  {isPending && <Loader2 className="mr-2 size-4.5 animate-spin" />}
+                  {isEdit ? "Save Changes" : `Create ${itemNoun}`}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancel}
+                  className="h-11 font-semibold"
+                  disabled={isPending}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         </div>

@@ -931,10 +931,10 @@ describe("DashboardServiceDetail Component", () => {
     const scheduleWithClosedAndSpecialJson = JSON.stringify({
       weeklySchedule: [],
       closedPeriods: [
-        { title: "Summer Recess", startDate: "2026-08-01", endDate: "2026-08-15" },
+        { title: "Summer Recess", startDate: "01.08.2026", endDate: "15.08.2026" },
       ],
       specialOpenings: [
-        { title: "Christmas Special", startDate: "2026-12-20", endDate: "2026-12-20", checkin: "09:00", checkout: "17:00" },
+        { title: "Christmas Special", startDate: "20.12.2026", endDate: "20.12.2026", checkin: "09:00", checkout: "17:00" },
       ],
     });
 
@@ -961,8 +961,8 @@ describe("DashboardServiceDetail Component", () => {
 
     expect(screen.getByText("Basic: 200 RON / course")).toBeDefined();
     expect(screen.getByText("Monthly: 800 RON / month")).toBeDefined();
-    expect(screen.getByText("Closed: Summer Recess (2026-08-01 to 2026-08-15)")).toBeDefined();
-    expect(screen.getByText("Open: Christmas Special (2026-12-20 to 2026-12-20 • 09:00 - 17:00)")).toBeDefined();
+    expect(screen.getByText("Closed: Summer Recess (01.08.2026 to 15.08.2026)")).toBeDefined();
+    expect(screen.getByText("Open: Christmas Special (20.12.2026 to 20.12.2026 • 09:00 - 17:00)")).toBeDefined();
   });
 });
 

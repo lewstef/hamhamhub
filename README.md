@@ -133,9 +133,18 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Multi-Pricing Tiers, Closed Periods & Special Openings Schedule Builder**:
   - **Multi-Pricing Tiers**: Allows organizations to configure multiple price tiers and billing frequencies (e.g. `2000 RON / course`, `800 RON / month`, `100 RON / session`) with optional tier labels (e.g., "Basic Package", "Monthly Pass") across `/dashboard/services/sport-dog-training` and all course offerings. Single-price offerings remain backward compatible with plain string values.
   - **Closed Periods Schedule Builder**: Organizations can define special closed periods (vacation dates, seasonal breaks, or holiday closures with title, start date, and end date) within the Schedule tab. Displays rose `Closed: Reason (Start to End)` badges on service cards.
-  - **Special Openings Schedule Builder**: Organizations can specify special dates or holiday sessions when they ARE open (e.g. Christmas Special Session, Weekend Workshop with title, start date, end date, and optional check-in time). Displays emerald `Open: Reason (Start to End)` badges on service cards.
+  - **Special Openings Schedule Builder**: Organizations can specify special dates or holiday sessions when they ARE open (e.g. Christmas Special Session, Weekend Workshop with title, start date, end date, Check-in time, and Check-out time). Displays emerald `Open: Reason (Start to End)` badges on service cards.
+  - **Closed / Special Openings Overlap & Empty Entry Validation**: Automatically filters out blank entries and enforces live notification banners and form validation on submit so that closed closure date ranges (`[startDate, endDate]`) cannot overlap with special open date ranges (`[startDate, endDate]`).
+- **Romanian Date Picker & Manual Text Input (`DatePickerInput`)**:
+  - Created a custom reusable date picker component (`src/components/ui/date-picker-input.tsx`) formatted for Romanian locale (`DD.MM.YYYY`, e.g. `15.08.2026`).
+  - Provides an interactive calendar popover widget with Romanian month names (*Ianuarie*...*Decembrie*), weekday headers (*Lu*, *Ma*, *Mi*, *Jo*, *Vi*, *Sâ*, *Du*), month navigation (`<` / `>`), and day picker grid, while leaving the text field (`type="text"`) 100% manually editable for typing, editing, or pasting date strings in Romanian format.
+- **Dog Sports MVP Refinements & Schedule Notes**:
+  - **Customized Terminology**: Updated daily operating schedule time labels from "Check-in Time" / "Check-out Time" to **Start** and **End** for Dog Sports Training (`/dashboard/services/sport-dog-training`), with updated validation alerts (*"End time cannot be before or equal to start time."*). Renamed section heading to **Schedule** and removed the "Active" status badge.
+  - **Schedule Item Notes & Redesigned Spacious Layout**: Added optional **Note / Schedule Remarks** text fields to each daily operating schedule item (Monday to Sunday), **Closed Periods**, and **Special Openings**. Reorganized input cards to give note fields full-width dedicated rows with comfortable `h-9` inputs. Notes dynamically display alongside schedule badges on service detail views.
 
 ---
+
+
 
 
 

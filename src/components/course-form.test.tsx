@@ -121,7 +121,7 @@ describe("CourseForm Component", () => {
 
     // Switch to Schedule tab
     fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
-    expect(screen.getByText("Daily Operating Schedule")).toBeDefined();
+    expect(screen.getAllByText("Schedule")[1]).toBeDefined();
     expect(screen.getByText("Copy Mon to Mon–Fri")).toBeDefined();
 
     // Switch to Location tab (contains Address, GBP, Maps, Dedicated Training Field, and Dedicated Parking)
@@ -410,7 +410,7 @@ describe("CourseForm Component", () => {
       fireEvent.click(submitBtn);
     });
 
-    expect(screen.getByText("Course name is required.")).toBeDefined();
+    expect(screen.getAllByText("Course name is required.")[0]).toBeDefined();
   });
 
   it("should show server action error when submission fails", async () => {
@@ -434,7 +434,7 @@ describe("CourseForm Component", () => {
       fireEvent.click(submitBtn);
     });
 
-    expect(screen.getByText("Failed to create course")).toBeDefined();
+    expect(screen.getAllByText("Failed to create course")[0]).toBeDefined();
   });
 
   it("should trigger onSubmitSuccess after successful edit/update", async () => {
@@ -800,7 +800,7 @@ describe("CourseForm Component", () => {
 
     // Switch to Schedule tab
     fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
-    expect(screen.getByText("Daily Operating Schedule")).toBeDefined();
+    expect(screen.getAllByText("Schedule")[1]).toBeDefined();
 
     // Navigate back to General tab — Name should be preserved
     fireEvent.click(screen.getByRole("button", { name: "General" }));
@@ -947,10 +947,10 @@ describe("CourseForm Component", () => {
     fireEvent.change(titleInput, { target: { value: "Christmas Special Session" } });
 
     const startInput = screen.getByLabelText("Start Date", { selector: "#special-opening-start-0" });
-    fireEvent.change(startInput, { target: { value: "2026-12-20" } });
+    fireEvent.change(startInput, { target: { value: "20.12.2026" } });
 
     const endInput = screen.getByLabelText("End Date", { selector: "#special-opening-end-0" });
-    fireEvent.change(endInput, { target: { value: "2026-12-20" } });
+    fireEvent.change(endInput, { target: { value: "20.12.2026" } });
 
     // Submit form
     const submitBtn = screen.getAllByRole("button", { name: "Create Dog Sport" })[0];
@@ -962,8 +962,89 @@ describe("CourseForm Component", () => {
     const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
     const scheduleJsonStr = passedFormData.get("schedule") as string;
     expect(scheduleJsonStr).toContain("Christmas Special Session");
-    expect(scheduleJsonStr).toContain("2026-12-20");
+    expect(scheduleJsonStr).toContain("20.12.2026");
+  });
+
+  it("should show error when a closed period overlaps with a special opening period", async () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sport-dog-training"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Set Name
+    fireEvent.change(screen.getByLabelText("Dog Sport Name"), { target: { value: "Overlap Test" } });
+
+    // Go to Schedule tab
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+
+    // Add Closed Period: 15.08.2026 to 20.08.2026
+    fireEvent.click(screen.getByRole("button", { name: "Add Closed Period" }));
+    fireEvent.change(screen.getByLabelText("Closure Reason / Title"), { target: { value: "Summer Break" } });
+    fireEvent.change(screen.getByLabelText("Start Date", { selector: "#closed-period-start-0" }), { target: { value: "15.08.2026" } });
+    fireEvent.change(screen.getByLabelText("End Date", { selector: "#closed-period-end-0" }), { target: { value: "20.08.2026" } });
+
+    // Add Special Opening: 18.08.2026 to 22.08.2026 (Overlaps on 18-20 Aug!)
+    fireEvent.click(screen.getByRole("button", { name: "Add Special Opening" }));
+    fireEvent.change(screen.getByLabelText("Opening Reason / Event Title"), { target: { value: "Special Open Day" } });
+    fireEvent.change(screen.getByLabelText("Start Date", { selector: "#special-opening-start-0" }), { target: { value: "18.08.2026" } });
+    fireEvent.change(screen.getByLabelText("End Date", { selector: "#special-opening-end-0" }), { target: { value: "22.08.2026" } });
+
+    // Live notification banner should be rendered immediately inside Schedule tab
+    expect(screen.getByTestId("schedule-overlap-notification")).toBeDefined();
+
+    // Submit form
+    const submitBtn = screen.getAllByRole("button", { name: "Create Dog Sport" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    // Should NOT call action and should display overlap error
+    expect(createCourseAction).not.toHaveBeenCalled();
+    expect(screen.getAllByText(/overlaps with special opening/)[0]).toBeDefined();
+  });
+
+  it("should allow adding optional notes to schedule items", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sport-dog-training"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Set Name
+    fireEvent.change(screen.getByLabelText("Dog Sport Name"), { target: { value: "Agility Advanced" } });
+
+    // Go to Schedule tab
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
+
+    // Add note to Monday schedule
+    const mondayNoteInput = screen.getByLabelText(/Note/i, { selector: "#note-monday" });
+    fireEvent.change(mondayNoteInput, { target: { value: "Evening group session" } });
+
+    // Submit form
+    const submitBtn = screen.getAllByRole("button", { name: "Create Dog Sport" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    const scheduleJsonStr = passedFormData.get("schedule") as string;
+    expect(scheduleJsonStr).toContain("Evening group session");
   });
 });
+
 
 

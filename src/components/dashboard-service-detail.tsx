@@ -356,19 +356,21 @@ export function DashboardServiceDetail({
             </div>
             
             {/* Status Badge */}
-            <div>
-              {isEnabled ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400">
-                  <CheckCircle2 className="size-3.5" />
-                  Active
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border border-border">
-                  <XCircle className="size-3.5" />
-                  Inactive
-                </span>
-              )}
-            </div>
+            {!isSportDogTraining && (
+              <div>
+                {isEnabled ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400">
+                    <CheckCircle2 className="size-3.5" />
+                    Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border border-border">
+                    <XCircle className="size-3.5" />
+                    Inactive
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </CardHeader>
 
@@ -530,20 +532,20 @@ export function DashboardServiceDetail({
                               <span
                                 key={idx}
                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20"
-                                title={period.startDate && period.endDate ? `${period.startDate} to ${period.endDate}` : period.startDate || period.endDate || ""}
+                                title={period.note || (period.startDate && period.endDate ? `${period.startDate} to ${period.endDate}` : period.startDate || period.endDate || "")}
                               >
                                 <CalendarX className="size-2.5" />
-                                Closed: {period.title || "Special Break"} ({period.startDate}{period.startDate && period.endDate ? " to " : ""}{period.endDate})
+                                Closed: {period.title || "Special Break"} ({period.startDate}{period.startDate && period.endDate ? " to " : ""}{period.endDate}{period.note ? ` • ${period.note}` : ""})
                               </span>
                             ))}
                             {parseSpecialOpenings(course.schedule).map((opening, idx) => (
                               <span
                                 key={idx}
                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                                title={opening.startDate && opening.endDate ? `${opening.startDate} to ${opening.endDate}` : opening.startDate || opening.endDate || ""}
+                                title={opening.note || (opening.startDate && opening.endDate ? `${opening.startDate} to ${opening.endDate}` : opening.startDate || opening.endDate || "")}
                               >
                                 <CalendarCheck className="size-2.5" />
-                                Open: {opening.title || "Special Session"} ({opening.startDate}{opening.startDate && opening.endDate ? " to " : ""}{opening.endDate}{opening.checkin || opening.checkout ? ` • ${opening.checkin || ""}${opening.checkout ? ` - ${opening.checkout}` : ""}` : ""})
+                                Open: {opening.title || "Special Session"} ({opening.startDate}{opening.startDate && opening.endDate ? " to " : ""}{opening.endDate}{opening.checkin || opening.checkout ? ` • ${opening.checkin || ""}${opening.checkout ? ` - ${opening.checkout}` : ""}` : ""}{opening.note ? ` • ${opening.note}` : ""})
                               </span>
                             ))}
                             {course.price &&
