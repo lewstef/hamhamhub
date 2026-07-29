@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export interface CustomSelectOption {
   value: string | number;
@@ -124,21 +125,24 @@ export function CustomSelect({
         ))}
       </select>
 
-      {/* Visible Trigger Button */}
+      {/* Visible Trigger Button using exact Input CSS classes to match TimePickerSelect & standard inputs */}
       <button
         type="button"
+        id={id ? `${id}-display` : undefined}
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-2.5 transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 ${
-          hasError ? "border-destructive focus-visible:ring-destructive" : ""
-        } ${heightClass} ${className}`}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        className={`w-full min-w-0 rounded-lg border border-input px-2.5 py-1 transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 h-9 pr-7 text-xs font-semibold bg-background cursor-pointer select-none flex items-center justify-between relative ${
+          hasError ? "border-destructive focus-visible:ring-destructive" : ""
+        } ${className}`}
       >
         <span className={`truncate text-left ${!selectedOption ? "text-muted-foreground" : "text-foreground"}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown className={`size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        <span className="absolute right-1.5 p-1 text-muted-foreground hover:text-foreground rounded transition-colors pointer-events-none">
+          <ChevronDown className={`size-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        </span>
       </button>
 
       {/* Popover Dropdown Menu */}
