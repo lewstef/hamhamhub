@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
@@ -96,7 +96,7 @@ export function TimePickerSelect({
           pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
           placeholder={placeholder}
           title="Please enter a valid time in 24-hour hh:mm format."
-          className={`h-8 pr-7 bg-background font-mono text-xs ${hasError ? "border-destructive focus-visible:ring-destructive" : ""} ${className}`}
+          className={`h-9 pr-7 bg-background font-mono text-xs ${hasError ? "border-destructive focus-visible:ring-destructive" : ""} ${className}`}
           required={required}
         />
         <button

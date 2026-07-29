@@ -96,7 +96,7 @@ export function CustomSelect({
     setIsOpen(false);
   };
 
-  const heightClass = size === "sm" ? "h-8 py-1 text-xs" : "h-9 py-1.5 text-sm";
+  const heightClass = size === "sm" ? "h-8 py-1 text-xs font-semibold" : "h-9 py-1.5 text-xs font-semibold";
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -129,7 +129,7 @@ export function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-2.5 transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 ${
           hasError ? "border-destructive focus-visible:ring-destructive" : ""
         } ${heightClass} ${className}`}
         aria-haspopup="listbox"
@@ -138,7 +138,7 @@ export function CustomSelect({
         <span className={`truncate text-left ${!selectedOption ? "text-muted-foreground" : "text-foreground"}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {/* Popover Dropdown Menu */}
@@ -151,15 +151,15 @@ export function CustomSelect({
                 key={String(opt.value)}
                 type="button"
                 disabled={opt.disabled}
-                className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                   isSelected
-                    ? "bg-accent/60 font-semibold text-primary"
+                    ? "bg-accent/60 text-primary"
                     : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
                 }`}
                 onClick={() => handleSelect(String(opt.value))}
               >
                 <span className="truncate">{opt.label}</span>
-                {isSelected && <Check className="size-4 text-primary shrink-0 ml-2" />}
+                {isSelected && <Check className="size-3.5 text-primary shrink-0 ml-2" />}
               </button>
             );
           })}

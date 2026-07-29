@@ -148,7 +148,7 @@ export function DatePickerInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className={`pr-9 text-xs bg-background font-mono ${className}`}
+          className={`h-9 pr-9 text-xs bg-background font-mono ${className}`}
         />
         <Button
           type="button"

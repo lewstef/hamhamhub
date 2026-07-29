@@ -957,14 +957,14 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
 
                   {certifiedTrainer && (
                     <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label htmlFor="certifier-name">Certifier Name</Label>
+                      <Label htmlFor="certifier-name" className="text-xs font-semibold">Certifier Name</Label>
                       <Input
                         id="certifier-name"
                         type="text"
                         placeholder="Name of certifying institution/body"
                         value={certifierName}
                         onChange={(e) => setCertifierName(e.target.value)}
-                        className="bg-background"
+                        className="h-9 bg-background text-xs font-semibold rounded-lg"
                       />
                     </div>
                   )}
@@ -1184,7 +1184,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                             placeholder="e.g. $150 or 500 RON"
                             value={tier.amount}
                             onChange={(e) => handleUpdatePriceTier(index, "amount", e.target.value)}
-                            className="bg-background text-sm font-semibold"
+                            className="h-9 bg-background text-xs font-semibold rounded-lg"
                           />
                         </div>
 
@@ -1201,6 +1201,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                               { value: "hour", label: "Per Hour" },
                               { value: "day", label: "Per Day" },
                             ]}
+                            className="h-9 text-xs font-semibold"
                           />
                         </div>
 
@@ -1212,7 +1213,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                             placeholder="e.g. Basic, Drop-in Pass"
                             value={tier.label || ""}
                             onChange={(e) => handleUpdatePriceTier(index, "label", e.target.value)}
-                            className="bg-background text-sm"
+                            className="h-9 bg-background text-xs font-semibold rounded-lg"
                           />
                         </div>
                       </div>
@@ -1509,36 +1510,36 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="training-field-address">Address</Label>
+                    <Label htmlFor="training-field-address" className="text-xs font-semibold">Address</Label>
                     <Input
                       id="training-field-address"
                       type="text"
                       placeholder="e.g. 123 Canine Lane, Bucharest"
                       value={trainingFieldAddress}
                       onChange={(e) => setTrainingFieldAddress(e.target.value)}
-                      className="bg-background"
+                      className="h-9 bg-background text-xs font-semibold rounded-lg"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="training-field-gbp">Google Business Profile</Label>
+                    <Label htmlFor="training-field-gbp" className="text-xs font-semibold">Google Business Profile</Label>
                     <Input
                       id="training-field-gbp"
                       type="url"
                       placeholder="https://business.google.com/..."
                       value={trainingFieldGoogleBusinessProfile}
                       onChange={(e) => setTrainingFieldGoogleBusinessProfile(e.target.value)}
-                      className="bg-background"
+                      className="h-9 bg-background text-xs font-semibold rounded-lg"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="training-field-maps">Google Maps Link</Label>
+                    <Label htmlFor="training-field-maps" className="text-xs font-semibold">Google Maps Link</Label>
                     <Input
                       id="training-field-maps"
                       type="url"
                       placeholder="https://maps.google.com/..."
                       value={trainingFieldGoogleMapsLink}
                       onChange={(e) => setTrainingFieldGoogleMapsLink(e.target.value)}
-                      className="bg-background"
+                      className="h-9 bg-background text-xs font-semibold rounded-lg"
                     />
                   </div>
                 </div>
