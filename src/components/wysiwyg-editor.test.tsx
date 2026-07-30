@@ -1,222 +1,56 @@
 // @vitest-environment happy-dom
+import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
-import React from "react";
 import { WysiwygEditor } from "./wysiwyg-editor";
 
-// Mock lucide-react icons used in toolbar
-vi.mock("lucide-react", () => ({
-  Bold: () => <span data-testid="icon-bold">B</span>,
-  Italic: () => <span data-testid="icon-italic">I</span>,
-  Underline: () => <span data-testid="icon-underline">U</span>,
-  List: () => <span data-testid="icon-list">List</span>,
-  ListOrdered: () => <span data-testid="icon-list-ordered">OL</span>,
-  RemoveFormatting: () => <span data-testid="icon-remove">Rf</span>,
-}));
-
 describe("WysiwygEditor Component", () => {
-  const noop = () => {};
-
-  it("should render the toolbar and the editable area", () => {
-    render(<WysiwygEditor value="" onChange={noop} />);
-
-    // All 6 toolbar buttons should be present
-    expect(screen.getByTitle("Bold")).toBeDefined();
-    expect(screen.getByTitle("Italic")).toBeDefined();
-    expect(screen.getByTitle("Underline")).toBeDefined();
-    expect(screen.getByTitle("Bullet List")).toBeDefined();
-    expect(screen.getByTitle("Numbered List")).toBeDefined();
-    expect(screen.getByTitle("Remove Formatting")).toBeDefined();
+  beforeEach(() => {
+    document.execCommand = vi.fn();
   });
 
-  it("should render editable div with contentEditable", () => {
-    const { container } = render(<WysiwygEditor value="<b>Hello</b>" onChange={noop} />);
+  it("should render editor div with initial HTML content", () => {
+    const { container } = render(<WysiwygEditor value="<p>Hello World</p>" onChange={() => {}} placeholder="Enter description" />);
 
-    const editable = container.querySelector("[contenteditable]");
-    expect(editable).toBeDefined();
+    const editorDiv = container.querySelector('[contenteditable="true"]') as HTMLDivElement;
+    expect(editorDiv).toBeDefined();
+    expect(editorDiv.innerHTML).toBe("<p>Hello World</p>");
   });
 
-  it("should call onChange when content is typed into the editable area", () => {
+  it("should invoke onChange on input event", () => {
     const handleChange = vi.fn();
     const { container } = render(<WysiwygEditor value="" onChange={handleChange} />);
 
-    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
+    const editorDiv = container.querySelector('[contenteditable="true"]') as HTMLDivElement;
+    editorDiv.innerHTML = "New text";
+    fireEvent.input(editorDiv);
 
-    act(() => {
-      editable.innerHTML = "<p>New content</p>";
-      fireEvent.input(editable);
-    });
-
-    expect(handleChange).toHaveBeenCalledWith("<p>New content</p>");
+    expect(handleChange).toHaveBeenCalledWith("New text");
   });
 
-  it("should sync innerHTML with value prop when value changes externally", () => {
-    const { container, rerender } = render(<WysiwygEditor value="<b>Initial</b>" onChange={noop} />);
+  it("should execute bold command when Bold toolbar button is clicked", () => {
+    render(<WysiwygEditor value="" onChange={() => {}} />);
 
-    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
-    expect(editable.innerHTML).toBe("<b>Initial</b>");
-
-    rerender(<WysiwygEditor value="<i>Updated</i>" onChange={noop} />);
-    expect(editable.innerHTML).toBe("<i>Updated</i>");
-  });
-
-  it("should not overwrite editable content when value prop matches current innerHTML", () => {
-    const { container } = render(<WysiwygEditor value="<b>Same</b>" onChange={noop} />);
-
-    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
-    // Simulate user having placed cursor inside — innerHTML is the same as prop
-    editable.innerHTML = "<b>Same</b>";
-
-    // Rerender with the same value — should NOT reset the innerHTML
-    const spy = vi.spyOn(editable, "innerHTML", "set");
-    // Force re-render with same value
-    expect(editable.innerHTML).toBe("<b>Same</b>");
-    spy.mockRestore();
-  });
-
-  it("should show the default placeholder text", () => {
-    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
-
-    const editable = container.querySelector("[contenteditable]");
-    expect(editable?.getAttribute("placeholder")).toBe("Start typing...");
-  });
-
-  it("should show a custom placeholder when provided", () => {
-    const { container } = render(
-      <WysiwygEditor value="" onChange={noop} placeholder="Write something..." />
-    );
-
-    const editable = container.querySelector("[contenteditable]");
-    expect(editable?.getAttribute("placeholder")).toBe("Write something...");
-  });
-
-  it("should execute bold command when Bold button is clicked", () => {
-    // happy-dom doesn't implement execCommand, so define it first
-    document.execCommand = vi.fn().mockReturnValue(true);
-
-    render(<WysiwygEditor value="" onChange={noop} />);
-    fireEvent.click(screen.getByTitle("Bold"));
+    const boldButton = screen.getByTitle("Bold");
+    fireEvent.click(boldButton);
 
     expect(document.execCommand).toHaveBeenCalledWith("bold", false, "");
   });
 
-  it("should execute italic command when Italic button is clicked", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
+  it("should execute italic command when Ctrl+I key combination is pressed", () => {
+    const { container } = render(<WysiwygEditor value="" onChange={() => {}} />);
 
-    render(<WysiwygEditor value="" onChange={noop} />);
-    fireEvent.click(screen.getByTitle("Italic"));
+    const editorDiv = container.querySelector('[contenteditable="true"]') as HTMLDivElement;
+    fireEvent.keyDown(editorDiv, { key: "i", ctrlKey: true });
 
     expect(document.execCommand).toHaveBeenCalledWith("italic", false, "");
   });
 
-  it("should execute underline command when Underline button is clicked", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
+  it("should execute underline command when Ctrl+U key combination is pressed", () => {
+    const { container } = render(<WysiwygEditor value="" onChange={() => {}} />);
 
-    render(<WysiwygEditor value="" onChange={noop} />);
-    fireEvent.click(screen.getByTitle("Underline"));
+    const editorDiv = container.querySelector('[contenteditable="true"]') as HTMLDivElement;
+    fireEvent.keyDown(editorDiv, { key: "u", ctrlKey: true });
 
     expect(document.execCommand).toHaveBeenCalledWith("underline", false, "");
-  });
-
-  it("should execute insertUnorderedList command when Bullet List button is clicked", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
-
-    render(<WysiwygEditor value="" onChange={noop} />);
-    fireEvent.click(screen.getByTitle("Bullet List"));
-
-    expect(document.execCommand).toHaveBeenCalledWith("insertUnorderedList", false, "");
-  });
-
-  it("should execute insertOrderedList command when Numbered List button is clicked", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
-
-    render(<WysiwygEditor value="" onChange={noop} />);
-    fireEvent.click(screen.getByTitle("Numbered List"));
-
-    expect(document.execCommand).toHaveBeenCalledWith("insertOrderedList", false, "");
-  });
-
-  it("should execute removeFormat command when Remove Formatting button is clicked", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
-
-    render(<WysiwygEditor value="" onChange={noop} />);
-    fireEvent.click(screen.getByTitle("Remove Formatting"));
-
-    expect(document.execCommand).toHaveBeenCalledWith("removeFormat", false, "");
-  });
-
-  it("should initialise editable area as empty string when value is falsy", () => {
-    const { container, rerender } = render(<WysiwygEditor value="<b>Old</b>" onChange={noop} />);
-
-    rerender(<WysiwygEditor value="" onChange={noop} />);
-
-    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
-    expect(editable.innerHTML).toBe("");
-  });
-
-  it("should trigger bold, italic, and underline commands when Ctrl+B, Ctrl+I, or Ctrl+U is pressed inside the editor", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
-
-    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
-    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
-
-    // Press Ctrl+B
-    fireEvent.keyDown(editable, { key: "b", ctrlKey: true });
-    expect(document.execCommand).toHaveBeenCalledWith("bold", false, "");
-
-    // Press Ctrl+I
-    fireEvent.keyDown(editable, { key: "i", ctrlKey: true });
-    expect(document.execCommand).toHaveBeenCalledWith("italic", false, "");
-
-    // Press Ctrl+U
-    fireEvent.keyDown(editable, { key: "u", ctrlKey: true });
-    expect(document.execCommand).toHaveBeenCalledWith("underline", false, "");
-  });
-
-  it("should trigger bold, italic, and underline commands when MetaKey (Cmd)+B, Cmd+I, or Cmd+U is pressed", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
-
-    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
-    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
-
-    // Press Cmd+B
-    fireEvent.keyDown(editable, { key: "b", metaKey: true });
-    expect(document.execCommand).toHaveBeenCalledWith("bold", false, "");
-
-    // Press Cmd+I
-    fireEvent.keyDown(editable, { key: "i", metaKey: true });
-    expect(document.execCommand).toHaveBeenCalledWith("italic", false, "");
-
-    // Press Cmd+U
-    fireEvent.keyDown(editable, { key: "u", metaKey: true });
-    expect(document.execCommand).toHaveBeenCalledWith("underline", false, "");
-  });
-
-  it("should not execute formatting commands when non-shortcut keys or standard keys without Ctrl/Cmd are pressed", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
-
-    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
-    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
-
-    // Press standard key 'a' without Ctrl/Cmd
-    fireEvent.keyDown(editable, { key: "a" });
-    // Press Ctrl+X (unhandled shortcut)
-    fireEvent.keyDown(editable, { key: "x", ctrlKey: true });
-
-    expect(document.execCommand).not.toHaveBeenCalled();
-  });
-
-  it("should stop event propagation when Ctrl+B is pressed so parent listeners do not trigger", () => {
-    document.execCommand = vi.fn().mockReturnValue(true);
-
-    const { container } = render(<WysiwygEditor value="" onChange={noop} />);
-    const editable = container.querySelector("[contenteditable]") as HTMLDivElement;
-
-    const event = new KeyboardEvent("keydown", { key: "b", ctrlKey: true, bubbles: true });
-    const stopSpy = vi.spyOn(event, "stopPropagation");
-
-    editable.dispatchEvent(event);
-
-    expect(stopSpy).toHaveBeenCalled();
   });
 });

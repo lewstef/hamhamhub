@@ -793,6 +793,522 @@ function FaqSection({ itemNoun, faqs, onAdd, onUpdate, onRemove, compact = false
 }
 
 // ============================================================
+// TrainerAttributesCard — Certified trainer toggle + experience description
+// ============================================================
+
+interface TrainerAttributesCardProps {
+  itemNoun: string;
+  /** When true, renders without a card wrapper (used in the flat layout's existing card). */
+  bare?: boolean;
+  certifiedTrainer: boolean;
+  onCertifiedTrainerChange: (v: boolean) => void;
+  certifierName: string;
+  onCertifierNameChange: (v: string) => void;
+  trainerExperienceDescription: string;
+  onTrainerExperienceDescriptionChange: (v: string) => void;
+}
+
+/**
+ * TrainerAttributesCard — Renders the Certified Dog Trainer toggle and trainer
+ * experience description fields.
+ * Used in the tabbed layout's General tab and the flat layout's Trainer & Facility
+ * Attributes card.
+ *
+ * @param props.bare - When true, omits the outer card wrapper so the caller can
+ *   embed the content inside an existing card element.
+ */
+function TrainerAttributesCard({
+  itemNoun,
+  bare = false,
+  certifiedTrainer,
+  onCertifiedTrainerChange,
+  certifierName,
+  onCertifierNameChange,
+  trainerExperienceDescription,
+  onTrainerExperienceDescriptionChange,
+}: TrainerAttributesCardProps) {
+  const content = (
+    <>
+      <BooleanToggleField
+        label="Certified Dog Trainer"
+        description={`Enable if this ${itemNoun.toLowerCase()} is coached by an officially certified trainer.`}
+        checked={certifiedTrainer}
+        onChange={onCertifiedTrainerChange}
+      >
+        <div className="space-y-2">
+          <Label htmlFor="certifier-name" className="text-xs font-semibold">Certifier Name</Label>
+          <Input
+            id="certifier-name"
+            type="text"
+            placeholder="Name of certifying institution/body"
+            value={certifierName}
+            onChange={(e) => onCertifierNameChange(e.target.value)}
+            className="h-9 bg-background text-xs font-semibold rounded-lg"
+          />
+        </div>
+      </BooleanToggleField>
+
+      <div className="h-px bg-border/40" />
+
+      <div className="space-y-2">
+        <Label className="text-xs font-semibold">Experience Description</Label>
+        <WysiwygEditor
+          value={trainerExperienceDescription}
+          onChange={onTrainerExperienceDescriptionChange}
+          placeholder="Describe trainer background, qualifications, experience, accomplishments..."
+        />
+      </div>
+    </>
+  );
+
+  if (bare) return <>{content}</>;
+
+  return (
+    <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
+        Trainer Attributes
+      </h3>
+      {content}
+    </div>
+  );
+}
+
+// ============================================================
+// ScheduleTabContent — Full schedule tab: weekly grid + closed periods + special openings
+// ============================================================
+
+interface ScheduleTabContentProps {
+  isDogSport: boolean;
+  scheduleOverlapError: string | null;
+  weeklySchedule: DayScheduleItem[];
+  onUpdateDaySchedule: (dayKey: DayKey, field: keyof DayScheduleItem, value: any) => void;
+  onCopyMonToWorkweek: () => void;
+  onCopyMonToAll: () => void;
+  closedPeriods: ClosedPeriodItem[];
+  onAddClosedPeriod: () => void;
+  onUpdateClosedPeriod: (index: number, field: keyof ClosedPeriodItem, value: string) => void;
+  onRemoveClosedPeriod: (index: number) => void;
+  specialOpenings: SpecialOpeningItem[];
+  onAddSpecialOpening: () => void;
+  onUpdateSpecialOpening: (index: number, field: keyof SpecialOpeningItem, value: string) => void;
+  onRemoveSpecialOpening: (index: number) => void;
+}
+
+/**
+ * ScheduleTabContent — Full schedule editor used in the "Schedule" tab (tabbed layout).
+ * Contains: weekly day schedule grid, closed periods builder, and special openings builder.
+ */
+function ScheduleTabContent({
+  isDogSport,
+  scheduleOverlapError,
+  weeklySchedule,
+  onUpdateDaySchedule,
+  onCopyMonToWorkweek,
+  onCopyMonToAll,
+  closedPeriods,
+  onAddClosedPeriod,
+  onUpdateClosedPeriod,
+  onRemoveClosedPeriod,
+  specialOpenings,
+  onAddSpecialOpening,
+  onUpdateSpecialOpening,
+  onRemoveSpecialOpening,
+}: ScheduleTabContentProps) {
+  return (
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {scheduleOverlapError && (
+        <div
+          data-testid="schedule-overlap-notification"
+          className="p-4 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-3 shadow-sm animate-in fade-in duration-200"
+        >
+          <AlertCircle className="size-5 shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-bold uppercase tracking-wider">Date Overlap Conflict Notification</span>
+            <span className="text-xs font-semibold">{scheduleOverlapError}</span>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
+        <DayScheduleGrid
+          weeklySchedule={weeklySchedule}
+          useSportLabels={isDogSport}
+          onUpdate={onUpdateDaySchedule}
+          onCopyMonToWorkweek={onCopyMonToWorkweek}
+          onCopyMonToAll={onCopyMonToAll}
+        />
+
+        {/* Closed Periods & Special Closures */}
+        <div className="space-y-4 pt-4 border-t border-border/60">
+          {scheduleOverlapError && (
+            <div
+              data-testid="schedule-overlap-notification-section"
+              className="p-4 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-3 shadow-sm animate-in fade-in duration-200"
+            >
+              <AlertCircle className="size-5 shrink-0 mt-0.5" />
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-bold uppercase tracking-wider">Date Overlap Conflict Notification</span>
+                <span className="text-xs font-semibold">{scheduleOverlapError}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1">
+            <Label className="text-base font-bold text-foreground">Closed Periods &amp; Special Closures</Label>
+            <p className="text-xs text-muted-foreground">
+              Specify vacation dates, seasonal breaks, or holiday closure periods when your organization is closed.
+            </p>
+          </div>
+
+          <div className="space-y-3" data-testid="closed-periods-list">
+            {closedPeriods.length === 0 ? (
+              <div className="text-center p-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
+                No special closed periods specified. Click &quot;Add Closed Period&quot; below to add vacation dates or holiday breaks.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {closedPeriods.map((period, index) => (
+                  <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Closed Period #{index + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onRemoveClosedPeriod(index)}
+                        className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                        title="Remove Closed Period"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label htmlFor={`closed-period-title-${index}`} className="text-xs font-semibold">Closure Reason / Title</Label>
+                          <Input
+                            id={`closed-period-title-${index}`}
+                            type="text"
+                            placeholder="e.g. Summer Vacation, Christmas Break"
+                            value={period.title}
+                            onChange={(e) => onUpdateClosedPeriod(index, "title", e.target.value)}
+                            className="bg-background text-xs font-semibold h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`closed-period-start-${index}`} className="text-xs font-semibold">Start Date</Label>
+                          <DatePickerInput
+                            id={`closed-period-start-${index}`}
+                            value={period.startDate}
+                            onChange={(val) => onUpdateClosedPeriod(index, "startDate", val)}
+                            placeholder="DD.MM.YYYY"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`closed-period-end-${index}`} className="text-xs font-semibold">End Date</Label>
+                          <DatePickerInput
+                            id={`closed-period-end-${index}`}
+                            value={period.endDate}
+                            onChange={(val) => onUpdateClosedPeriod(index, "endDate", val)}
+                            placeholder="DD.MM.YYYY"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor={`closed-period-note-${index}`} className="text-[11px] font-medium text-muted-foreground">Note / Closure Remarks (Optional)</Label>
+                        <Input
+                          id={`closed-period-note-${index}`}
+                          type="text"
+                          placeholder="e.g. Facility closed for annual renovation and staff training..."
+                          value={period.note || ""}
+                          onChange={(e) => onUpdateClosedPeriod(index, "note", e.target.value)}
+                          className="bg-background text-xs h-9 rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onAddClosedPeriod}
+            className="w-full font-bold text-xs py-4 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
+          >
+            <Plus className="size-3.5 mr-1.5" />
+            Add Closed Period
+          </Button>
+        </div>
+
+        {/* Special Openings & Extra Working Dates */}
+        <div className="space-y-4 pt-4 border-t border-border/60">
+          <div className="flex flex-col gap-1">
+            <Label className="text-base font-bold text-foreground">Special Openings &amp; Extra Working Dates</Label>
+            <p className="text-xs text-muted-foreground">
+              Specify special dates or holiday sessions when your organization IS open (e.g. Christmas special session, weekend workshop).
+            </p>
+          </div>
+
+          <div className="space-y-3" data-testid="special-openings-list">
+            {specialOpenings.length === 0 ? (
+              <div className="text-center p-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
+                No special opening dates specified. Click &quot;Add Special Opening&quot; below to add special open dates or extra working hours.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {specialOpenings.map((opening, index) => (
+                  <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Special Opening #{index + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onRemoveSpecialOpening(index)}
+                        className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                        title="Remove Special Opening"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <div className="space-y-1">
+                          <Label htmlFor={`special-opening-title-${index}`} className="text-xs font-semibold">Opening Reason / Event Title</Label>
+                          <Input
+                            id={`special-opening-title-${index}`}
+                            type="text"
+                            placeholder="e.g. Christmas Special Session"
+                            value={opening.title}
+                            onChange={(e) => onUpdateSpecialOpening(index, "title", e.target.value)}
+                            className="bg-background text-xs font-semibold h-9"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`special-opening-start-${index}`} className="text-xs font-semibold">Start Date</Label>
+                          <DatePickerInput
+                            id={`special-opening-start-${index}`}
+                            value={opening.startDate}
+                            onChange={(val) => onUpdateSpecialOpening(index, "startDate", val)}
+                            placeholder="DD.MM.YYYY"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`special-opening-end-${index}`} className="text-xs font-semibold">End Date</Label>
+                          <DatePickerInput
+                            id={`special-opening-end-${index}`}
+                            value={opening.endDate}
+                            onChange={(val) => onUpdateSpecialOpening(index, "endDate", val)}
+                            placeholder="DD.MM.YYYY"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`special-opening-checkin-${index}`} className="text-xs font-semibold">Check-in Time</Label>
+                          <TimePickerSelect
+                            id={`special-opening-checkin-${index}`}
+                            value={opening.checkin || "09:00"}
+                            onChange={(val) => onUpdateSpecialOpening(index, "checkin", val)}
+                            options={getCheckinOptions()}
+                            placeholder="09:00"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`special-opening-checkout-${index}`} className="text-xs font-semibold">Check-out Time</Label>
+                          <TimePickerSelect
+                            id={`special-opening-checkout-${index}`}
+                            value={opening.checkout || "17:00"}
+                            onChange={(val) => onUpdateSpecialOpening(index, "checkout", val)}
+                            options={getCheckoutOptions(opening.checkin || "09:00")}
+                            placeholder="17:00"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor={`special-opening-note-${index}`} className="text-[11px] font-medium text-muted-foreground">Note / Opening Remarks (Optional)</Label>
+                        <Input
+                          id={`special-opening-note-${index}`}
+                          type="text"
+                          placeholder="e.g. Special Christmas session open to all breeds..."
+                          value={opening.note || ""}
+                          onChange={(e) => onUpdateSpecialOpening(index, "note", e.target.value)}
+                          className="bg-background text-xs h-9 rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onAddSpecialOpening}
+            className="w-full font-bold text-xs py-4 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
+          >
+            <Plus className="size-3.5 mr-1.5" />
+            Add Special Opening
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// CareAmenitiesSection — Boarding-only care toggles
+// ============================================================
+
+interface CareAmenitiesSectionProps {
+  dailyWalks: number;
+  onDailyWalksChange: (v: number) => void;
+  medicationAdministration: boolean;
+  onMedicationAdministrationChange: (v: boolean) => void;
+  medicationAdministrationDetails: string;
+  onMedicationAdministrationDetailsChange: (v: string) => void;
+  webCam: boolean;
+  onWebCamChange: (v: boolean) => void;
+  webCamDetails: string;
+  onWebCamDetailsChange: (v: string) => void;
+  ownerCommunication: boolean;
+  onOwnerCommunicationChange: (v: boolean) => void;
+  ownerCommunicationDetails: string;
+  onOwnerCommunicationDetailsChange: (v: string) => void;
+  personalizedMealPlan: boolean;
+  onPersonalizedMealPlanChange: (v: boolean) => void;
+  personalizedMealPlanDetails: string;
+  onPersonalizedMealPlanDetailsChange: (v: string) => void;
+}
+
+/**
+ * CareAmenitiesSection — Renders boarding-specific care amenity toggles:
+ * daily walks, medication administration, webcam access, owner communication,
+ * and personalized meal plan.
+ *
+ * Used in the tabbed layout's "Care & facilities" tab and the flat layout's
+ * "Care & Facilities" card.
+ */
+function CareAmenitiesSection({
+  dailyWalks,
+  onDailyWalksChange,
+  medicationAdministration,
+  onMedicationAdministrationChange,
+  medicationAdministrationDetails,
+  onMedicationAdministrationDetailsChange,
+  webCam,
+  onWebCamChange,
+  webCamDetails,
+  onWebCamDetailsChange,
+  ownerCommunication,
+  onOwnerCommunicationChange,
+  ownerCommunicationDetails,
+  onOwnerCommunicationDetailsChange,
+  personalizedMealPlan,
+  onPersonalizedMealPlanChange,
+  personalizedMealPlanDetails,
+  onPersonalizedMealPlanDetailsChange,
+}: CareAmenitiesSectionProps) {
+  return (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor="daily-walks" className="text-xs font-semibold">Daily Walks</Label>
+        <CustomSelect
+          id="daily-walks"
+          value={dailyWalks}
+          onChange={(val) => onDailyWalksChange(parseInt(val, 10))}
+          options={[
+            { value: 1, label: "1 walk per day" },
+            { value: 2, label: "2 walks per day" },
+            { value: 3, label: "3 walks per day" },
+            { value: 4, label: "4 walks per day" },
+          ]}
+        />
+      </div>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label="Medication Administration"
+        description="Can you administer medication or medical care?"
+        checked={medicationAdministration}
+        onChange={onMedicationAdministrationChange}
+      >
+        <div className="space-y-2">
+          <Label>Medication Administration Instructions</Label>
+          <WysiwygEditor
+            value={medicationAdministrationDetails}
+            onChange={onMedicationAdministrationDetailsChange}
+            placeholder="e.g. oral tablets, injections, schedule limitations"
+          />
+        </div>
+      </BooleanToggleField>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label="Webcam"
+        description="Do you offer live video/webcam access to owners?"
+        checked={webCam}
+        onChange={onWebCamChange}
+      >
+        <div className="space-y-2">
+          <Label>Webcam Access Instructions</Label>
+          <WysiwygEditor
+            value={webCamDetails}
+            onChange={onWebCamDetailsChange}
+            placeholder="e.g. live stream link provided upon check-in, 24/7 access"
+          />
+        </div>
+      </BooleanToggleField>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label="Communication with the Owner"
+        description="Will you provide regular photo/video updates to the owner?"
+        checked={ownerCommunication}
+        onChange={onOwnerCommunicationChange}
+      >
+        <div className="space-y-2">
+          <Label>Communication Updates Details</Label>
+          <WysiwygEditor
+            value={ownerCommunicationDetails}
+            onChange={onOwnerCommunicationDetailsChange}
+            placeholder="e.g. daily photos via WhatsApp, weekly email progress"
+          />
+        </div>
+      </BooleanToggleField>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label="Personalized Meal Plan"
+        description="Can you provide a customized meal plan or accommodate special diets?"
+        checked={personalizedMealPlan}
+        onChange={onPersonalizedMealPlanChange}
+      >
+        <div className="space-y-2">
+          <Label>Meal Plan Details</Label>
+          <WysiwygEditor
+            value={personalizedMealPlanDetails}
+            onChange={onPersonalizedMealPlanDetailsChange}
+            placeholder="e.g. BARF diet support, raw food storage, customized portions"
+          />
+        </div>
+      </BooleanToggleField>
+    </>
+  );
+}
+
+// ============================================================
 // CourseForm — Main component
 // ============================================================
 
@@ -1413,40 +1929,15 @@ export function CourseForm({
               </div>
 
               {!isBoarding && (
-                <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
-                    Trainer Attributes
-                  </h3>
-                  <BooleanToggleField
-                    label="Certified Dog Trainer"
-                    description={`Enable if this ${itemNoun.toLowerCase()} is coached by an officially certified trainer.`}
-                    checked={certifiedTrainer}
-                    onChange={setCertifiedTrainer}
-                  >
-                    <div className="space-y-2">
-                      <Label htmlFor="certifier-name" className="text-xs font-semibold">Certifier Name</Label>
-                      <Input
-                        id="certifier-name"
-                        type="text"
-                        placeholder="Name of certifying institution/body"
-                        value={certifierName}
-                        onChange={(e) => setCertifierName(e.target.value)}
-                        className="h-9 bg-background text-xs font-semibold rounded-lg"
-                      />
-                    </div>
-                  </BooleanToggleField>
-
-                  <div className="h-px bg-border/40" />
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Experience Description</Label>
-                    <WysiwygEditor
-                      value={trainerExperienceDescription}
-                      onChange={setTrainerExperienceDescription}
-                      placeholder="Describe trainer background, qualifications, experience, accomplishments..."
-                    />
-                  </div>
-                </div>
+                <TrainerAttributesCard
+                  itemNoun={itemNoun}
+                  certifiedTrainer={certifiedTrainer}
+                  onCertifiedTrainerChange={setCertifiedTrainer}
+                  certifierName={certifierName}
+                  onCertifierNameChange={setCertifierName}
+                  trainerExperienceDescription={trainerExperienceDescription}
+                  onTrainerExperienceDescriptionChange={setTrainerExperienceDescription}
+                />
               )}
 
               {/* Information & Details Editor */}
@@ -1505,251 +1996,22 @@ export function CourseForm({
 
           {/* TAB 4: SCHEDULE */}
           {activeTab === "schedule" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              {scheduleOverlapError && (
-                <div
-                  data-testid="schedule-overlap-notification"
-                  className="p-4 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-3 shadow-sm animate-in fade-in duration-200"
-                >
-                  <AlertCircle className="size-5 shrink-0 mt-0.5" />
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-bold uppercase tracking-wider">Date Overlap Conflict Notification</span>
-                    <span className="text-xs font-semibold">{scheduleOverlapError}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
-                <DayScheduleGrid
-                  weeklySchedule={weeklySchedule}
-                  useSportLabels={isDogSport}
-                  onUpdate={handleUpdateDaySchedule}
-                  onCopyMonToWorkweek={handleCopyMonToWorkweek}
-                  onCopyMonToAll={handleCopyMonToAll}
-                />
-
-                {/* Closed Periods & Special Closures */}
-                <div className="space-y-4 pt-4 border-t border-border/60">
-                  {scheduleOverlapError && (
-                    <div
-                      data-testid="schedule-overlap-notification-section"
-                      className="p-4 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive flex items-start gap-3 shadow-sm animate-in fade-in duration-200"
-                    >
-                      <AlertCircle className="size-5 shrink-0 mt-0.5" />
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold uppercase tracking-wider">Date Overlap Conflict Notification</span>
-                        <span className="text-xs font-semibold">{scheduleOverlapError}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-1">
-                    <Label className="text-base font-bold text-foreground">Closed Periods &amp; Special Closures</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Specify vacation dates, seasonal breaks, or holiday closure periods when your organization is closed.
-                    </p>
-                  </div>
-
-                  <div className="space-y-3" data-testid="closed-periods-list">
-                    {closedPeriods.length === 0 ? (
-                      <div className="text-center p-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
-                        No special closed periods specified. Click &quot;Add Closed Period&quot; below to add vacation dates or holiday breaks.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {closedPeriods.map((period, index) => (
-                          <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                Closed Period #{index + 1}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRemoveClosedPeriod(index)}
-                                className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                                title="Remove Closed Period"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </Button>
-                            </div>
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div className="space-y-1">
-                                  <Label htmlFor={`closed-period-title-${index}`} className="text-xs font-semibold">Closure Reason / Title</Label>
-                                  <Input
-                                    id={`closed-period-title-${index}`}
-                                    type="text"
-                                    placeholder="e.g. Summer Vacation, Christmas Break"
-                                    value={period.title}
-                                    onChange={(e) => handleUpdateClosedPeriod(index, "title", e.target.value)}
-                                    className="bg-background text-xs font-semibold h-9"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label htmlFor={`closed-period-start-${index}`} className="text-xs font-semibold">Start Date</Label>
-                                  <DatePickerInput
-                                    id={`closed-period-start-${index}`}
-                                    value={period.startDate}
-                                    onChange={(val) => handleUpdateClosedPeriod(index, "startDate", val)}
-                                    placeholder="DD.MM.YYYY"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label htmlFor={`closed-period-end-${index}`} className="text-xs font-semibold">End Date</Label>
-                                  <DatePickerInput
-                                    id={`closed-period-end-${index}`}
-                                    value={period.endDate}
-                                    onChange={(val) => handleUpdateClosedPeriod(index, "endDate", val)}
-                                    placeholder="DD.MM.YYYY"
-                                  />
-                                </div>
-                              </div>
-                              <div className="space-y-1">
-                                <Label htmlFor={`closed-period-note-${index}`} className="text-[11px] font-medium text-muted-foreground">Note / Closure Remarks (Optional)</Label>
-                                <Input
-                                  id={`closed-period-note-${index}`}
-                                  type="text"
-                                  placeholder="e.g. Facility closed for annual renovation and staff training..."
-                                  value={period.note || ""}
-                                  onChange={(e) => handleUpdateClosedPeriod(index, "note", e.target.value)}
-                                  className="bg-background text-xs h-9 rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddClosedPeriod}
-                      className="w-full font-bold text-xs py-4 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
-                    >
-                      <Plus className="size-3.5 mr-1.5" />
-                      Add Closed Period
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Special Openings & Extra Working Dates */}
-                <div className="space-y-4 pt-4 border-t border-border/60">
-                  <div className="flex flex-col gap-1">
-                    <Label className="text-base font-bold text-foreground">Special Openings &amp; Extra Working Dates</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Specify special dates or holiday sessions when your organization IS open (e.g. Christmas special session, weekend workshop).
-                    </p>
-                  </div>
-
-                  <div className="space-y-3" data-testid="special-openings-list">
-                    {specialOpenings.length === 0 ? (
-                      <div className="text-center p-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
-                        No special opening dates specified. Click &quot;Add Special Opening&quot; below to add special open dates or extra working hours.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {specialOpenings.map((opening, index) => (
-                          <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                Special Opening #{index + 1}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRemoveSpecialOpening(index)}
-                                className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                                title="Remove Special Opening"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </Button>
-                            </div>
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                                <div className="space-y-1">
-                                  <Label htmlFor={`special-opening-title-${index}`} className="text-xs font-semibold">Opening Reason / Event Title</Label>
-                                  <Input
-                                    id={`special-opening-title-${index}`}
-                                    type="text"
-                                    placeholder="e.g. Christmas Special Session"
-                                    value={opening.title}
-                                    onChange={(e) => handleUpdateSpecialOpening(index, "title", e.target.value)}
-                                    className="bg-background text-xs font-semibold h-9"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label htmlFor={`special-opening-start-${index}`} className="text-xs font-semibold">Start Date</Label>
-                                  <DatePickerInput
-                                    id={`special-opening-start-${index}`}
-                                    value={opening.startDate}
-                                    onChange={(val) => handleUpdateSpecialOpening(index, "startDate", val)}
-                                    placeholder="DD.MM.YYYY"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label htmlFor={`special-opening-end-${index}`} className="text-xs font-semibold">End Date</Label>
-                                  <DatePickerInput
-                                    id={`special-opening-end-${index}`}
-                                    value={opening.endDate}
-                                    onChange={(val) => handleUpdateSpecialOpening(index, "endDate", val)}
-                                    placeholder="DD.MM.YYYY"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label htmlFor={`special-opening-checkin-${index}`} className="text-xs font-semibold">Start</Label>
-                                  <TimePickerSelect
-                                    id={`special-opening-checkin-${index}`}
-                                    value={opening.checkin || "09:00"}
-                                    onChange={(val) => handleUpdateSpecialOpening(index, "checkin", val)}
-                                    options={getCheckinOptions()}
-                                    placeholder="09:00"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label htmlFor={`special-opening-checkout-${index}`} className="text-xs font-semibold">End</Label>
-                                  <TimePickerSelect
-                                    id={`special-opening-checkout-${index}`}
-                                    value={opening.checkout || "17:00"}
-                                    onChange={(val) => handleUpdateSpecialOpening(index, "checkout", val)}
-                                    options={getCheckoutOptions(opening.checkin || "09:00")}
-                                    placeholder="17:00"
-                                  />
-                                </div>
-                              </div>
-                              <div className="space-y-1">
-                                <Label htmlFor={`special-opening-note-${index}`} className="text-[11px] font-medium text-muted-foreground">Note / Event Remarks (Optional)</Label>
-                                <Input
-                                  id={`special-opening-note-${index}`}
-                                  type="text"
-                                  placeholder="e.g. Special weekend workshop session, pre-registration required..."
-                                  value={opening.note || ""}
-                                  onChange={(e) => handleUpdateSpecialOpening(index, "note", e.target.value)}
-                                  className="bg-background text-xs h-9 rounded-lg border-input/80 focus-visible:ring-1 focus-visible:ring-primary"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleAddSpecialOpening}
-                      className="w-full font-bold text-xs py-4 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
-                    >
-                      <Plus className="size-3.5 mr-1.5" />
-                      Add Special Opening
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ScheduleTabContent
+              isDogSport={isDogSport}
+              scheduleOverlapError={scheduleOverlapError}
+              weeklySchedule={weeklySchedule}
+              onUpdateDaySchedule={handleUpdateDaySchedule}
+              onCopyMonToWorkweek={handleCopyMonToWorkweek}
+              onCopyMonToAll={handleCopyMonToAll}
+              closedPeriods={closedPeriods}
+              onAddClosedPeriod={handleAddClosedPeriod}
+              onUpdateClosedPeriod={handleUpdateClosedPeriod}
+              onRemoveClosedPeriod={handleRemoveClosedPeriod}
+              specialOpenings={specialOpenings}
+              onAddSpecialOpening={handleAddSpecialOpening}
+              onUpdateSpecialOpening={handleUpdateSpecialOpening}
+              onRemoveSpecialOpening={handleRemoveSpecialOpening}
+            />
           )}
 
           {/* TAB 5: LOCATION */}
@@ -1805,93 +2067,26 @@ export function CourseForm({
                     Configure specialized boarding amenities, webcam access, meal customization, and owner updates.
                   </p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="daily-walks" className="text-xs font-semibold">Daily Walks</Label>
-                  <CustomSelect
-                    id="daily-walks"
-                    value={dailyWalks}
-                    onChange={(val) => setDailyWalks(parseInt(val, 10))}
-                    options={[
-                      { value: 1, label: "1 walk per day" },
-                      { value: 2, label: "2 walks per day" },
-                      { value: 3, label: "3 walks per day" },
-                      { value: 4, label: "4 walks per day" },
-                    ]}
-                  />
-                </div>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Medication Administration"
-                  description="Can you administer medication or medical care?"
-                  checked={medicationAdministration}
-                  onChange={setMedicationAdministration}
-                >
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Medication Administration Instructions</Label>
-                    <WysiwygEditor
-                      value={medicationAdministrationDetails}
-                      onChange={setMedicationAdministrationDetails}
-                      placeholder="e.g. oral tablets, injections, schedule limitations"
-                    />
-                  </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Webcam"
-                  description="Do you offer live video/webcam access to owners?"
-                  checked={webCam}
-                  onChange={setWebCam}
-                >
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Webcam Access Instructions</Label>
-                    <WysiwygEditor
-                      value={webCamDetails}
-                      onChange={setWebCamDetails}
-                      placeholder="e.g. live stream link provided upon check-in, 24/7 access"
-                    />
-                  </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Communication with the Owner"
-                  description="Will you provide regular photo/video updates to the owner?"
-                  checked={ownerCommunication}
-                  onChange={setOwnerCommunication}
-                >
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Communication Updates Details</Label>
-                    <WysiwygEditor
-                      value={ownerCommunicationDetails}
-                      onChange={setOwnerCommunicationDetails}
-                      placeholder="e.g. daily photos via WhatsApp, weekly email progress"
-                    />
-                  </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Personalized Meal Plan"
-                  description="Can you provide a customized meal plan or accommodate special diets?"
-                  checked={personalizedMealPlan}
-                  onChange={setPersonalizedMealPlan}
-                >
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Meal Plan Details</Label>
-                    <WysiwygEditor
-                      value={personalizedMealPlanDetails}
-                      onChange={setPersonalizedMealPlanDetails}
-                      placeholder="e.g. BARF diet support, raw food storage, customized portions"
-                    />
-                  </div>
-                </BooleanToggleField>
+                <CareAmenitiesSection
+                  dailyWalks={dailyWalks}
+                  onDailyWalksChange={setDailyWalks}
+                  medicationAdministration={medicationAdministration}
+                  onMedicationAdministrationChange={setMedicationAdministration}
+                  medicationAdministrationDetails={medicationAdministrationDetails}
+                  onMedicationAdministrationDetailsChange={setMedicationAdministrationDetails}
+                  webCam={webCam}
+                  onWebCamChange={setWebCam}
+                  webCamDetails={webCamDetails}
+                  onWebCamDetailsChange={setWebCamDetails}
+                  ownerCommunication={ownerCommunication}
+                  onOwnerCommunicationChange={setOwnerCommunication}
+                  ownerCommunicationDetails={ownerCommunicationDetails}
+                  onOwnerCommunicationDetailsChange={setOwnerCommunicationDetails}
+                  personalizedMealPlan={personalizedMealPlan}
+                  onPersonalizedMealPlanChange={setPersonalizedMealPlan}
+                  personalizedMealPlanDetails={personalizedMealPlanDetails}
+                  onPersonalizedMealPlanDetailsChange={setPersonalizedMealPlanDetails}
+                />
               </div>
             </div>
           )}
@@ -1950,36 +2145,16 @@ export function CourseForm({
 
                 {itemNoun !== "Boarding service" && (
                   <>
-                    {/* Certified Trainer */}
-                    <BooleanToggleField
-                      label="Certified Dog Trainer"
-                      description={`Enable if this ${itemNoun.toLowerCase()} is coached by an officially certified trainer.`}
-                      checked={certifiedTrainer}
-                      onChange={setCertifiedTrainer}
-                    >
-                      <div className="space-y-2">
-                        <Label htmlFor="certifier-name">Certifier Name</Label>
-                        <Input
-                          id="certifier-name"
-                          type="text"
-                          placeholder="Name of certifying institution/body"
-                          value={certifierName}
-                          onChange={(e) => setCertifierName(e.target.value)}
-                          className="bg-background"
-                        />
-                      </div>
-                    </BooleanToggleField>
-
-                    <div className="h-px bg-border/40" />
-
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Experience Description</Label>
-                      <WysiwygEditor
-                        value={trainerExperienceDescription}
-                        onChange={setTrainerExperienceDescription}
-                        placeholder="Describe trainer background, qualifications, experience, accomplishments..."
-                      />
-                    </div>
+                    <TrainerAttributesCard
+                      itemNoun={itemNoun}
+                      bare
+                      certifiedTrainer={certifiedTrainer}
+                      onCertifiedTrainerChange={setCertifiedTrainer}
+                      certifierName={certifierName}
+                      onCertifierNameChange={setCertifierName}
+                      trainerExperienceDescription={trainerExperienceDescription}
+                      onTrainerExperienceDescriptionChange={setTrainerExperienceDescription}
+                    />
 
                     <div className="h-px bg-border/40" />
 
@@ -2072,94 +2247,26 @@ export function CourseForm({
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
                   Care &amp; Facilities
                 </h3>
-
-                <div className="space-y-2">
-                  <Label htmlFor="daily-walks">Daily Walks</Label>
-                  <CustomSelect
-                    id="daily-walks"
-                    value={dailyWalks}
-                    onChange={(val) => setDailyWalks(parseInt(val, 10))}
-                    options={[
-                      { value: 1, label: "1 walk per day" },
-                      { value: 2, label: "2 walks per day" },
-                      { value: 3, label: "3 walks per day" },
-                      { value: 4, label: "4 walks per day" },
-                    ]}
-                  />
-                </div>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Medication Administration"
-                  description="Can you administer medication or medical care?"
-                  checked={medicationAdministration}
-                  onChange={setMedicationAdministration}
-                >
-                  <div className="space-y-2">
-                    <Label>Medication Administration Instructions</Label>
-                    <WysiwygEditor
-                      value={medicationAdministrationDetails}
-                      onChange={setMedicationAdministrationDetails}
-                      placeholder="e.g. oral tablets, injections, schedule limitations"
-                    />
-                  </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Webcam"
-                  description="Do you offer live video/webcam access to owners?"
-                  checked={webCam}
-                  onChange={setWebCam}
-                >
-                  <div className="space-y-2">
-                    <Label>Webcam Access Instructions</Label>
-                    <WysiwygEditor
-                      value={webCamDetails}
-                      onChange={setWebCamDetails}
-                      placeholder="e.g. live stream link provided upon check-in, 24/7 access"
-                    />
-                  </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Communication with the Owner"
-                  description="Will you provide regular photo/video updates to the owner?"
-                  checked={ownerCommunication}
-                  onChange={setOwnerCommunication}
-                >
-                  <div className="space-y-2">
-                    <Label>Communication Updates Details</Label>
-                    <WysiwygEditor
-                      value={ownerCommunicationDetails}
-                      onChange={setOwnerCommunicationDetails}
-                      placeholder="e.g. daily photos via WhatsApp, weekly email progress"
-                    />
-                  </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Personalized Meal Plan"
-                  description="Can you provide a customized meal plan or accommodate special diets?"
-                  checked={personalizedMealPlan}
-                  onChange={setPersonalizedMealPlan}
-                >
-                  <div className="space-y-2">
-                    <Label>Meal Plan Details</Label>
-                    <WysiwygEditor
-                      value={personalizedMealPlanDetails}
-                      onChange={setPersonalizedMealPlanDetails}
-                      placeholder="e.g. BARF diet support, raw food storage, customized portions"
-                    />
-                  </div>
-                </BooleanToggleField>
-
+                <CareAmenitiesSection
+                  dailyWalks={dailyWalks}
+                  onDailyWalksChange={setDailyWalks}
+                  medicationAdministration={medicationAdministration}
+                  onMedicationAdministrationChange={setMedicationAdministration}
+                  medicationAdministrationDetails={medicationAdministrationDetails}
+                  onMedicationAdministrationDetailsChange={setMedicationAdministrationDetails}
+                  webCam={webCam}
+                  onWebCamChange={setWebCam}
+                  webCamDetails={webCamDetails}
+                  onWebCamDetailsChange={setWebCamDetails}
+                  ownerCommunication={ownerCommunication}
+                  onOwnerCommunicationChange={setOwnerCommunication}
+                  ownerCommunicationDetails={ownerCommunicationDetails}
+                  onOwnerCommunicationDetailsChange={setOwnerCommunicationDetails}
+                  personalizedMealPlan={personalizedMealPlan}
+                  onPersonalizedMealPlanChange={setPersonalizedMealPlan}
+                  personalizedMealPlanDetails={personalizedMealPlanDetails}
+                  onPersonalizedMealPlanDetailsChange={setPersonalizedMealPlanDetails}
+                />
                 {isBoarding && (
                   <>
                     <div className="h-px bg-border/60" />

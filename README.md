@@ -118,6 +118,10 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - If enabled, presents a checkbox multi-select option group for age phases: "Puppyhood (8 Weeks to 5 Months)", "Adolescence / Teenage Phase (5 Months to 12–18 Months)", and "Adulthood & Senior Years (1 Year +)".
 - **Two-Column Billing Cards & Primary / Secondary Contact Reorganization**:
   - The "Billing" tab splits content into a two-column layout on large screens: **Company information** card (Company name, Tax ID, Trade Registry Number, EUID, Address, Bank, and Bank Account Number) and **Contact information** card (Primary Contact Person and Secondary Contact Person).
+- **Modular Component Architecture & Form Decomposition**:
+  - Decomposed monolithic form structures (`course-form.tsx` and `edit-organization-form.tsx`) into clean, focused sub-components under `src/components/org-form/` and shared UI primitives.
+  - Split `edit-organization-form.tsx` (2,800+ lines) into modular tab components (`org-info-tab.tsx`, `org-billing-tab.tsx`, `org-security-tab.tsx`, `org-services-tab.tsx`, `org-subscription-tab.tsx`, and `types.ts`).
+  - Standardized all toggle controls across services lists, service detail screens, organization forms, and course forms with the reusable `ToggleSwitch` component primitive.
   - Primary Contact Person: Name (`*`), Phone (`*`), Email (`*`) — all mandatory.
   - Secondary Contact Person: Name, Phone, Email — optional secondary contact backup.
   - Simplified clean field labels (`Name`, `Phone`, `Email`) under explicit section headers ("Primary Contact Person" and "Secondary Contact Person (Optional)" with no uppercase font transforms applied).

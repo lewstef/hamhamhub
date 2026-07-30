@@ -10,10 +10,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Eye, EyeOff, Search, Check, User, ChevronRight, ChevronDown, X, Key, Shield, Mail, Home, Building, Map, Globe, Hash, MapPin, Phone, Lock, Settings } from "lucide-react";
+import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { PasswordStrength } from "@/components/password-strength";
 import { WysiwygEditor } from "./wysiwyg-editor";
 import { ROMANIAN_COUNTIES, getCountyLocalities } from "@/config/romanian-territory";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { OrgInfoTab } from "./org-form/org-info-tab";
+import { OrgBillingTab } from "./org-form/org-billing-tab";
+import { OrgSecurityTab } from "./org-form/org-security-tab";
+import { OrgSubscriptionTab } from "./org-form/org-subscription-tab";
+import { OrgServicesTab } from "./org-form/org-services-tab";
 
 interface Organization {
   id: string;
@@ -732,746 +738,69 @@ export function EditOrganizationForm({
         })}
       </div>
 
-      {/* CARD 1: Information */}
+      {/* TAB CONTENTS */}
       {activeTab === "personal" && (
-        <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
-          <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-              <User className="size-5" />
-            </div>
-            <CardTitle className="text-base font-bold text-foreground">Information</CardTitle>
-          </div>
-          <CardContent className="p-0">
-            <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
-              Manage your basic organization profile details
-            </div>
-            <div className="divide-y divide-border/50">
-              {/* Name Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Name</span>
-                  <span className="text-sm font-semibold text-foreground truncate">{organization.name}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowNameModal)}
-                  aria-label="Edit Name"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Name"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Email Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Email</span>
-                  {renderLinkValue(organization.email, "email")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowEmailModal)}
-                  aria-label="Edit Email"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Email"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Phone Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Phone</span>
-                  {renderLinkValue(organization.phoneNumber, "phone")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowPhoneModal)}
-                  aria-label="Edit Phone"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Phone"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Website Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Website</span>
-                  {renderLinkValue(organization.website, "link")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowWebsiteModal)}
-                  aria-label="Edit Website"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Website"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Facebook Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Facebook</span>
-                  {renderLinkValue(organization.facebook, "link")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowFacebookModal)}
-                  aria-label="Edit Facebook"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Facebook"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Instagram Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Instagram</span>
-                  {renderLinkValue(organization.instagram, "link")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowInstagramModal)}
-                  aria-label="Edit Instagram"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Instagram"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* TikTok Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">TikTok</span>
-                  {renderLinkValue(organization.tiktok, "link")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowTikTokModal)}
-                  aria-label="Edit TikTok"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit TikTok"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* LinkedIn Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group border-t border-border/40">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">LinkedIn</span>
-                  {renderLinkValue(organization.linkedin, "link")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowLinkedinModal)}
-                  aria-label="Edit LinkedIn"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit LinkedIn"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Description Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Description</span>
-                  <span className="text-sm text-foreground/90 font-medium truncate max-w-xs sm:max-w-md md:max-w-lg">
-                    {organization.description ? organization.description.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() || "-" : "-"}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowDescriptionModal)}
-                  aria-label="Edit Description"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Description"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Category Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Category</span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                    {selectedCategoryName}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowCategoryModal)}
-                  aria-label="Edit Category"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Category"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Member since Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 text-left">
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Member since</span>
-                  <span className="text-sm text-foreground/90 font-medium">{formattedRegistrationDate}</span>
-                </div>
-              </div>
-
-              {/* Subscription Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 text-left">
-                <div className="flex flex-1 items-center">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80">Subscription</span>
-                  <span className="text-sm text-foreground/90 font-medium">-</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <OrgInfoTab
+          organization={organization}
+          selectedCategoryName={selectedCategoryName}
+          formattedRegistrationDate={formattedRegistrationDate}
+          isPending={isPending}
+          onOpenNameModal={() => openModal(setShowNameModal)}
+          onOpenEmailModal={() => openModal(setShowEmailModal)}
+          onOpenPhoneModal={() => openModal(setShowPhoneModal)}
+          onOpenWebsiteModal={() => openModal(setShowWebsiteModal)}
+          onOpenFacebookModal={() => openModal(setShowFacebookModal)}
+          onOpenInstagramModal={() => openModal(setShowInstagramModal)}
+          onOpenTikTokModal={() => openModal(setShowTikTokModal)}
+          onOpenLinkedinModal={() => openModal(setShowLinkedinModal)}
+          onOpenDescriptionModal={() => openModal(setShowDescriptionModal)}
+          onOpenCategoryModal={() => openModal(setShowCategoryModal)}
+          renderLinkValue={renderLinkValue}
+        />
       )}
 
-      {/* CARD 1.2: Billing details */}
       {activeTab === "billing" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* CARD 1.2: Company details */}
-          <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
-            <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Building className="size-5" />
-              </div>
-              <CardTitle className="text-base font-bold text-foreground">Company information</CardTitle>
-            </div>
-            <CardContent className="p-0">
-              <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
-                The information provided below will reflect on your invoices
-              </div>
-              <div className="divide-y divide-border/50">
-                {/* Company Name Row */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Company name</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingCompanyName || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowBillingModal)}
-                    aria-label="Edit Billing Company Name"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Billing Company Name"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Tax ID Row */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Tax ID</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingTaxId || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowBillingModal)}
-                    aria-label="Edit Billing Tax ID"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Billing Tax ID"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Trade Registry Number Row */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Trade Registry Number</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingTradeRegistryNumber || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowBillingModal)}
-                    aria-label="Edit Billing Trade Registry Number"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Billing Trade Registry Number"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* EUID Row */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">EUID</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingEuid || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowBillingModal)}
-                    aria-label="Edit Billing EUID"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Billing EUID"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Address Row */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Address</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.address || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowAddressModal)}
-                    aria-label="Edit Address"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Address"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Bank Row */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Bank</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingBankName || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowBillingModal)}
-                    aria-label="Edit Billing Bank"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Billing Bank"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Bank Account Number Row */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Bank Account Number</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingBankAccountNumber || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowBillingModal)}
-                    aria-label="Edit Billing Bank Account Number"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Billing Bank Account Number"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* CARD 1.3: Contact details */}
-          <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
-            <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <User className="size-5" />
-              </div>
-              <CardTitle className="text-base font-bold text-foreground">Contact information</CardTitle>
-            </div>
-            <CardContent className="p-0">
-              <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
-                Primary and secondary contact persons for this organization
-              </div>
-
-              {/* Primary Contact Person Section */}
-              <div className="px-6 py-2.5 bg-muted/20 border-b border-border/50 text-xs font-bold text-muted-foreground/90">
-                Primary Contact Person
-              </div>
-              <div className="divide-y divide-border/50 border-b border-border/50">
-                {/* Primary Contact Name */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Name</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingContactName || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowPrimaryContactModal)}
-                    aria-label="Edit Primary Contact Person Name"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Primary Contact Person Name"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Primary Contact Phone */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Phone</span>
-                    {renderLinkValue(organization.billingContactPhone, "phone")}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowPrimaryContactModal)}
-                    aria-label="Edit Primary Contact Person Phone"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Primary Contact Person Phone"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Primary Contact Email */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Email</span>
-                    {renderLinkValue(organization.billingContactEmail, "email")}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowPrimaryContactModal)}
-                    aria-label="Edit Primary Contact Person Email"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Primary Contact Person Email"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Secondary Contact Person Section */}
-              <div className="px-6 py-2.5 bg-muted/20 border-b border-border/50 text-xs font-bold text-muted-foreground/90 flex items-center justify-between">
-                <span>Secondary Contact Person</span>
-                <span className="text-[10px] font-normal normal-case text-muted-foreground/70">(Optional)</span>
-              </div>
-              <div className="divide-y divide-border/50">
-                {/* Secondary Contact Name */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Name</span>
-                    <span className="text-sm text-foreground/90 font-medium truncate">{organization.billingSecondaryContactName || "-"}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowSecondaryContactModal)}
-                    aria-label="Edit Secondary Contact Person Name"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Secondary Contact Person Name"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Secondary Contact Phone */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Phone</span>
-                    {renderLinkValue(organization.billingSecondaryContactPhone, "phone")}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowSecondaryContactModal)}
-                    aria-label="Edit Secondary Contact Person Phone"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Secondary Contact Person Phone"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-
-                {/* Secondary Contact Email */}
-                <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                  <div className="flex flex-1 items-center min-w-0 pr-4">
-                    <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Email</span>
-                    {renderLinkValue(organization.billingSecondaryContactEmail, "email")}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openModal(setShowSecondaryContactModal)}
-                    aria-label="Edit Secondary Contact Person Email"
-                    disabled={isPending}
-                    className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                    title="Edit Secondary Contact Person Email"
-                  >
-                    <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                  </button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <OrgBillingTab
+          organization={organization}
+          isPending={isPending}
+          onOpenBillingModal={() => openModal(setShowBillingModal)}
+          onOpenAddressModal={() => openModal(setShowAddressModal)}
+          onOpenPrimaryContactModal={() => openModal(setShowPrimaryContactModal)}
+          onOpenSecondaryContactModal={() => openModal(setShowSecondaryContactModal)}
+          renderLinkValue={renderLinkValue}
+        />
       )}
 
-      {/* CARD 2: Security */}
       {activeTab === "account" && (
-        <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
-          <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-              <Mail className="size-5" />
-            </div>
-            <CardTitle className="text-base font-bold text-foreground">Security</CardTitle>
-          </div>
-          <CardContent className="p-0">
-            <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
-              Manage your login credentials, recovery email, and security settings
-            </div>
-            <div className="divide-y divide-border/50">
-              {/* Email Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Email</span>
-                  {renderLinkValue(organization.email, "email")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowEmailModal)}
-                  aria-label="Edit Email"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Email"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Recovery Email Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Recovery email</span>
-                  {renderLinkValue(organization.recoveryEmail, "email")}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowRecoveryEmailModal)}
-                  aria-label="Edit Recovery email"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Recovery email"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-
-              {/* Password Row */}
-              <div className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors text-left group">
-                <div className="flex flex-1 items-center min-w-0 pr-4">
-                  <span className="w-1/3 sm:w-64 text-sm font-medium text-muted-foreground/80 shrink-0">Password</span>
-                  <span className="text-sm font-mono text-foreground/80">••••••••</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openModal(setShowPasswordModal)}
-                  aria-label="Edit Password"
-                  disabled={isPending}
-                  className="p-1.5 -mr-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors cursor-pointer group/edit focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
-                  title="Edit Password"
-                >
-                  <ChevronRight className="size-4.5 text-primary opacity-80 group-hover/edit:opacity-100 group-hover/edit:translate-x-0.5 transition-all" />
-                </button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <OrgSecurityTab
+          organization={organization}
+          isPending={isPending}
+          onOpenEmailModal={() => openModal(setShowEmailModal)}
+          onOpenRecoveryEmailModal={() => openModal(setShowRecoveryEmailModal)}
+          onOpenPasswordModal={() => openModal(setShowPasswordModal)}
+          renderLinkValue={renderLinkValue}
+        />
       )}
 
-      {/* CARD 3: Subscription (Empty) */}
       {activeTab === "subscription" && (
-        <Card className="border border-border shadow-sm rounded-xl bg-card p-12 text-center text-muted-foreground">
-          No subscription details currently configured.
-        </Card>
+        <OrgSubscriptionTab />
       )}
 
-      {/* CARD 4: Services */}
       {activeTab === "services" && (
-        <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
-          <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
-              <Settings className="size-5" />
-            </div>
-            <CardTitle className="text-base font-bold text-foreground">Services Configuration</CardTitle>
-          </div>
-          <CardContent className="p-0">
-            <div className="px-6 py-4 text-xs font-semibold text-muted-foreground/80 border-b border-border/50 bg-muted/5">
-              Enable or disable services offered by this organization.
-            </div>
-            {servicesList.length === 0 ? (
-              <div className="p-12 text-center text-muted-foreground">
-                No active services associated with this organization's category.
-              </div>
-            ) : (
-              <div className="divide-y divide-border/50">
-                {servicesList.map((s) => {
-                  const isEnabled = enabledServiceIds.includes(s.id);
-                  const isLoading = togglingServiceId === s.id && isPending;
-                  return (
-                    <div key={s.id} className="flex flex-col">
-                      <div className="flex items-center justify-between px-6 py-4 hover:bg-muted/10 transition-colors">
-                        <div className="flex flex-col gap-1.5 max-w-[80%]">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-foreground">{s.name}</span>
-                            {isEnabled && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
-                                Active
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground leading-relaxed">
-                            {s.description || "No description provided."}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          {isEnabled && s.slug === "dog-training" && getSortedCourses(s.coursesOrder).length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => toggleExpand(s.id)}
-                              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                              title={expandedIds.includes(s.id) ? "Collapse courses" : "Expand courses"}
-                            >
-                              <ChevronDown
-                                className={`size-4.5 transition-transform duration-200 ${
-                                  expandedIds.includes(s.id) ? "rotate-180" : ""
-                                }`}
-                              />
-                            </button>
-                          )}
-                          {isEnabled && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              type="button"
-                              onClick={() => {
-                                if (s.slug === "dog-training") {
-                                  if (isDashboard) {
-                                    router.push(`/dashboard/services/dog-training`);
-                                  } else {
-                                    router.push(`/backoffice/organizations/services/${s.slug}/${organization.id}`);
-                                  }
-                                } else {
-                                  router.push(`/backoffice/organizations/services/${s.slug}/${organization.id}`);
-                                }
-                              }}
-                            >
-                              Edit
-                            </Button>
-                          )}
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={isEnabled}
-                            disabled={isLoading}
-                            onClick={() => handleToggleService(s.id)}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed ${
-                              isEnabled ? "bg-primary" : "bg-muted-foreground/30"
-                            }`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                isEnabled ? "translate-x-4" : "translate-x-0"
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Nested Courses Accordion (for Dog training) */}
-                      {isEnabled && s.slug === "dog-training" && getSortedCourses(s.coursesOrder).length > 0 && (
-                        <div
-                          className={`grid transition-all duration-200 ease-in-out border-t border-border/30 bg-muted/5 ${
-                            expandedIds.includes(s.id)
-                              ? "grid-rows-[1fr] opacity-100 py-5 pl-12 pr-6"
-                              : "grid-rows-[0fr] opacity-0 py-0 pl-12 pr-6 overflow-hidden"
-                          }`}
-                        >
-                          <div className="overflow-hidden space-y-3">
-                            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                              Courses Configured
-                            </div>
-                            <div className="divide-y divide-border/20 border border-border/40 rounded-lg bg-card overflow-hidden">
-                              {getSortedCourses(s.coursesOrder).map((sub) => {
-                                const isSubEnabled = enabledCourseIds.includes(sub.id);
-                                const isSubLoading = togglingCourseId === sub.id && isPending;
-
-                                return (
-                                  <div key={sub.id} className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
-                                    <span className="text-sm font-semibold text-foreground/90">
-                                      {sub.label}
-                                    </span>
-
-                                    <div className="flex items-center gap-4">
-                                      {isSubEnabled && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          type="button"
-                                          className="h-8 px-3"
-                                          onClick={() => router.push(`/backoffice/organizations/services/dog-training/${sub.key}/${organization.id}`)}
-                                        >
-                                          Edit
-                                        </Button>
-                                      )}
-                                      <button
-                                        type="button"
-                                        role="switch"
-                                        aria-checked={isSubEnabled}
-                                        disabled={isSubLoading}
-                                        onClick={() => handleToggleCourse(sub.id)}
-                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-                                          isSubEnabled ? "bg-primary" : "bg-muted-foreground/30"
-                                        }`}
-                                      >
-                                        <span
-                                          className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                            isSubEnabled ? "translate-x-4" : "translate-x-0"
-                                          }`}
-                                        />
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <OrgServicesTab
+          organization={organization}
+          servicesList={servicesList}
+          isDashboard={isDashboard}
+          enabledServiceIds={enabledServiceIds}
+          enabledCourseIds={enabledCourseIds}
+          expandedIds={expandedIds}
+          togglingServiceId={togglingServiceId}
+          togglingCourseId={togglingCourseId}
+          isPending={isPending}
+          onToggleService={handleToggleService}
+          onToggleCourse={handleToggleCourse}
+          onToggleExpand={toggleExpand}
+        />
       )}
 
       {!isDashboard && (

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { getSortedCourses } from "@/config/dog-training";
+import { ToggleSwitch } from "@/components/ui/toggle-switch";
 
 interface Service {
   id: string;
@@ -164,22 +165,11 @@ export function DashboardServicesList({
                     Edit
                   </Button>
                 )}
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isEnabled}
+                <ToggleSwitch
+                  checked={isEnabled}
+                  onChange={() => handleToggle(s.id)}
                   disabled={isLoading}
-                  onClick={() => handleToggle(s.id)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isEnabled ? "bg-primary" : "bg-muted-foreground/30"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      isEnabled ? "translate-x-4" : "translate-x-0"
-                    }`}
-                  />
-                </button>
+                />
               </div>
             </div>
 
@@ -219,22 +209,11 @@ export function DashboardServicesList({
                                 Edit
                               </Button>
                             )}
-                            <button
-                              type="button"
-                              role="switch"
-                              aria-checked={isSubEnabled}
+                            <ToggleSwitch
+                              checked={isSubEnabled}
+                              onChange={() => handleToggleCourse(sub.id)}
                               disabled={isSubLoading}
-                              onClick={() => handleToggleCourse(sub.id)}
-                              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-                                isSubEnabled ? "bg-primary" : "bg-muted-foreground/30"
-                              }`}
-                            >
-                              <span
-                                className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-                                  isSubEnabled ? "translate-x-4" : "translate-x-0"
-                                }`}
-                              />
-                            </button>
+                            />
                           </div>
                         </div>
                       );

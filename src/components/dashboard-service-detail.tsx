@@ -8,6 +8,7 @@ import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenin
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck } from "lucide-react";
+import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -368,22 +369,11 @@ export function DashboardServiceDetail({
                 </p>
               </div>
 
-              <button
-                type="button"
-                role="switch"
-                aria-checked={isEnabled}
+              <ToggleSwitch
+                checked={isEnabled}
+                onChange={handleToggle}
                 disabled={isPending}
-                onClick={handleToggle}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isEnabled ? "bg-primary" : "bg-muted-foreground/30"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block size-5 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-                    isEnabled ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
+              />
             </div>
           )}
 
