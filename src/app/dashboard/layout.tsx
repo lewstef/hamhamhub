@@ -57,7 +57,9 @@ export default async function DashboardLayout({
       .map((s) => ({
         id: s.id,
         name: s.name,
-        slug: (s.serviceTypeId || "").replace(/_/g, "-"),
+        slug: s.serviceTypeId
+          ? s.serviceTypeId.replace(/_/g, "-")
+          : s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
       }));
   }
 

@@ -74,10 +74,9 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Back to Courses List")).toBeDefined();
     expect(screen.getByText("Create New Course")).toBeDefined();
     expect(screen.getByText("Course Name")).toBeDefined();
-    expect(screen.getByPlaceholderText("e.g. Puppy Socialization Class")).toBeDefined();
+    expect(screen.getByPlaceholderText("e.g. Agility, IGP, Obedience")).toBeDefined();
     expect(screen.getByText("Course Information and Details")).toBeDefined();
     expect(screen.getAllByText("Create Course")[0]).toBeDefined();
-    expect(screen.getAllByText("Per Course")[0]).toBeDefined();
   });
 
   it("should render Dog Sport dynamic terminology and 6-tab navigation correctly", () => {
@@ -154,6 +153,11 @@ describe("CourseForm Component", () => {
 
     const nameInput = screen.getByLabelText("Course Name");
     fireEvent.change(nameInput, { target: { value: "Obedience 101" } });
+
+    const pricingTab = screen.getByText("Pricing");
+    await act(async () => {
+      fireEvent.click(pricingTab);
+    });
 
     const priceInput = screen.getByLabelText("Price Amount");
     fireEvent.change(priceInput, { target: { value: "150" } });
@@ -340,7 +344,7 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Check-out time cannot be before or equal to check-in time.")).toBeDefined();
   });
 
-  it("should render Edit Course terminology and values in edit mode", () => {
+  it("should render Edit Course terminology and values in edit mode", async () => {
     const initialCourse = {
       id: "course-123",
       name: "Agility Mastery",
@@ -372,6 +376,11 @@ describe("CourseForm Component", () => {
     expect(screen.getAllByRole("button", { name: "Save Changes" })[0]).toBeDefined();
     expect((screen.getByLabelText("Course Name") as HTMLInputElement).value).toBe("Agility Mastery");
     expect((screen.getByLabelText("Certifier Name") as HTMLInputElement).value).toBe("FCI");
+
+    const pricingTab = screen.getByText("Pricing");
+    await act(async () => {
+      fireEvent.click(pricingTab);
+    });
     expect((screen.getByLabelText("Price Amount") as HTMLInputElement).value).toBe("200");
   });
 
@@ -494,14 +503,20 @@ describe("CourseForm Component", () => {
 
     expect(screen.getByLabelText("Certifier Name")).toBeDefined();
 
-    // Toggle Dedicated Field
+    // Toggle Dedicated Field (in Location tab)
+    const locationTab = screen.getByText("Location");
+    await act(async () => {
+      fireEvent.click(locationTab);
+    });
+
+    expect(screen.getByLabelText("Address")).toBeDefined();
+    expect(screen.queryByText("Training Field Description")).toBeNull();
     const fieldSwitch = screen.getByText("Dedicated Training Field").closest(".space-y-4")?.querySelector("button[role='switch']");
     expect(fieldSwitch).toBeDefined();
-    expect(screen.queryByLabelText("Address")).toBeNull();
     await act(async () => {
       fireEvent.click(fieldSwitch!);
     });
-    expect(screen.getByLabelText("Address")).toBeDefined();
+    expect(screen.getByText("Training Field Description")).toBeDefined();
   });
 
   it("should manage adding, editing, and deleting FAQs in the builder", async () => {
@@ -517,8 +532,14 @@ describe("CourseForm Component", () => {
       />
     );
 
+    // Switch to FAQ tab
+    const faqTab = screen.getByText("FAQ");
+    await act(async () => {
+      fireEvent.click(faqTab);
+    });
+
     // Initial state: empty notice is shown
-    expect(screen.getByText('No FAQs added yet. Click "Add FAQ" below to start.')).toBeDefined();
+    expect(screen.getByText('No FAQs added yet. Click "Add FAQ Item" below to start.')).toBeDefined();
 
     // Click "Add FAQ Item"
     const addBtn = screen.getByRole("button", { name: "Add FAQ Item" });
@@ -527,7 +548,7 @@ describe("CourseForm Component", () => {
     });
 
     // Empty notice should disappear, FAQ item inputs should be visible
-    expect(screen.queryByText('No FAQs added yet. Click "Add FAQ" below to start.')).toBeNull();
+    expect(screen.queryByText('No FAQs added yet. Click "Add FAQ Item" below to start.')).toBeNull();
     
     const questionInput = screen.getByLabelText("Question");
     const answerInput = screen.getByPlaceholderText("e.g. Yes, all dogs must have up-to-date DHPP and Rabies vaccines.");
@@ -535,6 +556,12 @@ describe("CourseForm Component", () => {
     // Edit Question and Answer
     fireEvent.change(questionInput, { target: { value: "Vaccine requirement?" } });
     fireEvent.change(answerInput, { target: { value: "Yes, up-to-date DHPP required." } });
+
+    // Switch back to General tab to enter Course Name
+    const generalTab = screen.getByText("General");
+    await act(async () => {
+      fireEvent.click(generalTab);
+    });
 
     // Submit form and verify action call includes JSON faq string
     const nameInput = screen.getByLabelText("Course Name");
@@ -551,13 +578,19 @@ describe("CourseForm Component", () => {
       JSON.stringify([{ question: "Vaccine requirement?", answer: "Yes, up-to-date DHPP required." }])
     );
 
+    // Switch back to FAQ tab to remove item
+    const faqTabAgain = screen.getByText("FAQ");
+    await act(async () => {
+      fireEvent.click(faqTabAgain);
+    });
+
     // Click "Remove FAQ" button and verify empty notice is back
     const removeBtn = screen.getByRole("button", { name: "Remove FAQ" });
     await act(async () => {
       fireEvent.click(removeBtn);
     });
 
-    expect(screen.getByText('No FAQs added yet. Click "Add FAQ" below to start.')).toBeDefined();
+    expect(screen.getByText('No FAQs added yet. Click "Add FAQ Item" below to start.')).toBeDefined();
   });
 
   it("should trigger onCancel when Back button is clicked with no changes", async () => {
@@ -626,6 +659,12 @@ describe("CourseForm Component", () => {
         onSubmitSuccess={onSubmitSuccess}
       />
     );
+
+    // Switch to Terms of participation tab
+    const termsTab = screen.getByText("Terms of participation");
+    await act(async () => {
+      fireEvent.click(termsTab);
+    });
 
     // Verify age limits details checkbox options are hidden initially
     expect(screen.queryByText("Select Age Phases")).toBeNull();

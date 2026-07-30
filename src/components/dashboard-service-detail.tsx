@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
+import type { Course } from "@/types/course";
 import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
 import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/courses";
 import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
@@ -10,41 +11,6 @@ import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, C
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface Course {
-  id?: string;
-  name: string;
-  certifiedTrainer: boolean;
-  certifierName?: string | null;
-  dedicatedField: boolean;
-  trainingFieldDescription?: string | null;
-  trainingFieldAddress?: string | null;
-  trainingFieldGoogleBusinessProfile?: string | null;
-  trainingFieldGoogleMapsLink?: string | null;
-  parking: boolean;
-  parkingDescription?: string | null;
-  details?: string | null;
-  termsOfParticipation?: string | null;
-  price?: string | null;
-  priceType?: string | null;
-  medicationAdministration?: boolean | null;
-  medicationAdministrationDetails?: string | null;
-  webCam?: boolean | null;
-  webCamDetails?: string | null;
-  dailyWalks?: number | null;
-  ownerCommunication?: boolean | null;
-  ownerCommunicationDetails?: string | null;
-  personalizedMealPlan?: boolean | null;
-  personalizedMealPlanDetails?: string | null;
-  checkin?: string | null;
-  checkout?: string | null;
-  checkinWeekend?: string | null;
-  checkoutWeekend?: string | null;
-  schedule?: string | null;
-  ageLimitsEnabled?: boolean | null;
-  ageLimits?: string | null;
-  faq?: string | null;
-}
 
 const DAY_SHORT_NAMES: Record<string, string> = {
   monday: "Mon",

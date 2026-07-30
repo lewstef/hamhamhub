@@ -97,6 +97,13 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Unified Custom Dropdowns (`CustomSelect`)**: Replaced all native browser `<select>` elements across the entire platform (Daily Walks, Billing Frequency, Organization Category, Staff Role, and Service Template preview dropdowns) with a reusable, accessible custom dropdown component (`CustomSelect`). Features animated popover menus with thin custom scrollbars (`custom-scrollbar`), hover state highlights, selected checkmark indicators, outside-click auto-dismissal, and a synchronized hidden native select element ensuring seamless HTML form submission and test compatibility.
   - Enforced strict client-side and server-side validation ensuring check-out time cannot be before or equal to check-in time (`checkout > checkin`).
   - Added **Web cam** boolean switch (`webCam`) and optional access instructions text input (`webCamDetails`) strictly scoped to the Dog Boarding service (`/dashboard/services/dog-boarding`). Renders a teal `Web Cam` badge on active entries.
+- **Dog Sports Training & Dog Training Screen Reorganization**:
+  - Reorganized the "Dog training" service (`/dashboard/services/dog-training`) into a clean tabbed layout matching "Dog sports training".
+  - Standardized tabs: **General**, **Terms of participation**, **Pricing**, **Schedule**, **Location**, **FAQ**.
+  - Added an **Others** tab for existing Dog Training fields that are not mapped to standard tabs (`Communication with the Owner` and `Personalized Meal Plan`), preserving all existing functionality without adding unrequested fields.
+- **Dog Grooming Sidebar Redirection**:
+  - Updated active service slug resolution in `src/app/dashboard/layout.tsx` to automatically fall back to normalized service name slugs (`s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")`).
+  - Accessing "Dog grooming" from the sidebar now redirects directly to `/dashboard/services/dog-grooming`.
 - **Dog Sports Training MVP Subsystem**:
   - Renamed "Daily operating Schedule" header to "Schedule" for Dog Sport services (`/dashboard/services/sport-dog-training`).
   - Updated check-in and check-out field labels to **Start** and **End** across the Weekly Schedule, Special Openings, and summary views for Dog Sports.
@@ -210,14 +217,15 @@ The platform supports dynamic, nested sub-offerings for specialized services, sp
 
 ### A. Dynamic Noun Context-Switching & Tabbed Form Architecture
 The application UI dynamically adjusts its user-facing terminology and input settings depending on the slug of the active service:
-- **Dog training** (`dog-training`): Configures and displays offerings as **"Courses"** (e.g. "Add Course", "Course Name") using a clean two-column layout.
-- **Dog sports training** (`sport-dog-training`): Configures and displays offerings as **"Dog Sports"** (e.g. "Add Dog Sport", "Dog Sport Name") using an interactive **6-Tab Navigation System**:
-  1. **General Tab**: Name, Certified Dog Trainer toggle & Certifier Institution, Dog Sport Information (WYSIWYG editor).
+- **Dog sports training** (`sport-dog-training`): Configures and displays offerings as **"Dog Sports"** (e.g. "Add Dog Sport", "Dog Sport Name") using an interactive **6-Tab Navigation System**.
+- **Dog training** (`dog-training`): Configures and displays offerings as **"Courses"** (e.g. "Add Course", "Course Name"), also using the same **6-Tab Navigation System** for layout consistency.
+- Both tabbed services share the following tabs:
+  1. **General Tab**: Name, Certified Dog Trainer toggle & Certifier Institution, Information (WYSIWYG editor).
   2. **Terms of participation Tab**: Age Limits switch & phase checkboxes (`Puppy (Up to 9 months)`, `Junior (9 to 18 months)`, `Adult (18 months to 8 years)`, `Senior (8+ years)`), Terms of Participation (WYSIWYG editor).
-  3. **Pricing Tab**: Price Amount & Billing Frequency selector (`Per Dog Sport`, `Per Month`, `Per Session`, `Per Hour`).
-  4. **Schedule Tab**: 7-Day Daily Operating Schedule with check-in/out time pickers and quick preset buttons (`Copy Mon to Mon–Fri` & `Copy Mon to All`).
+  3. **Pricing Tab**: Price Amount & Billing Frequency selector (`Per Course/Dog Sport`, `Per Month`, `Per Session`, `Per Hour`).
+  4. **Schedule Tab**: 7-Day Daily Operating Schedule with time pickers and quick preset buttons (`Copy Mon to Mon–Fri` & `Copy Mon to All`).
   5. **Location Tab**: Address, Google Business Profile link, Google Maps Link, **Dedicated Training Field** switch & Description, and **Dedicated Parking** switch & Description.
-  6. **FAQ Tab** (Last Tab): Interactive FAQ Q&A item builder with WYSIWYG answer fields. (Care & Boarding Amenities are strictly scoped to the Dog Boarding service).
+  6. **FAQ Tab**: Interactive FAQ Q&A item builder with WYSIWYG answer fields.
 
 ### B. Facility & Venue Attributes & Top Action Header
 Each course or dog sport is defined in a dynamic form featuring:
@@ -232,6 +240,33 @@ Pricing configurations support both **per-offering** and **per-month** options. 
 
 ### D. Interactive Drag-and-Drop Reordering
 Dynamic offerings are rendered as a clean, flat list featuring a tactical `GripVertical` handle. Users can drag and drop items to reorder them locally. On drop, the new sequence is persisted to the database via `reorderOrgCoursesAction` updating the `sortOrder` values.
+
+### E. CourseForm Component Architecture
+
+The `CourseForm` (`src/components/course-form.tsx`) is organized around **shared UI primitives** and **local section components** to eliminate duplication between the tabbed and flat layouts:
+
+#### Shared UI Primitives (`src/components/ui/`)
+| Component | Description |
+| :--- | :--- |
+| `ToggleSwitch` | Accessible `role="switch"` pill toggle (replaces 12+ inline button patterns). |
+| `BooleanToggleField` | Compound field combining label + description + `ToggleSwitch` + optional expanded details slot. |
+
+#### Shared Types (`src/types/`)
+| File | Exports |
+| :--- | :--- |
+| `course.ts` | `Course` interface — shared between `CourseForm` and `DashboardServiceDetail`. |
+
+#### Local Section Components (internal to `course-form.tsx`, not exported)
+| Component | Purpose |
+| :--- | :--- |
+| `DayScheduleGrid` | 7-day per-day schedule editor with time pickers, notes, and copy shortcuts. |
+| `AgeLimitsSection` | Age limits toggle + dog age phase checkboxes. |
+| `LocationSection` | Dedicated training field + address/GBP/Maps inputs + parking. Accepts `layout="tabbed" \| "flat"` to control when address fields are revealed. |
+| `PricingSection` | Multi-tier pricing builder. Accepts `compact` for sidebar/column-2 style. |
+| `FaqSection` | FAQ Q&A builder. Accepts `compact` for inline (flat layout) vs card (tabbed layout). |
+
+#### Dirty-State Detection
+`isDirty` is computed via `useMemo`, with all initial values captured **once at mount** in a `useRef` snapshot (`iv`). This prevents unnecessary recomputation on every render and avoids the `getInitialWeeklySchedule(initialCourse)` call executing on every keystroke.
 
 ---
 

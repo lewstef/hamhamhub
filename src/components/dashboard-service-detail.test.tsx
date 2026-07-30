@@ -40,6 +40,12 @@ vi.mock("lucide-react", () => ({
   Users: () => <div data-testid="users" />,
   CalendarX: () => <div data-testid="calendar-x" />,
   CalendarCheck: () => <div data-testid="calendar-check" />,
+  FileText: () => <div data-testid="file-text" />,
+  FileCheck: () => <div data-testid="file-check" />,
+  DollarSign: () => <div data-testid="dollar-sign" />,
+  Calendar: () => <div data-testid="calendar" />,
+  HelpCircle: () => <div data-testid="help-circle" />,
+  Sliders: () => <div data-testid="sliders" />,
 }));
 
 vi.mock("@/app/actions/organizations", () => ({

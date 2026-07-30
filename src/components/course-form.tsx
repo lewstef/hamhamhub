@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition, useMemo, useRef } from "react";
+import type { Course } from "@/types/course";
 import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, Sliders, MapPin, Calendar, FileCheck } from "lucide-react";
+import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck } from "lucide-react";
 import { TimePickerSelect, getCheckinOptions, getCheckoutOptions } from "@/components/ui/time-picker-select";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { DatePickerInput, parseDateString } from "@/components/ui/date-picker-input";
@@ -15,44 +17,6 @@ export function getComparableTimestamp(dateStr: string): number | null {
   const parsed = parseDateString(dateStr);
   if (!parsed) return null;
   return Date.UTC(parsed.year, parsed.month, parsed.day);
-}
-
-
-
-
-interface Course {
-  id?: string;
-  name: string;
-  certifiedTrainer: boolean;
-  certifierName?: string | null;
-  dedicatedField: boolean;
-  trainingFieldDescription?: string | null;
-  trainingFieldAddress?: string | null;
-  trainingFieldGoogleBusinessProfile?: string | null;
-  trainingFieldGoogleMapsLink?: string | null;
-  parking: boolean;
-  parkingDescription?: string | null;
-  details?: string | null;
-  termsOfParticipation?: string | null;
-  price?: string | null;
-  priceType?: string | null;
-  medicationAdministration?: boolean | null;
-  medicationAdministrationDetails?: string | null;
-  webCam?: boolean | null;
-  webCamDetails?: string | null;
-  dailyWalks?: number | null;
-  ownerCommunication?: boolean | null;
-  ownerCommunicationDetails?: string | null;
-  personalizedMealPlan?: boolean | null;
-  personalizedMealPlanDetails?: string | null;
-  checkin?: string | null;
-  checkout?: string | null;
-  checkinWeekend?: string | null;
-  checkoutWeekend?: string | null;
-  schedule?: string | null;
-  ageLimitsEnabled?: boolean | null;
-  ageLimits?: string | null;
-  faq?: string | null;
 }
 
 export interface CoursePricingItem {
@@ -125,7 +89,6 @@ export function parseSpecialOpenings(scheduleJson?: string | null): SpecialOpeni
   return [];
 }
 
-
 export type DayKey = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
 export interface DayScheduleItem {
@@ -175,10 +138,18 @@ export function getInitialWeeklySchedule(initialCourse?: Course | null): DaySche
   ];
 }
 
+// ============================================================
+// DayScheduleGrid
+// ============================================================
+
 interface DayScheduleGridProps {
   weeklySchedule: DayScheduleItem[];
-  /** When true, renders "Start"/"End" labels and "Closed" closed-state text instead of check-in/out terminology. */
-  isDogSport: boolean;
+  /**
+   * When true, renders "Start"/"End" labels and "Closed" closed-state text
+   * instead of "Check-in"/"Check-out" / "Closed for check-in / check-out".
+   * Used for Dog Sport and Dog Training services.
+   */
+  useSportLabels: boolean;
   onUpdate: (dayKey: DayKey, field: keyof DayScheduleItem, value: any) => void;
   onCopyMonToWorkweek: () => void;
   onCopyMonToAll: () => void;
@@ -188,13 +159,14 @@ interface DayScheduleGridProps {
  * DayScheduleGrid Component
  *
  * Renders the 7-day weekly schedule editor with per-day toggles, start/end time pickers,
- * and optional notes. Used in both the Dog Sport tabbed layout and the Boarding inline layout.
+ * and optional notes. Shared between the Dog Sport/Dog Training tabbed layout
+ * (Schedule tab) and the Dog Boarding inline layout.
  *
  * @param props - {@link DayScheduleGridProps}
  */
 function DayScheduleGrid({
   weeklySchedule,
-  isDogSport,
+  useSportLabels,
   onUpdate,
   onCopyMonToWorkweek,
   onCopyMonToAll,
@@ -204,10 +176,10 @@ function DayScheduleGrid({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/40 pb-3">
         <div>
           <Label className="text-base font-bold text-foreground">
-            {isDogSport ? "Schedule" : "Daily Operating Schedule"}
+            {useSportLabels ? "Schedule" : "Daily Operating Schedule"}
           </Label>
           <p className="text-xs text-muted-foreground">
-            {isDogSport
+            {useSportLabels
               ? "Specify day-specific operating schedule (Monday to Sunday)"
               : "Specify day-specific check-in and check-out times (Monday to Sunday)"}
           </p>
@@ -268,7 +240,7 @@ function DayScheduleGrid({
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="space-y-1 w-full sm:w-36">
                       <Label htmlFor={`checkin-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                        {isDogSport ? "Start" : "Check-in Time"}
+                        {useSportLabels ? "Start" : "Check-in Time"}
                       </Label>
                       <TimePickerSelect
                         id={`checkin-${item.day}`}
@@ -281,7 +253,7 @@ function DayScheduleGrid({
                     </div>
                     <div className="space-y-1 w-full sm:w-36">
                       <Label htmlFor={`checkout-${item.day}`} className="text-[11px] font-medium text-muted-foreground">
-                        {isDogSport ? "End" : "Check-out Time"}
+                        {useSportLabels ? "End" : "Check-out Time"}
                       </Label>
                       <TimePickerSelect
                         id={`checkout-${item.day}`}
@@ -311,7 +283,7 @@ function DayScheduleGrid({
 
                   {item.checkin && item.checkout && item.checkout <= item.checkin && (
                     <p className="text-[11px] text-destructive font-semibold mt-0.5">
-                      {isDogSport
+                      {useSportLabels
                         ? "End time cannot be before or equal to start time."
                         : "Check-out time cannot be before or equal to check-in time."}
                     </p>
@@ -319,7 +291,7 @@ function DayScheduleGrid({
                 </div>
               ) : (
                 <span className="text-xs italic text-muted-foreground py-1">
-                  {isDogSport ? "Closed" : "Closed for check-in / check-out"}
+                  {useSportLabels ? "Closed" : "Closed for check-in / check-out"}
                 </span>
               )}
             </div>
@@ -329,6 +301,493 @@ function DayScheduleGrid({
     </>
   );
 }
+
+// ============================================================
+// AgeLimitsSection — Age limits toggle + dog age phase checkboxes
+// ============================================================
+
+const AGE_PHASES = [
+  "Puppy (Up to 9 months)",
+  "Junior (9 to 18 months)",
+  "Adult (18 months to 8 years)",
+  "Senior (8+ years)",
+] as const;
+
+interface AgeLimitsSectionProps {
+  itemNoun: string;
+  ageLimitsEnabled: boolean;
+  onAgeLimitsEnabledChange: (v: boolean) => void;
+  selectedAgeLimits: string[];
+  onSelectedAgeLimitsChange: (v: string[]) => void;
+}
+
+/**
+ * AgeLimitsSection — BooleanToggleField wrapping the dog age-phase checkbox list.
+ * Used in the tabbed layout's Terms tab and the flat layout's Trainer Attributes card.
+ */
+function AgeLimitsSection({
+  itemNoun,
+  ageLimitsEnabled,
+  onAgeLimitsEnabledChange,
+  selectedAgeLimits,
+  onSelectedAgeLimitsChange,
+}: AgeLimitsSectionProps) {
+  return (
+    <BooleanToggleField
+      label="Age Limits"
+      description={`Enable if this ${itemNoun.toLowerCase()} has specific age limits/requirements.`}
+      checked={ageLimitsEnabled}
+      onChange={onAgeLimitsEnabledChange}
+    >
+      <div className="space-y-3">
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+          Select Age Phases
+        </Label>
+        <div className="space-y-2">
+          {AGE_PHASES.map((option) => {
+            const isChecked = selectedAgeLimits.includes(option);
+            return (
+              <label
+                key={option}
+                className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/10 hover:bg-muted/30 transition-colors cursor-pointer text-sm font-medium"
+              >
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => {
+                    if (isChecked) {
+                      onSelectedAgeLimitsChange(selectedAgeLimits.filter((x) => x !== option));
+                    } else {
+                      onSelectedAgeLimitsChange([...selectedAgeLimits, option]);
+                    }
+                  }}
+                  className="mt-0.5 rounded border-input text-primary focus:ring-primary size-4"
+                />
+                <span className="text-foreground">{option}</span>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    </BooleanToggleField>
+  );
+}
+
+// ============================================================
+// LocationSection — Dedicated training field + location inputs + parking
+// ============================================================
+
+interface LocationSectionProps {
+  /**
+   * "tabbed" — address/GBP/Maps are always visible; Dedicated Field toggle reveals only the description.
+   * "flat"   — all location inputs are gated behind the Dedicated Field toggle.
+   */
+  layout: "tabbed" | "flat";
+  dedicatedField: boolean;
+  onDedicatedFieldChange: (v: boolean) => void;
+  trainingFieldDescription: string;
+  onTrainingFieldDescriptionChange: (v: string) => void;
+  trainingFieldAddress: string;
+  onTrainingFieldAddressChange: (v: string) => void;
+  trainingFieldGoogleBusinessProfile: string;
+  onGbpChange: (v: string) => void;
+  trainingFieldGoogleMapsLink: string;
+  onMapsChange: (v: string) => void;
+  parking: boolean;
+  onParkingChange: (v: boolean) => void;
+  parkingDescription: string;
+  onParkingDescriptionChange: (v: string) => void;
+}
+
+/**
+ * LocationSection — Renders location inputs, dedicated training field toggle, and parking toggle.
+ * Behaviour differs by `layout` prop — see {@link LocationSectionProps}.
+ */
+function LocationSection({
+  layout,
+  dedicatedField,
+  onDedicatedFieldChange,
+  trainingFieldDescription,
+  onTrainingFieldDescriptionChange,
+  trainingFieldAddress,
+  onTrainingFieldAddressChange,
+  trainingFieldGoogleBusinessProfile,
+  onGbpChange,
+  trainingFieldGoogleMapsLink,
+  onMapsChange,
+  parking,
+  onParkingChange,
+  parkingDescription,
+  onParkingDescriptionChange,
+}: LocationSectionProps) {
+  const locationInputs = (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor="training-field-address" className="text-xs font-semibold">Address</Label>
+        <Input
+          id="training-field-address"
+          type="text"
+          placeholder="e.g. 123 Canine Lane, Bucharest"
+          value={trainingFieldAddress}
+          onChange={(e) => onTrainingFieldAddressChange(e.target.value)}
+          className="h-9 bg-background text-xs font-semibold rounded-lg"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="training-field-gbp" className="text-xs font-semibold">Google Business Profile</Label>
+        <Input
+          id="training-field-gbp"
+          type="url"
+          placeholder="https://business.google.com/..."
+          value={trainingFieldGoogleBusinessProfile}
+          onChange={(e) => onGbpChange(e.target.value)}
+          className="h-9 bg-background text-xs font-semibold rounded-lg"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="training-field-maps" className="text-xs font-semibold">Google Maps Link</Label>
+        <Input
+          id="training-field-maps"
+          type="url"
+          placeholder="https://maps.google.com/..."
+          value={trainingFieldGoogleMapsLink}
+          onChange={(e) => onMapsChange(e.target.value)}
+          className="h-9 bg-background text-xs font-semibold rounded-lg"
+        />
+      </div>
+    </>
+  );
+
+  return (
+    <div className="space-y-4">
+      {layout === "tabbed" && (
+        <>
+          <div className="space-y-4">{locationInputs}</div>
+          <div className="h-px bg-border/60" />
+        </>
+      )}
+
+      <BooleanToggleField
+        label="Dedicated Training Field"
+        description="Does the class run on a fully closed, dedicated training field?"
+        checked={dedicatedField}
+        onChange={onDedicatedFieldChange}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Training Field Description</Label>
+            <WysiwygEditor
+              value={trainingFieldDescription}
+              onChange={onTrainingFieldDescriptionChange}
+              placeholder="Explain field attributes, size, safety fences, etc."
+            />
+          </div>
+          {layout === "flat" && locationInputs}
+        </div>
+      </BooleanToggleField>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label="Dedicated Parking"
+        description="Is parking available on site or nearby?"
+        checked={parking}
+        onChange={onParkingChange}
+      >
+        <WysiwygEditor
+          value={parkingDescription}
+          onChange={onParkingDescriptionChange}
+          placeholder="Details about parking capacity, location, fee..."
+        />
+      </BooleanToggleField>
+    </div>
+  );
+}
+
+// ============================================================
+// PricingSection — Pricing tier builder
+// ============================================================
+
+interface PricingSectionProps {
+  itemNoun: string;
+  isBoarding: boolean;
+  isGrooming: boolean;
+  pricings: CoursePricingItem[];
+  onAdd: () => void;
+  onUpdate: (index: number, field: keyof CoursePricingItem, value: string) => void;
+  onRemove: (index: number) => void;
+  /**
+   * compact=true uses the sidebar/column-2 visual style:
+   * smaller heading, tighter padding, and stacked fields (no 3-col grid).
+   */
+  compact?: boolean;
+}
+
+/**
+ * PricingSection — Pricing tier builder.
+ * Renders with a full card and "Pricing Structure" heading when compact=false (tabbed layout).
+ * Renders with a smaller "Pricing Configuration" heading and tighter layout when compact=true (flat sidebar).
+ */
+function PricingSection({
+  itemNoun,
+  isBoarding,
+  isGrooming,
+  pricings,
+  onAdd,
+  onUpdate,
+  onRemove,
+  compact = false,
+}: PricingSectionProps) {
+  const isItemBoarding = isBoarding || itemNoun === "Boarding service";
+  const isItemGrooming = isGrooming || itemNoun === "Grooming service";
+
+  const priceTypeOptions = useMemo(
+    () =>
+      isItemBoarding
+        ? [
+            { value: "night", label: "Per Night" },
+            { value: "day", label: "Per Day" },
+            { value: "month", label: "Per Month" },
+            { value: "service", label: "Per Boarding service" },
+          ]
+        : isItemGrooming
+        ? [
+            { value: "service", label: "Per Grooming service" },
+            { value: "session", label: "Per Session" },
+            { value: "hour", label: "Per Hour" },
+          ]
+        : [
+            { value: "course", label: `Per ${itemNoun}` },
+            { value: "month", label: "Per Month" },
+            { value: "session", label: "Per Session" },
+            { value: "hour", label: "Per Hour" },
+            { value: "day", label: "Per Day" },
+          ],
+    [itemNoun, isItemBoarding, isItemGrooming]
+  );
+
+  return (
+    <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-5">
+      {compact ? (
+        <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90">
+            Pricing Configuration
+          </h3>
+          <p className="text-xs text-muted-foreground">Specify one or multiple pricing tiers.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
+          <h3 className="text-base font-bold text-foreground">Pricing Structure</h3>
+          <p className="text-xs text-muted-foreground">
+            Configure one or more pricing options (e.g. per course, per month, per session) for this{" "}
+            {itemNoun.toLowerCase()}.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-4" data-testid="pricing-tiers-list">
+        {pricings.map((tier, index) => (
+          <div
+            key={index}
+            className={`${compact ? "p-3.5" : "p-4"} rounded-xl border border-border bg-muted/10 space-y-3 relative group`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Price Option #{index + 1}
+              </span>
+              {pricings.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onRemove(index)}
+                  className={`${compact ? "size-6" : "size-7"} text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors`}
+                  title="Remove Price Option"
+                >
+                  <Trash2 className={compact ? "size-3" : "size-3.5"} />
+                </Button>
+              )}
+            </div>
+
+            <div className={compact ? "space-y-2" : "grid grid-cols-1 sm:grid-cols-3 gap-3"}>
+              <div className="space-y-1">
+                <Label htmlFor={`course-price-${index}`} className="text-xs font-semibold">
+                  Price Amount
+                </Label>
+                <Input
+                  id={`course-price-${index}`}
+                  type="text"
+                  placeholder="e.g. $150 or 500 RON"
+                  value={tier.amount}
+                  onChange={(e) => onUpdate(index, "amount", e.target.value)}
+                  className={compact ? "bg-background text-sm font-semibold" : "h-9 bg-background text-xs font-semibold rounded-lg"}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor={`course-price-type-${index}`} className="text-xs font-semibold">
+                  Billing Frequency
+                </Label>
+                <CustomSelect
+                  id={`course-price-type-${index}`}
+                  value={tier.type}
+                  onChange={(val) => onUpdate(index, "type", val)}
+                  options={priceTypeOptions}
+                  className={compact ? undefined : "h-9 text-xs font-semibold"}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor={`course-price-label-${index}`} className="text-xs font-semibold">
+                  Label / Title (Optional)
+                </Label>
+                <Input
+                  id={`course-price-label-${index}`}
+                  type="text"
+                  placeholder={compact ? "e.g. Basic, Drop-in" : "e.g. Basic, Drop-in Pass"}
+                  value={tier.label || ""}
+                  onChange={(e) => onUpdate(index, "label", e.target.value)}
+                  className={compact ? "bg-background text-xs" : "h-9 bg-background text-xs font-semibold rounded-lg"}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onAdd}
+          className={`w-full font-bold text-xs ${compact ? "py-3" : "py-4"} rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200`}
+        >
+          <Plus className="size-3.5 mr-1.5" />
+          Add Price Tier
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// FaqSection — FAQ Q&A builder
+// ============================================================
+
+interface FaqSectionProps {
+  itemNoun: string;
+  faqs: Array<{ question: string; answer: string }>;
+  onAdd: () => void;
+  onUpdate: (index: number, key: "question" | "answer", value: string) => void;
+  onRemove: (index: number) => void;
+  /**
+   * compact=true renders as an inline inline section without a card wrapper,
+   * used in the flat two-column layout's Column 1.
+   */
+  compact?: boolean;
+}
+
+/**
+ * FaqSection — FAQ builder shared between the tabbed (card wrapper) and flat (inline) layouts.
+ */
+function FaqSection({ itemNoun, faqs, onAdd, onUpdate, onRemove, compact = false }: FaqSectionProps) {
+  const faqItems = (
+    <div className="space-y-3">
+      {faqs.length === 0 ? (
+        <div className="text-center p-8 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
+          No FAQs added yet. Click &quot;Add FAQ Item&quot; below to start.
+        </div>
+      ) : (
+        <div className="space-y-3" data-testid="faq-list">
+          {faqs.map((faq, index) => (
+            <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  FAQ Item #{index + 1}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onRemove(index)}
+                  className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                  title="Remove FAQ"
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <Label htmlFor={`faq-q-${index}`} className="text-xs font-semibold">Question</Label>
+                  <Input
+                    id={`faq-q-${index}`}
+                    type="text"
+                    placeholder="e.g. Is there a vaccination requirement?"
+                    value={faq.question}
+                    onChange={(e) => onUpdate(index, "question", e.target.value)}
+                    className="bg-background h-8 text-xs font-semibold"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Answer</Label>
+                  <WysiwygEditor
+                    value={faq.answer}
+                    onChange={(val) => onUpdate(index, "answer", val)}
+                    placeholder="e.g. Yes, all dogs must have up-to-date DHPP and Rabies vaccines."
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={onAdd}
+        className="w-full font-bold text-xs py-5 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
+      >
+        <Plus className="size-3.5 mr-1.5" />
+        Add FAQ Item
+      </Button>
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <div className="space-y-4 pt-4 border-t border-border/60">
+        <div className="flex flex-col gap-1">
+          <Label className="text-sm font-bold">Frequently Asked Questions (FAQ)</Label>
+          <p className="text-xs text-muted-foreground">
+            Add Q&amp;A pairs for clients regarding this {itemNoun.toLowerCase()}.
+          </p>
+        </div>
+        {faqItems}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-200">
+      <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-4">
+        <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
+          <h3 className="text-base font-bold text-foreground">Frequently Asked Questions (FAQ)</h3>
+          <p className="text-xs text-muted-foreground">
+            Add Q&amp;A pairs for clients regarding rules, gear requirements, and participation for this{" "}
+            {itemNoun.toLowerCase()}.
+          </p>
+        </div>
+        {faqItems}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// CourseForm — Main component
+// ============================================================
 
 /**
  * Props for the CourseForm component.
@@ -356,24 +815,29 @@ interface CourseFormProps {
  * CourseForm Component
  *
  * Form rendering panel for creating or editing sub-service items (Training Courses, Dog Sports, or Boarding rates).
- * Provides boolean toggle fieldsets for: Certified Trainer, Dedicated Field, Parking,
- * Medication Administration, Owner Updates, Personalized Meal Plan, and Age Limits.
- *
- * Conditional rendering rules:
- * - Check-in / Check-out time pickers are shown **only** when `serviceSlug === 'dog-boarding'`.
- * - Age Limits switch and phase checkboxes are shown **only** for non-boarding services
- *   (i.e. dog-training and sport-dog-training).
+ * Dog Sport and Dog Training services render a tabbed layout (General, Terms, Pricing, Schedule, Location, FAQ).
+ * All other services (Boarding, Grooming, base Training) render a two-column flat layout.
  *
  * Submits data via `createCourseAction` or `updateCourseAction` Server Actions.
  *
  * @param {CourseFormProps} props - The component props.
  * @returns {React.ReactElement} The course/boarding configuration form component.
  */
-export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse, onCancel, onSubmitSuccess, serviceSlug }: CourseFormProps) {
+export function CourseForm({
+  organizationId,
+  serviceId,
+  itemNoun,
+  initialCourse,
+  onCancel,
+  onSubmitSuccess,
+  serviceSlug,
+}: CourseFormProps) {
   const isEdit = !!initialCourse?.id;
   const isBoarding = serviceSlug === "dog-boarding";
   const isGrooming = serviceSlug === "dog-grooming" || itemNoun === "Grooming service";
   const isDogSport = serviceSlug === "sport-dog-training" || itemNoun === "Dog Sport";
+  const isDogTraining = serviceSlug === "dog-training" || itemNoun === "Course";
+  const isTabbedLayout = isDogSport || isDogTraining;
   const [activeTab, setActiveTab] = useState<"general" | "terms" | "faq" | "pricing" | "schedule" | "location">("general");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -433,8 +897,21 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     parseSpecialOpenings(initialCourse?.schedule)
   );
 
+  // FAQ Builder state
+  const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>(() => {
+    if (initialCourse?.faq) {
+      try {
+        const parsed = JSON.parse(initialCourse.faq);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        console.error("Failed to parse FAQ initial value:", e);
+      }
+    }
+    return [];
+  });
+
   // Live schedule overlap conflict calculation
-  const scheduleOverlapError = React.useMemo(() => {
+  const scheduleOverlapError = useMemo(() => {
     const activeClosed = closedPeriods.filter(
       (item) => item.title.trim() !== "" || item.startDate.trim() !== "" || item.endDate.trim() !== ""
     );
@@ -460,6 +937,126 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     return null;
   }, [closedPeriods, specialOpenings]);
 
+  // Stable initial value snapshot — captured once at mount, never changes.
+  // Using useRef avoids adding initialCourse to the isDirty dependency array
+  // while still allowing clean ESLint exhaustive-deps compliance.
+  const iv = useRef({
+    name: initialCourse?.name || "",
+    certifiedTrainer: initialCourse?.certifiedTrainer || false,
+    certifierName: initialCourse?.certifierName || "",
+    ageLimitsEnabled: initialCourse?.ageLimitsEnabled || false,
+    ageLimits: initialCourse?.ageLimits || "",
+    dedicatedField: initialCourse?.dedicatedField || false,
+    trainingFieldDescription: initialCourse?.trainingFieldDescription || "",
+    trainingFieldAddress: initialCourse?.trainingFieldAddress || "",
+    trainingFieldGbp: initialCourse?.trainingFieldGoogleBusinessProfile || "",
+    trainingFieldMaps: initialCourse?.trainingFieldGoogleMapsLink || "",
+    parking: initialCourse?.parking || false,
+    parkingDescription: initialCourse?.parkingDescription || "",
+    details: initialCourse?.details || "",
+    terms: initialCourse?.termsOfParticipation || "",
+    pricings: JSON.stringify(parseCoursePricings(initialCourse?.price, initialCourse?.priceType, defaultPriceType)),
+    closedPeriods: JSON.stringify(parseClosedPeriods(initialCourse?.schedule)),
+    specialOpenings: JSON.stringify(parseSpecialOpenings(initialCourse?.schedule)),
+    weeklySchedule: JSON.stringify(getInitialWeeklySchedule(initialCourse)),
+    faq: (() => {
+      if (initialCourse?.faq) {
+        try {
+          const parsed = JSON.parse(initialCourse.faq);
+          if (Array.isArray(parsed)) return JSON.stringify(parsed);
+        } catch (e) {}
+      }
+      return "[]";
+    })(),
+    medicationAdministration: initialCourse?.medicationAdministration || false,
+    medicationAdministrationDetails: initialCourse?.medicationAdministrationDetails || "",
+    webCam: initialCourse?.webCam || false,
+    webCamDetails: initialCourse?.webCamDetails || "",
+    dailyWalks: initialCourse?.dailyWalks || 1,
+    ownerCommunication: initialCourse?.ownerCommunication || false,
+    ownerCommunicationDetails: initialCourse?.ownerCommunicationDetails || "",
+    personalizedMealPlan: initialCourse?.personalizedMealPlan || false,
+    personalizedMealPlanDetails: initialCourse?.personalizedMealPlanDetails || "",
+    checkin: initialCourse?.checkin || "08:00",
+    checkout: initialCourse?.checkout || "18:00",
+    checkinWeekend: initialCourse?.checkinWeekend || "09:00",
+    checkoutWeekend: initialCourse?.checkoutWeekend || "16:00",
+  });
+
+  // Dirty check — memoized for performance; only recomputes when actual state changes.
+  const isDirty = useMemo(() => {
+    const i = iv.current;
+    return (
+      name !== i.name ||
+      certifiedTrainer !== i.certifiedTrainer ||
+      certifierName !== i.certifierName ||
+      ageLimitsEnabled !== i.ageLimitsEnabled ||
+      selectedAgeLimits.join(",") !== i.ageLimits ||
+      dedicatedField !== i.dedicatedField ||
+      trainingFieldDescription !== i.trainingFieldDescription ||
+      trainingFieldAddress !== i.trainingFieldAddress ||
+      trainingFieldGoogleBusinessProfile !== i.trainingFieldGbp ||
+      trainingFieldGoogleMapsLink !== i.trainingFieldMaps ||
+      parking !== i.parking ||
+      parkingDescription !== i.parkingDescription ||
+      details !== i.details ||
+      termsOfParticipation !== i.terms ||
+      JSON.stringify(pricings) !== i.pricings ||
+      JSON.stringify(closedPeriods) !== i.closedPeriods ||
+      JSON.stringify(specialOpenings) !== i.specialOpenings ||
+      medicationAdministration !== i.medicationAdministration ||
+      medicationAdministrationDetails !== i.medicationAdministrationDetails ||
+      webCam !== i.webCam ||
+      webCamDetails !== i.webCamDetails ||
+      dailyWalks !== i.dailyWalks ||
+      ownerCommunication !== i.ownerCommunication ||
+      ownerCommunicationDetails !== i.ownerCommunicationDetails ||
+      personalizedMealPlan !== i.personalizedMealPlan ||
+      personalizedMealPlanDetails !== i.personalizedMealPlanDetails ||
+      checkin !== i.checkin ||
+      checkout !== i.checkout ||
+      checkinWeekend !== i.checkinWeekend ||
+      checkoutWeekend !== i.checkoutWeekend ||
+      JSON.stringify(weeklySchedule) !== i.weeklySchedule ||
+      JSON.stringify(faqs) !== i.faq
+    );
+  }, [
+    name, certifiedTrainer, certifierName, ageLimitsEnabled, selectedAgeLimits,
+    dedicatedField, trainingFieldDescription, trainingFieldAddress,
+    trainingFieldGoogleBusinessProfile, trainingFieldGoogleMapsLink,
+    parking, parkingDescription, details, termsOfParticipation,
+    pricings, closedPeriods, specialOpenings,
+    medicationAdministration, medicationAdministrationDetails,
+    webCam, webCamDetails, dailyWalks,
+    ownerCommunication, ownerCommunicationDetails,
+    personalizedMealPlan, personalizedMealPlanDetails,
+    checkin, checkout, checkinWeekend, checkoutWeekend,
+    weeklySchedule, faqs,
+  ]);
+
+  // Safeguard: Ask before leaving page when there are unsaved changes
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
+      return e.returnValue;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
+
+  const handleCancel = () => {
+    if (isDirty) {
+      const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to leave?");
+      if (!confirmLeave) return;
+    }
+    onCancel();
+  };
 
   const handleUpdateDaySchedule = (dayKey: DayKey, field: keyof DayScheduleItem, value: any) => {
     setWeeklySchedule((prev) =>
@@ -519,7 +1116,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     setSpecialOpenings((prev) => prev.filter((_, i) => i !== index));
   };
 
-
   // Pricing Tier Handlers
   const handleAddPriceTier = () => {
     setPricings((prev) => [...prev, { amount: "", type: defaultPriceType, label: "" }]);
@@ -538,21 +1134,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     setPricings((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // FAQ Builder State
-  const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>(() => {
-    if (initialCourse?.faq) {
-      try {
-        const parsed = JSON.parse(initialCourse.faq);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      } catch (e) {
-        console.error("Failed to parse FAQ initial value:", e);
-      }
-    }
-    return [];
-  });
-
+  // FAQ Handlers
   const handleAddFaq = () => {
     setFaqs([...faqs, { question: "", answer: "" }]);
   };
@@ -565,81 +1147,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
 
   const handleRemoveFaq = (index: number) => {
     setFaqs(faqs.filter((_, i) => i !== index));
-  };
-
-  // Calculate if the form is dirty compared to the initial input values
-  let initialFaqStr = "[]";
-  if (initialCourse?.faq) {
-    try {
-      const parsed = JSON.parse(initialCourse.faq);
-      if (Array.isArray(parsed)) {
-        initialFaqStr = JSON.stringify(parsed);
-      }
-    } catch (e) { }
-  }
-
-  const initialPricingsStr = JSON.stringify(parseCoursePricings(initialCourse?.price, initialCourse?.priceType, defaultPriceType));
-  const initialClosedPeriodsStr = JSON.stringify(parseClosedPeriods(initialCourse?.schedule));
-  const initialSpecialOpeningsStr = JSON.stringify(parseSpecialOpenings(initialCourse?.schedule));
-
-  const isDirty =
-    name !== (initialCourse?.name || "") ||
-    certifiedTrainer !== (initialCourse?.certifiedTrainer || false) ||
-    certifierName !== (initialCourse?.certifierName || "") ||
-    ageLimitsEnabled !== (initialCourse?.ageLimitsEnabled || false) ||
-    selectedAgeLimits.join(",") !== (initialCourse?.ageLimits || "") ||
-    dedicatedField !== (initialCourse?.dedicatedField || false) ||
-    trainingFieldDescription !== (initialCourse?.trainingFieldDescription || "") ||
-    trainingFieldAddress !== (initialCourse?.trainingFieldAddress || "") ||
-    trainingFieldGoogleBusinessProfile !== (initialCourse?.trainingFieldGoogleBusinessProfile || "") ||
-    trainingFieldGoogleMapsLink !== (initialCourse?.trainingFieldGoogleMapsLink || "") ||
-    parking !== (initialCourse?.parking || false) ||
-    parkingDescription !== (initialCourse?.parkingDescription || "") ||
-    details !== (initialCourse?.details || "") ||
-    termsOfParticipation !== (initialCourse?.termsOfParticipation || "") ||
-    JSON.stringify(pricings) !== initialPricingsStr ||
-    JSON.stringify(closedPeriods) !== initialClosedPeriodsStr ||
-    JSON.stringify(specialOpenings) !== initialSpecialOpeningsStr ||
-    medicationAdministration !== (initialCourse?.medicationAdministration || false) ||
-    medicationAdministrationDetails !== (initialCourse?.medicationAdministrationDetails || "") ||
-    webCam !== (initialCourse?.webCam || false) ||
-    webCamDetails !== (initialCourse?.webCamDetails || "") ||
-    dailyWalks !== (initialCourse?.dailyWalks || 1) ||
-    ownerCommunication !== (initialCourse?.ownerCommunication || false) ||
-    ownerCommunicationDetails !== (initialCourse?.ownerCommunicationDetails || "") ||
-    personalizedMealPlan !== (initialCourse?.personalizedMealPlan || false) ||
-    personalizedMealPlanDetails !== (initialCourse?.personalizedMealPlanDetails || "") ||
-    checkin !== (initialCourse?.checkin || "08:00") ||
-    checkout !== (initialCourse?.checkout || "18:00") ||
-    checkinWeekend !== (initialCourse?.checkinWeekend || "09:00") ||
-    checkoutWeekend !== (initialCourse?.checkoutWeekend || "16:00") ||
-    JSON.stringify(weeklySchedule) !== JSON.stringify(getInitialWeeklySchedule(initialCourse)) ||
-    JSON.stringify(faqs) !== initialFaqStr;
-
-  // Safeguard: Ask before leaving page when there are unsaved changes
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "You have unsaved changes. Are you sure you want to leave?";
-      return e.returnValue;
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [isDirty]);
-
-  const handleCancel = () => {
-    if (isDirty) {
-      const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to leave?");
-      if (!confirmLeave) {
-        return;
-      }
-    }
-    onCancel();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -748,9 +1255,10 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
         const oEnd = getComparableTimestamp(openItem.endDate);
         if (oStart === null || oEnd === null) continue;
 
-        // Overlap check (inclusive range overlap)
         if (cStart <= oEnd && oStart <= cEnd) {
-          setError(`Closed period "${closed.title}" (${closed.startDate} – ${closed.endDate}) overlaps with special opening "${openItem.title}" (${openItem.startDate} – ${openItem.endDate}).`);
+          setError(
+            `Closed period "${closed.title}" (${closed.startDate} – ${closed.endDate}) overlaps with special opening "${openItem.title}" (${openItem.startDate} – ${openItem.endDate}).`
+          );
           return;
         }
       }
@@ -780,6 +1288,9 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
     });
   };
 
+  // ──────────────────────────────────────────────────────────
+  // Render
+  // ──────────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Header and Top Action Buttons */}
@@ -833,81 +1344,41 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
         </div>
       )}
 
-      {isDogSport && (
+      {/* Tab Navigation (tabbed layout only) */}
+      {isTabbedLayout && (
         <div className="flex flex-wrap items-center gap-2 border-b border-border pb-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab("general")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === "general"
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          {(
+            [
+              { key: "general", label: "General", Icon: FileText },
+              { key: "terms", label: "Terms of participation", Icon: FileCheck },
+              { key: "pricing", label: "Pricing", Icon: DollarSign },
+              { key: "schedule", label: "Schedule", Icon: Calendar, hasError: !!scheduleOverlapError },
+              { key: "location", label: "Location", Icon: MapPin },
+              { key: "faq", label: "FAQ", Icon: HelpCircle },
+            ] as const
+          ).map(({ key, label, Icon, hasError }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              className={`relative px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                activeTab === key
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               }`}
-          >
-            <FileText className="size-4" />
-            General
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("terms")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === "terms"
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-          >
-            <FileCheck className="size-4" />
-            Terms of participation
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("pricing")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === "pricing"
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-          >
-            <DollarSign className="size-4" />
-            Pricing
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("schedule")}
-            className={`relative px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === "schedule"
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-          >
-            <Calendar className="size-4" />
-            Schedule
-            {scheduleOverlapError && (
-              <span className="size-2 rounded-full bg-destructive animate-pulse" title="Overlap Conflict Detected" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("location")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === "location"
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-          >
-            <MapPin className="size-4" />
-            Location
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("faq")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === "faq"
-                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              }`}
-          >
-            <HelpCircle className="size-4" />
-            FAQ
-          </button>
+            >
+              <Icon className="size-4" />
+              {label}
+              {hasError && (
+                <span className="size-2 rounded-full bg-destructive animate-pulse" title="Overlap Conflict Detected" />
+              )}
+            </button>
+          ))}
         </div>
       )}
 
-      {isDogSport ? (
+      {/* ── TABBED LAYOUT ────────────────────────────────────── */}
+      {isTabbedLayout ? (
         <div className="space-y-6 min-h-[400px]">
           {/* TAB 1: GENERAL */}
           {activeTab === "general" && (
@@ -930,48 +1401,27 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
                   Trainer Attributes
                 </h3>
-
-                {/* Certified Trainer Toggle */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Certified Dog Trainer</span>
-                      <p className="text-xs text-muted-foreground">
-                        Enable if this {itemNoun.toLowerCase()} is coached by an officially certified trainer.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={certifiedTrainer}
-                      onClick={() => setCertifiedTrainer(!certifiedTrainer)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${certifiedTrainer ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${certifiedTrainer ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
+                <BooleanToggleField
+                  label="Certified Dog Trainer"
+                  description={`Enable if this ${itemNoun.toLowerCase()} is coached by an officially certified trainer.`}
+                  checked={certifiedTrainer}
+                  onChange={setCertifiedTrainer}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="certifier-name" className="text-xs font-semibold">Certifier Name</Label>
+                    <Input
+                      id="certifier-name"
+                      type="text"
+                      placeholder="Name of certifying institution/body"
+                      value={certifierName}
+                      onChange={(e) => setCertifierName(e.target.value)}
+                      className="h-9 bg-background text-xs font-semibold rounded-lg"
+                    />
                   </div>
-
-                  {certifiedTrainer && (
-                    <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label htmlFor="certifier-name" className="text-xs font-semibold">Certifier Name</Label>
-                      <Input
-                        id="certifier-name"
-                        type="text"
-                        placeholder="Name of certifying institution/body"
-                        value={certifierName}
-                        onChange={(e) => setCertifierName(e.target.value)}
-                        className="h-9 bg-background text-xs font-semibold rounded-lg"
-                      />
-                    </div>
-                  )}
-                </div>
+                </BooleanToggleField>
               </div>
 
-              {/* Dog Sport Information & Details Editor */}
+              {/* Information & Details Editor */}
               <div className="space-y-2">
                 <Label>{itemNoun} Information and Details</Label>
                 <WysiwygEditor
@@ -986,71 +1436,19 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
           {/* TAB 2: TERMS OF PARTICIPATION */}
           {activeTab === "terms" && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              {/* Age Limits Toggle & Checkboxes */}
               <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
-                  Age Limits & Prerequisites
+                  Age Limits &amp; Prerequisites
                 </h3>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Age Limits</span>
-                      <p className="text-xs text-muted-foreground">
-                        Enable if this {itemNoun.toLowerCase()} has specific age limits/requirements.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={ageLimitsEnabled}
-                      onClick={() => setAgeLimitsEnabled(!ageLimitsEnabled)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${ageLimitsEnabled ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${ageLimitsEnabled ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
-                  </div>
-
-                  {ageLimitsEnabled && (
-                    <div className="space-y-3 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Select Age Phases</Label>
-                      <div className="space-y-2">
-                        {[
-                          "Puppy (Up to 9 months)",
-                          "Junior (9 to 18 months)",
-                          "Adult (18 months to 8 years)",
-                          "Senior (8+ years)",
-                        ].map((option) => {
-                          const isChecked = selectedAgeLimits.includes(option);
-                          return (
-                            <label key={option} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/10 hover:bg-muted/30 transition-colors cursor-pointer text-sm font-medium">
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => {
-                                  if (isChecked) {
-                                    setSelectedAgeLimits(selectedAgeLimits.filter((x) => x !== option));
-                                  } else {
-                                    setSelectedAgeLimits([...selectedAgeLimits, option]);
-                                  }
-                                }}
-                                className="mt-0.5 rounded border-input text-primary focus:ring-primary size-4"
-                              />
-                              <span className="text-foreground">{option}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <AgeLimitsSection
+                  itemNoun={itemNoun}
+                  ageLimitsEnabled={ageLimitsEnabled}
+                  onAgeLimitsEnabledChange={setAgeLimitsEnabled}
+                  selectedAgeLimits={selectedAgeLimits}
+                  onSelectedAgeLimitsChange={setSelectedAgeLimits}
+                />
               </div>
 
-              {/* Terms of Participation WYSIWYG Editor */}
               <div className="space-y-2">
                 <Label>Terms of Participation</Label>
                 <WysiwygEditor
@@ -1062,176 +1460,18 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
             </div>
           )}
 
-
-
-          {/* TAB 7: FAQ */}
-          {activeTab === "faq" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-4">
-                <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
-                  <h3 className="text-base font-bold text-foreground">Frequently Asked Questions (FAQ)</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Add Q&A pairs for clients regarding rules, gear requirements, and participation for this {itemNoun.toLowerCase()}.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {faqs.length === 0 ? (
-                    <div className="text-center p-8 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
-                      No FAQs added yet. Click "Add FAQ Item" below to start.
-                    </div>
-                  ) : (
-                    <div className="space-y-3" data-testid="faq-list">
-                      {faqs.map((faq, index) => (
-                        <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                              FAQ Item #{index + 1}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveFaq(index)}
-                              className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                              title="Remove FAQ"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="space-y-1">
-                              <Label htmlFor={`faq-q-${index}`} className="text-xs font-semibold">Question</Label>
-                              <Input
-                                id={`faq-q-${index}`}
-                                type="text"
-                                placeholder="e.g. Is there a vaccination requirement?"
-                                value={faq.question}
-                                onChange={(e) => handleUpdateFaq(index, "question", e.target.value)}
-                                className="bg-background h-8 text-xs font-semibold"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs font-semibold">Answer</Label>
-                              <WysiwygEditor
-                                value={faq.answer}
-                                onChange={(val) => handleUpdateFaq(index, "answer", val)}
-                                placeholder="e.g. Yes, all dogs must have up-to-date DHPP and Rabies vaccines."
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddFaq}
-                    className="w-full font-bold text-xs py-5 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
-                  >
-                    <Plus className="size-3.5 mr-1.5" />
-                    Add FAQ Item
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* TAB 3: PRICING */}
           {activeTab === "pricing" && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-5">
-                <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
-                  <h3 className="text-base font-bold text-foreground">
-                    Pricing Structure
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Configure one or more pricing options (e.g. per course, per month, per session) for this {itemNoun.toLowerCase()}.
-                  </p>
-                </div>
-
-                <div className="space-y-4" data-testid="pricing-tiers-list">
-                  {pricings.map((tier, index) => (
-                    <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                          Price Option #{index + 1}
-                        </span>
-                        {pricings.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemovePriceTier(index)}
-                            className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                            title="Remove Price Option"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="space-y-1">
-                          <Label htmlFor={`course-price-${index}`} className="text-xs font-semibold">Price Amount</Label>
-                          <Input
-                            id={`course-price-${index}`}
-                            type="text"
-                            placeholder="e.g. $150 or 500 RON"
-                            value={tier.amount}
-                            onChange={(e) => handleUpdatePriceTier(index, "amount", e.target.value)}
-                            className="h-9 bg-background text-xs font-semibold rounded-lg"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <Label htmlFor={`course-price-type-${index}`} className="text-xs font-semibold">Billing Frequency</Label>
-                          <CustomSelect
-                            id={`course-price-type-${index}`}
-                            value={tier.type}
-                            onChange={(val) => handleUpdatePriceTier(index, "type", val)}
-                            options={[
-                              { value: "course", label: `Per ${itemNoun}` },
-                              { value: "month", label: "Per Month" },
-                              { value: "session", label: "Per Session" },
-                              { value: "hour", label: "Per Hour" },
-                              { value: "day", label: "Per Day" },
-                            ]}
-                            className="h-9 text-xs font-semibold"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <Label htmlFor={`course-price-label-${index}`} className="text-xs font-semibold">Label / Title (Optional)</Label>
-                          <Input
-                            id={`course-price-label-${index}`}
-                            type="text"
-                            placeholder="e.g. Basic, Drop-in Pass"
-                            value={tier.label || ""}
-                            onChange={(e) => handleUpdatePriceTier(index, "label", e.target.value)}
-                            className="h-9 bg-background text-xs font-semibold rounded-lg"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddPriceTier}
-                    className="w-full font-bold text-xs py-4 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
-                  >
-                    <Plus className="size-3.5 mr-1.5" />
-                    Add Price Tier
-                  </Button>
-                </div>
-              </div>
+              <PricingSection
+                itemNoun={itemNoun}
+                isBoarding={isBoarding}
+                isGrooming={isGrooming}
+                pricings={pricings}
+                onAdd={handleAddPriceTier}
+                onUpdate={handleUpdatePriceTier}
+                onRemove={handleRemovePriceTier}
+              />
             </div>
           )}
 
@@ -1251,17 +1491,16 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                 </div>
               )}
 
-              {/* 7-Day Day-Specific Operating Schedule Section */}
               <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
                 <DayScheduleGrid
                   weeklySchedule={weeklySchedule}
-                  isDogSport={isDogSport}
+                  useSportLabels={isDogSport}
                   onUpdate={handleUpdateDaySchedule}
                   onCopyMonToWorkweek={handleCopyMonToWorkweek}
                   onCopyMonToAll={handleCopyMonToAll}
                 />
 
-                {/* Closed Periods & Special Closures Section */}
+                {/* Closed Periods & Special Closures */}
                 <div className="space-y-4 pt-4 border-t border-border/60">
                   {scheduleOverlapError && (
                     <div
@@ -1277,7 +1516,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                   )}
 
                   <div className="flex flex-col gap-1">
-                    <Label className="text-base font-bold text-foreground">Closed Periods & Special Closures</Label>
+                    <Label className="text-base font-bold text-foreground">Closed Periods &amp; Special Closures</Label>
                     <p className="text-xs text-muted-foreground">
                       Specify vacation dates, seasonal breaks, or holiday closure periods when your organization is closed.
                     </p>
@@ -1286,7 +1525,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                   <div className="space-y-3" data-testid="closed-periods-list">
                     {closedPeriods.length === 0 ? (
                       <div className="text-center p-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
-                        No special closed periods specified. Click "Add Closed Period" below to add vacation dates or holiday breaks.
+                        No special closed periods specified. Click &quot;Add Closed Period&quot; below to add vacation dates or holiday breaks.
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -1307,7 +1546,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                 <Trash2 className="size-3.5" />
                               </Button>
                             </div>
-
                             <div className="space-y-3">
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div className="space-y-1">
@@ -1321,7 +1559,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                     className="bg-background text-xs font-semibold h-9"
                                   />
                                 </div>
-
                                 <div className="space-y-1">
                                   <Label htmlFor={`closed-period-start-${index}`} className="text-xs font-semibold">Start Date</Label>
                                   <DatePickerInput
@@ -1331,7 +1568,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                     placeholder="DD.MM.YYYY"
                                   />
                                 </div>
-
                                 <div className="space-y-1">
                                   <Label htmlFor={`closed-period-end-${index}`} className="text-xs font-semibold">End Date</Label>
                                   <DatePickerInput
@@ -1342,9 +1578,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                   />
                                 </div>
                               </div>
-
                               <div className="space-y-1">
-                                <Label htmlFor={`closed-period-note-${index}`} className="text-xs font-medium text-muted-foreground">Note / Closure Remarks (Optional)</Label>
+                                <Label htmlFor={`closed-period-note-${index}`} className="text-[11px] font-medium text-muted-foreground">Note / Closure Remarks (Optional)</Label>
                                 <Input
                                   id={`closed-period-note-${index}`}
                                   type="text"
@@ -1359,7 +1594,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                         ))}
                       </div>
                     )}
-
                     <Button
                       type="button"
                       variant="outline"
@@ -1373,10 +1607,10 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                   </div>
                 </div>
 
-                {/* Special Openings & Extra Working Dates Section */}
+                {/* Special Openings & Extra Working Dates */}
                 <div className="space-y-4 pt-4 border-t border-border/60">
                   <div className="flex flex-col gap-1">
-                    <Label className="text-base font-bold text-foreground">Special Openings & Extra Working Dates</Label>
+                    <Label className="text-base font-bold text-foreground">Special Openings &amp; Extra Working Dates</Label>
                     <p className="text-xs text-muted-foreground">
                       Specify special dates or holiday sessions when your organization IS open (e.g. Christmas special session, weekend workshop).
                     </p>
@@ -1385,7 +1619,7 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                   <div className="space-y-3" data-testid="special-openings-list">
                     {specialOpenings.length === 0 ? (
                       <div className="text-center p-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
-                        No special opening dates specified. Click "Add Special Opening" below to add special open dates or extra working hours.
+                        No special opening dates specified. Click &quot;Add Special Opening&quot; below to add special open dates or extra working hours.
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -1406,7 +1640,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                 <Trash2 className="size-3.5" />
                               </Button>
                             </div>
-
                             <div className="space-y-3">
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                                 <div className="space-y-1">
@@ -1420,7 +1653,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                     className="bg-background text-xs font-semibold h-9"
                                   />
                                 </div>
-
                                 <div className="space-y-1">
                                   <Label htmlFor={`special-opening-start-${index}`} className="text-xs font-semibold">Start Date</Label>
                                   <DatePickerInput
@@ -1430,7 +1662,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                     placeholder="DD.MM.YYYY"
                                   />
                                 </div>
-
                                 <div className="space-y-1">
                                   <Label htmlFor={`special-opening-end-${index}`} className="text-xs font-semibold">End Date</Label>
                                   <DatePickerInput
@@ -1440,7 +1671,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                     placeholder="DD.MM.YYYY"
                                   />
                                 </div>
-
                                 <div className="space-y-1">
                                   <Label htmlFor={`special-opening-checkin-${index}`} className="text-xs font-semibold">Start</Label>
                                   <TimePickerSelect
@@ -1451,7 +1681,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                     placeholder="09:00"
                                   />
                                 </div>
-
                                 <div className="space-y-1">
                                   <Label htmlFor={`special-opening-checkout-${index}`} className="text-xs font-semibold">End</Label>
                                   <TimePickerSelect
@@ -1463,9 +1692,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                                   />
                                 </div>
                               </div>
-
                               <div className="space-y-1">
-                                <Label htmlFor={`special-opening-note-${index}`} className="text-xs font-medium text-muted-foreground">Note / Event Remarks (Optional)</Label>
+                                <Label htmlFor={`special-opening-note-${index}`} className="text-[11px] font-medium text-muted-foreground">Note / Event Remarks (Optional)</Label>
                                 <Input
                                   id={`special-opening-note-${index}`}
                                   type="text"
@@ -1480,7 +1708,6 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                         ))}
                       </div>
                     )}
-
                     <Button
                       type="button"
                       variant="outline"
@@ -1502,130 +1729,44 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-5">
                 <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
-                  <h3 className="text-base font-bold text-foreground">Location & Map Details</h3>
+                  <h3 className="text-base font-bold text-foreground">Location &amp; Map Details</h3>
                   <p className="text-xs text-muted-foreground">
                     Provide location details, business profile, map links, and parking information for clients.
                   </p>
                 </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="training-field-address" className="text-xs font-semibold">Address</Label>
-                    <Input
-                      id="training-field-address"
-                      type="text"
-                      placeholder="e.g. 123 Canine Lane, Bucharest"
-                      value={trainingFieldAddress}
-                      onChange={(e) => setTrainingFieldAddress(e.target.value)}
-                      className="h-9 bg-background text-xs font-semibold rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="training-field-gbp" className="text-xs font-semibold">Google Business Profile</Label>
-                    <Input
-                      id="training-field-gbp"
-                      type="url"
-                      placeholder="https://business.google.com/..."
-                      value={trainingFieldGoogleBusinessProfile}
-                      onChange={(e) => setTrainingFieldGoogleBusinessProfile(e.target.value)}
-                      className="h-9 bg-background text-xs font-semibold rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="training-field-maps" className="text-xs font-semibold">Google Maps Link</Label>
-                    <Input
-                      id="training-field-maps"
-                      type="url"
-                      placeholder="https://maps.google.com/..."
-                      value={trainingFieldGoogleMapsLink}
-                      onChange={(e) => setTrainingFieldGoogleMapsLink(e.target.value)}
-                      className="h-9 bg-background text-xs font-semibold rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="h-px bg-border/60" />
-
-                {/* Dedicated Training Field Toggle */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Dedicated Training Field</span>
-                      <p className="text-xs text-muted-foreground">
-                        Does the class run on a fully closed, dedicated training field?
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={dedicatedField}
-                      onClick={() => setDedicatedField(!dedicatedField)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${dedicatedField ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${dedicatedField ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
-                  </div>
-
-                  {dedicatedField && (
-                    <div className="space-y-4 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <div className="space-y-2">
-                        <Label>Training Field Description</Label>
-                        <WysiwygEditor
-                          value={trainingFieldDescription}
-                          onChange={setTrainingFieldDescription}
-                          placeholder="Explain field attributes, size, safety fences, etc."
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="h-px bg-border/60" />
-
-                {/* Dedicated Parking Toggle */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Dedicated Parking</span>
-                      <p className="text-xs text-muted-foreground">
-                        Is parking available on site or nearby?
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={parking}
-                      onClick={() => setParking(!parking)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${parking ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${parking ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
-                  </div>
-
-                  {parking && (
-                    <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label>Parking Description</Label>
-                      <WysiwygEditor
-                        value={parkingDescription}
-                        onChange={setParkingDescription}
-                        placeholder="Details about parking capacity, location, fee..."
-                      />
-                    </div>
-                  )}
-                </div>
+                <LocationSection
+                  layout="tabbed"
+                  dedicatedField={dedicatedField}
+                  onDedicatedFieldChange={setDedicatedField}
+                  trainingFieldDescription={trainingFieldDescription}
+                  onTrainingFieldDescriptionChange={setTrainingFieldDescription}
+                  trainingFieldAddress={trainingFieldAddress}
+                  onTrainingFieldAddressChange={setTrainingFieldAddress}
+                  trainingFieldGoogleBusinessProfile={trainingFieldGoogleBusinessProfile}
+                  onGbpChange={setTrainingFieldGoogleBusinessProfile}
+                  trainingFieldGoogleMapsLink={trainingFieldGoogleMapsLink}
+                  onMapsChange={setTrainingFieldGoogleMapsLink}
+                  parking={parking}
+                  onParkingChange={setParking}
+                  parkingDescription={parkingDescription}
+                  onParkingDescriptionChange={setParkingDescription}
+                />
               </div>
             </div>
           )}
 
-          {/* Sticky Bottom Action Buttons for Dog Sport Tabs */}
+          {/* TAB 6: FAQ */}
+          {activeTab === "faq" && (
+            <FaqSection
+              itemNoun={itemNoun}
+              faqs={faqs}
+              onAdd={handleAddFaq}
+              onUpdate={handleUpdateFaq}
+              onRemove={handleRemoveFaq}
+            />
+          )}
+
+          {/* Bottom Action Buttons (tabbed layout) */}
           <div className="flex items-center justify-end gap-3 pt-6 border-t border-border mt-8">
             <Button
               type="button"
@@ -1647,9 +1788,9 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
           </div>
         </div>
       ) : (
-        /* Main Two-Column Layout for non-Dog Sport services (Boarding, Training, Grooming) */
+        /* ── FLAT LAYOUT (Boarding, Grooming, and other non-tabbed services) ── */
         <div className="grid grid-cols-1 lg:grid-cols-[64%_36%] gap-6">
-          {/* Column 1 - 64% Width */}
+          {/* Column 1 — 64% Width */}
           <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="course-name">{itemNoun} Name</Label>
@@ -1660,8 +1801,8 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
                   itemNoun === "Boarding service"
                     ? "e.g. Standard Room, VIP Cabin"
                     : isGrooming
-                      ? "e.g. Full Grooming & Bath"
-                      : "e.g. Puppy Socialization Class"
+                    ? "e.g. Full Grooming & Bath"
+                    : "e.g. Puppy Socialization Class"
                 }
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -1670,322 +1811,169 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
               />
             </div>
 
-            {/* Toggle groups */}
+            {/* Trainer & Facility Attributes card (not for grooming) */}
             {!isGrooming && (
               <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
                   {itemNoun === "Boarding service" ? "Facility Attributes" : "Trainer & Facility Attributes"}
                 </h3>
 
-                {/* Certified Trainer Toggle */}
                 {itemNoun !== "Boarding service" && (
                   <>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <span className="text-sm font-bold text-foreground">Certified Dog Trainer</span>
-                          <p className="text-xs text-muted-foreground">
-                            Enable if this {itemNoun.toLowerCase()} is coached by an officially certified trainer.
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={certifiedTrainer}
-                          onClick={() => setCertifiedTrainer(!certifiedTrainer)}
-                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${certifiedTrainer ? "bg-primary" : "bg-muted-foreground/30"
-                            }`}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${certifiedTrainer ? "translate-x-4" : "translate-x-0"
-                              }`}
-                          />
-                        </button>
+                    {/* Certified Trainer */}
+                    <BooleanToggleField
+                      label="Certified Dog Trainer"
+                      description={`Enable if this ${itemNoun.toLowerCase()} is coached by an officially certified trainer.`}
+                      checked={certifiedTrainer}
+                      onChange={setCertifiedTrainer}
+                    >
+                      <div className="space-y-2">
+                        <Label htmlFor="certifier-name">Certifier Name</Label>
+                        <Input
+                          id="certifier-name"
+                          type="text"
+                          placeholder="Name of certifying institution/body"
+                          value={certifierName}
+                          onChange={(e) => setCertifierName(e.target.value)}
+                          className="bg-background"
+                        />
                       </div>
+                    </BooleanToggleField>
 
-                      {certifiedTrainer && (
-                        <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                          <Label htmlFor="certifier-name">Certifier Name</Label>
+                    <div className="h-px bg-border/40" />
+
+                    {/* Age Limits */}
+                    <AgeLimitsSection
+                      itemNoun={itemNoun}
+                      ageLimitsEnabled={ageLimitsEnabled}
+                      onAgeLimitsEnabledChange={setAgeLimitsEnabled}
+                      selectedAgeLimits={selectedAgeLimits}
+                      onSelectedAgeLimitsChange={setSelectedAgeLimits}
+                    />
+
+                    <div className="h-px bg-border/60" />
+
+                    {/* Dedicated Training Field */}
+                    <BooleanToggleField
+                      label="Dedicated Training Field"
+                      description="Does the class run on a fully closed, dedicated training field?"
+                      checked={dedicatedField}
+                      onChange={setDedicatedField}
+                    >
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Training Field Description</Label>
+                          <WysiwygEditor
+                            value={trainingFieldDescription}
+                            onChange={setTrainingFieldDescription}
+                            placeholder="Explain field attributes, size, safety fences, etc."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="training-field-address">Address</Label>
                           <Input
-                            id="certifier-name"
+                            id="training-field-address"
                             type="text"
-                            placeholder="Name of certifying institution/body"
-                            value={certifierName}
-                            onChange={(e) => setCertifierName(e.target.value)}
+                            placeholder="e.g. 123 Canine Lane, Bucharest"
+                            value={trainingFieldAddress}
+                            onChange={(e) => setTrainingFieldAddress(e.target.value)}
                             className="bg-background"
                           />
                         </div>
-                      )}
-
-                      {/* Age Limits Toggle */}
-                      <div className="h-px bg-border/40" />
-
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="space-y-0.5">
-                            <span className="text-sm font-bold text-foreground">Age Limits</span>
-                            <p className="text-xs text-muted-foreground">
-                              Enable if this {itemNoun.toLowerCase()} has specific age limits/requirements.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={ageLimitsEnabled}
-                            onClick={() => setAgeLimitsEnabled(!ageLimitsEnabled)}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${ageLimitsEnabled ? "bg-primary" : "bg-muted-foreground/30"
-                              }`}
-                          >
-                            <span
-                              className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${ageLimitsEnabled ? "translate-x-4" : "translate-x-0"
-                                }`}
-                            />
-                          </button>
-                        </div>
-
-                        {ageLimitsEnabled && (
-                          <div className="space-y-3 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Select Age Phases</Label>
-                            <div className="space-y-2">
-                              {[
-                                "Puppy (Up to 9 months)",
-                                "Junior (9 to 18 months)",
-                                "Adult (18 months to 8 years)",
-                                "Senior (8+ years)",
-                              ].map((option) => {
-                                const isChecked = selectedAgeLimits.includes(option);
-                                return (
-                                  <label key={option} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/10 hover:bg-muted/30 transition-colors cursor-pointer text-sm font-medium">
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={() => {
-                                        if (isChecked) {
-                                          setSelectedAgeLimits(selectedAgeLimits.filter((x) => x !== option));
-                                        } else {
-                                          setSelectedAgeLimits([...selectedAgeLimits, option]);
-                                        }
-                                      }}
-                                      className="mt-0.5 rounded border-input text-primary focus:ring-primary size-4"
-                                    />
-                                    <span className="text-foreground">{option}</span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="h-px bg-border/60" />
-                  </>
-                )}
-
-                {/* Dedicated Training Field Toggle */}
-                {itemNoun !== "Boarding service" && (
-                  <>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <span className="text-sm font-bold text-foreground">Dedicated Training Field</span>
-                          <p className="text-xs text-muted-foreground">
-                            Does the class run on a fully closed, dedicated training field?
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={dedicatedField}
-                          onClick={() => setDedicatedField(!dedicatedField)}
-                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${dedicatedField ? "bg-primary" : "bg-muted-foreground/30"
-                            }`}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${dedicatedField ? "translate-x-4" : "translate-x-0"
-                              }`}
+                        <div className="space-y-2">
+                          <Label htmlFor="training-field-gbp">Google Business Profile</Label>
+                          <Input
+                            id="training-field-gbp"
+                            type="url"
+                            placeholder="https://business.google.com/..."
+                            value={trainingFieldGoogleBusinessProfile}
+                            onChange={(e) => setTrainingFieldGoogleBusinessProfile(e.target.value)}
+                            className="bg-background"
                           />
-                        </button>
-                      </div>
-
-                      {dedicatedField && (
-                        <div className="space-y-4 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                          <div className="space-y-2">
-                            <Label>Training Field Description</Label>
-                            <WysiwygEditor
-                              value={trainingFieldDescription}
-                              onChange={setTrainingFieldDescription}
-                              placeholder="Explain field attributes, size, safety fences, etc."
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="training-field-address">Address</Label>
-                            <Input
-                              id="training-field-address"
-                              type="text"
-                              placeholder="e.g. 123 Canine Lane, Bucharest"
-                              value={trainingFieldAddress}
-                              onChange={(e) => setTrainingFieldAddress(e.target.value)}
-                              className="bg-background"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="training-field-gbp">Google Business Profile</Label>
-                            <Input
-                              id="training-field-gbp"
-                              type="url"
-                              placeholder="https://business.google.com/..."
-                              value={trainingFieldGoogleBusinessProfile}
-                              onChange={(e) => setTrainingFieldGoogleBusinessProfile(e.target.value)}
-                              className="bg-background"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="training-field-maps">Google Maps Link</Label>
-                            <Input
-                              id="training-field-maps"
-                              type="url"
-                              placeholder="https://maps.google.com/..."
-                              value={trainingFieldGoogleMapsLink}
-                              onChange={(e) => setTrainingFieldGoogleMapsLink(e.target.value)}
-                              className="bg-background"
-                            />
-                          </div>
                         </div>
-                      )}
-                    </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="training-field-maps">Google Maps Link</Label>
+                          <Input
+                            id="training-field-maps"
+                            type="url"
+                            placeholder="https://maps.google.com/..."
+                            value={trainingFieldGoogleMapsLink}
+                            onChange={(e) => setTrainingFieldGoogleMapsLink(e.target.value)}
+                            className="bg-background"
+                          />
+                        </div>
+                      </div>
+                    </BooleanToggleField>
 
                     <div className="h-px bg-border/60" />
                   </>
                 )}
 
-                {/* Parking Toggle */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Parking</span>
-                      <p className="text-xs text-muted-foreground">
-                        Is parking available on site or nearby?
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={parking}
-                      onClick={() => setParking(!parking)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${parking ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${parking ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
-                  </div>
-
-                  {parking && (
-                    <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label>Parking Description</Label>
-                      <WysiwygEditor
-                        value={parkingDescription}
-                        onChange={setParkingDescription}
-                        placeholder="Details about parking capacity, location, fee..."
-                      />
-                    </div>
-                  )}
-                </div>
+                {/* Parking (all non-grooming services) */}
+                <BooleanToggleField
+                  label="Parking"
+                  description="Is parking available on site or nearby?"
+                  checked={parking}
+                  onChange={setParking}
+                >
+                  <WysiwygEditor
+                    value={parkingDescription}
+                    onChange={setParkingDescription}
+                    placeholder="Details about parking capacity, location, fee..."
+                  />
+                </BooleanToggleField>
               </div>
             )}
 
+            {/* Boarding Details (boarding-only section) */}
             {itemNoun === "Boarding service" && (
               <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
                   Boarding Details
                 </h3>
 
-                {/* Medication Administration Toggle */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Medication Administration</span>
-                      <p className="text-xs text-muted-foreground">
-                        Can you administer medication or medical care?
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={medicationAdministration}
-                      onClick={() => setMedicationAdministration(!medicationAdministration)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${medicationAdministration ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${medicationAdministration ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
+                <BooleanToggleField
+                  label="Medication Administration"
+                  description="Can you administer medication or medical care?"
+                  checked={medicationAdministration}
+                  onChange={setMedicationAdministration}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="medication-details">Medication Administration Instructions</Label>
+                    <Input
+                      id="medication-details"
+                      type="text"
+                      placeholder="e.g. oral tablets, injections, schedule limitations"
+                      value={medicationAdministrationDetails}
+                      onChange={(e) => setMedicationAdministrationDetails(e.target.value)}
+                      className="bg-background"
+                    />
                   </div>
-
-                  {medicationAdministration && (
-                    <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label htmlFor="medication-details">Medication Administration Instructions</Label>
-                      <Input
-                        id="medication-details"
-                        type="text"
-                        placeholder="e.g. oral tablets, injections, schedule limitations"
-                        value={medicationAdministrationDetails}
-                        onChange={(e) => setMedicationAdministrationDetails(e.target.value)}
-                        className="bg-background"
-                      />
-                    </div>
-                  )}
-                </div>
+                </BooleanToggleField>
 
                 <div className="h-px bg-border/60" />
 
-                {/* Web Cam Toggle */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Web cam</span>
-                      <p className="text-xs text-muted-foreground">
-                        Do you offer live video/webcam access to owners?
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={webCam}
-                      onClick={() => setWebCam(!webCam)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${webCam ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${webCam ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
+                <BooleanToggleField
+                  label="Web cam"
+                  description="Do you offer live video/webcam access to owners?"
+                  checked={webCam}
+                  onChange={setWebCam}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="webcam-details">Web cam Access Instructions</Label>
+                    <Input
+                      id="webcam-details"
+                      type="text"
+                      placeholder="e.g. live stream link provided upon check-in, 24/7 access"
+                      value={webCamDetails}
+                      onChange={(e) => setWebCamDetails(e.target.value)}
+                      className="bg-background"
+                    />
                   </div>
-
-                  {webCam && (
-                    <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label htmlFor="webcam-details">Web cam Access Instructions</Label>
-                      <Input
-                        id="webcam-details"
-                        type="text"
-                        placeholder="e.g. live stream link provided upon check-in, 24/7 access"
-                        value={webCamDetails}
-                        onChange={(e) => setWebCamDetails(e.target.value)}
-                        className="bg-background"
-                      />
-                    </div>
-                  )}
-                </div>
+                </BooleanToggleField>
 
                 <div className="h-px bg-border/60" />
 
-                {/* Daily Walks Dropdown */}
                 <div className="space-y-2">
                   <Label htmlFor="daily-walks">Daily Walks</Label>
                   <CustomSelect
@@ -2003,95 +1991,53 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
 
                 <div className="h-px bg-border/60" />
 
-                {/* Communication with the Owner Toggle */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Communication with the Owner</span>
-                      <p className="text-xs text-muted-foreground">
-                        Will you provide regular photo/video updates to the owner?
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={ownerCommunication}
-                      onClick={() => setOwnerCommunication(!ownerCommunication)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${ownerCommunication ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${ownerCommunication ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
+                <BooleanToggleField
+                  label="Communication with the Owner"
+                  description="Will you provide regular photo/video updates to the owner?"
+                  checked={ownerCommunication}
+                  onChange={setOwnerCommunication}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="communication-details">Communication Updates Details</Label>
+                    <Input
+                      id="communication-details"
+                      type="text"
+                      placeholder="e.g. daily photos via WhatsApp, weekly email progress"
+                      value={ownerCommunicationDetails}
+                      onChange={(e) => setOwnerCommunicationDetails(e.target.value)}
+                      className="bg-background"
+                    />
                   </div>
-
-                  {ownerCommunication && (
-                    <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label htmlFor="communication-details">Communication Updates Details</Label>
-                      <Input
-                        id="communication-details"
-                        type="text"
-                        placeholder="e.g. daily photos via WhatsApp, weekly email progress"
-                        value={ownerCommunicationDetails}
-                        onChange={(e) => setOwnerCommunicationDetails(e.target.value)}
-                        className="bg-background"
-                      />
-                    </div>
-                  )}
-                </div>
+                </BooleanToggleField>
 
                 <div className="h-px bg-border/60" />
 
-                {/* Personalized Meal Plan Toggle */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-sm font-bold text-foreground">Personalized Meal Plan</span>
-                      <p className="text-xs text-muted-foreground">
-                        Can you provide a customized meal plan or accommodate special diets?
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={personalizedMealPlan}
-                      onClick={() => setPersonalizedMealPlan(!personalizedMealPlan)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${personalizedMealPlan ? "bg-primary" : "bg-muted-foreground/30"
-                        }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${personalizedMealPlan ? "translate-x-4" : "translate-x-0"
-                          }`}
-                      />
-                    </button>
+                <BooleanToggleField
+                  label="Personalized Meal Plan"
+                  description="Can you provide a customized meal plan or accommodate special diets?"
+                  checked={personalizedMealPlan}
+                  onChange={setPersonalizedMealPlan}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="meal-details">Meal Plan Details</Label>
+                    <Input
+                      id="meal-details"
+                      type="text"
+                      placeholder="e.g. BARF diet support, raw food storage, customized portions"
+                      value={personalizedMealPlanDetails}
+                      onChange={(e) => setPersonalizedMealPlanDetails(e.target.value)}
+                      className="bg-background"
+                    />
                   </div>
-
-                  {personalizedMealPlan && (
-                    <div className="space-y-2 pl-4 border-l-2 border-primary/20 transition-all duration-200">
-                      <Label htmlFor="meal-details">Meal Plan Details</Label>
-                      <Input
-                        id="meal-details"
-                        type="text"
-                        placeholder="e.g. BARF diet support, raw food storage, customized portions"
-                        value={personalizedMealPlanDetails}
-                        onChange={(e) => setPersonalizedMealPlanDetails(e.target.value)}
-                        className="bg-background"
-                      />
-                    </div>
-                  )}
-                </div>
+                </BooleanToggleField>
 
                 {isBoarding && (
                   <>
                     <div className="h-px bg-border/60" />
-
-                    {/* 7-Day Day-Specific Schedule Section */}
                     <div className="space-y-4">
                       <DayScheduleGrid
                         weeklySchedule={weeklySchedule}
-                        isDogSport={isDogSport}
+                        useSportLabels={isDogSport}
                         onUpdate={handleUpdateDaySchedule}
                         onCopyMonToWorkweek={handleCopyMonToWorkweek}
                         onCopyMonToAll={handleCopyMonToAll}
@@ -2121,183 +2067,28 @@ export function CourseForm({ organizationId, serviceId, itemNoun, initialCourse,
               />
             </div>
 
-            {/* FAQ Builder Section */}
-            <div className="space-y-4 pt-4 border-t border-border/60">
-              <div className="flex flex-col gap-1">
-                <Label className="text-sm font-bold">Frequently Asked Questions (FAQ)</Label>
-                <p className="text-xs text-muted-foreground">
-                  Add Q&A pairs for clients regarding this {itemNoun.toLowerCase()}.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {faqs.length === 0 ? (
-                  <div className="text-center p-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground bg-muted/5">
-                    No FAQs added yet. Click "Add FAQ" below to start.
-                  </div>
-                ) : (
-                  <div className="space-y-3" data-testid="faq-list">
-                    {faqs.map((faq, index) => (
-                      <div key={index} className="p-4 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            FAQ Item #{index + 1}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveFaq(index)}
-                            className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                            title="Remove FAQ"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="space-y-1">
-                            <Label htmlFor={`faq-q-${index}`} className="text-xs font-semibold">Question</Label>
-                            <Input
-                              id={`faq-q-${index}`}
-                              type="text"
-                              placeholder="e.g. Is there a vaccination requirement?"
-                              value={faq.question}
-                              onChange={(e) => handleUpdateFaq(index, "question", e.target.value)}
-                              className="bg-background h-8 text-xs font-semibold"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs font-semibold">Answer</Label>
-                            <WysiwygEditor
-                              value={faq.answer}
-                              onChange={(val) => handleUpdateFaq(index, "answer", val)}
-                              placeholder="e.g. Yes, all dogs must have up-to-date DHPP and Rabies vaccines."
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddFaq}
-                  className="w-full font-bold text-xs py-5 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
-                >
-                  <Plus className="size-3.5 mr-1.5" />
-                  Add FAQ Item
-                </Button>
-              </div>
-            </div>
+            <FaqSection
+              itemNoun={itemNoun}
+              faqs={faqs}
+              onAdd={handleAddFaq}
+              onUpdate={handleUpdateFaq}
+              onRemove={handleRemoveFaq}
+              compact
+            />
           </div>
 
-          {/* Column 2 - 36% Width */}
+          {/* Column 2 — 36% Width */}
           <div className="space-y-6">
-            <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-4">
-              <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90">
-                  Pricing Configuration
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Specify one or multiple pricing tiers.
-                </p>
-              </div>
-
-              <div className="space-y-4" data-testid="pricing-tiers-list">
-                {pricings.map((tier, index) => (
-                  <div key={index} className="p-3.5 rounded-xl border border-border bg-muted/10 space-y-3 relative group">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Price Option #{index + 1}
-                      </span>
-                      {pricings.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemovePriceTier(index)}
-                          className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                          title="Remove Price Option"
-                        >
-                          <Trash2 className="size-3" />
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <Label htmlFor={`course-price-${index}`} className="text-xs font-semibold">Price Amount</Label>
-                        <Input
-                          id={`course-price-${index}`}
-                          type="text"
-                          placeholder="e.g. $150 or 500 RON"
-                          value={tier.amount}
-                          onChange={(e) => handleUpdatePriceTier(index, "amount", e.target.value)}
-                          className="bg-background text-sm font-semibold"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label htmlFor={`course-price-type-${index}`} className="text-xs font-semibold">Billing Frequency</Label>
-                        <CustomSelect
-                          id={`course-price-type-${index}`}
-                          value={tier.type}
-                          onChange={(val) => handleUpdatePriceTier(index, "type", val)}
-                          options={
-                            itemNoun === "Boarding service"
-                              ? [
-                                { value: "night", label: "Per Night" },
-                                { value: "day", label: "Per Day" },
-                                { value: "month", label: "Per Month" },
-                                { value: "service", label: "Per Boarding service" },
-                              ]
-                              : itemNoun === "Grooming service"
-                                ? [
-                                  { value: "service", label: "Per Grooming service" },
-                                  { value: "session", label: "Per Session" },
-                                  { value: "hour", label: "Per Hour" },
-                                ]
-                                : [
-                                  { value: "course", label: `Per ${itemNoun}` },
-                                  { value: "month", label: "Per Month" },
-                                  { value: "session", label: "Per Session" },
-                                  { value: "hour", label: "Per Hour" },
-                                ]
-                          }
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label htmlFor={`course-price-label-${index}`} className="text-xs font-semibold">Label / Title (Optional)</Label>
-                        <Input
-                          id={`course-price-label-${index}`}
-                          type="text"
-                          placeholder="e.g. Basic, Drop-in"
-                          value={tier.label || ""}
-                          onChange={(e) => handleUpdatePriceTier(index, "label", e.target.value)}
-                          className="bg-background text-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddPriceTier}
-                  className="w-full font-bold text-xs py-3 rounded-xl border-dashed border-2 border-border/80 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
-                >
-                  <Plus className="size-3.5 mr-1.5" />
-                  Add Price Tier
-                </Button>
-              </div>
-            </div>
+            <PricingSection
+              itemNoun={itemNoun}
+              isBoarding={isBoarding}
+              isGrooming={isGrooming}
+              pricings={pricings}
+              onAdd={handleAddPriceTier}
+              onUpdate={handleUpdatePriceTier}
+              onRemove={handleRemovePriceTier}
+              compact
+            />
 
             {/* Submit Actions */}
             <div className="space-y-3">
