@@ -252,6 +252,9 @@ describe("DashboardServiceDetail Component", () => {
       />
     );
 
+    const expandBtns = screen.getAllByRole("button", { name: /Expand/ });
+    expandBtns.forEach((btn) => fireEvent.click(btn));
+
     expect(screen.getByText("$100 / course")).toBeDefined();
     expect(screen.getByText("$50 / month")).toBeDefined();
   });
@@ -315,6 +318,9 @@ describe("DashboardServiceDetail Component", () => {
       />
     );
 
+    const expandBtns = screen.getAllByRole("button", { name: /Expand/ });
+    expandBtns.forEach((btn) => fireEvent.click(btn));
+
     expect(screen.getByText("120 RON / night")).toBeDefined();
     expect(screen.getByText("250 RON / day")).toBeDefined();
   });
@@ -359,6 +365,8 @@ describe("DashboardServiceDetail Component", () => {
       />
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
+
     expect(screen.getByText("Meds Administered")).toBeDefined();
     expect(screen.getByText("Webcam")).toBeDefined();
     expect(screen.getByText("3 Walks")).toBeDefined();
@@ -387,6 +395,8 @@ describe("DashboardServiceDetail Component", () => {
         ]}
       />
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
     expect(screen.getByText("Certified")).toBeDefined();
     expect(screen.getByText("Field")).toBeDefined();
@@ -418,6 +428,8 @@ describe("DashboardServiceDetail Component", () => {
         ]}
       />
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
     expect(screen.getByText("1 Walk")).toBeDefined();
   });
@@ -602,6 +614,8 @@ describe("DashboardServiceDetail Component", () => {
       />
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
+
     expect(screen.getByText("Mon–Fri:")).toBeDefined();
     expect(screen.getByText((content) => content.includes("In: 09:00"))).toBeDefined();
   });
@@ -634,6 +648,8 @@ describe("DashboardServiceDetail Component", () => {
         ]}
       />
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
     expect(screen.getByText("Mon–Fri:")).toBeDefined();
     expect(screen.getByText("Sat–Sun:")).toBeDefined();
@@ -674,6 +690,8 @@ describe("DashboardServiceDetail Component", () => {
         ]}
       />
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
     expect(screen.getByText("Mon–Thu:")).toBeDefined();
     expect(screen.getByText("Fri:")).toBeDefined();
@@ -889,6 +907,8 @@ describe("DashboardServiceDetail Component", () => {
       />
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
+
     // Badge should show "2 Phases" (two comma-separated values)
     expect(screen.getByText("Ages: 2 Phases")).toBeDefined();
   });
@@ -913,6 +933,8 @@ describe("DashboardServiceDetail Component", () => {
         ]}
       />
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
     // Badge should show "1 Phase" (singular)
     expect(screen.getByText("Ages: 1 Phase")).toBeDefined();
@@ -978,6 +1000,8 @@ describe("DashboardServiceDetail Component", () => {
         ]}
       />
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
     expect(screen.getByText("Basic: 200 RON / course")).toBeDefined();
     expect(screen.getByText("Monthly: 800 RON / month")).toBeDefined();

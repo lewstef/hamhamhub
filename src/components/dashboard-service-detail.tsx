@@ -169,8 +169,20 @@ export function DashboardServiceDetail({
 
   // Course states
   const [localCourses, setLocalCourses] = useState<Course[]>(courses || []);
-  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
+  const [expandedCourseIds, setExpandedCourseIds] = useState<Set<string>>(() => new Set());
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
+
+  const toggleExpandCourse = (courseId: string) => {
+    setExpandedCourseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(courseId)) {
+        next.delete(courseId);
+      } else {
+        next.add(courseId);
+      }
+      return next;
+    });
+  };
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | undefined>(undefined);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
@@ -386,6 +398,9 @@ export function DashboardServiceDetail({
                 <div className="divide-y divide-border/60 rounded-2xl border border-border overflow-hidden">
                   {localCourses.map((course) => {
                     const isCourseDragged = draggedCourseId === course.id;
+                    const courseId = course.id || "";
+                    const isExpanded = expandedCourseIds.has(courseId);
+
                     return (
                       <div
                         key={course.id}
@@ -399,50 +414,110 @@ export function DashboardServiceDetail({
                             : ""
                         }`}
                       >
+                        {/* Header Row */}
                         <div
-                          className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/5 transition-colors"
+                          onClick={() => courseId && toggleExpandCourse(courseId)}
+                          className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/5 transition-colors cursor-pointer select-none"
                         >
-                          {/* Left: drag handle + name + chips */}
-                          <div className="flex flex-wrap items-center gap-2 min-w-0">
-                            {/* Drag Handle */}
+                          {/* Left: Drag handle + Name + Chevron */}
+                          <div className="flex items-center gap-2.5 min-w-0">
                             <div
-                              className="text-muted-foreground/60 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted"
+                              className="text-muted-foreground/60 hover:text-primary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted shrink-0"
                               title="Drag to reorder"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <GripVertical className="size-3.5" />
                             </div>
-                            <span className="text-sm font-bold text-foreground">
+
+                            <span className="text-sm font-bold text-foreground truncate">
                               {course.name}
-                              {slug === "dog-boarding" && (
-                                <span className="inline-flex flex-wrap items-center gap-1.5 ml-2">
-                                  {parseScheduleGroups(
-                                    course.schedule,
-                                    course.checkin,
-                                    course.checkout,
-                                    course.checkinWeekend,
-                                    course.checkoutWeekend
-                                  ).map((grp, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border"
-                                      title={`${grp.dayRangeLabel} operating hours`}
-                                    >
-                                      <span className="font-semibold text-foreground/80">{grp.dayRangeLabel}:</span>{" "}
-                                      {grp.enabled ? (
-                                        <>
-                                          {grp.checkin ? `In: ${grp.checkin}` : ""}
-                                          {grp.checkin && grp.checkout ? " • " : ""}
-                                          {grp.checkout ? `Out: ${grp.checkout}` : ""}
-                                        </>
-                                      ) : (
-                                        <span className="italic">Closed</span>
-                                      )}
-                                    </span>
-                                  ))}
-                                </span>
-                              )}
                             </span>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (courseId) toggleExpandCourse(courseId);
+                              }}
+                              className="p-1 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
+                              title={isExpanded ? "Collapse details" : "Expand details"}
+                              aria-label={isExpanded ? `Collapse ${course.name}` : `Expand ${course.name}`}
+                            >
+                              <ChevronDown
+                                className={cn("size-4 transition-transform duration-200", isExpanded && "rotate-180")}
+                              />
+                            </button>
+                          </div>
+
+                          {/* Right: Action Buttons */}
+                          <div
+                            className="flex items-center gap-2 shrink-0"
+                            draggable={false}
+                            onDragStart={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingCourse(course);
+                                setIsFormOpen(true);
+                              }}
+                              className="h-8 font-bold text-xs cursor-pointer"
+                            >
+                              <Edit2 className="size-3.5 mr-1.5" />
+                              Edit
+                            </Button>
+
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={isDeletingId === course.id}
+                              onClick={() => course.id && handleDeleteCourse(course.id)}
+                              className="h-8 font-bold text-xs cursor-pointer"
+                            >
+                              <Trash2 className="size-3.5 mr-1.5" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Collapsible Badges Tray */}
+                        {isExpanded && (
+                          <div className="px-5 pb-4 pt-1.5 border-t border-border/30 bg-muted/10 flex flex-wrap items-center gap-2 animate-in fade-in duration-150">
+                            {slug === "dog-boarding" && (
+                              <div className="inline-flex flex-wrap items-center gap-1.5">
+                                {parseScheduleGroups(
+                                  course.schedule,
+                                  course.checkin,
+                                  course.checkout,
+                                  course.checkinWeekend,
+                                  course.checkoutWeekend
+                                ).map((grp, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-xs font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border"
+                                    title={`${grp.dayRangeLabel} operating hours`}
+                                  >
+                                    <span className="font-semibold text-foreground/80">{grp.dayRangeLabel}:</span>{" "}
+                                    {grp.enabled ? (
+                                      <>
+                                        {grp.checkin ? `In: ${grp.checkin}` : ""}
+                                        {grp.checkin && grp.checkout ? " • " : ""}
+                                        {grp.checkout ? `Out: ${grp.checkout}` : ""}
+                                      </>
+                                    ) : (
+                                      <span className="italic">Closed</span>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {course.certifiedTrainer && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
                                 <Award className="size-2.5" />
@@ -538,43 +613,7 @@ export function DashboardServiceDetail({
                                 );
                               })}
                           </div>
-  
-                          {/* Right: action buttons */}                           <div
-                            className="flex items-center gap-2 shrink-0"
-                            draggable={false}
-                            onDragStart={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                            }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditingCourse(course);
-                                setIsFormOpen(true);
-                              }}
-                              className="h-8 font-bold text-xs"
-                              disabled={isDeletingId === course.id}
-                            >
-                              <Edit2 className="size-3.5 mr-1.5" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => course.id && handleDeleteCourse(course.id)}
-                              className="h-8 font-bold text-xs"
-                              disabled={isDeletingId === course.id}
-                            >
-                              <Trash2 className="size-3.5 mr-1.5" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     );
                   })}

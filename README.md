@@ -240,8 +240,8 @@ Each course or dog sport is defined in a dynamic form featuring:
 ### C. Configurable Pricing Frequency
 Pricing configurations support both **per-offering** and **per-month** options. The selection is saved in the database under `courses.priceType` and formatted cleanly in the directory listing (e.g. `200 RON / course` or `$150 / month`).
 
-### D. Interactive Drag-and-Drop Reordering
-Dynamic offerings are rendered as a clean, flat list featuring a tactical `GripVertical` handle. Users can drag and drop items to reorder them locally. On drop, the new sequence is persisted to the database via `reorderOrgCoursesAction` updating the `sortOrder` values.
+### D. Interactive Drag-and-Drop Reordering & Collapsible Badges Tray
+Dynamic offerings are rendered as a clean, flat list featuring a tactical `GripVertical` handle and an interactive expand chevron button (`ChevronDown`). Clicking an entry or chevron expands a collapsible tray containing all associated amenity badges, schedule operating hours, closed/open exceptions, and pricing tiers. Users can drag and drop items to reorder them locally with real-time database persistence via `reorderOrgCoursesAction`.
 
 ### E. CourseForm Component Architecture
 
