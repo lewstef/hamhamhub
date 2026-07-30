@@ -17,6 +17,7 @@ interface ParsedCourseData {
   serviceId: string | null;
   certifiedTrainer: boolean;
   certifierName: string;
+  trainerExperienceDescription: string;
   dedicatedField: boolean;
   trainingFieldDescription: string;
   trainingFieldAddress: string;
@@ -61,6 +62,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const serviceId = (formData.get("serviceId") as string) || null;
   const certifiedTrainer = formData.get("certifiedTrainer") === "true";
   const certifierName = formData.get("certifierName") as string;
+  const trainerExperienceDescription = formData.get("trainerExperienceDescription") as string;
   const dedicatedField = formData.get("dedicatedField") === "true";
   const trainingFieldDescription = formData.get("trainingFieldDescription") as string;
   const trainingFieldAddress = formData.get("trainingFieldAddress") as string;
@@ -129,7 +131,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   return {
     data: {
       name, price, priceType, serviceId,
-      certifiedTrainer, certifierName,
+      certifiedTrainer, certifierName, trainerExperienceDescription,
       dedicatedField, trainingFieldDescription, trainingFieldAddress,
       trainingFieldGoogleBusinessProfile, trainingFieldGoogleMapsLink,
       parking, parkingDescription, details, termsOfParticipation,
@@ -200,6 +202,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       name: d.name,
       certifiedTrainer: d.certifiedTrainer,
       certifierName: d.certifiedTrainer ? d.certifierName : null,
+      trainerExperienceDescription: d.trainerExperienceDescription,
       dedicatedField: d.dedicatedField,
       trainingFieldDescription: d.dedicatedField ? d.trainingFieldDescription : null,
       trainingFieldAddress: d.dedicatedField ? d.trainingFieldAddress : null,
@@ -294,6 +297,7 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         serviceId: d.serviceId,
         certifiedTrainer: d.certifiedTrainer,
         certifierName: d.certifiedTrainer ? d.certifierName : null,
+        trainerExperienceDescription: d.trainerExperienceDescription,
         dedicatedField: d.dedicatedField,
         trainingFieldDescription: d.dedicatedField ? d.trainingFieldDescription : null,
         trainingFieldAddress: d.dedicatedField ? d.trainingFieldAddress : null,

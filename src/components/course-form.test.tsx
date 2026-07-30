@@ -808,6 +808,7 @@ describe("CourseForm Component", () => {
     expect(passedFormData.get("name")).toBe("Mondioring Level 1");
     expect(passedFormData.get("certifiedTrainer")).toBe("true");
     expect(passedFormData.get("certifierName")).toBe("FCI World Body");
+    expect(passedFormData.get("trainerExperienceDescription")).toBeDefined();
     expect(passedFormData.get("trainingFieldAddress")).toBe("Str. Canine 15, Cluj");
     expect(passedFormData.get("trainingFieldGoogleBusinessProfile")).toBe("https://business.google.com/site/mondioring");
     expect(passedFormData.get("trainingFieldGoogleMapsLink")).toBe("https://maps.google.com/place/mondioring");

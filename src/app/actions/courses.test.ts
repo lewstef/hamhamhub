@@ -54,6 +54,7 @@ describe("Courses Server Actions", () => {
       formData.append("priceType", "month");
       formData.append("certifiedTrainer", "true");
       formData.append("certifierName", "SuperDog");
+      formData.append("trainerExperienceDescription", "10 years experience");
       formData.append("ageLimitsEnabled", "true");
       formData.append("ageLimits", "Puppy (Up to 9 months),Senior (8+ years)");
       formData.append("dedicatedField", "true");
@@ -69,6 +70,7 @@ describe("Courses Server Actions", () => {
         priceType: "month",
         certifiedTrainer: true,
         certifierName: "SuperDog",
+        trainerExperienceDescription: "10 years experience",
         ageLimitsEnabled: true,
         ageLimits: "Puppy (Up to 9 months),Senior (8+ years)",
         dedicatedField: true,

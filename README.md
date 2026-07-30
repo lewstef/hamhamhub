@@ -220,7 +220,7 @@ The application UI dynamically adjusts its user-facing terminology and input set
 - **Dog sports training** (`sport-dog-training`): Configures and displays offerings as **"Dog Sports"** (e.g. "Add Dog Sport", "Dog Sport Name") using an interactive **6-Tab Navigation System**.
 - **Dog training** (`dog-training`): Configures and displays offerings as **"Courses"** (e.g. "Add Course", "Course Name"), also using the same **6-Tab Navigation System** for layout consistency.
 - Both tabbed services share the following tabs:
-  1. **General Tab**: Name, Certified Dog Trainer toggle & Certifier Institution, Information (WYSIWYG editor).
+  1. **General Tab**: Name, Certified Dog Trainer toggle & Certifier Institution, Trainer Experience Description (WYSIWYG editor), Information (WYSIWYG editor).
   2. **Terms of participation Tab**: Age Limits switch & phase checkboxes (`Puppy (Up to 9 months)`, `Junior (9 to 18 months)`, `Adult (18 months to 8 years)`, `Senior (8+ years)`), Terms of Participation (WYSIWYG editor).
   3. **Pricing Tab**: Price Amount & Billing Frequency selector (`Per Course/Dog Sport`, `Per Month`, `Per Session`, `Per Hour`).
   4. **Schedule Tab**: 7-Day Daily Operating Schedule with time pickers and quick preset buttons (`Copy Mon to Mon–Fri` & `Copy Mon to All`).
@@ -230,7 +230,7 @@ The application UI dynamically adjusts its user-facing terminology and input set
 ### B. Facility & Venue Attributes & Top Action Header
 Each course or dog sport is defined in a dynamic form featuring:
 - **Top Header Action Bar**: Prominently displays `Cancel` and `Save Changes` / `Create [ItemNoun]` buttons right at the top header for instant access without scrolling.
-- **Obedience & Certified Coaching**: Toggleable trainer certifications with certifier name tracking.
+- **Obedience & Certified Coaching**: Toggleable trainer certifications with certifier name tracking and a dedicated **Experience Description** WYSIWYG editor for detailing trainer background.
 - **Dedicated Venues & Location**: Address, Google Business Profile (GBP) link, and Google Maps link.
 - **Parking Accommodations**: Switchable parking toggle with descriptive details.
 - **WYSIWYG Descriptions**: Text styling editors for program details and participation terms.

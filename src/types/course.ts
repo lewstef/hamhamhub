@@ -8,6 +8,7 @@ export interface Course {
   name: string;
   certifiedTrainer: boolean;
   certifierName?: string | null;
+  trainerExperienceDescription?: string | null;
   dedicatedField: boolean;
   trainingFieldDescription?: string | null;
   trainingFieldAddress?: string | null;

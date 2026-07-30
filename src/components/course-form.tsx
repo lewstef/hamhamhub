@@ -846,6 +846,7 @@ export function CourseForm({
   const [name, setName] = useState(initialCourse?.name || "");
   const [certifiedTrainer, setCertifiedTrainer] = useState(initialCourse?.certifiedTrainer || false);
   const [certifierName, setCertifierName] = useState(initialCourse?.certifierName || "");
+  const [trainerExperienceDescription, setTrainerExperienceDescription] = useState(initialCourse?.trainerExperienceDescription || "");
   const [ageLimitsEnabled, setAgeLimitsEnabled] = useState(initialCourse?.ageLimitsEnabled || false);
   const [selectedAgeLimits, setSelectedAgeLimits] = useState<string[]>(
     initialCourse?.ageLimits
@@ -944,6 +945,7 @@ export function CourseForm({
     name: initialCourse?.name || "",
     certifiedTrainer: initialCourse?.certifiedTrainer || false,
     certifierName: initialCourse?.certifierName || "",
+    trainerExperienceDescription: initialCourse?.trainerExperienceDescription || "",
     ageLimitsEnabled: initialCourse?.ageLimitsEnabled || false,
     ageLimits: initialCourse?.ageLimits || "",
     dedicatedField: initialCourse?.dedicatedField || false,
@@ -990,6 +992,7 @@ export function CourseForm({
       name !== i.name ||
       certifiedTrainer !== i.certifiedTrainer ||
       certifierName !== i.certifierName ||
+      trainerExperienceDescription !== i.trainerExperienceDescription ||
       ageLimitsEnabled !== i.ageLimitsEnabled ||
       selectedAgeLimits.join(",") !== i.ageLimits ||
       dedicatedField !== i.dedicatedField ||
@@ -1021,7 +1024,7 @@ export function CourseForm({
       JSON.stringify(faqs) !== i.faq
     );
   }, [
-    name, certifiedTrainer, certifierName, ageLimitsEnabled, selectedAgeLimits,
+    name, certifiedTrainer, certifierName, trainerExperienceDescription, ageLimitsEnabled, selectedAgeLimits,
     dedicatedField, trainingFieldDescription, trainingFieldAddress,
     trainingFieldGoogleBusinessProfile, trainingFieldGoogleMapsLink,
     parking, parkingDescription, details, termsOfParticipation,
@@ -1173,6 +1176,7 @@ export function CourseForm({
     }
     formData.append("certifiedTrainer", String(certifiedTrainer));
     formData.append("certifierName", certifierName);
+    formData.append("trainerExperienceDescription", trainerExperienceDescription);
     formData.append("ageLimitsEnabled", String(ageLimitsEnabled));
     formData.append("ageLimits", selectedAgeLimits.join(","));
     formData.append("dedicatedField", String(dedicatedField));
@@ -1280,10 +1284,10 @@ export function CourseForm({
     startTransition(async () => {
       const action = isEdit ? updateCourseAction : createCourseAction;
       const res = await action(null, formData);
-      if (res?.success) {
+      if ("success" in res && res.success) {
         onSubmitSuccess();
       } else {
-        setError(res?.error || `An error occurred while saving the ${itemNoun.toLowerCase()}.`);
+        setError("error" in res ? res.error : `An error occurred while saving the ${itemNoun.toLowerCase()}.`);
       }
     });
   };
@@ -1349,12 +1353,12 @@ export function CourseForm({
         <div className="flex flex-wrap items-center gap-2 border-b border-border pb-2">
           {(
             [
-              { key: "general", label: "General", Icon: FileText },
-              { key: "terms", label: "Terms of participation", Icon: FileCheck },
-              { key: "pricing", label: "Pricing", Icon: DollarSign },
+              { key: "general", label: "General", Icon: FileText, hasError: false },
+              { key: "terms", label: "Terms of participation", Icon: FileCheck, hasError: false },
+              { key: "pricing", label: "Pricing", Icon: DollarSign, hasError: false },
               { key: "schedule", label: "Schedule", Icon: Calendar, hasError: !!scheduleOverlapError },
-              { key: "location", label: "Location", Icon: MapPin },
-              { key: "faq", label: "FAQ", Icon: HelpCircle },
+              { key: "location", label: "Location", Icon: MapPin, hasError: false },
+              { key: "faq", label: "FAQ", Icon: HelpCircle, hasError: false },
             ] as const
           ).map(({ key, label, Icon, hasError }) => (
             <button
@@ -1419,6 +1423,17 @@ export function CourseForm({
                     />
                   </div>
                 </BooleanToggleField>
+
+                <div className="h-px bg-border/40" />
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Experience Description</Label>
+                  <WysiwygEditor
+                    value={trainerExperienceDescription}
+                    onChange={setTrainerExperienceDescription}
+                    placeholder="Describe trainer background, qualifications, experience, accomplishments..."
+                  />
+                </div>
               </div>
 
               {/* Information & Details Editor */}
@@ -1839,6 +1854,17 @@ export function CourseForm({
                         />
                       </div>
                     </BooleanToggleField>
+
+                    <div className="h-px bg-border/40" />
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Experience Description</Label>
+                      <WysiwygEditor
+                        value={trainerExperienceDescription}
+                        onChange={setTrainerExperienceDescription}
+                        placeholder="Describe trainer background, qualifications, experience, accomplishments..."
+                      />
+                    </div>
 
                     <div className="h-px bg-border/40" />
 

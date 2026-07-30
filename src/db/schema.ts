@@ -76,6 +76,7 @@ export const courses = pgTable("courses", {
   name: text("name").notNull(),
   certifiedTrainer: boolean("certified_trainer").default(false).notNull(),
   certifierName: text("certifier_name"),
+  trainerExperienceDescription: text("trainer_experience_description"),
   dedicatedField: boolean("dedicated_field").default(false).notNull(),
   trainingFieldDescription: text("training_field_description"),
   trainingFieldAddress: text("training_field_address"),
