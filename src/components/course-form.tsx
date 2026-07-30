@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
-import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck, Sliders } from "lucide-react";
 import { TimePickerSelect, getCheckinOptions, getCheckoutOptions } from "@/components/ui/time-picker-select";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { DatePickerInput, parseDateString } from "@/components/ui/date-picker-input";
@@ -383,6 +383,7 @@ interface LocationSectionProps {
    * "flat"   — all location inputs are gated behind the Dedicated Field toggle.
    */
   layout: "tabbed" | "flat";
+  isBoarding?: boolean;
   dedicatedField: boolean;
   onDedicatedFieldChange: (v: boolean) => void;
   trainingFieldDescription: string;
@@ -405,6 +406,7 @@ interface LocationSectionProps {
  */
 function LocationSection({
   layout,
+  isBoarding,
   dedicatedField,
   onDedicatedFieldChange,
   trainingFieldDescription,
@@ -467,29 +469,33 @@ function LocationSection({
         </>
       )}
 
-      <BooleanToggleField
-        label="Dedicated Training Field"
-        description="Does the class run on a fully closed, dedicated training field?"
-        checked={dedicatedField}
-        onChange={onDedicatedFieldChange}
-      >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Training Field Description</Label>
-            <WysiwygEditor
-              value={trainingFieldDescription}
-              onChange={onTrainingFieldDescriptionChange}
-              placeholder="Explain field attributes, size, safety fences, etc."
-            />
-          </div>
-          {layout === "flat" && locationInputs}
-        </div>
-      </BooleanToggleField>
+      {!isBoarding && (
+        <>
+          <BooleanToggleField
+            label="Dedicated Training Field"
+            description="Does the class run on a fully closed, dedicated training field?"
+            checked={dedicatedField}
+            onChange={onDedicatedFieldChange}
+          >
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Training Field Description</Label>
+                <WysiwygEditor
+                  value={trainingFieldDescription}
+                  onChange={onTrainingFieldDescriptionChange}
+                  placeholder="Explain field attributes, size, safety fences, etc."
+                />
+              </div>
+              {layout === "flat" && locationInputs}
+            </div>
+          </BooleanToggleField>
 
-      <div className="h-px bg-border/60" />
+          <div className="h-px bg-border/60" />
+        </>
+      )}
 
       <BooleanToggleField
-        label="Dedicated Parking"
+        label={isBoarding ? "Parking" : "Dedicated Parking"}
         description="Is parking available on site or nearby?"
         checked={parking}
         onChange={onParkingChange}
@@ -547,6 +553,7 @@ function PricingSection({
         ? [
             { value: "night", label: "Per Night" },
             { value: "day", label: "Per Day" },
+            { value: "half_day", label: "Per Half Day" },
             { value: "month", label: "Per Month" },
             { value: "service", label: "Per Boarding service" },
           ]
@@ -833,12 +840,12 @@ export function CourseForm({
   serviceSlug,
 }: CourseFormProps) {
   const isEdit = !!initialCourse?.id;
-  const isBoarding = serviceSlug === "dog-boarding";
+  const isBoarding = serviceSlug === "dog-boarding" || itemNoun === "Boarding service";
   const isGrooming = serviceSlug === "dog-grooming" || itemNoun === "Grooming service";
   const isDogSport = serviceSlug === "sport-dog-training" || itemNoun === "Dog Sport";
   const isDogTraining = serviceSlug === "dog-training" || itemNoun === "Course";
-  const isTabbedLayout = isDogSport || isDogTraining;
-  const [activeTab, setActiveTab] = useState<"general" | "terms" | "faq" | "pricing" | "schedule" | "location">("general");
+  const isTabbedLayout = isDogSport || isDogTraining || isBoarding;
+  const [activeTab, setActiveTab] = useState<"general" | "terms" | "faq" | "pricing" | "schedule" | "location" | "others">("general");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -1353,19 +1360,20 @@ export function CourseForm({
         <div className="flex flex-wrap items-center gap-2 border-b border-border pb-2">
           {(
             [
-              { key: "general", label: "General", Icon: FileText, hasError: false },
-              { key: "terms", label: "Terms of participation", Icon: FileCheck, hasError: false },
-              { key: "pricing", label: "Pricing", Icon: DollarSign, hasError: false },
-              { key: "schedule", label: "Schedule", Icon: Calendar, hasError: !!scheduleOverlapError },
-              { key: "location", label: "Location", Icon: MapPin, hasError: false },
-              { key: "faq", label: "FAQ", Icon: HelpCircle, hasError: false },
-            ] as const
+              { key: "general" as const, label: "General", Icon: FileText, hasError: false },
+              { key: "terms" as const, label: isBoarding ? "Terms" : "Terms of participation", Icon: FileCheck, hasError: false },
+              { key: "pricing" as const, label: "Pricing", Icon: DollarSign, hasError: false },
+              { key: "schedule" as const, label: "Schedule", Icon: Calendar, hasError: !!scheduleOverlapError },
+              { key: "location" as const, label: "Location", Icon: MapPin, hasError: false },
+              { key: "faq" as const, label: "FAQ", Icon: HelpCircle, hasError: false },
+              ...(isBoarding ? [{ key: "others" as const, label: "Care & facilities", Icon: Sliders, hasError: false }] : []),
+            ]
           ).map(({ key, label, Icon, hasError }) => (
             <button
               key={key}
               type="button"
               onClick={() => setActiveTab(key)}
-              className={`relative px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`relative px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === key
                   ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                   : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
@@ -1392,7 +1400,11 @@ export function CourseForm({
                 <Input
                   id="course-name"
                   type="text"
-                  placeholder="e.g. Agility, IGP, Obedience"
+                  placeholder={
+                    isBoarding
+                      ? "e.g. Standard Room, VIP Cabin"
+                      : "e.g. Agility, IGP, Obedience"
+                  }
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="bg-card text-base font-semibold"
@@ -1400,41 +1412,42 @@ export function CourseForm({
                 />
               </div>
 
-              {/* Certified Trainer Attributes */}
-              <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
-                  Trainer Attributes
-                </h3>
-                <BooleanToggleField
-                  label="Certified Dog Trainer"
-                  description={`Enable if this ${itemNoun.toLowerCase()} is coached by an officially certified trainer.`}
-                  checked={certifiedTrainer}
-                  onChange={setCertifiedTrainer}
-                >
+              {!isBoarding && (
+                <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
+                    Trainer Attributes
+                  </h3>
+                  <BooleanToggleField
+                    label="Certified Dog Trainer"
+                    description={`Enable if this ${itemNoun.toLowerCase()} is coached by an officially certified trainer.`}
+                    checked={certifiedTrainer}
+                    onChange={setCertifiedTrainer}
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="certifier-name" className="text-xs font-semibold">Certifier Name</Label>
+                      <Input
+                        id="certifier-name"
+                        type="text"
+                        placeholder="Name of certifying institution/body"
+                        value={certifierName}
+                        onChange={(e) => setCertifierName(e.target.value)}
+                        className="h-9 bg-background text-xs font-semibold rounded-lg"
+                      />
+                    </div>
+                  </BooleanToggleField>
+
+                  <div className="h-px bg-border/40" />
+
                   <div className="space-y-2">
-                    <Label htmlFor="certifier-name" className="text-xs font-semibold">Certifier Name</Label>
-                    <Input
-                      id="certifier-name"
-                      type="text"
-                      placeholder="Name of certifying institution/body"
-                      value={certifierName}
-                      onChange={(e) => setCertifierName(e.target.value)}
-                      className="h-9 bg-background text-xs font-semibold rounded-lg"
+                    <Label className="text-xs font-semibold">Experience Description</Label>
+                    <WysiwygEditor
+                      value={trainerExperienceDescription}
+                      onChange={setTrainerExperienceDescription}
+                      placeholder="Describe trainer background, qualifications, experience, accomplishments..."
                     />
                   </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/40" />
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Experience Description</Label>
-                  <WysiwygEditor
-                    value={trainerExperienceDescription}
-                    onChange={setTrainerExperienceDescription}
-                    placeholder="Describe trainer background, qualifications, experience, accomplishments..."
-                  />
                 </div>
-              </div>
+              )}
 
               {/* Information & Details Editor */}
               <div className="space-y-2">
@@ -1465,7 +1478,7 @@ export function CourseForm({
               </div>
 
               <div className="space-y-2">
-                <Label>Terms of Participation</Label>
+                <Label>{isBoarding ? "Terms" : "Terms of Participation"}</Label>
                 <WysiwygEditor
                   value={termsOfParticipation}
                   onChange={setTermsOfParticipation}
@@ -1751,6 +1764,7 @@ export function CourseForm({
                 </div>
                 <LocationSection
                   layout="tabbed"
+                  isBoarding={isBoarding}
                   dedicatedField={dedicatedField}
                   onDedicatedFieldChange={setDedicatedField}
                   trainingFieldDescription={trainingFieldDescription}
@@ -1779,6 +1793,107 @@ export function CourseForm({
               onUpdate={handleUpdateFaq}
               onRemove={handleRemoveFaq}
             />
+          )}
+
+          {/* TAB 7: OTHERS (Boarding Details & Care Amenities) */}
+          {activeTab === "others" && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-5">
+                <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
+                  <h3 className="text-base font-bold text-foreground">Care &amp; Facilities</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Configure specialized boarding amenities, webcam access, meal customization, and owner updates.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="daily-walks" className="text-xs font-semibold">Daily Walks</Label>
+                  <CustomSelect
+                    id="daily-walks"
+                    value={dailyWalks}
+                    onChange={(val) => setDailyWalks(parseInt(val, 10))}
+                    options={[
+                      { value: 1, label: "1 walk per day" },
+                      { value: 2, label: "2 walks per day" },
+                      { value: 3, label: "3 walks per day" },
+                      { value: 4, label: "4 walks per day" },
+                    ]}
+                  />
+                </div>
+
+                <div className="h-px bg-border/60" />
+
+                <BooleanToggleField
+                  label="Medication Administration"
+                  description="Can you administer medication or medical care?"
+                  checked={medicationAdministration}
+                  onChange={setMedicationAdministration}
+                >
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Medication Administration Instructions</Label>
+                    <WysiwygEditor
+                      value={medicationAdministrationDetails}
+                      onChange={setMedicationAdministrationDetails}
+                      placeholder="e.g. oral tablets, injections, schedule limitations"
+                    />
+                  </div>
+                </BooleanToggleField>
+
+                <div className="h-px bg-border/60" />
+
+                <BooleanToggleField
+                  label="Webcam"
+                  description="Do you offer live video/webcam access to owners?"
+                  checked={webCam}
+                  onChange={setWebCam}
+                >
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Webcam Access Instructions</Label>
+                    <WysiwygEditor
+                      value={webCamDetails}
+                      onChange={setWebCamDetails}
+                      placeholder="e.g. live stream link provided upon check-in, 24/7 access"
+                    />
+                  </div>
+                </BooleanToggleField>
+
+                <div className="h-px bg-border/60" />
+
+                <BooleanToggleField
+                  label="Communication with the Owner"
+                  description="Will you provide regular photo/video updates to the owner?"
+                  checked={ownerCommunication}
+                  onChange={setOwnerCommunication}
+                >
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Communication Updates Details</Label>
+                    <WysiwygEditor
+                      value={ownerCommunicationDetails}
+                      onChange={setOwnerCommunicationDetails}
+                      placeholder="e.g. daily photos via WhatsApp, weekly email progress"
+                    />
+                  </div>
+                </BooleanToggleField>
+
+                <div className="h-px bg-border/60" />
+
+                <BooleanToggleField
+                  label="Personalized Meal Plan"
+                  description="Can you provide a customized meal plan or accommodate special diets?"
+                  checked={personalizedMealPlan}
+                  onChange={setPersonalizedMealPlan}
+                >
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Meal Plan Details</Label>
+                    <WysiwygEditor
+                      value={personalizedMealPlanDetails}
+                      onChange={setPersonalizedMealPlanDetails}
+                      placeholder="e.g. BARF diet support, raw food storage, customized portions"
+                    />
+                  </div>
+                </BooleanToggleField>
+              </div>
+            </div>
           )}
 
           {/* Bottom Action Buttons (tabbed layout) */}
@@ -1955,50 +2070,8 @@ export function CourseForm({
             {itemNoun === "Boarding service" && (
               <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
-                  Boarding Details
+                  Care &amp; Facilities
                 </h3>
-
-                <BooleanToggleField
-                  label="Medication Administration"
-                  description="Can you administer medication or medical care?"
-                  checked={medicationAdministration}
-                  onChange={setMedicationAdministration}
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="medication-details">Medication Administration Instructions</Label>
-                    <Input
-                      id="medication-details"
-                      type="text"
-                      placeholder="e.g. oral tablets, injections, schedule limitations"
-                      value={medicationAdministrationDetails}
-                      onChange={(e) => setMedicationAdministrationDetails(e.target.value)}
-                      className="bg-background"
-                    />
-                  </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/60" />
-
-                <BooleanToggleField
-                  label="Web cam"
-                  description="Do you offer live video/webcam access to owners?"
-                  checked={webCam}
-                  onChange={setWebCam}
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="webcam-details">Web cam Access Instructions</Label>
-                    <Input
-                      id="webcam-details"
-                      type="text"
-                      placeholder="e.g. live stream link provided upon check-in, 24/7 access"
-                      value={webCamDetails}
-                      onChange={(e) => setWebCamDetails(e.target.value)}
-                      className="bg-background"
-                    />
-                  </div>
-                </BooleanToggleField>
-
-                <div className="h-px bg-border/60" />
 
                 <div className="space-y-2">
                   <Label htmlFor="daily-walks">Daily Walks</Label>
@@ -2018,20 +2091,53 @@ export function CourseForm({
                 <div className="h-px bg-border/60" />
 
                 <BooleanToggleField
+                  label="Medication Administration"
+                  description="Can you administer medication or medical care?"
+                  checked={medicationAdministration}
+                  onChange={setMedicationAdministration}
+                >
+                  <div className="space-y-2">
+                    <Label>Medication Administration Instructions</Label>
+                    <WysiwygEditor
+                      value={medicationAdministrationDetails}
+                      onChange={setMedicationAdministrationDetails}
+                      placeholder="e.g. oral tablets, injections, schedule limitations"
+                    />
+                  </div>
+                </BooleanToggleField>
+
+                <div className="h-px bg-border/60" />
+
+                <BooleanToggleField
+                  label="Webcam"
+                  description="Do you offer live video/webcam access to owners?"
+                  checked={webCam}
+                  onChange={setWebCam}
+                >
+                  <div className="space-y-2">
+                    <Label>Webcam Access Instructions</Label>
+                    <WysiwygEditor
+                      value={webCamDetails}
+                      onChange={setWebCamDetails}
+                      placeholder="e.g. live stream link provided upon check-in, 24/7 access"
+                    />
+                  </div>
+                </BooleanToggleField>
+
+                <div className="h-px bg-border/60" />
+
+                <BooleanToggleField
                   label="Communication with the Owner"
                   description="Will you provide regular photo/video updates to the owner?"
                   checked={ownerCommunication}
                   onChange={setOwnerCommunication}
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="communication-details">Communication Updates Details</Label>
-                    <Input
-                      id="communication-details"
-                      type="text"
-                      placeholder="e.g. daily photos via WhatsApp, weekly email progress"
+                    <Label>Communication Updates Details</Label>
+                    <WysiwygEditor
                       value={ownerCommunicationDetails}
-                      onChange={(e) => setOwnerCommunicationDetails(e.target.value)}
-                      className="bg-background"
+                      onChange={setOwnerCommunicationDetails}
+                      placeholder="e.g. daily photos via WhatsApp, weekly email progress"
                     />
                   </div>
                 </BooleanToggleField>
@@ -2045,14 +2151,11 @@ export function CourseForm({
                   onChange={setPersonalizedMealPlan}
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="meal-details">Meal Plan Details</Label>
-                    <Input
-                      id="meal-details"
-                      type="text"
-                      placeholder="e.g. BARF diet support, raw food storage, customized portions"
+                    <Label>Meal Plan Details</Label>
+                    <WysiwygEditor
                       value={personalizedMealPlanDetails}
-                      onChange={(e) => setPersonalizedMealPlanDetails(e.target.value)}
-                      className="bg-background"
+                      onChange={setPersonalizedMealPlanDetails}
+                      placeholder="e.g. BARF diet support, raw food storage, customized portions"
                     />
                   </div>
                 </BooleanToggleField>
@@ -2085,7 +2188,7 @@ export function CourseForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Terms of Participation</Label>
+              <Label>{isBoarding ? "Terms" : "Terms of Participation"}</Label>
               <WysiwygEditor
                 value={termsOfParticipation}
                 onChange={setTermsOfParticipation}

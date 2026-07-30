@@ -120,6 +120,20 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Inactive")).toBeDefined();
   });
 
+  it("should render Active status badge for sport-dog-training", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={{ id: "srv-sport-dog-training", name: "Dog Sports Training", description: "Dog sports", slug: "sport-dog-training", category: "cynological" }}
+        initialIsEnabled={true}
+        slug="sport-dog-training"
+      />
+    );
+
+    expect(screen.getByText("Dog Sports Training")).toBeDefined();
+    expect(screen.getByText("Active")).toBeDefined();
+  });
+
   it("should call toggleOrganizationServiceAction when toggle switch is clicked", async () => {
     vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ success: true });
 
@@ -346,7 +360,7 @@ describe("DashboardServiceDetail Component", () => {
     );
 
     expect(screen.getByText("Meds Administered")).toBeDefined();
-    expect(screen.getByText("Web Cam")).toBeDefined();
+    expect(screen.getByText("Webcam")).toBeDefined();
     expect(screen.getByText("3 Walks")).toBeDefined();
     expect(screen.getByText("Updates Sent")).toBeDefined();
     expect(screen.getByText("Meal Plan")).toBeDefined();

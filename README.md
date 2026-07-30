@@ -213,19 +213,21 @@ The backoffice system integrates completely dynamic configuration layers for bus
 
 ## 6. Dynamic Offerings & Cynological Offerings (Courses & Dog Sports)
 
-The platform supports dynamic, nested sub-offerings for specialized services, specifically **"Dog training"** and **"Dog sports training"**:
+The platform supports dynamic, nested sub-offerings for specialized services, specifically **"Dog training"**, **"Dog sports training"**, and **"Dog boarding"**:
 
 ### A. Dynamic Noun Context-Switching & Tabbed Form Architecture
 The application UI dynamically adjusts its user-facing terminology and input settings depending on the slug of the active service:
-- **Dog sports training** (`sport-dog-training`): Configures and displays offerings as **"Dog Sports"** (e.g. "Add Dog Sport", "Dog Sport Name") using an interactive **6-Tab Navigation System**.
-- **Dog training** (`dog-training`): Configures and displays offerings as **"Courses"** (e.g. "Add Course", "Course Name"), also using the same **6-Tab Navigation System** for layout consistency.
-- Both tabbed services share the following tabs:
-  1. **General Tab**: Name, Certified Dog Trainer toggle & Certifier Institution, Trainer Experience Description (WYSIWYG editor), Information (WYSIWYG editor).
+- **Dog sports training** (`sport-dog-training`): Configures and displays offerings as **"Dog Sports"** (e.g. "Add Dog Sport", "Dog Sport Name") using the **Tabbed Navigation System**.
+- **Dog training** (`dog-training`): Configures and displays offerings as **"Courses"** (e.g. "Add Course", "Course Name") using the **Tabbed Navigation System**.
+- **Dog boarding** (`dog-boarding`): Configures and displays offerings as **"Boarding Services"** (e.g. "Add Boarding service", "Boarding service Name") using the **Tabbed Navigation System**, extended with a dedicated **Care & facilities** tab for boarding care amenities.
+- Core tabbed navigation structure:
+  1. **General Tab**: Name, Certified Dog Trainer toggle & Certifier Institution (training/sports), Trainer Experience Description (WYSIWYG editor), Information & Details (WYSIWYG editor).
   2. **Terms of participation Tab**: Age Limits switch & phase checkboxes (`Puppy (Up to 9 months)`, `Junior (9 to 18 months)`, `Adult (18 months to 8 years)`, `Senior (8+ years)`), Terms of Participation (WYSIWYG editor).
-  3. **Pricing Tab**: Price Amount & Billing Frequency selector (`Per Course/Dog Sport`, `Per Month`, `Per Session`, `Per Hour`).
-  4. **Schedule Tab**: 7-Day Daily Operating Schedule with time pickers and quick preset buttons (`Copy Mon to Mon–Fri` & `Copy Mon to All`).
-  5. **Location Tab**: Address, Google Business Profile link, Google Maps Link, **Dedicated Training Field** switch & Description, and **Dedicated Parking** switch & Description.
+  3. **Pricing Tab**: Price Amount & Billing Frequency selector (`Per Night`, `Per Day`, `Per Half Day`, `Per Month`, `Per Boarding service`, etc.).
+  4. **Schedule Tab**: 7-Day Daily Operating Schedule with time pickers, Closed Periods, Special Openings, and quick preset buttons (`Copy Mon to Mon–Fri` & `Copy Mon to All`).
+  5. **Location Tab**: Address, Google Business Profile link, Google Maps Link, Dedicated Training Field switch (training/sports), and Parking switch & Description.
   6. **FAQ Tab**: Interactive FAQ Q&A item builder with WYSIWYG answer fields.
+  7. **Care & facilities Tab** (*Boarding services*): Specialized boarding care options including Daily Walks (1–4 selector), Medication Administration (WYSIWYG editor), Web Cam access (WYSIWYG editor), Owner Communication updates (WYSIWYG editor), and Personalized Meal Plans (WYSIWYG editor).
 
 ### B. Facility & Venue Attributes & Top Action Header
 Each course or dog sport is defined in a dynamic form featuring:

@@ -197,16 +197,19 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Boarding service Information and Details")).toBeDefined();
     expect(screen.getAllByText("Create Boarding service")[0]).toBeDefined();
 
-    // Boarding frequency options
-    expect(screen.getByText("Per Night")).toBeDefined();
-    expect(screen.getByText("Per Day")).toBeDefined();
-    expect(screen.getByText("Per Month")).toBeDefined();
-    expect(screen.getByText("Per Boarding service")).toBeDefined();
+    // Boarding frequency options (Pricing tab)
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+    expect(screen.getAllByText("Per Night")[0]).toBeDefined();
+    expect(screen.getAllByText("Per Day")[0]).toBeDefined();
+    expect(screen.getAllByText("Per Half Day")[0]).toBeDefined();
+    expect(screen.getAllByText("Per Month")[0]).toBeDefined();
+    expect(screen.getAllByText("Per Boarding service")[0]).toBeDefined();
 
     // Training fields should not be present
     expect(screen.queryByText("Certified Dog Trainer")).toBeNull();
     expect(screen.queryByText("Dedicated Training Field")).toBeNull();
-    // Parking is facility-related, should remain
+    // Parking is facility-related, should remain in Location tab
+    fireEvent.click(screen.getByRole("button", { name: "Location" }));
     expect(screen.getByText("Parking")).toBeDefined();
   });
 
@@ -222,8 +225,11 @@ describe("CourseForm Component", () => {
       />
     );
 
+    // Click Care & facilities tab to access Boarding Details
+    fireEvent.click(screen.getByRole("button", { name: "Care & facilities" }));
+
     // Boarding details header
-    expect(screen.getByText("Boarding Details")).toBeDefined();
+    expect(screen.getByText("Care & Facilities")).toBeDefined();
 
     // Verify presence of daily walks dropdown and select walk value
     const walksSelect = screen.getByLabelText("Daily Walks") as HTMLSelectElement;
@@ -233,7 +239,7 @@ describe("CourseForm Component", () => {
     expect(walksSelect.value).toBe("3");
 
     // Medication administration details input is hidden initially
-    expect(screen.queryByLabelText("Medication Administration Instructions")).toBeNull();
+    expect(screen.queryByPlaceholderText("e.g. oral tablets, injections, schedule limitations")).toBeNull();
 
     // Find and click the Medication Administration switch button
     const medicationSection = screen.getByText("Medication Administration").closest(".space-y-4");
@@ -244,15 +250,15 @@ describe("CourseForm Component", () => {
     });
 
     // Instructions input should be displayed now
-    const medsInput = screen.getByLabelText("Medication Administration Instructions");
+    const medsInput = screen.getByPlaceholderText("e.g. oral tablets, injections, schedule limitations");
     expect(medsInput).toBeDefined();
     fireEvent.change(medsInput, { target: { value: "Give twice daily with wet food" } });
 
     // Web cam details input is hidden initially
-    expect(screen.queryByLabelText("Web cam Access Instructions")).toBeNull();
+    expect(screen.queryByPlaceholderText("e.g. live stream link provided upon check-in, 24/7 access")).toBeNull();
 
-    // Find and click the Web cam switch button
-    const webcamSection = screen.getByText("Web cam").closest(".space-y-4");
+    // Find and click the Webcam switch button
+    const webcamSection = screen.getByText("Webcam").closest(".space-y-4");
     const webcamSwitch = webcamSection?.querySelector("button[role='switch']");
     expect(webcamSwitch).toBeDefined();
     await act(async () => {
@@ -260,12 +266,12 @@ describe("CourseForm Component", () => {
     });
 
     // Web cam instructions input should be displayed now
-    const webcamInput = screen.getByLabelText("Web cam Access Instructions");
+    const webcamInput = screen.getByPlaceholderText("e.g. live stream link provided upon check-in, 24/7 access");
     expect(webcamInput).toBeDefined();
     fireEvent.change(webcamInput, { target: { value: "Live stream access link" } });
 
     // Communication with Owner details input is hidden initially
-    expect(screen.queryByLabelText("Communication Updates Details")).toBeNull();
+    expect(screen.queryByPlaceholderText("e.g. daily photos via WhatsApp, weekly email progress")).toBeNull();
 
     // Find and click the Communication switch
     const commsSection = screen.getByText("Communication with the Owner").closest(".space-y-4");
@@ -276,12 +282,12 @@ describe("CourseForm Component", () => {
     });
 
     // Communication details input should display
-    const commsInput = screen.getByLabelText("Communication Updates Details");
+    const commsInput = screen.getByPlaceholderText("e.g. daily photos via WhatsApp, weekly email progress");
     expect(commsInput).toBeDefined();
     fireEvent.change(commsInput, { target: { value: "Photos via WhatsApp at 2pm" } });
 
     // Personalized Meal Plan details input is hidden initially
-    expect(screen.queryByLabelText("Meal Plan Details")).toBeNull();
+    expect(screen.queryByPlaceholderText("e.g. BARF diet support, raw food storage, customized portions")).toBeNull();
 
     // Find and click the Meal Plan switch
     const mealSection = screen.getByText("Personalized Meal Plan").closest(".space-y-4");
@@ -292,11 +298,12 @@ describe("CourseForm Component", () => {
     });
 
     // Meal Plan details input should display
-    const mealInput = screen.getByLabelText("Meal Plan Details");
+    const mealInput = screen.getByPlaceholderText("e.g. BARF diet support, raw food storage, customized portions");
     expect(mealInput).toBeDefined();
     fireEvent.change(mealInput, { target: { value: "Raw diet raw food storage" } });
 
-    // Daily Operating Schedule section
+    // Switch to Schedule tab for Daily Operating Schedule section
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
     expect(screen.getByText("Daily Operating Schedule")).toBeDefined();
     expect(screen.getByText("Copy Mon to Mon–Fri")).toBeDefined();
     expect(screen.getByText("Copy Mon to All")).toBeDefined();
@@ -335,6 +342,7 @@ describe("CourseForm Component", () => {
       />
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
     const checkinInputs = screen.getAllByLabelText("Check-in Time") as HTMLInputElement[];
     const checkoutInputs = screen.getAllByLabelText("Check-out Time") as HTMLInputElement[];
 
@@ -739,6 +747,7 @@ describe("CourseForm Component", () => {
       />
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "Schedule" }));
     const copyMonFriBtn = screen.getByRole("button", { name: "Copy Mon to Mon–Fri" });
     await act(async () => {
       fireEvent.click(copyMonFriBtn);

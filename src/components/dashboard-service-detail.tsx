@@ -327,21 +327,19 @@ export function DashboardServiceDetail({
             </div>
             
             {/* Status Badge */}
-            {!isSportDogTraining && (
-              <div>
-                {isEnabled ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400">
-                    <CheckCircle2 className="size-3.5" />
-                    Active
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border border-border">
-                    <XCircle className="size-3.5" />
-                    Inactive
-                  </span>
-                )}
-              </div>
-            )}
+            <div>
+              {isEnabled ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400">
+                  <CheckCircle2 className="size-3.5" />
+                  Active
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border border-border">
+                  <XCircle className="size-3.5" />
+                  Inactive
+                </span>
+              )}
+            </div>
           </div>
         </CardHeader>
 
@@ -478,7 +476,7 @@ export function DashboardServiceDetail({
                             {course.webCam && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-600 border border-teal-500/20" title={course.webCamDetails || ""}>
                                 <Video className="size-2.5" />
-                                Web Cam
+                                Webcam
                               </span>
                             )}
                             {course.dailyWalks && (
@@ -522,7 +520,9 @@ export function DashboardServiceDetail({
                             {course.price &&
                               parseCoursePricings(course.price, course.priceType, itemNoun.toLowerCase()).map((pTier, pIdx) => {
                                 if (!pTier.amount) return null;
-                                const typeLabel = ["month", "night", "day", "service", "session", "hour", "course"].includes(pTier.type || "")
+                                const typeLabel = pTier.type === "half_day"
+                                  ? "half day"
+                                  : ["month", "night", "day", "half_day", "service", "session", "hour", "course"].includes(pTier.type || "")
                                   ? pTier.type
                                   : itemNoun.toLowerCase();
                                 const displayText = pTier.label

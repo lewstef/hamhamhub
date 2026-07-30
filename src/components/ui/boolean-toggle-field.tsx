@@ -40,8 +40,11 @@ export function BooleanToggleField({
 }: BooleanToggleFieldProps) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
+      <div className="flex items-center justify-between gap-4">
+        <div
+          onClick={() => !disabled && onChange(!checked)}
+          className="space-y-0.5 cursor-pointer select-none flex-1"
+        >
           <span className="text-sm font-bold text-foreground">{label}</span>
           <p className="text-xs text-muted-foreground">{description}</p>
         </div>
