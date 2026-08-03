@@ -31,9 +31,7 @@ vi.mock("lucide-react", () => ({
   Underline: () => <div data-testid="underline" />,
   List: () => <div data-testid="list" />,
   ListOrdered: () => <div data-testid="list-ordered" />,
-  RemoveFormatting: () => <div data-testid="remove-formatting" />,
   // CourseForm icons
-  ChevronDown: () => <div data-testid="chevron-down" />,
   CheckCircle: () => <div data-testid="check-circle-2" />,
   Info: () => <div data-testid="info" />,
   AlertCircle: () => <div data-testid="alert-circle" />,
@@ -81,9 +79,9 @@ vi.mock("next/navigation", () => ({
 
 describe("DashboardServiceDetail Component", () => {
   const genericService = {
-    id: "srv-dog-walking",
-    name: "Dog Walking",
-    description: "Professional walking for all breeds.",
+    id: "srv-generic",
+    name: "Generic Service",
+    description: "Generic service for testing.",
   };
 
   const trainingService = {
@@ -98,12 +96,12 @@ describe("DashboardServiceDetail Component", () => {
         organizationId="org-123"
         service={genericService}
         initialIsEnabled={true}
-        slug="dog-walking"
+        slug="generic-service"
       />
     );
 
-    expect(screen.getByText("Dog Walking")).toBeDefined();
-    expect(screen.getByText(/Template Identifier: srv-dog-walking/)).toBeDefined();
+    expect(screen.getByText("Generic Service")).toBeDefined();
+    expect(screen.getByText(/Template Identifier: srv-generic/)).toBeDefined();
     expect(screen.getByText("Active")).toBeDefined();
   });
 
@@ -113,7 +111,7 @@ describe("DashboardServiceDetail Component", () => {
         organizationId="org-123"
         service={genericService}
         initialIsEnabled={false}
-        slug="dog-walking"
+        slug="generic-service"
       />
     );
 
@@ -142,7 +140,7 @@ describe("DashboardServiceDetail Component", () => {
         organizationId="org-123"
         service={genericService}
         initialIsEnabled={false}
-        slug="dog-walking"
+        slug="generic-service"
       />
     );
 
@@ -151,7 +149,22 @@ describe("DashboardServiceDetail Component", () => {
       fireEvent.click(toggleBtn);
     });
 
-    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-dog-walking", true);
+    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-generic", true);
+  });
+
+  it("should hide toggle button and Service Status for Dog Walking, and render Add Walking service button", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={{ id: "srv-dog-walking", name: "Dog Walking", description: "Walking service" }}
+        initialIsEnabled={true}
+        slug="dog-walking"
+      />
+    );
+
+    expect(screen.queryByText("Service Status")).toBeNull();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.getByText("Add Walking service")).toBeDefined();
   });
 
   it("should hide toggle button and identifier description for Dog Training, and render Add Course button", () => {
@@ -802,7 +815,7 @@ describe("DashboardServiceDetail Component", () => {
         organizationId="org-123"
         service={genericService}
         initialIsEnabled={false}
-        slug="dog-walking"
+        slug="generic-service"
       />
     );
 
@@ -816,7 +829,7 @@ describe("DashboardServiceDetail Component", () => {
 
     // After action error, rolls back to Inactive
     expect(screen.getByText("Inactive")).toBeDefined();
-    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-dog-walking", true);
+    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-123", "srv-generic", true);
   });
 
   it("should call reorderOrgCoursesAction after drag-end on a course row", async () => {

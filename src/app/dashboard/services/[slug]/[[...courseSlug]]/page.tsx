@@ -102,7 +102,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
         )
       )
       .orderBy(courses.sortOrder, courses.createdAt);
-  } else if (slug === "sport-dog-training" || slug === "dog-boarding" || slug === "dog-grooming") {
+  } else if (slug === "sport-dog-training" || slug === "dog-boarding" || slug === "dog-grooming" || slug === "dog-walking") {
     orgCourses = await db
       .select()
       .from(courses)

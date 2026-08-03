@@ -384,6 +384,8 @@ interface LocationSectionProps {
    */
   layout: "tabbed" | "flat";
   isBoarding?: boolean;
+  hideDedicatedField?: boolean;
+  hideParking?: boolean;
   dedicatedField: boolean;
   onDedicatedFieldChange: (v: boolean) => void;
   trainingFieldDescription: string;
@@ -407,6 +409,8 @@ interface LocationSectionProps {
 function LocationSection({
   layout,
   isBoarding,
+  hideDedicatedField = false,
+  hideParking = false,
   dedicatedField,
   onDedicatedFieldChange,
   trainingFieldDescription,
@@ -465,11 +469,11 @@ function LocationSection({
       {layout === "tabbed" && (
         <>
           <div className="space-y-4">{locationInputs}</div>
-          <div className="h-px bg-border/60" />
+          {(!hideDedicatedField || !hideParking) && <div className="h-px bg-border/60" />}
         </>
       )}
 
-      {!isBoarding && (
+      {!isBoarding && !hideDedicatedField && (
         <>
           <BooleanToggleField
             label="Dedicated Training Field"
@@ -490,22 +494,24 @@ function LocationSection({
             </div>
           </BooleanToggleField>
 
-          <div className="h-px bg-border/60" />
+          {!hideParking && <div className="h-px bg-border/60" />}
         </>
       )}
 
-      <BooleanToggleField
-        label={isBoarding ? "Parking" : "Dedicated Parking"}
-        description="Is parking available on site or nearby?"
-        checked={parking}
-        onChange={onParkingChange}
-      >
-        <WysiwygEditor
-          value={parkingDescription}
-          onChange={onParkingDescriptionChange}
-          placeholder="Details about parking capacity, location, fee..."
-        />
-      </BooleanToggleField>
+      {!hideParking && (
+        <BooleanToggleField
+          label={isBoarding ? "Parking" : "Dedicated Parking"}
+          description="Is parking available on site or nearby?"
+          checked={parking}
+          onChange={onParkingChange}
+        >
+          <WysiwygEditor
+            value={parkingDescription}
+            onChange={onParkingDescriptionChange}
+            placeholder="Details about parking capacity, location, fee..."
+          />
+        </BooleanToggleField>
+      )}
     </div>
   );
 }
@@ -1360,7 +1366,8 @@ export function CourseForm({
   const isGrooming = serviceSlug === "dog-grooming" || itemNoun === "Grooming service";
   const isDogSport = serviceSlug === "sport-dog-training" || itemNoun === "Dog Sport";
   const isDogTraining = serviceSlug === "dog-training" || itemNoun === "Course";
-  const isTabbedLayout = isDogSport || isDogTraining || isBoarding;
+  const isDogWalking = serviceSlug === "dog-walking" || itemNoun === "Walking service";
+  const isTabbedLayout = isDogSport || isDogTraining || isBoarding || isDogWalking;
   const [activeTab, setActiveTab] = useState<"general" | "terms" | "faq" | "pricing" | "schedule" | "location" | "others">("general");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -2027,6 +2034,8 @@ export function CourseForm({
                 <LocationSection
                   layout="tabbed"
                   isBoarding={isBoarding}
+                  hideDedicatedField={isDogWalking}
+                  hideParking={isDogWalking}
                   dedicatedField={dedicatedField}
                   onDedicatedFieldChange={setDedicatedField}
                   trainingFieldDescription={trainingFieldDescription}

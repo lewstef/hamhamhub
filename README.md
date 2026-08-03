@@ -103,7 +103,10 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Added an **Others** tab for existing Dog Training fields that are not mapped to standard tabs (`Communication with the Owner` and `Personalized Meal Plan`), preserving all existing functionality without adding unrequested fields.
 - **Dog Grooming Sidebar Redirection**:
   - Updated active service slug resolution in `src/app/dashboard/layout.tsx` to automatically fall back to normalized service name slugs (`s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")`).
-  - Accessing "Dog grooming" from the sidebar now redirects directly to `/dashboard/services/dog-grooming`.
+- **Dog Walking Service Layout & Tabbed Reorganization**:
+  - Removed the static "Service Status" toggle card from the Dog Walking service view (`/dashboard/services/dog-walking`).
+  - Reorganized Dog Walking form into the standardized tabbed layout (**General**, **Terms of participation**, **Pricing**, **Schedule**, **Location**, **FAQ**).
+  - Removed the "Dedicated Training Field" and "Dedicated Parking" fields/badges from the Dog Walking service while retaining address, Google Business Profile, and Google Maps inputs under the **Location** tab.
 - **Dog Sports Training MVP Subsystem**:
   - Renamed "Daily operating Schedule" header to "Schedule" for Dog Sport services (`/dashboard/services/sport-dog-training`).
   - Updated check-in and check-out field labels to **Start** and **End** across the Weekly Schedule, Special Openings, and summary views for Dog Sports.
@@ -315,7 +318,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (493 tests across 39 test files)
+# Run all tests (507 tests across 43 test files)
 npm run test
 
 # Run with coverage report
@@ -333,6 +336,6 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 | :--- | :--- |
 | Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types`, `courses`, `system` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
-| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `service-type-preview-form`, `smtp-config-form` |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `service-type-preview-form`, `smtp-config-form`, `org-services-tab`, `time-picker-select`, `toggle-switch`, `boolean-toggle-field` |
 | Config & utilities | `config/service-types`, `config/dog-training`, `config/romanian-territory`, `lib/utils`, `lib/email` |
 | Hooks | `use-mobile` |

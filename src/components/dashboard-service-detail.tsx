@@ -202,13 +202,16 @@ export function DashboardServiceDetail({
   const isSportDogTraining = service.name.toLowerCase() === "dog sports training";
   const isDogBoarding = service.name.toLowerCase() === "dog boarding";
   const isDogGrooming = service.name.toLowerCase() === "dog grooming";
-  const isDynamicCourses = isDogTraining || isSportDogTraining || isDogBoarding || isDogGrooming;
+  const isDogWalking = service.name.toLowerCase() === "dog walking" || slug === "dog-walking";
+  const isDynamicCourses = isDogTraining || isSportDogTraining || isDogBoarding || isDogGrooming || isDogWalking;
   const itemNoun = isSportDogTraining
     ? "Dog Sport"
     : isDogBoarding
     ? "Boarding service"
     : isDogGrooming
     ? "Grooming service"
+    : isDogWalking
+    ? "Walking service"
     : "Course";
 
   const handleToggle = () => {
@@ -520,13 +523,13 @@ export function DashboardServiceDetail({
                                 Ages: {course.ageLimits.split(",").length} {course.ageLimits.split(",").length === 1 ? "Phase" : "Phases"}
                               </span>
                             )}
-                            {course.dedicatedField && (
+                            {slug !== "dog-walking" && course.dedicatedField && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-600 border border-sky-500/20">
                                 <MapPin className="size-2.5" />
                                 Field
                               </span>
                             )}
-                            {course.parking && (
+                            {slug !== "dog-walking" && course.parking && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                                 <Car className="size-2.5" />
                                 Parking
