@@ -834,7 +834,7 @@ export async function requestNewCartierAction({
     const cleanNotes = notes?.trim() || "";
     const userEmail = session.user.email || session.user.name || "Unknown user";
 
-    await sendMail({
+    const emailRes = await sendMail({
       to: "stefan.wrabeli@gmail.com",
       subject: `HamHamHub - Solicitare adaugare Cartier nou: ${cleanCartier} (${cleanCity})`,
       html: `
@@ -849,6 +849,10 @@ export async function requestNewCartierAction({
         </div>
       `,
     });
+
+    if (emailRes && "error" in emailRes) {
+      return { error: "A apărut o eroare la trimiterea solicitării. Vă rugăm să încercați din nou." };
+    }
 
     return {
       success: true,

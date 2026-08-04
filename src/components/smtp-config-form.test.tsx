@@ -1,74 +1,92 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
 import { SmtpConfigForm } from "./smtp-config-form";
+import { updateSmtpConfigAction, sendTestEmailAction } from "@/app/actions/system";
 
 vi.mock("@/app/actions/system", () => ({
   updateSmtpConfigAction: vi.fn(),
   sendTestEmailAction: vi.fn(),
 }));
 
-let mockSaveState: any = null;
-let mockTestState: any = null;
-
-vi.mock("react", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react")>();
-  return {
-    ...actual,
-    useActionState: (action: any, initialState: any) => {
-      if (action.name === "updateSmtpConfigAction") {
-        return [mockSaveState, vi.fn(), false];
-      }
-      return [mockTestState, vi.fn(), false];
-    },
-  };
-});
-
 describe("SmtpConfigForm Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSaveState = null;
-    mockTestState = null;
   });
 
-  it("should render default form inputs and header title", () => {
+  it("renders with default inputs when no initialConfig is provided", () => {
     render(<SmtpConfigForm />);
 
-    expect(screen.getByText("SMTP Server Configuration")).toBeDefined();
-    expect(screen.getByLabelText(/SMTP Host/i)).toBeDefined();
-    expect(screen.getByLabelText(/Port/i)).toBeDefined();
-    expect(screen.getByLabelText(/Encryption Protocol/i)).toBeDefined();
-    expect(screen.getByLabelText(/Sender Display Name/i)).toBeDefined();
-    expect(screen.getByLabelText(/Sender Email Address/i)).toBeDefined();
+    expect(screen.getByDisplayValue("smtp.gmail.com")).toBeDefined();
+    expect(screen.getByDisplayValue("587")).toBeDefined();
+    expect(screen.getByDisplayValue("notifications@hamhamhub.ro")).toBeDefined();
+    expect(screen.getByDisplayValue("HamHamHub System")).toBeDefined();
+    expect(screen.getByDisplayValue("no-reply@hamhamhub.ro")).toBeDefined();
   });
 
-  it("should toggle password visibility when show/hide eye icon button is clicked", () => {
+  it("renders with custom initialConfig values", () => {
+    render(
+      <SmtpConfigForm
+        initialConfig={{
+          smtpHost: "mail.mycompany.com",
+          smtpPort: "465",
+          smtpSecurity: "SSL",
+          smtpUsername: "smtp@mycompany.com",
+          senderName: "My Company Admin",
+          senderEmail: "admin@mycompany.com",
+        }}
+      />
+    );
+
+    expect(screen.getByDisplayValue("mail.mycompany.com")).toBeDefined();
+    expect(screen.getByDisplayValue("465")).toBeDefined();
+    expect(screen.getByDisplayValue("smtp@mycompany.com")).toBeDefined();
+    expect(screen.getByDisplayValue("My Company Admin")).toBeDefined();
+    expect(screen.getByDisplayValue("admin@mycompany.com")).toBeDefined();
+  });
+
+  it("toggles password visibility when eye icon button is clicked", () => {
     render(<SmtpConfigForm />);
 
-    const passwordInput = screen.getByLabelText(/SMTP Password/i) as HTMLInputElement;
+    const passwordInput = screen.getByPlaceholderText("••••••••••••") as HTMLInputElement;
     expect(passwordInput.type).toBe("password");
 
     const toggleBtn = screen.getByTitle("Show password");
     fireEvent.click(toggleBtn);
     expect(passwordInput.type).toBe("text");
 
-    const hideBtn = screen.getByTitle("Hide password");
-    fireEvent.click(hideBtn);
+    fireEvent.click(screen.getByTitle("Hide password"));
     expect(passwordInput.type).toBe("password");
   });
 
-  it("should open and close the test email modal", () => {
+  it("opens and closes the test email modal", () => {
     render(<SmtpConfigForm />);
 
-    const testEmailBtn = screen.getByRole("button", { name: /Send Test Email/i });
-    fireEvent.click(testEmailBtn);
+    expect(screen.queryByText("Send Test Connection Email")).toBeNull();
+
+    const openBtn = screen.getByRole("button", { name: /Send Test Email/i });
+    fireEvent.click(openBtn);
 
     expect(screen.getByText("Send Test Connection Email")).toBeDefined();
 
-    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    const cancelBtn = screen.getByRole("button", { name: /Cancel/i });
     fireEvent.click(cancelBtn);
 
     expect(screen.queryByText("Send Test Connection Email")).toBeNull();
+  });
+
+  it("handles typing recipient email and dispatching test email form", () => {
+    render(<SmtpConfigForm />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Send Test Email/i }));
+
+    const recipientInput = screen.getByPlaceholderText("admin@hamhamhub.ro");
+    fireEvent.change(recipientInput, { target: { value: "test@example.com" } });
+
+    const dispatchBtn = screen.getByRole("button", { name: /Dispatch Test Email/i });
+    fireEvent.click(dispatchBtn);
+
+    expect(sendTestEmailAction).toHaveBeenCalled();
   });
 });

@@ -57,4 +57,20 @@ describe("DatePickerInput Component", () => {
     fireEvent.click(screen.getByTitle("Luna anterioară"));
     expect(screen.getByText("Iulie 2026")).toBeDefined();
   });
+
+  it("should wrap year backwards from Ianuarie to Decembrie and forwards from Decembrie to Ianuarie", () => {
+    const onChange = vi.fn();
+    render(<DatePickerInput id="test-date" value="15.01.2026" onChange={onChange} />);
+
+    fireEvent.click(screen.getByLabelText("Open Calendar"));
+    expect(screen.getByText("Ianuarie 2026")).toBeDefined();
+
+    // Click Prev Month on January -> should wrap to Decembrie 2025
+    fireEvent.click(screen.getByTitle("Luna anterioară"));
+    expect(screen.getByText("Decembrie 2025")).toBeDefined();
+
+    // Click Next Month on December -> should wrap to Ianuarie 2026
+    fireEvent.click(screen.getByTitle("Luna următoare"));
+    expect(screen.getByText("Ianuarie 2026")).toBeDefined();
+  });
 });

@@ -70,7 +70,25 @@ export function TimePickerSelect({
   hasError = false,
 }: TimePickerSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const activeIdx = options.indexOf(value);
+      setHighlightedIndex(activeIdx >= 0 ? activeIdx : 0);
+    } else {
+      setHighlightedIndex(-1);
+    }
+  }, [isOpen, options, value]);
+
+  useEffect(() => {
+    if (isOpen && highlightedIndex >= 0 && optionRefs.current[highlightedIndex]) {
+      optionRefs.current[highlightedIndex]?.scrollIntoView({ block: "nearest" });
+    }
+  }, [highlightedIndex, isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -84,10 +102,51 @@ export function TimePickerSelect({
     };
   }, []);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (["ArrowDown", "ArrowUp"].includes(e.key)) {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown": {
+        e.preventDefault();
+        if (highlightedIndex < options.length - 1) {
+          setHighlightedIndex((prev) => prev + 1);
+        }
+        break;
+      }
+      case "ArrowUp": {
+        e.preventDefault();
+        if (highlightedIndex > 0) {
+          setHighlightedIndex((prev) => prev - 1);
+        }
+        break;
+      }
+      case "Enter": {
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < options.length) {
+          onChange(options[highlightedIndex]);
+          setIsOpen(false);
+        }
+        break;
+      }
+      case "Escape": {
+        e.preventDefault();
+        setIsOpen(false);
+        break;
+      }
+    }
+  };
+
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} onKeyDown={handleKeyDown} className="relative w-full">
       <div className="relative flex items-center">
         <Input
+          ref={inputRef}
           id={id}
           type="text"
           value={value}
@@ -104,7 +163,7 @@ export function TimePickerSelect({
           tabIndex={-1}
           onClick={() => setIsOpen((prev) => !prev)}
           className="absolute right-1.5 p-1 text-muted-foreground hover:text-foreground rounded transition-colors focus:outline-none"
-          title="Toggle time dropdown (next 5 options)"
+          title="Toggle time dropdown"
           aria-label="Toggle time options dropdown"
         >
           <ChevronDown className="size-3.5" />
@@ -113,21 +172,33 @@ export function TimePickerSelect({
 
       {isOpen && options.length > 0 && (
         <div className="absolute top-full left-0 mt-1 w-full min-w-[110px] max-h-[155px] overflow-y-auto custom-scrollbar bg-popover border border-border shadow-md rounded-md py-1 z-50 animate-in fade-in-50 zoom-in-95">
-          {options.map((time) => (
-            <button
-              key={time}
-              type="button"
-              className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors hover:bg-accent hover:text-accent-foreground ${
-                time === value ? "bg-accent/60 font-bold text-primary" : "text-popover-foreground"
-              }`}
-              onClick={() => {
-                onChange(time);
-                setIsOpen(false);
-              }}
-            >
-              {time}
-            </button>
-          ))}
+          {options.map((time, idx) => {
+            const isHighlighted = idx === highlightedIndex;
+            const isSelected = time === value;
+            return (
+              <button
+                key={time}
+                ref={(el) => {
+                  optionRefs.current[idx] = el;
+                }}
+                type="button"
+                onMouseEnter={() => setHighlightedIndex(idx)}
+                className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors ${
+                  isHighlighted
+                    ? "bg-accent text-accent-foreground font-bold"
+                    : isSelected
+                    ? "bg-accent/60 font-bold text-primary"
+                    : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+                }`}
+                onClick={() => {
+                  onChange(time);
+                  setIsOpen(false);
+                }}
+              >
+                {time}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

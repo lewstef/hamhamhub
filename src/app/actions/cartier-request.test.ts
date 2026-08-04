@@ -74,4 +74,16 @@ describe("requestNewCartierAction Server Action", () => {
       html: expect.stringContaining("Borhanci Vest"),
     });
   });
+
+  it("should return generic error message when sendMail fails", async () => {
+    vi.mocked(auth).mockResolvedValue({ user: { email: "owner@dogwalker.ro" } } as any);
+    vi.mocked(sendMail).mockRejectedValueOnce(new Error("SMTP Connection failed"));
+
+    const res = await requestNewCartierAction({
+      cityName: "Cluj-Napoca",
+      cartierName: "Borhanci Vest",
+    });
+
+    expect(res).toEqual({ error: "A apărut o eroare la trimiterea solicitării. Vă rugăm să încercați din nou." });
+  });
 });

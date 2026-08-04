@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useTransition, useMemo, useRef } from "react";
-import type { Course } from "@/types/course";
+import type { Course, SecondaryCoverageZone, CoverageZonesData } from "@/types/course";
+import { parseCoverageZones, serializeCoverageZones } from "@/types/course";
 import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
 import { requestNewCartierAction } from "@/app/actions/organizations";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
@@ -9,11 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
-import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck, Sliders, X, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck, Sliders, X, CheckCircle2, Globe } from "lucide-react";
 import { TimePickerSelect, getCheckinOptions, getCheckoutOptions } from "@/components/ui/time-picker-select";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { DatePickerInput, parseDateString } from "@/components/ui/date-picker-input";
-import { getCartiereForCity } from "@/config/romanian-cartiere";
+import { getCartiereForCity, ROMANIAN_CITY_CARTIERE } from "@/config/romanian-cartiere";
 
 export function getComparableTimestamp(dateStr: string): number | null {
   const parsed = parseDateString(dateStr);
@@ -390,6 +391,11 @@ interface LocationSectionProps {
   orgCity?: string;
   selectedCartiere?: string[];
   onCartiereChange?: (zones: string[]) => void;
+  secondaryZones?: SecondaryCoverageZone[];
+  onAddSecondaryZone?: () => void;
+  onRemoveSecondaryZone?: (index: number) => void;
+  onSecondaryCityChange?: (index: number, newCity: string) => void;
+  onSecondaryCartiereChange?: (index: number, cartiere: string[]) => void;
   hideDedicatedField?: boolean;
   hideParking?: boolean;
   dedicatedField: boolean;
@@ -419,6 +425,11 @@ function LocationSection({
   orgCity = "",
   selectedCartiere = [],
   onCartiereChange,
+  secondaryZones = [],
+  onAddSecondaryZone,
+  onRemoveSecondaryZone,
+  onSecondaryCityChange,
+  onSecondaryCartiereChange,
   hideDedicatedField = false,
   hideParking = false,
   dedicatedField,
@@ -476,7 +487,7 @@ function LocationSection({
   const locationInputs = (
     <>
       {isDogWalking && (
-        <div className="space-y-4 pb-2">
+        <div className="space-y-6 pb-2">
           {inlineSuccessBanner && (
             <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs flex items-center justify-between gap-3 shadow-xs">
               <div className="flex items-start gap-2.5">
@@ -493,121 +504,277 @@ function LocationSection({
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold">City</Label>
-            <Input
-              type="text"
-              value={cityName}
-              readOnly
-              disabled
-              className="h-9 bg-muted/30 text-xs font-semibold rounded-lg cursor-not-allowed opacity-90"
-            />
+          {/* CARD 1: PRIMARY COVERAGE ZONE */}
+          <div className="p-5 rounded-2xl border border-border/80 bg-card shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+              <div>
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <MapPin className="size-4 text-primary" />
+                  Primary Coverage Zone
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Neighborhood coverage for your primary business city ({cityName}).
+                </p>
+              </div>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 self-start sm:self-auto">
+                Primary City: {cityName}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Primary City / Localitate</Label>
+              <Input
+                type="text"
+                value={cityName}
+                readOnly
+                disabled
+                className="h-9 bg-muted/30 text-xs font-semibold rounded-lg cursor-not-allowed opacity-90"
+              />
+            </div>
+
+            {cartiereList ? (
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-xs font-bold text-foreground">Neighborhood Coverage Zones (Cartiere)</Label>
+                    <p className="text-[11px] text-muted-foreground">Configure specific neighborhoods in {cityName} where you offer dog walking services.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onCartiereChange?.([...cartiereList])}
+                      className="h-7 text-[10px] font-semibold px-2"
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onCartiereChange?.([])}
+                      className="h-7 text-[10px] font-semibold px-2"
+                    >
+                      Deselect All
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
+                  {cartiereList.map((cartier) => {
+                    const isSelected = selectedCartiere.includes(cartier);
+                    return (
+                      <button
+                        key={cartier}
+                        type="button"
+                        onClick={() => {
+                          if (!onCartiereChange) return;
+                          if (isSelected) {
+                            onCartiereChange(selectedCartiere.filter((c) => c !== cartier));
+                          } else {
+                            onCartiereChange([...selectedCartiere, cartier]);
+                          }
+                        }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all text-left ${
+                          isSelected
+                            ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                            : "bg-background border-border text-foreground hover:bg-muted/40"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="size-3.5 rounded border-border text-primary focus:ring-primary/20 pointer-events-none"
+                        />
+                        <span className="truncate">{cartier}</span>
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRequestErrorMsg(null);
+                      setRequestSuccessMsg(null);
+                      setIsRequestCartierOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border border-dashed border-primary/50 text-primary hover:bg-primary/5 transition-all text-left cursor-pointer"
+                  >
+                    <Plus className="size-3.5 shrink-0" />
+                    <span className="truncate">Request new Coverage zone (Cartier)</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2.5 text-amber-700 dark:text-amber-400">
+                  <AlertCircle className="size-4.5 shrink-0 mt-0.5" />
+                  <div className="text-xs">
+                    <p className="font-bold">Unsupported City for Neighborhood Selection</p>
+                    <p className="text-[11px] mt-0.5 opacity-90">
+                      Your city (<strong>{cityName}</strong>) is currently not in our standard neighborhood coverage dataset. A notification has been sent to our staff to add neighborhood zones for your city.
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRequestErrorMsg(null);
+                      setRequestSuccessMsg(null);
+                      setIsRequestCartierOpen(true);
+                    }}
+                    className="h-8 border-dashed text-xs font-semibold text-primary hover:text-primary gap-1.5"
+                  >
+                    <Plus className="size-3.5" />
+                    Request new Coverage zone (Cartier)
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {cartiereList ? (
-            <div className="space-y-3 pt-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-xs font-bold text-foreground">Neighborhood Coverage Zones (Cartiere)</Label>
-                  <p className="text-[11px] text-muted-foreground">Configure specific neighborhoods in {cityName} where you offer dog walking services.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onCartiereChange?.([...cartiereList])}
-                    className="h-7 text-[10px] font-semibold px-2"
-                  >
-                    Select All
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onCartiereChange?.([])}
-                    className="h-7 text-[10px] font-semibold px-2"
-                  >
-                    Deselect All
-                  </Button>
-                </div>
+          {/* CARD 2: SECONDARY COVERAGE ZONES */}
+          <div className="p-5 rounded-2xl border border-border/80 bg-card shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-3">
+              <div>
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Globe className="size-4 text-primary" />
+                  Secondary Coverage Zones
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Add additional cities where your dog walking services operate and configure neighborhood coverage.
+                </p>
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onAddSecondaryZone}
+                className="h-8 text-xs font-semibold gap-1.5 cursor-pointer border-dashed border-primary/60 text-primary hover:bg-primary/5 self-start sm:self-auto"
+              >
+                <Plus className="size-3.5" />
+                Add Secondary Coverage Zone
+              </Button>
+            </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
-                {cartiereList.map((cartier) => {
-                  const isSelected = selectedCartiere.includes(cartier);
+            {secondaryZones.length > 0 ? (
+              <div className="space-y-4 pt-1">
+                {secondaryZones.map((secZone, idx) => {
+                  const secCityName = secZone.city;
+                  const secCartiereList = secCityName ? getCartiereForCity(secCityName) : null;
+                  const availableCities = Object.keys(ROMANIAN_CITY_CARTIERE).filter(
+                    (c) => c !== cityName && (c === secCityName || !secondaryZones.some((s, i) => i !== idx && s.city === c))
+                  );
+
                   return (
-                    <button
-                      key={cartier}
-                      type="button"
-                      onClick={() => {
-                        if (!onCartiereChange) return;
-                        if (isSelected) {
-                          onCartiereChange(selectedCartiere.filter((c) => c !== cartier));
-                        } else {
-                          onCartiereChange([...selectedCartiere, cartier]);
-                        }
-                      }}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all text-left ${
-                        isSelected
-                          ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
-                          : "bg-background border-border text-foreground hover:bg-muted/40"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {}}
-                        className="size-3.5 rounded border-border text-primary focus:ring-primary/20 pointer-events-none"
-                      />
-                      <span className="truncate">{cartier}</span>
-                    </button>
+                    <div key={idx} className="p-4 rounded-xl border border-border bg-muted/10 shadow-xs space-y-4 relative">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 space-y-1.5 max-w-xs">
+                          <Label className="text-xs font-semibold">Secondary City</Label>
+                          <CustomSelect
+                            options={[
+                              { value: "", label: "Select Secondary City" },
+                              ...availableCities.map((c) => ({ value: c, label: c })),
+                            ]}
+                            value={secCityName}
+                            onChange={(val) => onSecondaryCityChange?.(idx, val)}
+                            placeholder="Select Secondary City..."
+                            searchable
+                            searchPlaceholder="Search city..."
+                            className="h-9 text-xs font-semibold"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onRemoveSecondaryZone?.(idx)}
+                          className="h-8 text-xs font-semibold text-destructive hover:bg-destructive/10 gap-1.5 self-end cursor-pointer"
+                        >
+                          <Trash2 className="size-3.5" />
+                          Remove Zone
+                        </Button>
+                      </div>
+
+                      {secCityName && secCartiereList && (
+                        <div className="space-y-3 pt-2 border-t border-border/60">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold text-foreground">
+                              Neighborhoods in <strong>{secCityName}</strong>
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onSecondaryCartiereChange?.(idx, [...secCartiereList])}
+                                className="h-6 text-[10px] font-semibold px-2"
+                              >
+                                Select All
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onSecondaryCartiereChange?.(idx, [])}
+                                className="h-6 text-[10px] font-semibold px-2"
+                              >
+                                Deselect All
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
+                            {secCartiereList.map((cartier) => {
+                              const isSelected = secZone.cartiere.includes(cartier);
+                              return (
+                                <button
+                                  key={cartier}
+                                  type="button"
+                                  onClick={() => {
+                                    if (!onSecondaryCartiereChange) return;
+                                    const next = isSelected
+                                      ? secZone.cartiere.filter((c) => c !== cartier)
+                                      : [...secZone.cartiere, cartier];
+                                    onSecondaryCartiereChange(idx, next);
+                                  }}
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all text-left ${
+                                    isSelected
+                                      ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                                      : "bg-background border-border text-foreground hover:bg-muted/40"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => {}}
+                                    className="size-3.5 rounded border-border text-primary focus:ring-primary/20 pointer-events-none"
+                                  />
+                                  <span className="truncate">{cartier}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRequestErrorMsg(null);
-                    setRequestSuccessMsg(null);
-                    setIsRequestCartierOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border border-dashed border-primary/50 text-primary hover:bg-primary/5 transition-all text-left cursor-pointer"
-                >
-                  <Plus className="size-3.5 shrink-0" />
-                  <span className="truncate">Request new Coverage zone (Cartier)</span>
-                </button>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2.5 text-amber-700 dark:text-amber-400">
-                <AlertCircle className="size-4.5 shrink-0 mt-0.5" />
-                <div className="text-xs">
-                  <p className="font-bold">Unsupported City for Neighborhood Selection</p>
-                  <p className="text-[11px] mt-0.5 opacity-90">
-                    Your city (<strong>{cityName}</strong>) is currently not in our standard neighborhood coverage dataset. A notification has been sent to our staff to add neighborhood zones for your city.
-                  </p>
-                </div>
+            ) : (
+              <div className="p-4 rounded-xl border border-dashed border-border/80 bg-muted/5 text-center py-6 space-y-1">
+                <p className="text-xs font-semibold text-foreground">No Secondary Coverage Zones Added</p>
+                <p className="text-[11px] text-muted-foreground">
+                  If you walk dogs in adjacent or additional cities, click "Add Secondary Coverage Zone" above to configure coverage.
+                </p>
               </div>
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setRequestErrorMsg(null);
-                    setRequestSuccessMsg(null);
-                    setIsRequestCartierOpen(true);
-                  }}
-                  className="h-8 border-dashed text-xs font-semibold text-primary hover:text-primary gap-1.5"
-                >
-                  <Plus className="size-3.5" />
-                  Request new Coverage zone (Cartier)
-                </Button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -1732,20 +1899,44 @@ export function CourseForm({
     parseClosedPeriods(initialCourse?.schedule)
   );
 
-  // Cartiere Coverage Zones state (for Dog Walking)
-  const [selectedCartiere, setSelectedCartiere] = useState<string[]>(() => {
-    if (initialCourse?.coverageZones) {
-      try {
-        const parsed = JSON.parse(initialCourse.coverageZones);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) {
-        if (typeof initialCourse.coverageZones === "string") {
-          return initialCourse.coverageZones.split(",").map((s) => s.trim()).filter(Boolean);
-        }
-      }
-    }
-    return [];
-  });
+  // Cartiere Coverage Zones state (Primary & Secondary for Dog Walking)
+  const [coverageData, setCoverageData] = useState<CoverageZonesData>(() =>
+    parseCoverageZones(initialCourse?.coverageZones)
+  );
+
+  const handlePrimaryCartiereChange = (zones: string[]) => {
+    setCoverageData((prev) => ({ ...prev, primary: zones }));
+  };
+
+  const handleAddSecondaryZone = () => {
+    setCoverageData((prev) => ({
+      ...prev,
+      secondary: [...prev.secondary, { city: "", cartiere: [] }],
+    }));
+  };
+
+  const handleRemoveSecondaryZone = (index: number) => {
+    setCoverageData((prev) => ({
+      ...prev,
+      secondary: prev.secondary.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSecondaryCityChange = (index: number, newCity: string) => {
+    setCoverageData((prev) => {
+      const nextSec = [...prev.secondary];
+      nextSec[index] = { city: newCity, cartiere: [] };
+      return { ...prev, secondary: nextSec };
+    });
+  };
+
+  const handleSecondaryCartiereChange = (index: number, cartiere: string[]) => {
+    setCoverageData((prev) => {
+      const nextSec = [...prev.secondary];
+      nextSec[index] = { ...nextSec[index], cartiere };
+      return { ...prev, secondary: nextSec };
+    });
+  };
 
   // Special Openings / Extra Working Dates state
   const [specialOpenings, setSpecialOpenings] = useState<SpecialOpeningItem[]>(() =>
@@ -2006,6 +2197,87 @@ export function CourseForm({
     setFaqs(faqs.filter((_, i) => i !== index));
   };
 
+  // Safety Confirmation Guard State for Item Removals
+  interface RemoveConfirmState {
+    type: "secondaryZone" | "closedPeriod" | "specialOpening" | "priceTier" | "faq";
+    index: number;
+    title: string;
+    description: string;
+  }
+
+  const [removeConfirm, setRemoveConfirm] = useState<RemoveConfirmState | null>(null);
+
+  const requestRemoveSecondaryZone = (index: number) => {
+    const secZone = coverageData.secondary[index];
+    const cityName = secZone?.city ? ` (${secZone.city})` : "";
+    setRemoveConfirm({
+      type: "secondaryZone",
+      index,
+      title: "Remove Secondary Coverage Zone",
+      description: `Are you sure you want to remove secondary zone${cityName}? All selected neighborhoods for this city will be removed.`,
+    });
+  };
+
+  const requestRemoveClosedPeriod = (index: number) => {
+    const period = closedPeriods[index];
+    const title = period?.title ? ` "${period.title}"` : "";
+    setRemoveConfirm({
+      type: "closedPeriod",
+      index,
+      title: "Remove Closed Period",
+      description: `Are you sure you want to remove closed period${title}?`,
+    });
+  };
+
+  const requestRemoveSpecialOpening = (index: number) => {
+    const opening = specialOpenings[index];
+    const title = opening?.title ? ` "${opening.title}"` : "";
+    setRemoveConfirm({
+      type: "specialOpening",
+      index,
+      title: "Remove Special Opening",
+      description: `Are you sure you want to remove special opening${title}?`,
+    });
+  };
+
+  const requestRemovePriceTier = (index: number) => {
+    if (pricings.length <= 1) return;
+    setRemoveConfirm({
+      type: "priceTier",
+      index,
+      title: "Remove Price Option",
+      description: `Are you sure you want to remove Price Option #${index + 1}?`,
+    });
+  };
+
+  const requestRemoveFaq = (index: number) => {
+    const faq = faqs[index];
+    const qText = faq?.question ? ` "${faq.question}"` : "";
+    setRemoveConfirm({
+      type: "faq",
+      index,
+      title: "Remove FAQ Item",
+      description: `Are you sure you want to remove FAQ Item #${index + 1}${qText}?`,
+    });
+  };
+
+  const confirmRemoveItem = () => {
+    if (!removeConfirm) return;
+    const { type, index } = removeConfirm;
+    if (type === "secondaryZone") {
+      handleRemoveSecondaryZone(index);
+    } else if (type === "closedPeriod") {
+      handleRemoveClosedPeriod(index);
+    } else if (type === "specialOpening") {
+      handleRemoveSpecialOpening(index);
+    } else if (type === "priceTier") {
+      handleRemovePriceTier(index);
+    } else if (type === "faq") {
+      handleRemoveFaq(index);
+    }
+    setRemoveConfirm(null);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -2051,7 +2323,7 @@ export function CourseForm({
     formData.append("ownerCommunicationDetails", ownerCommunicationDetails);
     formData.append("personalizedMealPlan", String(personalizedMealPlan));
     formData.append("personalizedMealPlanDetails", personalizedMealPlanDetails);
-    formData.append("coverageZones", JSON.stringify(selectedCartiere));
+    formData.append("coverageZones", serializeCoverageZones(coverageData));
 
     for (const item of weeklySchedule) {
       if (item.enabled && item.checkin && item.checkout) {
@@ -2321,7 +2593,7 @@ export function CourseForm({
                 pricings={pricings}
                 onAdd={handleAddPriceTier}
                 onUpdate={handleUpdatePriceTier}
-                onRemove={handleRemovePriceTier}
+                onRemove={requestRemovePriceTier}
               />
             </div>
           )}
@@ -2338,11 +2610,11 @@ export function CourseForm({
               closedPeriods={closedPeriods}
               onAddClosedPeriod={handleAddClosedPeriod}
               onUpdateClosedPeriod={handleUpdateClosedPeriod}
-              onRemoveClosedPeriod={handleRemoveClosedPeriod}
+              onRemoveClosedPeriod={requestRemoveClosedPeriod}
               specialOpenings={specialOpenings}
               onAddSpecialOpening={handleAddSpecialOpening}
               onUpdateSpecialOpening={handleUpdateSpecialOpening}
-              onRemoveSpecialOpening={handleRemoveSpecialOpening}
+              onRemoveSpecialOpening={requestRemoveSpecialOpening}
             />
           )}
 
@@ -2365,8 +2637,13 @@ export function CourseForm({
                   isBoarding={isBoarding}
                   isDogWalking={isDogWalking}
                   orgCity={orgCity}
-                  selectedCartiere={selectedCartiere}
-                  onCartiereChange={setSelectedCartiere}
+                  selectedCartiere={coverageData.primary}
+                  onCartiereChange={handlePrimaryCartiereChange}
+                  secondaryZones={coverageData.secondary}
+                  onAddSecondaryZone={handleAddSecondaryZone}
+                  onRemoveSecondaryZone={requestRemoveSecondaryZone}
+                  onSecondaryCityChange={handleSecondaryCityChange}
+                  onSecondaryCartiereChange={handleSecondaryCartiereChange}
                   hideDedicatedField={isDogWalking}
                   hideParking={isDogWalking}
                   dedicatedField={dedicatedField}
@@ -2395,7 +2672,7 @@ export function CourseForm({
               faqs={faqs}
               onAdd={handleAddFaq}
               onUpdate={handleUpdateFaq}
-              onRemove={handleRemoveFaq}
+              onRemove={requestRemoveFaq}
             />
           )}
 
@@ -2650,7 +2927,7 @@ export function CourseForm({
               faqs={faqs}
               onAdd={handleAddFaq}
               onUpdate={handleUpdateFaq}
-              onRemove={handleRemoveFaq}
+              onRemove={requestRemoveFaq}
               compact
             />
           </div>
@@ -2664,7 +2941,7 @@ export function CourseForm({
               pricings={pricings}
               onAdd={handleAddPriceTier}
               onUpdate={handleUpdatePriceTier}
-              onRemove={handleRemovePriceTier}
+              onRemove={requestRemovePriceTier}
               compact
             />
 
@@ -2699,6 +2976,50 @@ export function CourseForm({
                   Cancel
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Safety Confirmation Guard Modal */}
+      {removeConfirm && (
+        <div className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200 relative">
+            <button
+              type="button"
+              onClick={() => setRemoveConfirm(null)}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
+            <div className="space-y-1.5 pt-1">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <AlertCircle className="size-4 text-destructive shrink-0" />
+                {removeConfirm.title}
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {removeConfirm.description}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setRemoveConfirm(null)}
+                className="rounded-xl h-9 text-xs font-semibold"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={confirmRemoveItem}
+                className="rounded-xl h-9 text-xs font-semibold"
+              >
+                Confirm Remove
+              </Button>
             </div>
           </div>
         </div>

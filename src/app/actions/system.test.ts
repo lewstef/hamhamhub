@@ -171,5 +171,31 @@ describe("System Server Actions — SMTP Config", () => {
       const result = await sendTestEmailAction({}, formData);
       expect(result).toEqual({ success: true });
     });
+
+    it("should return error when sendMail fails with result error", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { role: "admin" },
+      } as any);
+      vi.mocked(sendMail).mockResolvedValue({ success: false, error: "SMTP auth failed" });
+
+      const formData = new FormData();
+      formData.append("testRecipientEmail", "admin@test.com");
+
+      const result = await sendTestEmailAction({}, formData);
+      expect(result).toEqual({ error: "SMTP auth failed" });
+    });
+
+    it("should return error when sendMail throws exception", async () => {
+      vi.mocked(auth).mockResolvedValue({
+        user: { role: "admin" },
+      } as any);
+      vi.mocked(sendMail).mockRejectedValueOnce(new Error("Connection timeout"));
+
+      const formData = new FormData();
+      formData.append("testRecipientEmail", "admin@test.com");
+
+      const result = await sendTestEmailAction({}, formData);
+      expect(result).toEqual({ error: "Failed to establish SMTP connection or deliver test email." });
+    });
   });
 });

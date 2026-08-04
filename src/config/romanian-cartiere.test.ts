@@ -45,4 +45,13 @@ describe("romanian-cartiere module", () => {
     expect(isCitySupported("Timișoara")).toBe(true);
     expect(isCitySupported("Brașov")).toBe(true);
   });
+
+  it("should handle null and empty string inputs gracefully", () => {
+    expect(normalizeCityName("")).toBe("");
+    expect(normalizeCityName(null as any)).toBe("");
+    expect(getCartiereForCity("")).toBeNull();
+    expect(getCartiereForCity(null as any)).toBeNull();
+    expect(isCitySupported("")).toBe(false);
+    expect(isCitySupported(null as any)).toBe(false);
+  });
 });

@@ -141,5 +141,41 @@ describe("Service Types Server Actions", () => {
       const result = await updateServiceTypeAction(null, formData);
       expect(result).toEqual({ error: "Something went wrong. Please try again." });
     });
+
+    it("should return error if id is missing", async () => {
+      const formData = new FormData();
+      formData.append("name", "Dog Training");
+      formData.append("description", "Valid description");
+
+      const result = await updateServiceTypeAction(null, formData);
+      expect(result).toEqual({ error: "All fields are required." });
+    });
+  });
+
+  describe("getServiceTypesAction error and seed branches", () => {
+    it("should handle db.select throwing error and return default static list", async () => {
+      mockSelect.mockImplementationOnce(() => {
+        throw new Error("DB offline");
+      });
+
+      const result = await getServiceTypesAction();
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it("should insert default category services when seeding empty serviceTypes", async () => {
+      mockSelect
+        .mockResolvedValueOnce([]) // empty serviceTypes
+        .mockResolvedValueOnce([
+          { id: "dog_training", name: "Dog training", description: "Desc" },
+        ])
+        .mockResolvedValueOnce([]); // empty existing services
+
+      mockInsert
+        .mockResolvedValueOnce({ count: 5 }) // insert serviceTypes
+        .mockResolvedValueOnce({ count: 10 }); // insert category services
+
+      const result = await getServiceTypesAction();
+      expect(result.length).toBeGreaterThan(0);
+    });
   });
 });

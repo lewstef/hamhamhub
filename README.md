@@ -284,19 +284,23 @@ The `CourseForm` (`src/components/course-form.tsx`) is organized around **shared
 
 ---
 
-### F. Dog Walking Neighborhood Coverage (Cartiere Integration)
+### F. Dog Walking Neighborhood Coverage (Cartiere & Secondary Coverage Zones Integration)
 
 #### Functional Overview
-- **Interactive Coverage Selection**: Dog walking providers select specific neighborhoods (*cartiere*) in their city where services are available using toggleable chips, complete with **"Select All"** and **"Deselect All"** quick action controls.
+- **Primary & Secondary Coverage Selection**: Dog walking providers select specific neighborhoods (*cartiere*) in their autocompleted primary city (`orgCity`) as well as additional **Secondary Cities**.
+- **Adding Secondary Zones**: Clicking **"+ Add Secondary Coverage Zone"** allows providers to select additional Romanian municipalities from a custom dropdown menu (`CustomSelect`). Each secondary city card renders an interactive neighborhood coverage grid with **"Select All"**, **"Deselect All"**, and **"Remove Zone"** controls.
 - **Requesting New Zones**: If a provider cannot find a specific neighborhood or their city is not yet in the standard dataset, clicking **"Request new Coverage zone (Cartier)"** opens a modal overlay. Providers enter the missing neighborhood name and optional landmarks/boundary notes.
 - **Instant Admin Notification & Confirmation**: Submitting a zone request sends an automated HTML email notification directly to platform support staff (`stefan.wrabeli@gmail.com`) and displays a confirmation message: *"Request Submitted Successfully! We received your request for a new coverage zone, we will be back soon"*.
 - **Automatic Unsupported City Detection**: Updating an organization's primary address city to a non-standard municipality in `updateOrganizationAction` triggers an automated email notification alerting staff to review and populate neighborhood datasets for that city.
 
 #### Technical Architecture
 - **Dataset Configuration (`src/config/romanian-cartiere.ts`)**: Defines `ROMANIAN_CITY_CARTIERE`, a dataset covering top 40+ Romanian cities and Bucharest sectors/neighborhoods. Exposes `normalizeCityName`, `getCartiereForCity`, and `isCitySupported` utilizing diacritic-insensitive and case-insensitive string normalization (`normalize("NFD")`).
-- **Database Schema & Types (`src/db/schema.ts` & `src/types/course.ts`)**: `courses.coverageZones` stores the JSON stringified array of selected cartiere strings.
+- **Database Schema & Serialization (`src/db/schema.ts` & `src/types/course.ts`)**:
+  - Defines `SecondaryCoverageZone` (`{ city: string; cartiere: string[] }`) and `CoverageZonesData` (`{ primary: string[]; secondary: SecondaryCoverageZone[] }`).
+  - Exports `parseCoverageZones(raw)` (backward-compatible parser supporting legacy string arrays and structured multi-city objects) and `serializeCoverageZones(data)`.
+  - `courses.coverageZones` stores the serialized JSON structure.
 - **Server Action (`src/app/actions/organizations.ts`)**: `requestNewCartierAction` requires an authenticated user session, validates input parameters, and dispatches notification emails via the `sendMail` transport module.
-- **Form Component (`src/components/course-form.tsx`)**: Tab navigation renders the **"Coverage zones"** tab (`MapPin` icon). `LocationSection` renders the coverage grid and manages modal state (`isRequestCartierOpen`, `newCartierName`, `newCartierNotes`, `isSubmittingRequest`, `requestSuccessMsg`).
+- **Form Component (`src/components/course-form.tsx`)**: Tab navigation renders the **"Coverage zones"** tab (`MapPin` icon). `LocationSection` renders both the primary city card and secondary city cards with city selection dropdowns and removal actions.
 
 ---
 
@@ -339,7 +343,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (517 tests across 45 test files)
+# Run all tests (548 tests across 47 test files)
 npm run test
 
 # Run with coverage report
@@ -347,10 +351,10 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
 
 ### Test Coverage Metrics
-- **Statements**: **86.20%**
-- **Lines**: **87.10%**
-- **Functions**: **85.10%**
-- **Branches**: **76.50%**
+- **Statements**: **86.48%**
+- **Lines**: **87.74%**
+- **Functions**: **82.50%**
+- **Branches**: **77.78%**
 
 ### Test Coverage Summary
 | Area | Files Covered |
@@ -358,5 +362,5 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 | Server actions | `auth`, `initialization`, `employees`, `users`, `organizations` (including `requestNewCartierAction`), `services`, `service-types`, `courses`, `system` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
 | Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `service-type-preview-form`, `smtp-config-form`, `org-services-tab`, `time-picker-select`, `toggle-switch`, `boolean-toggle-field` |
-| Config & utilities | `config/service-types`, `config/dog-training`, `config/romanian-territory`, `config/romanian-cartiere`, `lib/utils`, `lib/email` |
+| Config, Types & utilities | `types/course` (100% coverage), `config/service-types`, `config/dog-training`, `config/romanian-territory`, `config/romanian-cartiere`, `lib/utils`, `lib/email` |
 | Hooks | `use-mobile` |

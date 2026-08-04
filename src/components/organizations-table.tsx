@@ -70,6 +70,12 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Delete category state/actions
+  const [deleteCategoryTargetId, setDeleteCategoryTargetId] = useState<string | null>(null);
+  const [showDeleteCategoryConfirm, setShowDeleteCategoryConfirm] = useState(false);
+  const [deleteCategoryModalKey, setDeleteCategoryModalKey] = useState(0);
+  const [deleteCategorySubmitted, setDeleteCategorySubmitted] = useState(false);
+
   const [formModalKey, setFormModalKey] = useState(0);
   const [categoryModalKey, setCategoryModalKey] = useState(0);
   const [editCategoryModalKey, setEditCategoryModalKey] = useState(0);
@@ -535,19 +541,17 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                             >
                               <Pencil className="size-3" />
                             </Button>
-                            <form action={deleteCategoryAction} className="inline-block">
-                              <input type="hidden" name="id" value={category.id} />
-                              <Button
-                                type="submit"
-                                variant="ghost"
-                                size="icon-sm"
-                                disabled={isDeleteCategoryPending}
-                                className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground cursor-pointer rounded-lg transition-colors"
-                                title="Delete Category"
-                              >
-                                  <Trash2 className="size-3.5" />
-                              </Button>
-                            </form>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              disabled={isDeleteCategoryPending}
+                              onClick={() => openDeleteCategoryModal(category.id)}
+                              className="hover:bg-destructive/10 hover:text-destructive text-muted-foreground cursor-pointer rounded-lg transition-colors"
+                              title="Delete Category"
+                            >
+                                <Trash2 className="size-3.5" />
+                            </Button>
                           </td>
                         </tr>
                       ))
@@ -936,6 +940,50 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
                   </Button>
                   <Button type="submit" variant="destructive" disabled={deletePending} className="rounded-xl h-9 text-xs font-semibold">
                     {deletePending ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Delete Category Confirmation Modal */}
+      {showDeleteCategoryConfirm && deleteCategoryTargetId && (
+        <div key={deleteCategoryModalKey} className="fixed inset-0 bg-background/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <Card className="relative w-full max-w-sm shadow-2xl rounded-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={closeDeleteCategoryModal}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
+            <CardHeader className="px-6 pt-6 pb-4 border-b border-border/60">
+              <CardTitle className="text-lg font-bold">Delete Category</CardTitle>
+              <CardDescription className="text-xs mt-1 text-muted-foreground">
+                Are you sure you want to permanently delete this organization category? This action cannot be undone.
+              </CardDescription>
+            </CardHeader>
+            <form action={(formData) => { setDeleteCategorySubmitted(true); deleteCategoryAction(formData); }}>
+              <input type="hidden" name="id" value={deleteCategoryTargetId} />
+              <CardContent className="p-6 space-y-4">
+                {deleteCategorySubmitted && deleteCategoryState?.error && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+                    {deleteCategoryState.error}
+                  </div>
+                )}
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeDeleteCategoryModal}
+                    disabled={isDeleteCategoryPending}
+                    className="rounded-xl h-9 text-xs font-semibold"
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" variant="destructive" disabled={isDeleteCategoryPending} className="rounded-xl h-9 text-xs font-semibold">
+                    {isDeleteCategoryPending ? "Deleting..." : "Delete Category"}
                   </Button>
                 </div>
               </CardContent>

@@ -470,4 +470,63 @@ describe("Courses Server Actions", () => {
       expect(result).toEqual({ error: "Failed to save courses order." });
     });
   });
+
+  describe("Additional branch tests for courses.ts", () => {
+    it("should allow employee role to create, update, and delete courses", async () => {
+      vi.mocked(auth).mockResolvedValue({ user: { id: "emp-1", role: "employee" }, expires: "" });
+
+      // Create
+      const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
+      const createData = new FormData();
+      createData.append("organizationId", "org-1");
+      createData.append("name", "Employee Created Course");
+
+      const createRes = await createCourseAction(null, createData);
+      expect(createRes).toEqual({ success: true });
+
+      // Update
+      const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
+      vi.mocked(db.select).mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: mockLimit }) }) } as any);
+      const mockSet = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValueOnce({ count: 1 }) });
+      vi.mocked(db.update).mockReturnValueOnce({ set: mockSet } as any);
+
+      const updateData = new FormData();
+      updateData.append("id", "course-1");
+      updateData.append("name", "Employee Updated Course");
+
+      const updateRes = await updateCourseAction(null, updateData);
+      expect(updateRes).toEqual({ success: true });
+
+      // Delete
+      vi.mocked(db.select).mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]) }) }) } as any);
+      vi.mocked(db.delete).mockReturnValueOnce({ where: vi.fn().mockResolvedValueOnce({ count: 1 }) } as any);
+
+      const deleteRes = await deleteCourseAction("course-1");
+      expect(deleteRes).toEqual({ success: true });
+    });
+
+    it("should return error if course to update is not found", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(db.select).mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValueOnce([]) }) }) } as any);
+
+      const formData = new FormData();
+      formData.append("id", "non-existent-course");
+      formData.append("name", "Non Existent");
+
+      const result = await updateCourseAction(null, formData);
+      expect(result).toEqual({ error: "Course not found" });
+    });
+
+    it("should return error if course to delete is not found or unauthorized", async () => {
+      // Unauthenticated
+      vi.mocked(auth).mockResolvedValueOnce(null);
+      expect(await deleteCourseAction("course-1")).toEqual({ error: "Unauthorized access" });
+
+      // Course not found
+      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(db.select).mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValueOnce([]) }) }) } as any);
+      expect(await deleteCourseAction("course-1")).toEqual({ error: "Course not found" });
+    });
+  });
 });

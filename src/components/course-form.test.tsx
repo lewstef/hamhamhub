@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import React from "react";
 import { CourseForm } from "./course-form";
+import { parseCoverageZones } from "@/types/course";
 import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
 
 vi.mock("lucide-react", () => ({
@@ -13,6 +14,7 @@ vi.mock("lucide-react", () => ({
   Trash2: () => <div data-testid="trash2" />,
   ChevronDown: () => <div data-testid="chevron-down" />,
   FileText: () => <div data-testid="file-text" />,
+  Globe: () => <div data-testid="globe" />,
   HelpCircle: () => <div data-testid="help-circle" />,
   DollarSign: () => <div data-testid="dollar-sign" />,
   Sliders: () => <div data-testid="sliders" />,
@@ -598,10 +600,15 @@ describe("CourseForm Component", () => {
       fireEvent.click(faqTabAgain);
     });
 
-    // Click "Remove FAQ" button and verify empty notice is back
+    // Click "Remove FAQ" button and confirm in safety guard modal
     const removeBtn = screen.getByRole("button", { name: "Remove FAQ" });
     await act(async () => {
       fireEvent.click(removeBtn);
+    });
+
+    const confirmBtn = screen.getByRole("button", { name: "Confirm Remove" });
+    await act(async () => {
+      fireEvent.click(confirmBtn);
     });
 
     expect(screen.getByText('No FAQs added yet. Click "Add FAQ Item" below to start.')).toBeDefined();
@@ -1098,6 +1105,78 @@ describe("CourseForm Component", () => {
     const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
     const scheduleJsonStr = passedFormData.get("schedule") as string;
     expect(scheduleJsonStr).toContain("Evening group session");
+  });
+
+  it("should parse legacy and structured coverageZones JSON strings correctly", () => {
+    // Legacy array string
+    const legacyParsed = parseCoverageZones(JSON.stringify(["Mănăștur", "Gheorgheni"]));
+    expect(legacyParsed).toEqual({
+      primary: ["Mănăștur", "Gheorgheni"],
+      secondary: [],
+    });
+
+    // Structured object JSON
+    const structuredParsed = parseCoverageZones(
+      JSON.stringify({
+        primary: ["Centru"],
+        secondary: [{ city: "Timișoara", cartiere: ["Iosefin", "Fabric"] }],
+      })
+    );
+    expect(structuredParsed).toEqual({
+      primary: ["Centru"],
+      secondary: [{ city: "Timișoara", cartiere: ["Iosefin", "Fabric"] }],
+    });
+
+    // Empty / null fallback
+    expect(parseCoverageZones(null)).toEqual({ primary: [], secondary: [] });
+  });
+
+  it("should render Primary and Secondary Coverage Zones for Dog Walking service mode", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-walking"
+        itemNoun="Walking service"
+        serviceSlug="dog-walking"
+        orgCity="Cluj-Napoca"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Name input
+    fireEvent.change(screen.getByLabelText("Walking service Name"), { target: { value: "30 Min Dog Walk" } });
+
+    // Switch to Coverage zones tab
+    fireEvent.click(screen.getByRole("button", { name: "Coverage zones" }));
+
+    // Verify Primary city field is pre-filled and disabled
+    expect(screen.getByDisplayValue("Cluj-Napoca")).toBeDefined();
+    expect(screen.getByText("Neighborhood Coverage Zones (Cartiere)")).toBeDefined();
+
+    // Select primary cartier
+    const manasturBtn = screen.getByText("Mănăștur");
+    fireEvent.click(manasturBtn);
+
+    // Add Secondary Coverage Zone
+    const addSecBtn = screen.getByRole("button", { name: "Add Secondary Coverage Zone" });
+    fireEvent.click(addSecBtn);
+
+    expect(screen.getByText("Secondary Coverage Zones")).toBeDefined();
+    expect(screen.getAllByText("Select Secondary City")[0]).toBeDefined();
+
+    // Submit form
+    const submitBtn = screen.getAllByRole("button", { name: "Create Walking service" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    const coverageJsonStr = passedFormData.get("coverageZones") as string;
+    expect(coverageJsonStr).toContain("Mănăștur");
   });
 });
 

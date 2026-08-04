@@ -120,4 +120,55 @@ describe("TimePickerSelect Component", () => {
     const input = screen.getByRole("textbox");
     expect(input.className).toContain("border-destructive");
   });
+
+  it("supports keyboard navigation (ArrowDown, ArrowUp, Enter, Escape)", () => {
+    const handleChange = vi.fn();
+    const { container } = render(
+      <TimePickerSelect
+        id="checkin-time"
+        value="08:00"
+        onChange={handleChange}
+        options={options}
+      />
+    );
+
+    const input = screen.getByRole("textbox");
+
+    // ArrowDown to open dropdown
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(screen.getByRole("button", { name: "08:30" })).toBeDefined();
+
+    // ArrowDown to move highlight to 08:30
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    // Enter to select 08:30
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(handleChange).toHaveBeenCalledWith("08:30");
+
+    // Re-open and test Escape
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(screen.getByRole("button", { name: "08:30" })).toBeDefined();
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(screen.queryByRole("button", { name: "08:30" })).toBeNull();
+  });
+
+  it("updates highlight on mouseEnter", () => {
+    render(
+      <TimePickerSelect
+        id="checkin-time"
+        value="08:00"
+        onChange={() => {}}
+        options={options}
+      />
+    );
+
+    const input = screen.getByRole("textbox");
+    fireEvent.focus(input);
+
+    const optionBtn = screen.getByRole("button", { name: "09:00" });
+    fireEvent.mouseEnter(optionBtn);
+
+    expect(optionBtn.className).toContain("bg-accent");
+  });
 });
