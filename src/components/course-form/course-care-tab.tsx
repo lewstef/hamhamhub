@@ -1,0 +1,178 @@
+"use client";
+
+import React from "react";
+import { Label } from "@/components/ui/label";
+import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
+import { WysiwygEditor } from "@/components/wysiwyg-editor";
+import { CustomSelect } from "@/components/ui/custom-select";
+
+export interface CourseCareTabProps {
+  isDogWalking?: boolean;
+  dailyWalks: number;
+  onDailyWalksChange: (v: number) => void;
+  medicationAdministration: boolean;
+  onMedicationAdministrationChange: (v: boolean) => void;
+  medicationAdministrationDetails: string;
+  onMedicationAdministrationDetailsChange: (v: string) => void;
+  webCam: boolean;
+  onWebCamChange: (v: boolean) => void;
+  webCamDetails: string;
+  onWebCamDetailsChange: (v: string) => void;
+  ownerCommunication: boolean;
+  onOwnerCommunicationChange: (v: boolean) => void;
+  ownerCommunicationDetails: string;
+  onOwnerCommunicationDetailsChange: (v: string) => void;
+  personalizedMealPlan: boolean;
+  onPersonalizedMealPlanChange: (v: boolean) => void;
+  personalizedMealPlanDetails: string;
+  onPersonalizedMealPlanDetailsChange: (v: string) => void;
+}
+
+/**
+ * CourseCareTab Component
+ *
+ * Renders boarding-specific care amenity toggles:
+ * daily walks, medication administration, personalized meal plan, webcam access, and communication/GPS reports.
+ */
+export function CourseCareTab({
+  isDogWalking = false,
+  dailyWalks,
+  onDailyWalksChange,
+  medicationAdministration,
+  onMedicationAdministrationChange,
+  medicationAdministrationDetails,
+  onMedicationAdministrationDetailsChange,
+  webCam,
+  onWebCamChange,
+  webCamDetails,
+  onWebCamDetailsChange,
+  ownerCommunication,
+  onOwnerCommunicationChange,
+  ownerCommunicationDetails,
+  onOwnerCommunicationDetailsChange,
+  personalizedMealPlan,
+  onPersonalizedMealPlanChange,
+  personalizedMealPlanDetails,
+  onPersonalizedMealPlanDetailsChange,
+}: CourseCareTabProps) {
+  return (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor="daily-walks" className="text-xs font-semibold">Daily Walks</Label>
+        <CustomSelect
+          id="daily-walks"
+          value={dailyWalks}
+          onChange={(val) => onDailyWalksChange(parseInt(val, 10))}
+          options={[
+            { value: 1, label: "1 walk per day" },
+            { value: 2, label: "2 walks per day" },
+            { value: 3, label: "3 walks per day" },
+            { value: 4, label: "4 walks per day" },
+          ]}
+        />
+      </div>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label={isDogWalking ? "Key Access & Home Entry Protocol" : "Medication Administration"}
+        description={
+          isDogWalking
+            ? "Specify home entry instructions (lockbox codes, key pickup, concierge, alarm codes)."
+            : "Can you administer medication or medical care?"
+        }
+        checked={medicationAdministration}
+        onChange={onMedicationAdministrationChange}
+      >
+        <div className="space-y-2">
+          <Label>
+            {isDogWalking ? "Home Access & Key Handling Instructions" : "Medication Administration Instructions"}
+          </Label>
+          <WysiwygEditor
+            value={medicationAdministrationDetails}
+            onChange={onMedicationAdministrationDetailsChange}
+            placeholder={
+              isDogWalking
+                ? "e.g. Lockbox code 1234 on side gate, concierge key handoff, alarm disarm code 5678, key drop-off in mailbox"
+                : "e.g. oral tablets, injections, schedule limitations"
+            }
+          />
+        </div>
+      </BooleanToggleField>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label={isDogWalking ? "Post-Walk Feeding & Treat Customization" : "Personalized Meal Plan"}
+        description={
+          isDogWalking
+            ? "Can you feed or provide custom treats to the dog after the walk?"
+            : "Can you provide a customized meal plan or accommodate special diets?"
+        }
+        checked={personalizedMealPlan}
+        onChange={onPersonalizedMealPlanChange}
+      >
+        <div className="space-y-2">
+          <Label>{isDogWalking ? "Post-Walk Feeding Instructions" : "Meal Plan Details"}</Label>
+          <WysiwygEditor
+            value={personalizedMealPlanDetails}
+            onChange={onPersonalizedMealPlanDetailsChange}
+            placeholder={
+              isDogWalking
+                ? "e.g. Post-walk kibble feeding, custom treat administration, dietary restriction adherence"
+                : "e.g. BARF diet support, raw food storage, customized portions"
+            }
+          />
+        </div>
+      </BooleanToggleField>
+
+      {!isDogWalking && (
+        <>
+          <div className="h-px bg-border/60" />
+
+          <BooleanToggleField
+            label="Webcam"
+            description="Do you offer live video/webcam access to owners?"
+            checked={webCam}
+            onChange={onWebCamChange}
+          >
+            <div className="space-y-2">
+              <Label>Webcam Access Instructions</Label>
+              <WysiwygEditor
+                value={webCamDetails}
+                onChange={onWebCamDetailsChange}
+                placeholder="e.g. live stream link provided upon check-in, 24/7 access"
+              />
+            </div>
+          </BooleanToggleField>
+        </>
+      )}
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label={isDogWalking ? "GPS Route Tracking & Post-Walk Reports" : "Communication with the Owner"}
+        description={
+          isDogWalking
+            ? "Will you provide live GPS route tracking, walk photos, potty status, and post-walk summaries?"
+            : "Will you provide regular photo/video updates to the owner?"
+        }
+        checked={ownerCommunication}
+        onChange={onOwnerCommunicationChange}
+      >
+        <div className="space-y-2">
+          <Label>{isDogWalking ? "GPS & Walk Report Details" : "Communication Updates Details"}</Label>
+          <WysiwygEditor
+            value={ownerCommunicationDetails}
+            onChange={onOwnerCommunicationDetailsChange}
+            placeholder={
+              isDogWalking
+                ? "e.g. Photo & video update sent after walk, potty status tracking (pee/poop), fresh water refill, paw wipe on rainy days"
+                : "e.g. daily photos via WhatsApp, weekly email progress"
+            }
+          />
+        </div>
+      </BooleanToggleField>
+    </>
+  );
+}

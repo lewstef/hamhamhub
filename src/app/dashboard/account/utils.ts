@@ -60,6 +60,9 @@ export async function getDashboardAccountData() {
       billingSecondaryContactName: users.billingSecondaryContactName,
       billingSecondaryContactPhone: users.billingSecondaryContactPhone,
       billingSecondaryContactEmail: users.billingSecondaryContactEmail,
+      verificationStatus: users.verificationStatus,
+      verificationRequestedAt: users.verificationRequestedAt,
+      verificationNotes: users.verificationNotes,
     })
     .from(users)
     .where(eq(users.id, id))

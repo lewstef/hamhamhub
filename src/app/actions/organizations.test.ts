@@ -9,6 +9,8 @@ import {
   deleteOrganizationCategoryAction,
   toggleOrganizationServiceAction,
   toggleOrganizationCourseAction,
+  requestOrganizationVerificationAction,
+  updateOrganizationVerificationStatusAction,
 } from "./organizations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -740,6 +742,66 @@ describe("Organization Server Actions", () => {
       const formData = new FormData();
       const result = await deleteOrganizationAction(null, formData);
       expect(result).toEqual({ error: "Organization ID is required" });
+    });
+  });
+
+  describe("Category Verification Server Actions", () => {
+    it("should return error if user is unauthenticated when requesting verification", async () => {
+      vi.mocked(auth).mockResolvedValueOnce(null);
+      const res = await requestOrganizationVerificationAction("org-1");
+      expect(res).toEqual({ error: "Unauthenticated. Please log in." });
+    });
+
+    it("should return error if client user attempts to request verification", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "u-1", role: "user", name: "User" },
+        expires: "date",
+      });
+      const res = await requestOrganizationVerificationAction("org-1");
+      expect(res).toEqual({ error: "Forbidden. Insufficient permissions." });
+    });
+
+    it("should return error if organization is not found", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "org-1", role: "organization", name: "Org 1" },
+        expires: "date",
+      });
+      mockSelect.mockResolvedValueOnce([]); // Org not found
+      const res = await requestOrganizationVerificationAction("org-1");
+      expect(res).toEqual({ error: "Organization not found." });
+    });
+
+    it("should submit verification request and dispatch email successfully", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "org-1", role: "organization", name: "Org 1" },
+        expires: "date",
+      });
+      mockSelect
+        .mockResolvedValueOnce([{ id: "org-1", name: "Alpha Kennels", email: "alpha@kennel.ro", role: "organization", organizationCategory: "dog_kennel" }])
+        .mockResolvedValueOnce([{ id: "dog_kennel", name: "Dog Kennel" }]);
+      mockUpdate.mockResolvedValueOnce([{ id: "org-1" }]);
+
+      const res = await requestOrganizationVerificationAction("org-1", "CUI RO9999");
+      expect(res.success).toBe(true);
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "stefan.wrabeli@gmail.com",
+          subject: expect.stringContaining("Alpha Kennels"),
+        })
+      );
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account/verification");
+    });
+
+    it("should allow backoffice admin to update verification status", async () => {
+      vi.mocked(auth).mockResolvedValueOnce({
+        user: { id: "admin-1", role: "admin", name: "Admin" },
+        expires: "date",
+      });
+      mockUpdate.mockResolvedValueOnce([{ id: "org-1" }]);
+
+      const res = await updateOrganizationVerificationStatusAction("org-1", "verified");
+      expect(res.success).toBe(true);
+      expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account/verification");
     });
   });
 });

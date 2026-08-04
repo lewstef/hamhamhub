@@ -142,6 +142,19 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
     setDeleteSubmitted(false);
   };
 
+  const openDeleteCategoryModal = (id: string) => {
+    setDeleteCategoryTargetId(id);
+    setDeleteCategorySubmitted(false);
+    setDeleteCategoryModalKey((prev) => prev + 1);
+    setShowDeleteCategoryConfirm(true);
+  };
+
+  const closeDeleteCategoryModal = () => {
+    setShowDeleteCategoryConfirm(false);
+    setDeleteCategoryTargetId(null);
+    setDeleteCategorySubmitted(false);
+  };
+
   // Close form on successful creation
   useEffect(() => {
     if (state?.success) {

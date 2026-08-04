@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { ChevronDown } from "lucide-react";
+import { SelectMenu, SelectMenuItem } from "./select-menu";
 
 /** Pre-computed list of 30-minute interval time strings (00:00 to 23:30). */
 const TIME_OPTIONS_30MIN: string[] = Array.from({ length: 48 }, (_, i) => {
@@ -171,35 +172,29 @@ export function TimePickerSelect({
       </div>
 
       {isOpen && options.length > 0 && (
-        <div className="absolute top-full left-0 mt-1 w-full min-w-[110px] max-h-[155px] overflow-y-auto custom-scrollbar bg-popover border border-border shadow-md rounded-md py-1 z-50 animate-in fade-in-50 zoom-in-95">
+        <SelectMenu minWidthClass="min-w-[110px]" maxHeightClass="max-h-[155px]">
           {options.map((time, idx) => {
             const isHighlighted = idx === highlightedIndex;
             const isSelected = time === value;
             return (
-              <button
+              <SelectMenuItem
                 key={time}
                 ref={(el) => {
                   optionRefs.current[idx] = el;
                 }}
-                type="button"
+                label={time}
+                isSelected={isSelected}
+                isHighlighted={isHighlighted}
+                fontClass="font-mono"
                 onMouseEnter={() => setHighlightedIndex(idx)}
-                className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors ${
-                  isHighlighted
-                    ? "bg-accent text-accent-foreground font-bold"
-                    : isSelected
-                    ? "bg-accent/60 font-bold text-primary"
-                    : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                }`}
                 onClick={() => {
                   onChange(time);
                   setIsOpen(false);
                 }}
-              >
-                {time}
-              </button>
+              />
             );
           })}
-        </div>
+        </SelectMenu>
       )}
     </div>
   );

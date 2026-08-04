@@ -20,6 +20,13 @@ import { OrgBillingTab } from "./org-form/org-billing-tab";
 import { OrgSecurityTab } from "./org-form/org-security-tab";
 import { OrgSubscriptionTab } from "./org-form/org-subscription-tab";
 import { OrgServicesTab } from "./org-form/org-services-tab";
+import { OrgVerificationTab } from "./org-form/org-verification-tab";
+import { OrgEditNameCategoryModal } from "./org-form/modals/org-edit-name-category-modal";
+import { OrgEditContactModal } from "./org-form/modals/org-edit-contact-modal";
+import { OrgEditAddressModal } from "./org-form/modals/org-edit-address-modal";
+import { OrgEditBillingModal } from "./org-form/modals/org-edit-billing-modal";
+import { OrgEditPasswordModal } from "./org-form/modals/org-edit-password-modal";
+import { OrgEditDescriptionModal } from "./org-form/modals/org-edit-description-modal";
 
 interface Organization {
   id: string;
@@ -77,7 +84,7 @@ interface EditOrganizationFormProps {
   organization: Organization;
   organizationCategoryList: OrganizationCategory[];
   servicesList?: Service[];
-  activeTabProp?: "personal" | "account" | "subscription" | "services" | "billing";
+  activeTabProp?: "personal" | "account" | "subscription" | "services" | "billing" | "verification";
 }
 
 
@@ -700,6 +707,7 @@ export function EditOrganizationForm({
           { id: "personal", label: "Information", path: "information" },
           { id: "billing", label: "Billing", path: "billing" },
           { id: "account", label: "Security", path: "security" },
+          { id: "verification", label: "Verification", path: "verification" },
           { id: "subscription", label: "Subscription", path: "subscription" },
           ...(isDashboard ? [] : [{ id: "services", label: "Services", path: "services" }]),
         ].map((tab) => {
@@ -782,6 +790,14 @@ export function EditOrganizationForm({
         />
       )}
 
+      {activeTab === "verification" && (
+        <OrgVerificationTab
+          organization={organization}
+          organizationCategoryList={organizationCategoryList}
+          isBackoffice={!isDashboard}
+        />
+      )}
+
       {activeTab === "subscription" && (
         <OrgSubscriptionTab />
       )}
@@ -811,1339 +827,134 @@ export function EditOrganizationForm({
         </div>
       )}
 
-      {/* POPUP 1: Edit Name (Identity) */}
-      {showNameModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <User className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Name</CardTitle>
-                <CardDescription className="text-xs">Update your organization's official profile name.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-              <input type="hidden" name="phoneNumber" value={organization.phoneNumber || ""} />
-              <input type="hidden" name="addressCountry" value={organization.addressCountry || ""} />
-              <input type="hidden" name="addressState" value={organization.addressState || ""} />
-              <input type="hidden" name="addressCity" value={organization.addressCity || ""} />
-              <input type="hidden" name="addressLine" value={organization.addressLine || ""} />
-              <input type="hidden" name="addressZip" value={organization.addressZip || ""} />
+      {/* MODAL POPUPS DELEGATION */}
+      <OrgEditNameCategoryModal
+        showNameModal={showNameModal}
+        showCategoryModal={showCategoryModal}
+        onCloseModal={closeModal}
+        setShowNameModal={setShowNameModal}
+        setShowCategoryModal={setShowCategoryModal}
+        onCloseAllModals={closeAllModals}
+        organization={organization}
+        organizationCategoryList={organizationCategoryList}
+        personalAction={personalAction}
+        personalError={personalError}
+        isPending={isPending}
+      />
 
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Organization Name
-                    </Label>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="name"
-                        name="name"
-                        type="text"
-                        defaultValue={organization.name}
-                        required
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowNameModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
+      <OrgEditAddressModal
+        showAddressModal={showAddressModal}
+        onCloseModal={closeModal}
+        setShowAddressModal={setShowAddressModal}
+        onCloseAllModals={closeAllModals}
+        organization={organization}
+        personalAction={personalAction}
+        personalError={personalError}
+        isPending={isPending}
+        countyDropdownRef={countyDropdownRef}
+        editCounty={editCounty}
+        setEditCounty={setEditCounty}
+        countySearch={countySearch}
+        setCountySearch={setCountySearch}
+        showCountyDropdown={showCountyDropdown}
+        setShowCountyDropdown={setShowCountyDropdown}
+        filteredCounties={filteredCounties}
+        countyHighlightIndex={countyHighlightIndex}
+        setCountyHighlightIndex={setCountyHighlightIndex}
+        selectCounty={selectCounty}
+        handleCountyKeyDown={handleCountyKeyDown}
+        localityDropdownRef={localityDropdownRef}
+        localityInputRef={localityInputRef}
+        editLocality={editLocality}
+        setEditLocality={setEditLocality}
+        localitySearch={localitySearch}
+        setLocalitySearch={setLocalitySearch}
+        showLocalityDropdown={showLocalityDropdown}
+        setShowLocalityDropdown={setShowLocalityDropdown}
+        filteredLocalities={filteredLocalities}
+        localityHighlightIndex={localityHighlightIndex}
+        setLocalityHighlightIndex={setLocalityHighlightIndex}
+        handleLocalityKeyDown={handleLocalityKeyDown}
+      />
 
-      {/* POPUP 1.5: Edit Category */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Settings className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Category</CardTitle>
-                <CardDescription className="text-xs">Update organization Operational Category classification.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="phoneNumber" value={organization.phoneNumber || ""} />
-              <input type="hidden" name="addressCountry" value={organization.addressCountry || ""} />
-              <input type="hidden" name="addressState" value={organization.addressState || ""} />
-              <input type="hidden" name="addressCity" value={organization.addressCity || ""} />
-              <input type="hidden" name="addressLine" value={organization.addressLine || ""} />
-              <input type="hidden" name="addressZip" value={organization.addressZip || ""} />
+      <OrgEditContactModal
+        showPhoneModal={showPhoneModal}
+        showWebsiteModal={showWebsiteModal}
+        showFacebookModal={showFacebookModal}
+        showInstagramModal={showInstagramModal}
+        showTikTokModal={showTikTokModal}
+        showLinkedinModal={showLinkedinModal}
+        onCloseModal={closeModal}
+        setShowPhoneModal={setShowPhoneModal}
+        setShowWebsiteModal={setShowWebsiteModal}
+        setShowFacebookModal={setShowFacebookModal}
+        setShowInstagramModal={setShowInstagramModal}
+        setShowTikTokModal={setShowTikTokModal}
+        setShowLinkedinModal={setShowLinkedinModal}
+        onCloseAllModals={closeAllModals}
+        organization={organization}
+        personalAction={personalAction}
+        personalError={personalError}
+        isPending={isPending}
+        phonePlaceholder={phonePlaceholder}
+        phonePatternInfo={phonePatternInfo}
+        selectedCountry={selectedCountry}
+      />
 
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="organizationCategory" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Organization Category
-                    </Label>
-                    <CustomSelect
-                      id="organizationCategory"
-                      name="organizationCategory"
-                      defaultValue={organization.organizationCategory || ""}
-                      required
-                      options={organizationCategoryList.map((t) => ({
-                        value: t.id,
-                        label: t.name,
-                      }))}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowCategoryModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
+      <OrgEditBillingModal
+        showBillingModal={showBillingModal}
+        showPrimaryContactModal={showPrimaryContactModal}
+        showSecondaryContactModal={showSecondaryContactModal}
+        onCloseModal={closeModal}
+        setShowBillingModal={setShowBillingModal}
+        setShowPrimaryContactModal={setShowPrimaryContactModal}
+        setShowSecondaryContactModal={setShowSecondaryContactModal}
+        onCloseAllModals={closeAllModals}
+        organization={organization}
+        personalAction={personalAction}
+        personalError={personalError}
+        isPending={isPending}
+        bankDropdownRef={bankDropdownRef}
+        editBank={editBank}
+        setEditBank={setEditBank}
+        bankSearch={bankSearch}
+        setBankSearch={setBankSearch}
+        showBankDropdown={showBankDropdown}
+        setShowBankDropdown={setShowBankDropdown}
+        filteredBanks={filteredBanks}
+        bankHighlightIndex={bankHighlightIndex}
+        setBankHighlightIndex={setBankHighlightIndex}
+        handleBankKeyDown={handleBankKeyDown}
+      />
 
-      {/* POPUP 2: Edit Address */}
-      {/* POPUP 4: Edit Address Details */}
-      {showAddressModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-2xl shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <MapPin className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Address Details</CardTitle>
-                <CardDescription className="text-xs">Update your organization's physical billing coordinates.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-              <input type="hidden" name="phoneNumber" value={organization.phoneNumber || ""} />
-              <input type="hidden" name="addressCountry" value="Romania" />
+      <OrgEditPasswordModal
+        showEmailModal={showEmailModal}
+        showRecoveryEmailModal={showRecoveryEmailModal}
+        showPasswordModal={showPasswordModal}
+        onCloseModal={closeModal}
+        setShowEmailModal={setShowEmailModal}
+        setShowRecoveryEmailModal={setShowRecoveryEmailModal}
+        setShowPasswordModal={setShowPasswordModal}
+        onCloseAllModals={closeAllModals}
+        organization={organization}
+        accountAction={accountAction}
+        accountError={accountError}
+        isPending={isPending}
+        isDashboard={isDashboard}
+      />
 
-              <CardContent className="p-6 space-y-4 bg-muted/5">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                 <div className="space-y-4">
-                  {/* County & Locality */}
-                  <div className="grid gap-4 grid-cols-2">
-                    {/* County Search Select */}
-                    <div className="space-y-1.5 relative" ref={countyDropdownRef}>
-                      <input type="hidden" name="addressState" value={editCounty} />
-                      <Label htmlFor="addressState" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        County <span className="text-destructive font-semibold">*</span>
-                      </Label>
-                      <div className="relative">
-                        <Map className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                        <Input
-                          id="addressState"
-                          type="text"
-                          value={countySearch}
-                          onChange={(e) => {
-                            setCountySearch(e.target.value);
-                            setEditCounty(e.target.value);
-                            setShowCountyDropdown(true);
-                          }}
-                          onFocus={() => setShowCountyDropdown(true)}
-                          onKeyDown={handleCountyKeyDown}
-                          placeholder="Search county..."
-                          required
-                          className="pl-9 pr-10 focus-visible:ring-primary/20"
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                          {countySearch && (
-                            <button
-                              type="button"
-                              aria-label="Clear county selection"
-                              onClick={() => {
-                                setCountySearch("");
-                                setEditCounty("");
-                                setLocalitySearch("");
-                                setEditLocality("");
-                                setShowCountyDropdown(false);
-                              }}
-                              className="text-muted-foreground/60 hover:text-foreground/90 transition-colors p-0.5"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          )}
-                          <ChevronDown className="size-4 text-muted-foreground/60 pointer-events-none" />
-                        </div>
-                      </div>
-
-                      {showCountyDropdown && filteredCounties.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
-                          {filteredCounties.map((c, index) => (
-                            <button
-                              key={c}
-                              type="button"
-                              onClick={() => selectCounty(c)}
-                              onMouseEnter={() => setCountyHighlightIndex(index)}
-                              className={`w-full text-left px-3 py-2.5 text-sm rounded-lg transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0 ${
-                                countyHighlightIndex === index
-                                  ? "bg-accent text-accent-foreground"
-                                  : "text-popover-foreground hover:bg-accent/80 hover:text-accent-foreground"
-                              }`}
-                            >
-                              <span>{c}</span>
-                              {editCounty === c && <Check className="size-4 text-primary" />}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Locality Search Select */}
-                    <div className="space-y-1.5 relative" ref={localityDropdownRef}>
-                      <input type="hidden" name="addressCity" value={editLocality} />
-                      <Label htmlFor="addressCity" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        Locality <span className="text-destructive font-semibold">*</span>
-                      </Label>
-                      <div className="relative">
-                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                        <Input
-                          id="addressCity"
-                          ref={localityInputRef}
-                          type="text"
-                          value={localitySearch}
-                          disabled={!editCounty}
-                          onChange={(e) => {
-                            setLocalitySearch(e.target.value);
-                            setEditLocality(e.target.value);
-                            setShowLocalityDropdown(true);
-                          }}
-                          onFocus={() => {
-                            if (editCounty) setShowLocalityDropdown(true);
-                          }}
-                          onKeyDown={handleLocalityKeyDown}
-                          placeholder={editCounty ? "Search locality..." : "Select county first..."}
-                          required
-                          className="pl-9 pr-10 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                          {localitySearch && (
-                            <button
-                              type="button"
-                              aria-label="Clear locality selection"
-                              onClick={() => {
-                                setLocalitySearch("");
-                                setEditLocality("");
-                                setShowLocalityDropdown(false);
-                              }}
-                              className="text-muted-foreground/60 hover:text-foreground/90 transition-colors p-0.5"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          )}
-                          <ChevronDown className="size-4 text-muted-foreground/60 pointer-events-none" />
-                        </div>
-                      </div>
-
-                      {showLocalityDropdown && editCounty && filteredLocalities.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
-                          {filteredLocalities.map((loc, index) => (
-                            <button
-                              key={loc}
-                              type="button"
-                              onClick={() => {
-                                setEditLocality(loc);
-                                setLocalitySearch(loc);
-                                setShowLocalityDropdown(false);
-                              }}
-                              onMouseEnter={() => setLocalityHighlightIndex(index)}
-                              className={`w-full text-left px-3 py-2.5 text-sm rounded-lg transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0 ${
-                                localityHighlightIndex === index
-                                  ? "bg-accent text-accent-foreground"
-                                  : "text-popover-foreground hover:bg-accent/80 hover:text-accent-foreground"
-                              }`}
-                            >
-                              <span>{loc}</span>
-                              {editLocality === loc && <Check className="size-4 text-primary" />}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Street Address */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="addressLine" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Street Address <span className="text-destructive font-semibold">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Home className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="addressLine"
-                        name="addressLine"
-                        type="text"
-                        defaultValue={organization.addressLine || ""}
-                        placeholder="123 Main Street, Suite 100"
-                        required
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Zip Code */}
-                  <div className="grid gap-4 grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="addressZip" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        Zip code
-                      </Label>
-                      <div className="relative">
-                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                        <Input
-                          id="addressZip"
-                          name="addressZip"
-                          type="text"
-                          defaultValue={organization.addressZip || ""}
-                          placeholder="12345"
-                          className="pl-9 focus-visible:ring-primary/20"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowAddressModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 3: Edit Phone Number */}
-      {showPhoneModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Phone className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Phone Number</CardTitle>
-                <CardDescription className="text-xs">Update organization main primary phone contact.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-              <input type="hidden" name="addressCountry" value={organization.addressCountry || ""} />
-              <input type="hidden" name="addressState" value={organization.addressState || ""} />
-              <input type="hidden" name="addressCity" value={organization.addressCity || ""} />
-              <input type="hidden" name="addressLine" value={organization.addressLine || ""} />
-              <input type="hidden" name="addressZip" value={organization.addressZip || ""} />
-
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phoneNumber" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Phone
-                    </Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        type="text"
-                        defaultValue={organization.phoneNumber || ""}
-                        placeholder={phonePlaceholder}
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                    {phonePatternInfo && (
-                      <p className="text-[10px] text-muted-foreground mt-1.5">
-                        Expected format for {selectedCountry}: <span className="font-mono text-foreground font-semibold">{phonePatternInfo.placeholder}</span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowPhoneModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 3.5: Edit Website */}
-      {showWebsiteModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Globe className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Website</CardTitle>
-                <CardDescription className="text-xs">Update organization official website URL address.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-              <input type="hidden" name="phoneNumber" value={organization.phoneNumber || ""} />
-              <input type="hidden" name="description" value={organization.description || ""} />
-
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="website" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Website
-                    </Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="website"
-                        name="website"
-                        type="url"
-                        defaultValue={organization.website || ""}
-                        placeholder="https://example.com"
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      (e.g., https://example.com)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowWebsiteModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 3.6: Edit Facebook */}
-      {showFacebookModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Globe className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Facebook Page</CardTitle>
-                <CardDescription className="text-xs">Update organization official Facebook URL.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="facebook" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Facebook URL
-                    </Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="facebook"
-                        name="facebook"
-                        type="url"
-                        defaultValue={organization.facebook || ""}
-                        placeholder="https://facebook.com/yourpage"
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      (e.g., https://facebook.com/yourpage)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowFacebookModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 3.7: Edit Instagram */}
-      {showInstagramModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Globe className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Instagram Profile</CardTitle>
-                <CardDescription className="text-xs">Update organization official Instagram URL.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="instagram" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Instagram URL
-                    </Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="instagram"
-                        name="instagram"
-                        type="url"
-                        defaultValue={organization.instagram || ""}
-                        placeholder="https://instagram.com/yourpage"
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      (e.g., https://instagram.com/yourpage)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowInstagramModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 3.8: Edit TikTok */}
-      {showTikTokModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Globe className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit TikTok Profile</CardTitle>
-                <CardDescription className="text-xs">Update organization official TikTok URL.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="tiktok" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      TikTok URL
-                    </Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="tiktok"
-                        name="tiktok"
-                        type="url"
-                        defaultValue={organization.tiktok || ""}
-                        placeholder="https://tiktok.com/@yourpage"
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      (e.g., https://tiktok.com/@yourpage)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowTikTokModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 3.9: Edit LinkedIn */}
-      {showLinkedinModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Globe className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit LinkedIn Page</CardTitle>
-                <CardDescription className="text-xs">Update organization official LinkedIn URL.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="linkedin" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      LinkedIn URL
-                    </Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="linkedin"
-                        name="linkedin"
-                        type="url"
-                        defaultValue={organization.linkedin || ""}
-                        placeholder="https://linkedin.com/in/yourprofile"
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1.5">
-                      (e.g., https://linkedin.com/in/yourprofile)
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowLinkedinModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 4: Edit Email */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Mail className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Email</CardTitle>
-                <CardDescription className="text-xs">Modify login email credentials.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={accountAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="recoveryEmail" value={organization.recoveryEmail || ""} />
-              <CardContent className="p-6 space-y-4">
-                {accountError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {accountError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Email Address
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        defaultValue={organization.email || ""}
-                        required
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowEmailModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 4.5: Edit Recovery Email */}
-      {showRecoveryEmailModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Shield className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Recovery Email</CardTitle>
-                <CardDescription className="text-xs">Modify account backup recovery contact mail.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={accountAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="email" value={organization.email || ""} />
-              <CardContent className="p-6 space-y-4">
-                {accountError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {accountError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="recoveryEmail" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Recovery email
-                    </Label>
-                    <div className="relative">
-                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="recoveryEmail"
-                        name="recoveryEmail"
-                        type="email"
-                        defaultValue={organization.recoveryEmail || ""}
-                        placeholder="backup@example.com"
-                        className="pl-9 focus-visible:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowRecoveryEmailModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 5: Edit Password */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Lock className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Change Password</CardTitle>
-                <CardDescription className="text-xs">Set a new operational access password for safety.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={accountAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="email" value={organization.email || ""} />
-              <input type="hidden" name="recoveryEmail" value={organization.recoveryEmail || ""} />
-
-              <CardContent className="p-6 space-y-4">
-                {accountError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {accountError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  {isDashboard && (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="currentPassword" className="text-sm font-medium normal-case text-muted-foreground/80">
-                        Current Password
-                      </Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                        <Input
-                          id="currentPassword"
-                          name="currentPassword"
-                          type="password"
-                          placeholder="••••••••"
-                          required
-                          className="pl-9 focus-visible:ring-primary/20"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      New Password
-                    </Label>
-                    <div className="relative">
-                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        required
-                        value={passwordVal}
-                        onChange={(e) => setPasswordVal(e.target.value)}
-                        className="pl-9 pr-10 focus-visible:ring-primary/20"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none cursor-pointer"
-                      >
-                        {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                      </button>
-                    </div>
-                    <PasswordStrength password={passwordVal} />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Confirm Password
-                    </Label>
-                    <div className="relative">
-                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        required
-                        value={confirmPasswordVal}
-                        onChange={(e) => setConfirmPasswordVal(e.target.value)}
-                        className="pl-9 pr-10 focus-visible:ring-primary/20"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none cursor-pointer"
-                      >
-                        {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                      </button>
-                    </div>
-                    {passwordVal !== "" && confirmPasswordVal !== "" && !passwordsMatch && (
-                      <p className="text-xs font-medium text-destructive mt-1">Passwords do not match.</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowPasswordModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPasswordSubmitDisabled}>
-                    {isPending ? "Saving..." : "Change Password"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-      {/* POPUP 6: Edit Billing Details */}
-      {showBillingModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-md shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Building className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Company details</CardTitle>
-                <CardDescription className="text-xs">Update your organization billing details used on invoices.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-
-              <CardContent className="p-6 space-y-4">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingCompanyName" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Company name <span className="text-destructive font-semibold">*</span>
-                    </Label>
-                    <Input
-                      id="billingCompanyName"
-                      name="billingCompanyName"
-                      type="text"
-                      key={organization.billingCompanyName || ""}
-                      defaultValue={organization.billingCompanyName || ""}
-                      required
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingTaxId" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Tax ID <span className="text-destructive font-semibold">*</span>
-                    </Label>
-                    <Input
-                      id="billingTaxId"
-                      name="billingTaxId"
-                      type="text"
-                      key={organization.billingTaxId || ""}
-                      defaultValue={organization.billingTaxId || ""}
-                      required
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingTradeRegistryNumber" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Trade Registry Number <span className="text-destructive font-semibold">*</span>
-                    </Label>
-                    <Input
-                      id="billingTradeRegistryNumber"
-                      name="billingTradeRegistryNumber"
-                      type="text"
-                      key={organization.billingTradeRegistryNumber || ""}
-                      defaultValue={organization.billingTradeRegistryNumber || ""}
-                      placeholder="J40/1234/2020"
-                      required
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingEuid" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      EUID <span className="text-destructive font-semibold">*</span>
-                    </Label>
-                    <Input
-                      id="billingEuid"
-                      name="billingEuid"
-                      type="text"
-                      key={organization.billingEuid || ""}
-                      defaultValue={organization.billingEuid || ""}
-                      required
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-
-                  {/* Bank select with suggestions */}
-                  <div className="space-y-1.5 relative" ref={bankDropdownRef}>
-                    <Label htmlFor="billingBankName" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Bank
-                    </Label>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
-                      <Input
-                        id="billingBankName"
-                        name="billingBankName"
-                        type="text"
-                        value={bankSearch}
-                        onChange={(e) => {
-                          setBankSearch(e.target.value);
-                          setEditBank(e.target.value);
-                          setShowBankDropdown(true);
-                        }}
-                        onFocus={() => setShowBankDropdown(true)}
-                        onKeyDown={handleBankKeyDown}
-                        placeholder="Search or select bank..."
-                        className="pl-9 pr-10 focus-visible:ring-primary/20"
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                        {bankSearch && (
-                          <button
-                            type="button"
-                            aria-label="Clear bank selection"
-                            onClick={() => {
-                              setBankSearch("");
-                              setEditBank("");
-                              setShowBankDropdown(false);
-                            }}
-                            className="text-muted-foreground/60 hover:text-foreground/90 transition-colors p-0.5"
-                          >
-                            <X className="size-3.5" />
-                          </button>
-                        )}
-                        <ChevronDown className="size-4 text-muted-foreground/60 pointer-events-none" />
-                      </div>
-                    </div>
-
-                    {showBankDropdown && filteredBanks.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1.5 bg-popover border border-border/80 rounded-xl shadow-2xl max-h-48 overflow-y-auto animate-in fade-in-50 slide-in-from-top-2 duration-200 p-1.5 backdrop-blur-md">
-                        {filteredBanks.map((b, index) => (
-                          <button
-                            key={b}
-                            type="button"
-                            onClick={() => {
-                              setEditBank(b);
-                              setBankSearch(b);
-                              setShowBankDropdown(false);
-                            }}
-                            onMouseEnter={() => setBankHighlightIndex(index)}
-                            className={`w-full text-left px-3 py-2.5 text-sm rounded-lg transition-all duration-150 focus:outline-none flex items-center justify-between font-medium cursor-pointer mb-0.5 last:mb-0 ${
-                              bankHighlightIndex === index
-                                ? "bg-accent text-accent-foreground"
-                                : "text-popover-foreground hover:bg-accent/80 hover:text-accent-foreground"
-                            }`}
-                          >
-                            <span>{b}</span>
-                            {editBank === b && <Check className="size-4 text-primary" />}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingBankAccountNumber" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Bank Account Number
-                    </Label>
-                    <Input
-                      id="billingBankAccountNumber"
-                      name="billingBankAccountNumber"
-                      type="text"
-                      key={organization.billingBankAccountNumber || ""}
-                      defaultValue={organization.billingBankAccountNumber || ""}
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowBillingModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 7: Edit Primary Contact Details */}
-      {showPrimaryContactModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-lg shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <User className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Primary Contact</CardTitle>
-                <CardDescription className="text-xs">Update your organization's primary contact details.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-
-              <CardContent className="p-6 space-y-6">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingContactName" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Name <span className="text-destructive font-semibold">*</span>
-                    </Label>
-                    <Input
-                      id="billingContactName"
-                      name="billingContactName"
-                      type="text"
-                      key={organization.billingContactName || ""}
-                      defaultValue={organization.billingContactName || ""}
-                      required
-                      placeholder="e.g. Jane Doe"
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingContactPhone" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Phone <span className="text-destructive font-semibold">*</span>
-                    </Label>
-                    <Input
-                      id="billingContactPhone"
-                      name="billingContactPhone"
-                      type="text"
-                      key={organization.billingContactPhone || ""}
-                      defaultValue={organization.billingContactPhone || ""}
-                      required
-                      placeholder="0723456789"
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingContactEmail" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Email <span className="text-destructive font-semibold">*</span>
-                    </Label>
-                    <Input
-                      id="billingContactEmail"
-                      name="billingContactEmail"
-                      type="email"
-                      key={organization.billingContactEmail || ""}
-                      defaultValue={organization.billingContactEmail || ""}
-                      required
-                      placeholder="jane@organization.org"
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowPrimaryContactModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 8: Edit Secondary Contact Details */}
-      {showSecondaryContactModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-lg shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <User className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Secondary Contact</CardTitle>
-                <CardDescription className="text-xs">Update your organization's secondary contact details (optional).</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-
-              <CardContent className="p-6 space-y-6">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingSecondaryContactName" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Name
-                    </Label>
-                    <Input
-                      id="billingSecondaryContactName"
-                      name="billingSecondaryContactName"
-                      type="text"
-                      key={organization.billingSecondaryContactName || ""}
-                      defaultValue={organization.billingSecondaryContactName || ""}
-                      placeholder="e.g. John Smith"
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingSecondaryContactPhone" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Phone
-                    </Label>
-                    <Input
-                      id="billingSecondaryContactPhone"
-                      name="billingSecondaryContactPhone"
-                      type="text"
-                      key={organization.billingSecondaryContactPhone || ""}
-                      defaultValue={organization.billingSecondaryContactPhone || ""}
-                      placeholder="0723456789"
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="billingSecondaryContactEmail" className="text-sm font-medium normal-case text-muted-foreground/80">
-                      Email
-                    </Label>
-                    <Input
-                      id="billingSecondaryContactEmail"
-                      name="billingSecondaryContactEmail"
-                      type="email"
-                      key={organization.billingSecondaryContactEmail || ""}
-                      defaultValue={organization.billingSecondaryContactEmail || ""}
-                      placeholder="john@organization.org"
-                      className="focus-visible:ring-primary/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowSecondaryContactModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
-
-      {/* POPUP 9: Edit Description Details */}
-      {showDescriptionModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) closeAllModals(); }}>
-          <Card className="w-full max-w-2xl shadow-2xl relative border border-border animate-in fade-in zoom-in-95 duration-200">
-            <CardHeader className="border-b border-border pb-4 flex flex-row items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Settings className="size-5" />
-              </div>
-              <div className="flex flex-col">
-                <CardTitle className="text-base font-semibold">Edit Description</CardTitle>
-                <CardDescription className="text-xs">Update your organization's public rich-text profile description.</CardDescription>
-              </div>
-            </CardHeader>
-            <form action={personalAction}>
-              <input type="hidden" name="id" value={organization.id} />
-              <input type="hidden" name="name" value={organization.name} />
-              <input type="hidden" name="organizationCategory" value={organization.organizationCategory || ""} />
-              <input type="hidden" name="description" value={editDescription} />
-
-              <CardContent className="p-6 space-y-6">
-                {personalError && (
-                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {personalError}
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium normal-case text-muted-foreground/80">
-                    Description
-                  </Label>
-                  <WysiwygEditor
-                    value={editDescription}
-                    onChange={setEditDescription}
-                    placeholder="Provide a detailed description of your organization, services, and operations..."
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                  <Button type="button" variant="outline" onClick={() => closeModal(setShowDescriptionModal)} disabled={isPending}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-      )}
+      <OrgEditDescriptionModal
+        showDescriptionModal={showDescriptionModal}
+        onCloseModal={closeModal}
+        setShowDescriptionModal={setShowDescriptionModal}
+        onCloseAllModals={closeAllModals}
+        organization={organization}
+        personalAction={personalAction}
+        personalError={personalError}
+        isPending={isPending}
+        editDescription={editDescription}
+        setEditDescription={setEditDescription}
+      />
     </div>
   );
 }

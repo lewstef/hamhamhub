@@ -15,6 +15,12 @@ import { TimePickerSelect, getCheckinOptions, getCheckoutOptions } from "@/compo
 import { CustomSelect } from "@/components/ui/custom-select";
 import { DatePickerInput, parseDateString } from "@/components/ui/date-picker-input";
 import { getCartiereForCity, ROMANIAN_CITY_CARTIERE } from "@/config/romanian-cartiere";
+import { CourseGeneralTab } from "./course-form/course-general-tab";
+import { CoursePricingTab } from "./course-form/course-pricing-tab";
+import { CourseScheduleTab } from "./course-form/course-schedule-tab";
+import { CourseCareTab } from "./course-form/course-care-tab";
+import { CourseLocationTab } from "./course-form/course-location-tab";
+import { CourseFaqTab } from "./course-form/course-faq-tab";
 
 export function getComparableTimestamp(dateStr: string): number | null {
   const parsed = parseDateString(dateStr);
@@ -1647,6 +1653,7 @@ function ScheduleTabContent({
 // ============================================================
 
 interface CareAmenitiesSectionProps {
+  isDogWalking?: boolean;
   dailyWalks: number;
   onDailyWalksChange: (v: number) => void;
   medicationAdministration: boolean;
@@ -1676,6 +1683,7 @@ interface CareAmenitiesSectionProps {
  * "Care & Facilities" card.
  */
 function CareAmenitiesSection({
+  isDogWalking = false,
   dailyWalks,
   onDailyWalksChange,
   medicationAdministration,
@@ -1715,17 +1723,27 @@ function CareAmenitiesSection({
       <div className="h-px bg-border/60" />
 
       <BooleanToggleField
-        label="Medication Administration"
-        description="Can you administer medication or medical care?"
+        label={isDogWalking ? "Key Access & Home Entry Protocol" : "Medication Administration"}
+        description={
+          isDogWalking
+            ? "Specify home entry instructions (lockbox codes, key pickup, concierge, alarm codes)."
+            : "Can you administer medication or medical care?"
+        }
         checked={medicationAdministration}
         onChange={onMedicationAdministrationChange}
       >
         <div className="space-y-2">
-          <Label>Medication Administration Instructions</Label>
+          <Label>
+            {isDogWalking ? "Home Access & Key Handling Instructions" : "Medication Administration Instructions"}
+          </Label>
           <WysiwygEditor
             value={medicationAdministrationDetails}
             onChange={onMedicationAdministrationDetailsChange}
-            placeholder="e.g. oral tablets, injections, schedule limitations"
+            placeholder={
+              isDogWalking
+                ? "e.g. Lockbox code 1234 on side gate, concierge key handoff, alarm disarm code 5678, key drop-off in mailbox"
+                : "e.g. oral tablets, injections, schedule limitations"
+            }
           />
         </div>
       </BooleanToggleField>
@@ -1733,53 +1751,73 @@ function CareAmenitiesSection({
       <div className="h-px bg-border/60" />
 
       <BooleanToggleField
-        label="Webcam"
-        description="Do you offer live video/webcam access to owners?"
-        checked={webCam}
-        onChange={onWebCamChange}
-      >
-        <div className="space-y-2">
-          <Label>Webcam Access Instructions</Label>
-          <WysiwygEditor
-            value={webCamDetails}
-            onChange={onWebCamDetailsChange}
-            placeholder="e.g. live stream link provided upon check-in, 24/7 access"
-          />
-        </div>
-      </BooleanToggleField>
-
-      <div className="h-px bg-border/60" />
-
-      <BooleanToggleField
-        label="Communication with the Owner"
-        description="Will you provide regular photo/video updates to the owner?"
-        checked={ownerCommunication}
-        onChange={onOwnerCommunicationChange}
-      >
-        <div className="space-y-2">
-          <Label>Communication Updates Details</Label>
-          <WysiwygEditor
-            value={ownerCommunicationDetails}
-            onChange={onOwnerCommunicationDetailsChange}
-            placeholder="e.g. daily photos via WhatsApp, weekly email progress"
-          />
-        </div>
-      </BooleanToggleField>
-
-      <div className="h-px bg-border/60" />
-
-      <BooleanToggleField
-        label="Personalized Meal Plan"
-        description="Can you provide a customized meal plan or accommodate special diets?"
+        label={isDogWalking ? "Post-Walk Feeding & Treat Customization" : "Personalized Meal Plan"}
+        description={
+          isDogWalking
+            ? "Can you feed or provide custom treats to the dog after the walk?"
+            : "Can you provide a customized meal plan or accommodate special diets?"
+        }
         checked={personalizedMealPlan}
         onChange={onPersonalizedMealPlanChange}
       >
         <div className="space-y-2">
-          <Label>Meal Plan Details</Label>
+          <Label>{isDogWalking ? "Post-Walk Feeding Instructions" : "Meal Plan Details"}</Label>
           <WysiwygEditor
             value={personalizedMealPlanDetails}
             onChange={onPersonalizedMealPlanDetailsChange}
-            placeholder="e.g. BARF diet support, raw food storage, customized portions"
+            placeholder={
+              isDogWalking
+                ? "e.g. Post-walk kibble feeding, custom treat administration, dietary restriction adherence"
+                : "e.g. BARF diet support, raw food storage, customized portions"
+            }
+          />
+        </div>
+      </BooleanToggleField>
+
+      {!isDogWalking && (
+        <>
+          <div className="h-px bg-border/60" />
+
+          <BooleanToggleField
+            label="Webcam"
+            description="Do you offer live video/webcam access to owners?"
+            checked={webCam}
+            onChange={onWebCamChange}
+          >
+            <div className="space-y-2">
+              <Label>Webcam Access Instructions</Label>
+              <WysiwygEditor
+                value={webCamDetails}
+                onChange={onWebCamDetailsChange}
+                placeholder="e.g. live stream link provided upon check-in, 24/7 access"
+              />
+            </div>
+          </BooleanToggleField>
+        </>
+      )}
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label={isDogWalking ? "GPS Route Tracking & Post-Walk Reports" : "Communication with the Owner"}
+        description={
+          isDogWalking
+            ? "Will you provide live GPS route tracking, walk photos, potty status, and post-walk summaries?"
+            : "Will you provide regular photo/video updates to the owner?"
+        }
+        checked={ownerCommunication}
+        onChange={onOwnerCommunicationChange}
+      >
+        <div className="space-y-2">
+          <Label>{isDogWalking ? "GPS & Walk Report Details" : "Communication Updates Details"}</Label>
+          <WysiwygEditor
+            value={ownerCommunicationDetails}
+            onChange={onOwnerCommunicationDetailsChange}
+            placeholder={
+              isDogWalking
+                ? "e.g. Photo & video update sent after walk, potty status tracking (pee/poop), fresh water refill, paw wipe on rainy days"
+                : "e.g. daily photos via WhatsApp, weekly email progress"
+            }
           />
         </div>
       </BooleanToggleField>
@@ -1844,6 +1882,8 @@ export function CourseForm({
   const isDogTraining = serviceSlug === "dog-training" || itemNoun === "Course";
   const isDogWalking = serviceSlug === "dog-walking" || itemNoun === "Walking service";
   const isTabbedLayout = isDogSport || isDogTraining || isBoarding || isDogWalking;
+  const cityName = orgCity || "Cluj-Napoca";
+  const cartiereList = getCartiereForCity(cityName);
   const [activeTab, setActiveTab] = useState<"general" | "terms" | "faq" | "pricing" | "schedule" | "location" | "others">("general");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -1859,6 +1899,12 @@ export function CourseForm({
       ? initialCourse.ageLimits.split(",").map((s) => s.trim()).filter(Boolean)
       : []
   );
+
+  const handleToggleAgeLimit = (limit: string) => {
+    setSelectedAgeLimits((prev) =>
+      prev.includes(limit) ? prev.filter((a) => a !== limit) : [...prev, limit]
+    );
+  };
   const [dedicatedField, setDedicatedField] = useState(initialCourse?.dedicatedField || false);
   const [trainingFieldDescription, setTrainingFieldDescription] = useState(initialCourse?.trainingFieldDescription || "");
   const [trainingFieldAddress, setTrainingFieldAddress] = useState(initialCourse?.trainingFieldAddress || "");
@@ -2514,46 +2560,24 @@ export function CourseForm({
         <div className="space-y-6 min-h-[400px]">
           {/* TAB 1: GENERAL */}
           {activeTab === "general" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="space-y-2">
-                <Label htmlFor="course-name">{itemNoun} Name</Label>
-                <Input
-                  id="course-name"
-                  type="text"
-                  placeholder={
-                    isBoarding
-                      ? "e.g. Standard Room, VIP Cabin"
-                      : "e.g. Agility, IGP, Obedience"
-                  }
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="bg-card text-base font-semibold"
-                  required
-                />
-              </div>
-
-              {!isBoarding && (
-                <TrainerAttributesCard
-                  itemNoun={itemNoun}
-                  certifiedTrainer={certifiedTrainer}
-                  onCertifiedTrainerChange={setCertifiedTrainer}
-                  certifierName={certifierName}
-                  onCertifierNameChange={setCertifierName}
-                  trainerExperienceDescription={trainerExperienceDescription}
-                  onTrainerExperienceDescriptionChange={setTrainerExperienceDescription}
-                />
-              )}
-
-              {/* Information & Details Editor */}
-              <div className="space-y-2">
-                <Label>{itemNoun} Information and Details</Label>
-                <WysiwygEditor
-                  value={details}
-                  onChange={setDetails}
-                  placeholder="What does the program include? Explain course objectives, discipline details..."
-                />
-              </div>
-            </div>
+            <CourseGeneralTab
+              name={name}
+              onNameChange={setName}
+              details={details}
+              onDetailsChange={setDetails}
+              certifiedTrainer={certifiedTrainer}
+              onCertifiedTrainerChange={setCertifiedTrainer}
+              certifierName={certifierName}
+              onCertifierNameChange={setCertifierName}
+              trainerExperienceDescription={trainerExperienceDescription}
+              onTrainerExperienceDescriptionChange={setTrainerExperienceDescription}
+              ageLimitsEnabled={ageLimitsEnabled}
+              onAgeLimitsEnabledChange={setAgeLimitsEnabled}
+              selectedAgeLimits={selectedAgeLimits}
+              onToggleAgeLimit={handleToggleAgeLimit}
+              itemNoun={itemNoun}
+              isDogWalking={isDogWalking}
+            />
           )}
 
           {/* TAB 2: TERMS OF PARTICIPATION */}
@@ -2586,7 +2610,7 @@ export function CourseForm({
           {/* TAB 3: PRICING */}
           {activeTab === "pricing" && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <PricingSection
+              <CoursePricingTab
                 itemNoun={itemNoun}
                 isBoarding={isBoarding}
                 isGrooming={isGrooming}
@@ -2594,13 +2618,14 @@ export function CourseForm({
                 onAdd={handleAddPriceTier}
                 onUpdate={handleUpdatePriceTier}
                 onRemove={requestRemovePriceTier}
+                isDogWalking={isDogWalking}
               />
             </div>
           )}
 
           {/* TAB 4: SCHEDULE */}
           {activeTab === "schedule" && (
-            <ScheduleTabContent
+            <CourseScheduleTab
               isDogSport={isDogSport}
               scheduleOverlapError={scheduleOverlapError}
               weeklySchedule={weeklySchedule}
@@ -2632,13 +2657,14 @@ export function CourseForm({
                       : "Provide location details, business profile, map links, and parking information for clients."}
                   </p>
                 </div>
-                <LocationSection
+                <CourseLocationTab
                   layout="tabbed"
                   isBoarding={isBoarding}
                   isDogWalking={isDogWalking}
-                  orgCity={orgCity}
+                  cityName={cityName}
+                  cartiereList={cartiereList}
                   selectedCartiere={coverageData.primary}
-                  onCartiereChange={handlePrimaryCartiereChange}
+                  onSelectedCartiereChange={handlePrimaryCartiereChange}
                   secondaryZones={coverageData.secondary}
                   onAddSecondaryZone={handleAddSecondaryZone}
                   onRemoveSecondaryZone={requestRemoveSecondaryZone}
@@ -2667,7 +2693,7 @@ export function CourseForm({
 
           {/* TAB 6: FAQ */}
           {activeTab === "faq" && (
-            <FaqSection
+            <CourseFaqTab
               itemNoun={itemNoun}
               faqs={faqs}
               onAdd={handleAddFaq}
@@ -2686,7 +2712,8 @@ export function CourseForm({
                     Configure specialized boarding amenities, webcam access, meal customization, and owner updates.
                   </p>
                 </div>
-                <CareAmenitiesSection
+                <CourseCareTab
+                  isDogWalking={isDogWalking}
                   dailyWalks={dailyWalks}
                   onDailyWalksChange={setDailyWalks}
                   medicationAdministration={medicationAdministration}
@@ -2867,6 +2894,7 @@ export function CourseForm({
                   Care &amp; Facilities
                 </h3>
                 <CareAmenitiesSection
+                  isDogWalking={isDogWalking}
                   dailyWalks={dailyWalks}
                   onDailyWalksChange={setDailyWalks}
                   medicationAdministration={medicationAdministration}

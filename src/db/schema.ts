@@ -46,6 +46,9 @@ export const users = pgTable("users", {
   billingSecondaryContactPhone: text("billing_secondary_contact_phone"),
   billingSecondaryContactEmail: text("billing_secondary_contact_email"),
   description: text("description"),
+  verificationStatus: text("verification_status").$type<"unverified" | "pending" | "verified">().default("unverified").notNull(),
+  verificationRequestedAt: timestamp("verification_requested_at"),
+  verificationNotes: text("verification_notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

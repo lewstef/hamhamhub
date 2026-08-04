@@ -6,34 +6,10 @@ import { db } from "@/db";
 import { systemSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendMail } from "@/lib/email";
+import { sendTestEmailSchema } from "@/lib/validations/system";
 
 /**
  * Server Action to update SMTP configuration settings.
- *
- * Checks administrator authorization session before validating and updating SMTP host, port, security, credentials, and sender options in the database.
- *
- * @param {any} prevState - Previous action state object containing success status or error message.
- * @param {FormData} formData - The FormData object submitted by the client.
- * @param {string} formData.smtpHost - The SMTP server host domain/address (required).
- * @param {string} formData.smtpPort - The SMTP server connection port number (required).
- * @param {string} formData.smtpSecurity - Transport security protocol: "TLS", "SSL", or "None" (required).
- * @param {string} [formData.smtpUsername] - Optional SMTP authentication username/email address.
- * @param {string} [formData.smtpPassword] - Optional SMTP authentication password/app token.
- * @param {string} formData.senderName - The display name for outgoing emails (required).
- * @param {string} formData.senderEmail - The sender email address for outgoing emails (required).
- *
- * @returns {Promise<{ success?: boolean; error?: string }>}
- * - Returns `{ success: true }` upon successfully saving the SMTP configuration settings.
- * - Returns `{ error: string }` if unauthorized, input is invalid, or server operation fails.
- *
- * @sideEffects
- * - Revalidates path `/backoffice/system/smtp` on successful update.
- *
- * @redirects
- * - None. Returns action status object.
- *
- * @securityGuards
- * - Ensures active session exists and user has role `"admin"`.
  */
 export async function updateSmtpConfigAction(
   prevState: any,
@@ -120,25 +96,6 @@ export async function updateSmtpConfigAction(
 
 /**
  * Server Action to dispatch a test email using current SMTP configuration settings.
- *
- * Checks administrator authorization before validating recipient email address and triggering a test connection via Nodemailer.
- *
- * @param {any} prevState - Previous action state object containing success status or error message.
- * @param {FormData} formData - The FormData object submitted by the client.
- * @param {string} formData.testRecipientEmail - Target email address to send test email to (required).
- *
- * @returns {Promise<{ success?: boolean; error?: string }>}
- * - Returns `{ success: true }` upon successfully verifying SMTP connection and sending test email.
- * - Returns `{ error: string }` if unauthorized, email address is invalid, or connection test fails.
- *
- * @sideEffects
- * - Dispatches a test email via `sendMail()`.
- *
- * @redirects
- * - None. Returns action status object.
- *
- * @securityGuards
- * - Ensures active session exists and user has role `"admin"`.
  */
 export async function sendTestEmailAction(
   prevState: any,
@@ -153,12 +110,13 @@ export async function sendTestEmailAction(
 
     const testRecipientEmail = (formData.get("testRecipientEmail") as string)?.trim();
 
-    if (!testRecipientEmail || !testRecipientEmail.includes("@")) {
+    const parsed = sendTestEmailSchema.safeParse({ recipientEmail: testRecipientEmail });
+    if (!parsed.success) {
       return { error: "A valid target recipient email address is required for test emails." };
     }
 
     const result = await sendMail({
-      to: testRecipientEmail,
+      to: parsed.data.recipientEmail,
       subject: "HamHamHub SMTP Verification Test",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">

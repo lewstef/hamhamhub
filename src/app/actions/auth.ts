@@ -7,52 +7,51 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { isValidEmail } from "@/lib/validation";
+import { signUpSchema, loginSchema, updateUserThemeSchema } from "@/lib/validations/auth";
 
 /**
  * Registers a new user or staff account.
- *
- * User registration (roleType !== "staff"):
- * @param formData.name     - Display name (required)
- * @param formData.email    - Unique login email (required, validated format)
- * @param formData.password - Min 6 characters (required)
- * @param formData.roleType - Must be absent or any value other than "staff" to register as user
- *
- * Staff registration (roleType === "staff"):
- * @param formData.name     - Display name (required)
- * @param formData.username - Unique username (required)
- * @param formData.password - Min 6 characters (required)
- * @param formData.role     - "employee" | "admin" (required)
- * @param formData.roleType - Must be "staff"
- *
- * @returns `{ success: true }` on successful registration
- * @returns `{ error: string }` on validation failure or duplicate email/username
+ * Uses Zod `signUpSchema` for structured input validation.
  */
 export async function signUpAction(prevState: unknown, formData: FormData) {
-  const name = formData.get("name") as string;
-  const password = formData.get("password") as string;
   const roleType = formData.get("roleType") as string; // "user" or "staff"
 
   if (roleType === "staff") {
     return { error: "Staff registration is disabled" };
   }
 
-  if (!name || !password) {
+  const rawName = formData.get("name") as string;
+  const rawPassword = formData.get("password") as string;
+  const rawEmail = formData.get("email") as string;
+
+  if (!rawName || !rawPassword) {
     return { error: "Name and password are required" };
   }
 
-  if (password.length < 6) {
+  if (rawPassword.length < 6) {
     return { error: "Password must be at least 6 characters" };
   }
 
+  if (!rawEmail || !isValidEmail(rawEmail)) {
+    return { error: "Please enter a valid email address." };
+  }
+
+  const parsed = signUpSchema.safeParse({
+    name: rawName,
+    email: rawEmail,
+    password: rawPassword,
+    confirmPassword: rawPassword,
+    type: "user",
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "Validation error" };
+  }
+
+  const { name, email, password } = parsed.data;
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Standard User registration
-    const email = formData.get("email") as string;
-
-    if (!email || !isValidEmail(email)) {
-      return { error: "Please enter a valid email address." };
-    }
 
     // Check if email exists
     const [existingEmail] = await db
@@ -82,15 +81,7 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
 
 /**
  * Authenticates a user or staff member via NextAuth Credentials provider.
- * Enforces email format with valid TLD for user/organization logins.
- *
- * @param formData.identifier - Email address (for users/organizations) or username (for staff)
- * @param formData.password   - Account password (required)
- * @param formData.loginType  - "user" redirects to /dashboard; "staff" redirects to /backoffice
- *
- * @returns `{ error: string }` on invalid credentials, missing fields, or invalid email format for user login
- * @returns Never returns on success — issues a server-side `redirect()` to the target path.
- * @throws Re-throws Next.js NEXT_REDIRECT errors so the framework can handle navigation.
+ * Uses Zod `loginSchema` for structured input validation.
  */
 export async function loginAction(prevState: unknown, formData: FormData) {
   const identifier = formData.get("identifier") as string; // Email or Username
@@ -99,6 +90,16 @@ export async function loginAction(prevState: unknown, formData: FormData) {
 
   if (!identifier || !password) {
     return { error: "All fields are required" };
+  }
+
+  const parsed = loginSchema.safeParse({
+    identifier,
+    password,
+    type: loginType === "staff" ? "staff" : "user",
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message || "All fields are required" };
   }
 
   if (loginType === "user" && !isValidEmail(identifier)) {
@@ -110,8 +111,8 @@ export async function loginAction(prevState: unknown, formData: FormData) {
   try {
     // Use redirect: false to prevent NextAuth from auto-redirecting to pages.signIn on error
     const redirectUrl = await signIn("credentials", {
-      identifier,
-      password,
+      identifier: parsed.data.identifier,
+      password: parsed.data.password,
       redirectTo: successRedirectTo,
       redirect: false,
     });
@@ -144,12 +145,7 @@ export async function loginAction(prevState: unknown, formData: FormData) {
 
 /**
  * Persists the authenticated user's preferred UI theme to the database.
- * Requires an active session — returns an error if the user is not logged in.
- *
- * @param theme - "light" | "dark"
- *
- * @returns `{ success: true }` on successful update
- * @returns `{ error: string }` if unauthenticated, theme value is invalid, or DB update fails
+ * Uses Zod `updateUserThemeSchema` for structured validation.
  */
 export async function updateUserThemeAction(theme: "light" | "dark") {
   const session = await auth();
@@ -157,15 +153,20 @@ export async function updateUserThemeAction(theme: "light" | "dark") {
     return { error: "Not authenticated" };
   }
 
-  if (theme !== "light" && theme !== "dark") {
+  const parsed = updateUserThemeSchema.safeParse({
+    userId: session.user.id,
+    theme,
+  });
+
+  if (!parsed.success) {
     return { error: "Invalid theme" };
   }
 
   try {
     await db
       .update(users)
-      .set({ theme })
-      .where(eq(users.id, session.user.id));
+      .set({ theme: parsed.data.theme })
+      .where(eq(users.id, parsed.data.userId));
     return { success: true };
   } catch (error) {
     console.error("Failed to update user theme:", error);

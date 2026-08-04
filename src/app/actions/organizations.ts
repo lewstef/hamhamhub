@@ -10,6 +10,7 @@ import { auth } from "@/auth";
 import { isValidEmail, isValidRomanianPhone, isValidUrl } from "@/lib/validation";
 import { sendMail } from "@/lib/email";
 import { isCitySupported } from "@/config/romanian-cartiere";
+import { organizationCategorySchema } from "@/lib/validations/organizations";
 
 /**
  * Returns all organization categories from the database.
@@ -48,7 +49,9 @@ export async function getOrganizationCategories() {
 export async function createOrganizationCategoryAction(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
-  if (!name || name.trim() === "") {
+
+  const parsed = organizationCategorySchema.safeParse({ name });
+  if (!parsed.success) {
     return { error: "Organization category name is required." };
   }
 
@@ -861,5 +864,159 @@ export async function requestNewCartierAction({
   } catch (error) {
     console.error("Failed to process new cartier request email:", error);
     return { error: "A apărut o eroare la trimiterea solicitării. Vă rugăm să încercați din nou." };
+  }
+}
+
+/**
+ * Submits a Category Verification request for an organization.
+ * Updates `users.verificationStatus` to 'pending' in the database and dispatches an HTML email
+ * notification to `stefan.wrabeli@gmail.com` detailing contact and category parameters.
+ *
+ * @param {string} organizationId - The unique database UUID identifier of the organization.
+ * @param {string} [notes] - Optional accreditation message or details provided by the organization.
+ *
+ * @returns {Promise<{ success?: boolean; message?: string; error?: string }>} Response object.
+ * @sideEffect Updates `verificationStatus`, `verificationRequestedAt`, and `verificationNotes` in database.
+ * @sideEffect Dispatches notification email to `stefan.wrabeli@gmail.com`.
+ * @sideEffect Revalidates `/dashboard/account/verification` and `/backoffice/organizations/verification/[id]`.
+ * @securityGuard Ensures user is authenticated and authorized (admin/employee or owning organization).
+ */
+export async function requestOrganizationVerificationAction(organizationId: string, notes?: string) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { error: "Unauthenticated. Please log in." };
+    }
+
+    // Security check: Only staff (admin/employee) or the organization itself can submit verification
+    if (session.user.role === "user") {
+      return { error: "Forbidden. Insufficient permissions." };
+    }
+    if (session.user.role === "organization" && session.user.id !== organizationId) {
+      return { error: "Forbidden. You can only request verification for your own organization." };
+    }
+
+    const [org] = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, organizationId), eq(users.role, "organization")))
+      .limit(1);
+
+    if (!org) {
+      return { error: "Organization not found." };
+    }
+
+    const cleanNotes = notes?.trim() || "";
+    const requestedAt = new Date();
+
+    await db
+      .update(users)
+      .set({
+        verificationStatus: "pending",
+        verificationRequestedAt: requestedAt,
+        verificationNotes: cleanNotes,
+      })
+      .where(eq(users.id, organizationId));
+
+    // Get category name
+    let categoryName = org.organizationCategory || "General";
+    if (org.organizationCategory) {
+      const [cat] = await db
+        .select()
+        .from(organizationCategories)
+        .where(eq(organizationCategories.id, org.organizationCategory))
+        .limit(1);
+      if (cat) categoryName = cat.name;
+    }
+
+    const emailRes = await sendMail({
+      to: "stefan.wrabeli@gmail.com",
+      subject: `[HamHamHub] Verification Request: ${org.name} (${categoryName})`,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; max-w: 600px; color: #1e293b;">
+          <h2 style="color: #2563eb; margin-top: 0; display: flex; align-items: center; gap: 8px;">
+            🛡️ Solicitare Verificare Categorie Organizație
+          </h2>
+          <p>Organizația <strong>${org.name}</strong> a trimis o solicitare de verificare pentru categoria <strong>${categoryName}</strong>.</p>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+          <h3 style="font-size: 14px; text-transform: uppercase; color: #64748b; margin-bottom: 8px;">Detalii Contact Organizație</h3>
+          <ul style="line-height: 1.6; padding-left: 20px; margin-top: 0;">
+            <li><strong>Nume Organizație:</strong> ${org.name}</li>
+            <li><strong>ID Organizație:</strong> <code>${org.id}</code></li>
+            <li><strong>Categorie:</strong> ${categoryName} (<code>${org.organizationCategory || "—"}</code>)</li>
+            <li><strong>Email:</strong> <a href="mailto:${org.email}">${org.email}</a></li>
+            <li><strong>Telefon:</strong> ${org.phoneNumber ? `<a href="tel:${org.phoneNumber}">${org.phoneNumber}</a>` : "—"}</li>
+            <li><strong>Oraș / Adresă:</strong> ${org.addressCity || org.address || "—"}</li>
+            <li><strong>Data Solicitării:</strong> ${requestedAt.toLocaleString()}</li>
+            ${cleanNotes ? `<li><strong>Observații Solicitant:</strong> <blockquote style="background: #f8fafc; padding: 10px; border-left: 3px solid #2563eb; margin: 8px 0;">${cleanNotes}</blockquote></li>` : ""}
+          </ul>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+          <p style="font-size: 13px; color: #64748b;">Puteți revizui această organizație în panoul Backoffice.</p>
+        </div>
+      `,
+    });
+
+    if (emailRes && "error" in emailRes) {
+      console.error("Verification email failed:", emailRes.error);
+    }
+
+    revalidatePath("/dashboard/account/verification");
+    revalidatePath(`/backoffice/organizations/verification/${organizationId}`);
+
+    return {
+      success: true,
+      message: "Verification request submitted successfully. Our team will review your application soon.",
+    };
+  } catch (error) {
+    console.error("Failed to process organization verification request:", error);
+    return { error: "An error occurred while submitting your verification request. Please try again." };
+  }
+}
+
+/**
+ * Updates an organization's Category Verification status (unverified, pending, or verified).
+ * Callable by backoffice administrative personnel.
+ *
+ * @param {string} organizationId - Target organization database ID.
+ * @param {"unverified" | "pending" | "verified"} status - Target verification status.
+ *
+ * @returns {Promise<{ success?: boolean; message?: string; error?: string }>}
+ * @sideEffect Updates `users.verificationStatus` in database.
+ * @sideEffect Revalidates organization routes.
+ * @securityGuard Enforces backoffice admin/employee authorization.
+ */
+export async function updateOrganizationVerificationStatusAction(
+  organizationId: string,
+  status: "unverified" | "pending" | "verified"
+) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { error: "Unauthenticated. Please log in." };
+    }
+
+    // Security check: Only backoffice staff (admin/employee) can alter verification status
+    if (session.user.role !== "admin" && session.user.role !== "employee") {
+      return { error: "Forbidden. Only backoffice staff can alter verification status." };
+    }
+
+    await db
+      .update(users)
+      .set({
+        verificationStatus: status,
+      })
+      .where(and(eq(users.id, organizationId), eq(users.role, "organization")));
+
+    revalidatePath("/dashboard/account/verification");
+    revalidatePath(`/backoffice/organizations/verification/${organizationId}`);
+    revalidatePath(`/backoffice/organizations/information/${organizationId}`);
+
+    return {
+      success: true,
+      message: `Organization verification status updated to '${status}'.`,
+    };
+  } catch (error) {
+    console.error("Failed to update organization verification status:", error);
+    return { error: "Failed to update verification status. Please try again." };
   }
 }

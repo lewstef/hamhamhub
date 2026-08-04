@@ -34,6 +34,9 @@ export interface Organization {
   billingSecondaryContactName?: string | null;
   billingSecondaryContactPhone?: string | null;
   billingSecondaryContactEmail?: string | null;
+  verificationStatus?: "unverified" | "pending" | "verified" | null;
+  verificationRequestedAt?: Date | string | null;
+  verificationNotes?: string | null;
 }
 
 export interface OrganizationCategory {
@@ -54,5 +57,5 @@ export interface EditOrganizationFormProps {
   organization: Organization;
   organizationCategoryList: OrganizationCategory[];
   servicesList?: Service[];
-  activeTabProp?: "personal" | "account" | "subscription" | "services" | "billing";
+  activeTabProp?: "personal" | "account" | "subscription" | "services" | "billing" | "verification";
 }

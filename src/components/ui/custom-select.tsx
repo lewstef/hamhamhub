@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, Check, Search, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { SelectMenu, SelectMenuItem } from "./select-menu";
 
 export interface CustomSelectOption {
   value: string | number;
@@ -278,7 +279,7 @@ export function CustomSelect({
 
       {/* Popover Dropdown Menu */}
       {isOpen && !disabled && formattedOptions.length > 0 && (
-        <div className="absolute top-full left-0 mt-1 w-full min-w-[140px] max-h-56 overflow-y-auto custom-scrollbar bg-popover border border-border shadow-md rounded-md py-1 z-50 animate-in fade-in-50 zoom-in-95">
+        <SelectMenu>
           {searchable && (
             <div className="px-2 py-1.5 border-b border-border bg-popover sticky top-0 z-10">
               <div className="relative flex items-center">
@@ -314,26 +315,18 @@ export function CustomSelect({
               const isHighlighted = idx === highlightedIndex;
 
               return (
-                <button
+                <SelectMenuItem
                   key={String(opt.value)}
                   ref={(el) => {
                     optionRefs.current[idx] = el;
                   }}
-                  type="button"
+                  label={opt.label}
+                  isSelected={isSelected}
+                  isHighlighted={isHighlighted}
                   disabled={opt.disabled}
                   onMouseEnter={() => setHighlightedIndex(idx)}
-                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isHighlighted
-                      ? "bg-accent text-accent-foreground"
-                      : isSelected
-                      ? "bg-accent/60 text-primary"
-                      : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
                   onClick={() => handleSelect(String(opt.value))}
-                >
-                  <span className="truncate">{opt.label}</span>
-                  {isSelected && <Check className="size-3.5 text-primary shrink-0 ml-2" />}
-                </button>
+                />
               );
             })
           ) : (
@@ -341,7 +334,7 @@ export function CustomSelect({
               No matching options found
             </div>
           )}
-        </div>
+        </SelectMenu>
       )}
     </div>
   );
