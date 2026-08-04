@@ -19,6 +19,8 @@ vi.mock("lucide-react", () => ({
   MapPin: () => <div data-testid="map-pin" />,
   Calendar: () => <div data-testid="calendar" />,
   FileCheck: () => <div data-testid="file-check" />,
+  X: () => <div data-testid="x-icon" />,
+  CheckCircle2: () => <div data-testid="check-circle2" />,
 }));
 
 vi.mock("@/db", () => ({
@@ -33,6 +35,10 @@ vi.mock("@/db", () => ({
 vi.mock("@/app/actions/courses", () => ({
   createCourseAction: vi.fn(),
   updateCourseAction: vi.fn(),
+}));
+
+vi.mock("@/app/actions/organizations", () => ({
+  requestNewCartierAction: vi.fn(),
 }));
 
 vi.mock("@/components/wysiwyg-editor", () => ({
@@ -96,7 +102,7 @@ describe("CourseForm Component", () => {
     expect(screen.getByRole("button", { name: "Terms of participation" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Pricing" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Schedule" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Location" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Coverage zones" })).toBeDefined();
     expect(screen.getByRole("button", { name: "FAQ" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Others" })).toBeNull();
 
@@ -123,8 +129,8 @@ describe("CourseForm Component", () => {
     expect(screen.getAllByText("Schedule")[1]).toBeDefined();
     expect(screen.getByText("Copy Mon to Mon–Fri")).toBeDefined();
 
-    // Switch to Location tab (contains Address, GBP, Maps, Dedicated Training Field, and Dedicated Parking)
-    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    // Switch to Coverage zones tab (contains Address, GBP, Maps, Dedicated Training Field, and Dedicated Parking)
+    fireEvent.click(screen.getByRole("button", { name: "Coverage zones" }));
     expect(screen.getByText("Location & Map Details")).toBeDefined();
     expect(screen.getByLabelText("Address")).toBeDefined();
     expect(screen.getByLabelText("Google Business Profile")).toBeDefined();
@@ -208,8 +214,8 @@ describe("CourseForm Component", () => {
     // Training fields should not be present
     expect(screen.queryByText("Certified Dog Trainer")).toBeNull();
     expect(screen.queryByText("Dedicated Training Field")).toBeNull();
-    // Parking is facility-related, should remain in Location tab
-    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    // Parking is facility-related, should remain in Coverage zones tab
+    fireEvent.click(screen.getByRole("button", { name: "Coverage zones" }));
     expect(screen.getByText("Parking")).toBeDefined();
   });
 
@@ -511,8 +517,8 @@ describe("CourseForm Component", () => {
 
     expect(screen.getByLabelText("Certifier Name")).toBeDefined();
 
-    // Toggle Dedicated Field (in Location tab)
-    const locationTab = screen.getByText("Location");
+    // Toggle Dedicated Field (in Coverage zones tab)
+    const locationTab = screen.getByRole("button", { name: "Coverage zones" });
     await act(async () => {
       fireEvent.click(locationTab);
     });
@@ -787,8 +793,8 @@ describe("CourseForm Component", () => {
     const certifierInput = screen.getByLabelText("Certifier Name");
     fireEvent.change(certifierInput, { target: { value: "FCI World Body" } });
 
-    // 2. Location Tab: Fill Address and Maps links
-    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    // 2. Coverage zones Tab: Fill Address and Maps links
+    fireEvent.click(screen.getByRole("button", { name: "Coverage zones" }));
     const addressInput = screen.getByLabelText("Address");
     fireEvent.change(addressInput, { target: { value: "Str. Canine 15, Cluj" } });
 
@@ -842,8 +848,8 @@ describe("CourseForm Component", () => {
     const nameInput = screen.getByLabelText("Dog Sport Name") as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: "IGP Tracking" } });
 
-    // Fill Location tab
-    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    // Fill Coverage zones tab
+    fireEvent.click(screen.getByRole("button", { name: "Coverage zones" }));
     const addressInput = screen.getByLabelText("Address") as HTMLInputElement;
     fireEvent.change(addressInput, { target: { value: "Timisoara Field 4" } });
 
@@ -855,8 +861,8 @@ describe("CourseForm Component", () => {
     fireEvent.click(screen.getByRole("button", { name: "General" }));
     expect((screen.getByLabelText("Dog Sport Name") as HTMLInputElement).value).toBe("IGP Tracking");
 
-    // Navigate back to Location tab — Address should be preserved
-    fireEvent.click(screen.getByRole("button", { name: "Location" }));
+    // Navigate back to Coverage zones tab — Address should be preserved
+    fireEvent.click(screen.getByRole("button", { name: "Coverage zones" }));
     expect((screen.getByLabelText("Address") as HTMLInputElement).value).toBe("Timisoara Field 4");
   });
 

@@ -3,15 +3,17 @@
 import React, { useState, useEffect, useTransition, useMemo, useRef } from "react";
 import type { Course } from "@/types/course";
 import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
+import { requestNewCartierAction } from "@/app/actions/organizations";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
-import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck, Sliders } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Plus, Trash2, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck, Sliders, X, CheckCircle2 } from "lucide-react";
 import { TimePickerSelect, getCheckinOptions, getCheckoutOptions } from "@/components/ui/time-picker-select";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { DatePickerInput, parseDateString } from "@/components/ui/date-picker-input";
+import { getCartiereForCity } from "@/config/romanian-cartiere";
 
 export function getComparableTimestamp(dateStr: string): number | null {
   const parsed = parseDateString(dateStr);
@@ -384,6 +386,10 @@ interface LocationSectionProps {
    */
   layout: "tabbed" | "flat";
   isBoarding?: boolean;
+  isDogWalking?: boolean;
+  orgCity?: string;
+  selectedCartiere?: string[];
+  onCartiereChange?: (zones: string[]) => void;
   hideDedicatedField?: boolean;
   hideParking?: boolean;
   dedicatedField: boolean;
@@ -409,6 +415,10 @@ interface LocationSectionProps {
 function LocationSection({
   layout,
   isBoarding,
+  isDogWalking = false,
+  orgCity = "",
+  selectedCartiere = [],
+  onCartiereChange,
   hideDedicatedField = false,
   hideParking = false,
   dedicatedField,
@@ -426,41 +436,337 @@ function LocationSection({
   parkingDescription,
   onParkingDescriptionChange,
 }: LocationSectionProps) {
+  const cityName = orgCity?.trim() || "Cluj-Napoca";
+  const cartiereList = isDogWalking ? getCartiereForCity(cityName) : null;
+
+  const [isRequestCartierOpen, setIsRequestCartierOpen] = useState(false);
+  const [newCartierName, setNewCartierName] = useState("");
+  const [newCartierNotes, setNewCartierNotes] = useState("");
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [requestSuccessMsg, setRequestSuccessMsg] = useState<string | null>(null);
+  const [requestErrorMsg, setRequestErrorMsg] = useState<string | null>(null);
+
+  const [inlineSuccessBanner, setInlineSuccessBanner] = useState<string | null>(null);
+
+  const handleSendCartierRequest = async (e?: React.FormEvent | React.KeyboardEvent) => {
+    if (e) e.preventDefault();
+    if (!newCartierName.trim()) return;
+
+    setIsSubmittingRequest(true);
+    setRequestErrorMsg(null);
+    setRequestSuccessMsg(null);
+
+    const res = await requestNewCartierAction({
+      cityName,
+      cartierName: newCartierName.trim(),
+      notes: newCartierNotes.trim(),
+    });
+
+    setIsSubmittingRequest(false);
+    if ("error" in res) {
+      setRequestErrorMsg(res.error);
+    } else {
+      setRequestSuccessMsg(res.message);
+      setInlineSuccessBanner(res.message);
+      setNewCartierName("");
+      setNewCartierNotes("");
+    }
+  };
+
   const locationInputs = (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="training-field-address" className="text-xs font-semibold">Address</Label>
-        <Input
-          id="training-field-address"
-          type="text"
-          placeholder="e.g. 123 Canine Lane, Bucharest"
-          value={trainingFieldAddress}
-          onChange={(e) => onTrainingFieldAddressChange(e.target.value)}
-          className="h-9 bg-background text-xs font-semibold rounded-lg"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="training-field-gbp" className="text-xs font-semibold">Google Business Profile</Label>
-        <Input
-          id="training-field-gbp"
-          type="url"
-          placeholder="https://business.google.com/..."
-          value={trainingFieldGoogleBusinessProfile}
-          onChange={(e) => onGbpChange(e.target.value)}
-          className="h-9 bg-background text-xs font-semibold rounded-lg"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="training-field-maps" className="text-xs font-semibold">Google Maps Link</Label>
-        <Input
-          id="training-field-maps"
-          type="url"
-          placeholder="https://maps.google.com/..."
-          value={trainingFieldGoogleMapsLink}
-          onChange={(e) => onMapsChange(e.target.value)}
-          className="h-9 bg-background text-xs font-semibold rounded-lg"
-        />
-      </div>
+      {isDogWalking && (
+        <div className="space-y-4 pb-2">
+          {inlineSuccessBanner && (
+            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs flex items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="size-4.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <p className="font-semibold">{inlineSuccessBanner}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInlineSuccessBanner(null)}
+                className="text-emerald-700 dark:text-emerald-400 hover:opacity-75 cursor-pointer shrink-0"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold">City</Label>
+            <Input
+              type="text"
+              value={cityName}
+              readOnly
+              disabled
+              className="h-9 bg-muted/30 text-xs font-semibold rounded-lg cursor-not-allowed opacity-90"
+            />
+          </div>
+
+          {cartiereList ? (
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-xs font-bold text-foreground">Neighborhood Coverage Zones (Cartiere)</Label>
+                  <p className="text-[11px] text-muted-foreground">Configure specific neighborhoods in {cityName} where you offer dog walking services.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onCartiereChange?.([...cartiereList])}
+                    className="h-7 text-[10px] font-semibold px-2"
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onCartiereChange?.([])}
+                    className="h-7 text-[10px] font-semibold px-2"
+                  >
+                    Deselect All
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1">
+                {cartiereList.map((cartier) => {
+                  const isSelected = selectedCartiere.includes(cartier);
+                  return (
+                    <button
+                      key={cartier}
+                      type="button"
+                      onClick={() => {
+                        if (!onCartiereChange) return;
+                        if (isSelected) {
+                          onCartiereChange(selectedCartiere.filter((c) => c !== cartier));
+                        } else {
+                          onCartiereChange([...selectedCartiere, cartier]);
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all text-left ${
+                        isSelected
+                          ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                          : "bg-background border-border text-foreground hover:bg-muted/40"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}}
+                        className="size-3.5 rounded border-border text-primary focus:ring-primary/20 pointer-events-none"
+                      />
+                      <span className="truncate">{cartier}</span>
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRequestErrorMsg(null);
+                    setRequestSuccessMsg(null);
+                    setIsRequestCartierOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border border-dashed border-primary/50 text-primary hover:bg-primary/5 transition-all text-left cursor-pointer"
+                >
+                  <Plus className="size-3.5 shrink-0" />
+                  <span className="truncate">Request new Coverage zone (Cartier)</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2.5 text-amber-700 dark:text-amber-400">
+                <AlertCircle className="size-4.5 shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <p className="font-bold">Unsupported City for Neighborhood Selection</p>
+                  <p className="text-[11px] mt-0.5 opacity-90">
+                    Your city (<strong>{cityName}</strong>) is currently not in our standard neighborhood coverage dataset. A notification has been sent to our staff to add neighborhood zones for your city.
+                  </p>
+                </div>
+              </div>
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setRequestErrorMsg(null);
+                    setRequestSuccessMsg(null);
+                    setIsRequestCartierOpen(true);
+                  }}
+                  className="h-8 border-dashed text-xs font-semibold text-primary hover:text-primary gap-1.5"
+                >
+                  <Plus className="size-3.5" />
+                  Request new Coverage zone (Cartier)
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isRequestCartierOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-xl relative animate-in zoom-in-95 duration-200 space-y-4">
+            <button
+              type="button"
+              onClick={() => setIsRequestCartierOpen(false)}
+              className="absolute right-4 top-4 text-muted-foreground hover:text-foreground focus:outline-none transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
+
+            <div className="space-y-1">
+              <h3 className="text-base font-bold flex items-center gap-2 text-foreground">
+                <MapPin className="size-4 text-primary" />
+                Request new Coverage zone (Cartier)
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Can't find a neighborhood in <strong className="text-foreground">{cityName}</strong>? Request a new zone and our staff will review and add it.
+              </p>
+            </div>
+
+            {requestSuccessMsg ? (
+              <div className="space-y-4 pt-2">
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/25 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs flex items-start gap-3 shadow-xs">
+                  <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-bold text-sm text-emerald-900 dark:text-emerald-200">Request Submitted Successfully!</p>
+                    <p className="font-medium text-xs leading-relaxed">{requestSuccessMsg}</p>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setIsRequestCartierOpen(false)}
+                    className="h-8 text-xs font-semibold px-4 cursor-pointer"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 pt-1">
+                {requestErrorMsg && (
+                  <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
+                    {requestErrorMsg}
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="req-city-name" className="text-xs font-semibold">City / Localitate</Label>
+                  <Input
+                    id="req-city-name"
+                    value={cityName}
+                    disabled
+                    readOnly
+                    className="h-9 bg-muted/30 text-xs font-semibold cursor-not-allowed opacity-90"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="req-cartier-name" className="text-xs font-semibold">Neighborhood Name (Nume Cartier) *</Label>
+                  <Input
+                    id="req-cartier-name"
+                    type="text"
+                    placeholder="e.g. Mănăștur Nord, Borhanci Est"
+                    value={newCartierName}
+                    onChange={(e) => setNewCartierName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSendCartierRequest();
+                      }
+                    }}
+                    required
+                    className="h-9 text-xs font-semibold bg-background"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="req-notes" className="text-xs font-semibold">Additional Notes (Optional)</Label>
+                  <textarea
+                    id="req-notes"
+                    rows={3}
+                    placeholder="Any specific landmarks, streets, or zone boundary details..."
+                    value={newCartierNotes}
+                    onChange={(e) => setNewCartierNotes(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsRequestCartierOpen(false)}
+                    disabled={isSubmittingRequest}
+                    className="h-8 text-xs font-semibold"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleSendCartierRequest()}
+                    disabled={isSubmittingRequest || !newCartierName.trim()}
+                    className="h-8 text-xs font-semibold gap-1.5 cursor-pointer"
+                  >
+                    {isSubmittingRequest && <Loader2 className="size-3.5 animate-spin" />}
+                    Submit Request
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!isDogWalking && (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="training-field-address" className="text-xs font-semibold">Address</Label>
+            <Input
+              id="training-field-address"
+              type="text"
+              placeholder="e.g. 123 Canine Lane, Bucharest"
+              value={trainingFieldAddress}
+              onChange={(e) => onTrainingFieldAddressChange(e.target.value)}
+              className="h-9 bg-background text-xs font-semibold rounded-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="training-field-gbp" className="text-xs font-semibold">Google Business Profile</Label>
+            <Input
+              id="training-field-gbp"
+              type="url"
+              placeholder="https://business.google.com/..."
+              value={trainingFieldGoogleBusinessProfile}
+              onChange={(e) => onGbpChange(e.target.value)}
+              className="h-9 bg-background text-xs font-semibold rounded-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="training-field-maps" className="text-xs font-semibold">Google Maps Link</Label>
+            <Input
+              id="training-field-maps"
+              type="url"
+              placeholder="https://maps.google.com/..."
+              value={trainingFieldGoogleMapsLink}
+              onChange={(e) => onMapsChange(e.target.value)}
+              className="h-9 bg-background text-xs font-semibold rounded-lg"
+            />
+          </div>
+        </>
+      )}
     </>
   );
 
@@ -1329,6 +1635,7 @@ function CareAmenitiesSection({
  * @property {() => void} onSubmitSuccess - Callback triggered after successful creation or update action.
  * @property {string} [serviceSlug] - Slug of the parent service. Used to conditionally render boarding-only fields
  *   (Check-in / Check-out pickers) and hide age-limits toggle for non-training services.
+ * @property {string} [orgCity] - Optional city name of the organization, used for neighborhood coverage zone selection in Dog Walking mode.
  */
 interface CourseFormProps {
   organizationId: string;
@@ -1338,13 +1645,14 @@ interface CourseFormProps {
   onCancel: () => void;
   onSubmitSuccess: () => void;
   serviceSlug?: string;
+  orgCity?: string;
 }
 
 /**
  * CourseForm Component
  *
  * Form rendering panel for creating or editing sub-service items (Training Courses, Dog Sports, or Boarding rates).
- * Dog Sport and Dog Training services render a tabbed layout (General, Terms, Pricing, Schedule, Location, FAQ).
+ * Dog Sport and Dog Training services render a tabbed layout (General, Terms, Pricing, Schedule, Coverage zones, FAQ).
  * All other services (Boarding, Grooming, base Training) render a two-column flat layout.
  *
  * Submits data via `createCourseAction` or `updateCourseAction` Server Actions.
@@ -1360,6 +1668,7 @@ export function CourseForm({
   onCancel,
   onSubmitSuccess,
   serviceSlug,
+  orgCity,
 }: CourseFormProps) {
   const isEdit = !!initialCourse?.id;
   const isBoarding = serviceSlug === "dog-boarding" || itemNoun === "Boarding service";
@@ -1422,6 +1731,21 @@ export function CourseForm({
   const [closedPeriods, setClosedPeriods] = useState<ClosedPeriodItem[]>(() =>
     parseClosedPeriods(initialCourse?.schedule)
   );
+
+  // Cartiere Coverage Zones state (for Dog Walking)
+  const [selectedCartiere, setSelectedCartiere] = useState<string[]>(() => {
+    if (initialCourse?.coverageZones) {
+      try {
+        const parsed = JSON.parse(initialCourse.coverageZones);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        if (typeof initialCourse.coverageZones === "string") {
+          return initialCourse.coverageZones.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+      }
+    }
+    return [];
+  });
 
   // Special Openings / Extra Working Dates state
   const [specialOpenings, setSpecialOpenings] = useState<SpecialOpeningItem[]>(() =>
@@ -1727,6 +2051,7 @@ export function CourseForm({
     formData.append("ownerCommunicationDetails", ownerCommunicationDetails);
     formData.append("personalizedMealPlan", String(personalizedMealPlan));
     formData.append("personalizedMealPlanDetails", personalizedMealPlanDetails);
+    formData.append("coverageZones", JSON.stringify(selectedCartiere));
 
     for (const item of weeklySchedule) {
       if (item.enabled && item.checkin && item.checkout) {
@@ -1887,7 +2212,7 @@ export function CourseForm({
               { key: "terms" as const, label: isBoarding ? "Terms" : "Terms of participation", Icon: FileCheck, hasError: false },
               { key: "pricing" as const, label: "Pricing", Icon: DollarSign, hasError: false },
               { key: "schedule" as const, label: "Schedule", Icon: Calendar, hasError: !!scheduleOverlapError },
-              { key: "location" as const, label: "Location", Icon: MapPin, hasError: false },
+              { key: "location" as const, label: "Coverage zones", Icon: MapPin, hasError: false },
               { key: "faq" as const, label: "FAQ", Icon: HelpCircle, hasError: false },
               ...(isBoarding ? [{ key: "others" as const, label: "Care & facilities", Icon: Sliders, hasError: false }] : []),
             ]
@@ -2026,14 +2351,22 @@ export function CourseForm({
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-5">
                 <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
-                  <h3 className="text-base font-bold text-foreground">Location &amp; Map Details</h3>
+                  <h3 className="text-base font-bold text-foreground">
+                    {isDogWalking ? "Coverage zones" : "Location & Map Details"}
+                  </h3>
                   <p className="text-xs text-muted-foreground">
-                    Provide location details, business profile, map links, and parking information for clients.
+                    {isDogWalking
+                      ? "Configure specific neighborhoods and coverage zones in your city where dog walking services are provided."
+                      : "Provide location details, business profile, map links, and parking information for clients."}
                   </p>
                 </div>
                 <LocationSection
                   layout="tabbed"
                   isBoarding={isBoarding}
+                  isDogWalking={isDogWalking}
+                  orgCity={orgCity}
+                  selectedCartiere={selectedCartiere}
+                  onCartiereChange={setSelectedCartiere}
                   hideDedicatedField={isDogWalking}
                   hideParking={isDogWalking}
                   dedicatedField={dedicatedField}

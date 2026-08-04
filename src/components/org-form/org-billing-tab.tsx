@@ -24,7 +24,7 @@ export function OrgBillingTab({
   renderLinkValue,
 }: OrgBillingTabProps) {
   return (
-    <div className="space-y-6 w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start w-full">
       {/* CARD 1.2: Billing info */}
       <Card className="border border-border shadow-sm rounded-xl overflow-hidden bg-card">
         <div className="px-6 py-4.5 border-b border-border flex items-center gap-3">

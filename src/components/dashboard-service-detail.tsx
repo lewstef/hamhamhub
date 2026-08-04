@@ -141,6 +141,7 @@ interface DashboardServiceDetailProps {
   courses?: Course[];
   backHref?: string;
   backLabel?: string;
+  orgCity?: string;
 }
 
 /**
@@ -163,6 +164,7 @@ export function DashboardServiceDetail({
   courses,
   backHref = "/dashboard/services",
   backLabel = "Back to Services",
+  orgCity,
 }: DashboardServiceDetailProps) {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(initialIsEnabled);
@@ -198,11 +200,12 @@ export function DashboardServiceDetail({
     }
   }, [courses]);
 
-  const isDogTraining = service.name.toLowerCase() === "dog training";
-  const isSportDogTraining = service.name.toLowerCase() === "dog sports training";
-  const isDogBoarding = service.name.toLowerCase() === "dog boarding";
-  const isDogGrooming = service.name.toLowerCase() === "dog grooming";
-  const isDogWalking = service.name.toLowerCase() === "dog walking" || slug === "dog-walking";
+  const serviceName = service?.name?.toLowerCase() || "";
+  const isDogTraining = serviceName === "dog training";
+  const isSportDogTraining = serviceName === "dog sports training" || slug === "sport-dog-training";
+  const isDogBoarding = serviceName === "dog boarding";
+  const isDogGrooming = serviceName === "dog grooming";
+  const isDogWalking = serviceName === "dog walking" || slug === "dog-walking";
   const isDynamicCourses = isDogTraining || isSportDogTraining || isDogBoarding || isDogGrooming || isDogWalking;
   const itemNoun = isSportDogTraining
     ? "Dog Sport"
@@ -284,6 +287,7 @@ export function DashboardServiceDetail({
           itemNoun={itemNoun}
           initialCourse={editingCourse}
           serviceSlug={slug}
+          orgCity={orgCity}
           onCancel={() => {
             setIsFormOpen(false);
             setEditingCourse(undefined);

@@ -59,7 +59,7 @@ export default async function DashboardLayout({
         name: s.name,
         slug: s.serviceTypeId
           ? s.serviceTypeId.replace(/_/g, "-")
-          : s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
+          : (s.name || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
       }));
   }
 

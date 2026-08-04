@@ -34,6 +34,8 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       organizationCategory: users.organizationCategory,
       enabledServices: users.enabledServices,
       enabledCourses: users.enabledCourses,
+      addressCity: users.addressCity,
+      address: users.address,
     })
     .from(users)
     .where(eq(users.id, userId))
@@ -64,7 +66,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
     .where(eq(services.organizationCategory, organization.organizationCategory || ""));
 
   const service = allCatServices.find((s) => {
-    const sSlug = s.serviceTypeId ? s.serviceTypeId.replace(/_/g, "-") : s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+    const sSlug = s.serviceTypeId ? s.serviceTypeId.replace(/_/g, "-") : (s.name || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
     return sSlug === slug || s.serviceTypeId === dbId || s.id === slug;
   });
 
@@ -115,6 +117,8 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       .orderBy(courses.sortOrder, courses.createdAt);
   }
 
+  const orgCity = organization.addressCity?.trim() || (organization.address ? organization.address.split(",")[1]?.trim() : "") || "";
+
   return (
     <DashboardServiceDetail
       organizationId={organization.id}
@@ -124,6 +128,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       activeCourseTab={activeCourseTab}
       enabledCourseIds={enabledCourseIds}
       courses={orgCourses}
+      orgCity={orgCity}
     />
   );
 }

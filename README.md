@@ -84,7 +84,7 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
 - **Tactile Service Toggle Cards**: Replaced standard multi-select fields with a visual option grid. Users can toggle multiple services. Existing category services are displayed as checkmarked and disabled with a "Registered" indicator to prevent duplicate allocations.
 - **FAQ Accordion Builder & Display**: Interactive FAQ Q&A list builder situated underneath the Terms of Participation section in the Course Form (`CourseForm`). Renders as a clean, static, always-visible question-and-answer list (with no collapsible accordion functionality) inside expandable course detail drawers on the dynamic services settings page.
 - **Unsaved Changes Safeguard**: Checks if any input fields in the Course Configurator (`CourseForm`) are dirty. Prompts a native confirm dialog if the user clicks the "Back" button, and registers a browser `beforeunload` listener to warn the user if they attempt to reload or close the tab.
-- **Renamed Account Settings & Dedicated Billing Tab**: Renamed dashboard and backoffice settings tabs ("Account information" to "Information", "Account settings" to "Security") and extracted the organization's address parameters into a new dedicated "Billing" tab. Updated routes to `/dashboard/account/information`, `/dashboard/account/security`, `/dashboard/account/billing` for the dashboard, and `/backoffice/organizations/information/[id]`, `/backoffice/organizations/security/[id]`, `/backoffice/organizations/billing/[id]` for the backoffice.
+- **Renamed Account Settings & Dedicated Billing Tab**: Renamed dashboard and backoffice settings tabs ("Account information" to "Information", "Account settings" to "Security") and extracted the organization's address parameters into a new dedicated "Billing" tab. Updated routes to `/dashboard/account/information`, `/dashboard/account/security`, `/dashboard/account/billing` for the dashboard, and `/backoffice/organizations/information/[id]`, `/backoffice/organizations/security/[id]`, `/backoffice/organizations/billing/[id]` for the backoffice. Rendered "Billing details" and "Contact information" cards side-by-side in a responsive 2-column grid (`grid grid-cols-1 lg:grid-cols-2 gap-6`).
 - **Profile Information Updates**:
   - Added **Email** row to the Information tab page, linking to the pre-existing email edit modal.
   - Renamed **"Phone number"** row and input labels to **"Phone"**.
@@ -103,11 +103,16 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Added an **Others** tab for existing Dog Training fields that are not mapped to standard tabs (`Communication with the Owner` and `Personalized Meal Plan`), preserving all existing functionality without adding unrequested fields.
 - **Dog Grooming Sidebar Redirection**:
   - Updated active service slug resolution in `src/app/dashboard/layout.tsx` to automatically fall back to normalized service name slugs (`s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")`).
-- **Dog Walking Service Layout & Tabbed Reorganization**:
+- **Dog Walking Service Layout, Tabbed Reorganization & Cartiere Coverage Zones**:
   - Removed the static "Service Status" toggle card from the Dog Walking service view (`/dashboard/services/dog-walking`).
   - Reorganized Dog Walking form into the standardized tabbed layout (**General**, **Terms of participation**, **Pricing**, **Schedule**, **Location**, **FAQ**).
-  - Removed the "Dedicated Training Field" and "Dedicated Parking" fields/badges from the Dog Walking service while retaining address, Google Business Profile, and Google Maps inputs under the **Location** tab.
-- **Dog Sports Training MVP Subsystem**:
+  - Simplified the **Location** tab for Dog Walking services to display only the prefilled read-only City and the multi-select Neighborhood Coverage Zones (Cartiere) picker, removing Address, Google Business Profile, and Google Maps Link inputs.
+  - Added static dataset `romanian-cartiere.ts` mapping **101 Romanian cities** (Bucharest + 100 major cities) and **707 total cartiere** (neighborhoods).
+  - Built a multi-select neighborhood coverage zone picker inside the **Location** tab of `CourseForm` for Dog Walking services (`coverageZones` persisted as a JSON array on `courses`).
+  - Prefills the city from the organization's address as a read-only field.
+  - Triggers an automated notification email to `stefan.wrabeli@gmail.com` with subject `"HamHamHub - Localitate lipsa pentru servicii de plimbare caini"` if an organization updates their address with a city that is not yet in our top cities dataset.
+- **Dog Sports Training MVP Subsystem & Sidebar Label Standardization**:
+  - Standardized sidebar and service name label to **"Dog sports training"** across database services and navigation menus.
   - Renamed "Daily operating Schedule" header to "Schedule" for Dog Sport services (`/dashboard/services/sport-dog-training`).
   - Updated check-in and check-out field labels to **Start** and **End** across the Weekly Schedule, Special Openings, and summary views for Dog Sports.
   - Added per-day **Note / Schedule Remarks** text inputs to every day row in the Schedule editor, enabling trainers to attach specific session remarks (e.g. "Group sessions only", "Advance registration required").
@@ -232,7 +237,7 @@ The application UI dynamically adjusts its user-facing terminology and input set
   2. **Terms of participation Tab**: Age Limits switch & phase checkboxes (`Puppy (Up to 9 months)`, `Junior (9 to 18 months)`, `Adult (18 months to 8 years)`, `Senior (8+ years)`), Terms of Participation (WYSIWYG editor).
   3. **Pricing Tab**: Price Amount & Billing Frequency selector (`Per Night`, `Per Day`, `Per Half Day`, `Per Month`, `Per Boarding service`, etc.).
   4. **Schedule Tab**: 7-Day Daily Operating Schedule with time pickers, Closed Periods, Special Openings, and quick preset buttons (`Copy Mon to Mon–Fri` & `Copy Mon to All`).
-  5. **Location Tab**: Address, Google Business Profile link, Google Maps Link, Dedicated Training Field switch (training/sports), and Parking switch & Description.
+  5. **Coverage zones Tab**: Neighborhood coverage grid (for Dog Walking services) showing supported city cartiere (e.g. Cluj-Napoca, București) with automated request dialog for missing zones via `requestNewCartierAction`, or Address, GBP, Maps, and Dedicated Training Field/Parking switches.
   6. **FAQ Tab**: Interactive FAQ Q&A item builder with WYSIWYG answer fields.
   7. **Care & facilities Tab** (*Boarding services*): Specialized boarding care options including Daily Walks (1–4 selector), Medication Administration (WYSIWYG editor), Web Cam access (WYSIWYG editor), Owner Communication updates (WYSIWYG editor), and Personalized Meal Plans (WYSIWYG editor).
 
@@ -270,12 +275,28 @@ The `CourseForm` (`src/components/course-form.tsx`) is organized around **shared
 | :--- | :--- |
 | `DayScheduleGrid` | 7-day per-day schedule editor with time pickers, notes, and copy shortcuts. |
 | `AgeLimitsSection` | Age limits toggle + dog age phase checkboxes. |
-| `LocationSection` | Dedicated training field + address/GBP/Maps inputs + parking. Accepts `layout="tabbed" \| "flat"` to control when address fields are revealed. |
+| `LocationSection` | Dedicated training field + address/GBP/Maps inputs + parking. Accepts `layout="tabbed" \| "flat"` to control when address fields are revealed. In Dog Walking mode, renders the neighborhood coverage zone grid. |
 | `PricingSection` | Multi-tier pricing builder. Accepts `compact` for sidebar/column-2 style. |
 | `FaqSection` | FAQ Q&A builder. Accepts `compact` for inline (flat layout) vs card (tabbed layout). |
 
 #### Dirty-State Detection
 `isDirty` is computed via `useMemo`, with all initial values captured **once at mount** in a `useRef` snapshot (`iv`). This prevents unnecessary recomputation on every render and avoids the `getInitialWeeklySchedule(initialCourse)` call executing on every keystroke.
+
+---
+
+### F. Dog Walking Neighborhood Coverage (Cartiere Integration)
+
+#### Functional Overview
+- **Interactive Coverage Selection**: Dog walking providers select specific neighborhoods (*cartiere*) in their city where services are available using toggleable chips, complete with **"Select All"** and **"Deselect All"** quick action controls.
+- **Requesting New Zones**: If a provider cannot find a specific neighborhood or their city is not yet in the standard dataset, clicking **"Request new Coverage zone (Cartier)"** opens a modal overlay. Providers enter the missing neighborhood name and optional landmarks/boundary notes.
+- **Instant Admin Notification & Confirmation**: Submitting a zone request sends an automated HTML email notification directly to platform support staff (`stefan.wrabeli@gmail.com`) and displays a confirmation message: *"Request Submitted Successfully! We received your request for a new coverage zone, we will be back soon"*.
+- **Automatic Unsupported City Detection**: Updating an organization's primary address city to a non-standard municipality in `updateOrganizationAction` triggers an automated email notification alerting staff to review and populate neighborhood datasets for that city.
+
+#### Technical Architecture
+- **Dataset Configuration (`src/config/romanian-cartiere.ts`)**: Defines `ROMANIAN_CITY_CARTIERE`, a dataset covering top 40+ Romanian cities and Bucharest sectors/neighborhoods. Exposes `normalizeCityName`, `getCartiereForCity`, and `isCitySupported` utilizing diacritic-insensitive and case-insensitive string normalization (`normalize("NFD")`).
+- **Database Schema & Types (`src/db/schema.ts` & `src/types/course.ts`)**: `courses.coverageZones` stores the JSON stringified array of selected cartiere strings.
+- **Server Action (`src/app/actions/organizations.ts`)**: `requestNewCartierAction` requires an authenticated user session, validates input parameters, and dispatches notification emails via the `sendMail` transport module.
+- **Form Component (`src/components/course-form.tsx`)**: Tab navigation renders the **"Coverage zones"** tab (`MapPin` icon). `LocationSection` renders the coverage grid and manages modal state (`isRequestCartierOpen`, `newCartierName`, `newCartierNotes`, `isSubmittingRequest`, `requestSuccessMsg`).
 
 ---
 
@@ -296,7 +317,7 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
 | `actions/initialization.ts` | `createAdminAction` |
 | `actions/employees.ts` | `createEmployeeAction`, `updateEmployeeAction`, `changeEmployeePasswordAction`, `deleteEmployeeAction` |
 | `actions/users.ts` | `createUserAction`, `updateUserAction`, `changeUserPasswordAction`, `deleteUserAction` |
-| `actions/organizations.ts` | `getOrganizationCategories`, `createOrganizationCategoryAction`, `updateOrganizationCategoryAction`, `deleteOrganizationCategoryAction`, `createOrganizationAction`, `updateOrganizationAction`, `changeOrganizationPasswordAction`, `deleteOrganizationAction`, `toggleOrganizationServiceAction`, `toggleOrganizationCourseAction` |
+| `actions/organizations.ts` | `getOrganizationCategories`, `createOrganizationCategoryAction`, `updateOrganizationCategoryAction`, `deleteOrganizationCategoryAction`, `createOrganizationAction`, `updateOrganizationAction`, `changeOrganizationPasswordAction`, `deleteOrganizationAction`, `toggleOrganizationServiceAction`, `toggleOrganizationCourseAction`, `requestNewCartierAction` |
 | `actions/services.ts` | `createServiceAction`, `deleteServiceAction`, `reorderServicesAction`, `reorderCoursesAction` |
 | `actions/service-types.ts` | `getServiceTypesAction`, `updateServiceTypeAction` |
 | `actions/courses.ts` | `createCourseAction`, `updateCourseAction`, `deleteCourseAction`, `reorderOrgCoursesAction` |
@@ -318,7 +339,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (507 tests across 43 test files)
+# Run all tests (517 tests across 45 test files)
 npm run test
 
 # Run with coverage report
@@ -334,8 +355,8 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ### Test Coverage Summary
 | Area | Files Covered |
 | :--- | :--- |
-| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations`, `services`, `service-types`, `courses`, `system` |
+| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations` (including `requestNewCartierAction`), `services`, `service-types`, `courses`, `system` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
 | Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form`, `dashboard-services-list`, `services-table`, `course-form`, `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `service-type-preview-form`, `smtp-config-form`, `org-services-tab`, `time-picker-select`, `toggle-switch`, `boolean-toggle-field` |
-| Config & utilities | `config/service-types`, `config/dog-training`, `config/romanian-territory`, `lib/utils`, `lib/email` |
+| Config & utilities | `config/service-types`, `config/dog-training`, `config/romanian-territory`, `config/romanian-cartiere`, `lib/utils`, `lib/email` |
 | Hooks | `use-mobile` |

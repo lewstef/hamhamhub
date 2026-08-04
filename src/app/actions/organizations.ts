@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { isValidEmail, isValidRomanianPhone, isValidUrl } from "@/lib/validation";
 import { sendMail } from "@/lib/email";
+import { isCitySupported } from "@/config/romanian-cartiere";
 
 /**
  * Returns all organization categories from the database.
@@ -327,6 +328,18 @@ export async function updateOrganizationAction(prevState: unknown, formData: For
       updateData.addressState = addressState?.trim() || null;
       updateData.addressZip = addressZip?.trim() || null;
       updateData.addressCountry = addressCountry?.trim() || null;
+
+      if (addressCity && addressCity.trim() !== "" && !isCitySupported(addressCity.trim())) {
+        try {
+          await sendMail({
+            to: "stefan.wrabeli@gmail.com",
+            subject: "HamHamHub - Localitate lipsa pentru servicii de plimbare caini",
+            html: `<p>Organization <strong>${name}</strong> (ID: ${id}) set address city to <strong>${addressCity.trim()}</strong> which is not in the supported top cities list.</p>`,
+          });
+        } catch (emailErr) {
+          console.error("Failed to send unsupported city email notification:", emailErr);
+        }
+      }
     }
 
     if (formData.has("facebook")) {
@@ -778,5 +791,71 @@ export async function toggleOrganizationCourseAction(organizationId: string, cou
   } catch (error) {
     console.error("Failed to toggle organization course:", error);
     return { error: "Failed to toggle course. Please try again." };
+  }
+}
+
+/**
+ * Server Action: Sends an automated email notification requesting addition of a missing neighborhood/cartier for a city.
+ *
+ * Security: Requires an active authenticated user session.
+ * Side Effects: Dispatches an email to stefan.wrabeli@gmail.com using the sendMail transport module.
+ *
+ * @param {Object} params - Input parameters.
+ * @param {string} params.cityName - The name of the city (e.g., "Cluj-Napoca", "București").
+ * @param {string} params.cartierName - The name of the requested missing neighborhood/cartier.
+ * @param {string} [params.notes] - Optional additional notes or comments from the user.
+ * @returns {Promise<{ success: true; message: string } | { error: string }>} Result object.
+ */
+export async function requestNewCartierAction({
+  cityName,
+  cartierName,
+  notes,
+}: {
+  cityName: string;
+  cartierName: string;
+  notes?: string;
+}): Promise<{ success: true; message: string } | { error: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return { error: "Unauthorized access" };
+    }
+
+    if (!cityName || cityName.trim() === "") {
+      return { error: "Numele localității este obligatoriu." };
+    }
+
+    if (!cartierName || cartierName.trim() === "") {
+      return { error: "Numele cartierului este obligatoriu." };
+    }
+
+    const cleanCity = cityName.trim();
+    const cleanCartier = cartierName.trim();
+    const cleanNotes = notes?.trim() || "";
+    const userEmail = session.user.email || session.user.name || "Unknown user";
+
+    await sendMail({
+      to: "stefan.wrabeli@gmail.com",
+      subject: `HamHamHub - Solicitare adaugare Cartier nou: ${cleanCartier} (${cleanCity})`,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <h2 style="color: #2563eb; margin-top: 0;">Solicitare Cartier Nou</h2>
+          <p>Utilizatorul <strong>${userEmail}</strong> a solicitat adăugarea unui nou cartier pentru serviciul de plimbat câini.</p>
+          <ul style="line-height: 1.6;">
+            <li><strong>Oraș / Localitate:</strong> ${cleanCity}</li>
+            <li><strong>Cartier Solicitat:</strong> ${cleanCartier}</li>
+            ${cleanNotes ? `<li><strong>Observații / Detalii:</strong> ${cleanNotes}</li>` : ""}
+          </ul>
+        </div>
+      `,
+    });
+
+    return {
+      success: true,
+      message: "We received your request for a new coverage zone, we will be back soon",
+    };
+  } catch (error) {
+    console.error("Failed to process new cartier request email:", error);
+    return { error: "A apărut o eroare la trimiterea solicitării. Vă rugăm să încercați din nou." };
   }
 }

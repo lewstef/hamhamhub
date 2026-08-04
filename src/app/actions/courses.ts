@@ -43,6 +43,7 @@ interface ParsedCourseData {
   schedule: string | null;
   ageLimitsEnabled: boolean;
   ageLimits: string | null;
+  coverageZones: string | null;
   faq: string | null;
 }
 
@@ -89,6 +90,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const schedule = (formData.get("schedule") as string) || null;
   const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
   const ageLimits = (formData.get("ageLimits") as string) || null;
+  const coverageZones = (formData.get("coverageZones") as string) || null;
   const faq = (formData.get("faq") as string) || null;
 
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -140,7 +142,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
       ownerCommunication, ownerCommunicationDetails,
       personalizedMealPlan, personalizedMealPlanDetails,
       checkin, checkout, checkinWeekend, checkoutWeekend,
-      schedule, ageLimitsEnabled, ageLimits, faq,
+      schedule, ageLimitsEnabled, ageLimits, coverageZones, faq,
     },
   };
 }
@@ -230,6 +232,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       schedule: d.schedule,
       ageLimitsEnabled: d.ageLimitsEnabled,
       ageLimits: d.ageLimitsEnabled ? d.ageLimits : null,
+      coverageZones: d.coverageZones,
       faq: d.faq,
     });
 
@@ -325,6 +328,7 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         schedule: d.schedule,
         ageLimitsEnabled: d.ageLimitsEnabled,
         ageLimits: d.ageLimitsEnabled ? d.ageLimits : null,
+        coverageZones: d.coverageZones,
         faq: d.faq,
       })
       .where(eq(courses.id, courseId));

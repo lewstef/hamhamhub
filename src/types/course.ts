@@ -36,5 +36,6 @@ export interface Course {
   schedule?: string | null;
   ageLimitsEnabled?: boolean | null;
   ageLimits?: string | null;
+  coverageZones?: string | null;
   faq?: string | null;
 }

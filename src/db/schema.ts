@@ -104,6 +104,7 @@ export const courses = pgTable("courses", {
   schedule: text("schedule"),
   ageLimitsEnabled: boolean("age_limits_enabled").default(false).notNull(),
   ageLimits: text("age_limits"),
+  coverageZones: text("coverage_zones"),
   faq: text("faq"),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

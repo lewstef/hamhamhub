@@ -31,6 +31,7 @@ vi.mock("lucide-react", () => ({
   Underline: () => <div data-testid="underline" />,
   List: () => <div data-testid="list" />,
   ListOrdered: () => <div data-testid="list-ordered" />,
+  RemoveFormatting: () => <div data-testid="remove-formatting" />,
   // CourseForm icons
   CheckCircle: () => <div data-testid="check-circle-2" />,
   Info: () => <div data-testid="info" />,
@@ -122,13 +123,13 @@ describe("DashboardServiceDetail Component", () => {
     render(
       <DashboardServiceDetail
         organizationId="org-123"
-        service={{ id: "srv-sport-dog-training", name: "Dog Sports Training", description: "Dog sports", slug: "sport-dog-training", category: "cynological" }}
+        service={{ id: "srv-sport-dog-training", name: "Dog sports training", description: "Dog sports", slug: "sport-dog-training", category: "cynological" }}
         initialIsEnabled={true}
         slug="sport-dog-training"
       />
     );
 
-    expect(screen.getByText("Dog Sports Training")).toBeDefined();
+    expect(screen.getByText("Dog sports training")).toBeDefined();
     expect(screen.getByText("Active")).toBeDefined();
   });
 
