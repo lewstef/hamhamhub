@@ -262,6 +262,22 @@ describe("CourseForm Component", () => {
     expect(medsInput).toBeDefined();
     fireEvent.change(medsInput, { target: { value: "Give twice daily with wet food" } });
 
+    // 24/7 Surveillance details input is hidden initially
+    expect(screen.queryByPlaceholderText("e.g. 24/7 on-site staff supervision, live CCTV camera monitoring, night security protocol")).toBeNull();
+
+    // Find and click the 24/7 Surveillance switch button
+    const surveillanceSection = screen.getByText("24/7 Surveillance").closest(".space-y-4");
+    const surveillanceSwitch = surveillanceSection?.querySelector("button[role='switch']");
+    expect(surveillanceSwitch).toBeDefined();
+    await act(async () => {
+      fireEvent.click(surveillanceSwitch!);
+    });
+
+    // Surveillance details input should be displayed now
+    const surveillanceInput = screen.getByPlaceholderText("e.g. 24/7 on-site staff supervision, live CCTV camera monitoring, night security protocol");
+    expect(surveillanceInput).toBeDefined();
+    fireEvent.change(surveillanceInput, { target: { value: "24/7 CCTV monitoring" } });
+
     // Web cam details input is hidden initially
     expect(screen.queryByPlaceholderText("e.g. live stream link provided upon check-in, 24/7 access")).toBeNull();
 

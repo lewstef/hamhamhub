@@ -1660,6 +1660,10 @@ interface CareAmenitiesSectionProps {
   onMedicationAdministrationChange: (v: boolean) => void;
   medicationAdministrationDetails: string;
   onMedicationAdministrationDetailsChange: (v: string) => void;
+  surveillance247: boolean;
+  onSurveillance247Change: (v: boolean) => void;
+  surveillance247Details: string;
+  onSurveillance247DetailsChange: (v: string) => void;
   webCam: boolean;
   onWebCamChange: (v: boolean) => void;
   webCamDetails: string;
@@ -1676,7 +1680,7 @@ interface CareAmenitiesSectionProps {
 
 /**
  * CareAmenitiesSection — Renders boarding-specific care amenity toggles:
- * daily walks, medication administration, webcam access, owner communication,
+ * daily walks, medication administration, 24/7 surveillance, webcam access, owner communication,
  * and personalized meal plan.
  *
  * Used in the tabbed layout's "Care & facilities" tab and the flat layout's
@@ -1690,6 +1694,10 @@ function CareAmenitiesSection({
   onMedicationAdministrationChange,
   medicationAdministrationDetails,
   onMedicationAdministrationDetailsChange,
+  surveillance247,
+  onSurveillance247Change,
+  surveillance247Details,
+  onSurveillance247DetailsChange,
   webCam,
   onWebCamChange,
   webCamDetails,
@@ -1744,6 +1752,24 @@ function CareAmenitiesSection({
                 ? "e.g. Lockbox code 1234 on side gate, concierge key handoff, alarm disarm code 5678, key drop-off in mailbox"
                 : "e.g. oral tablets, injections, schedule limitations"
             }
+          />
+        </div>
+      </BooleanToggleField>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label="24/7 Surveillance"
+        description="Do you provide 24/7 continuous staff presence and surveillance for boarded pets?"
+        checked={surveillance247}
+        onChange={onSurveillance247Change}
+      >
+        <div className="space-y-2">
+          <Label>24/7 Surveillance Details</Label>
+          <WysiwygEditor
+            value={surveillance247Details}
+            onChange={onSurveillance247DetailsChange}
+            placeholder="e.g. 24/7 on-site staff supervision, live CCTV camera monitoring, night security protocol"
           />
         </div>
       </BooleanToggleField>
@@ -1921,6 +1947,8 @@ export function CourseForm({
   );
   const [medicationAdministration, setMedicationAdministration] = useState(initialCourse?.medicationAdministration || false);
   const [medicationAdministrationDetails, setMedicationAdministrationDetails] = useState(initialCourse?.medicationAdministrationDetails || "");
+  const [surveillance247, setSurveillance247] = useState(initialCourse?.surveillance247 || false);
+  const [surveillance247Details, setSurveillance247Details] = useState(initialCourse?.surveillance247Details || "");
   const [webCam, setWebCam] = useState(initialCourse?.webCam || false);
   const [webCamDetails, setWebCamDetails] = useState(initialCourse?.webCamDetails || "");
   const [dailyWalks, setDailyWalks] = useState(initialCourse?.dailyWalks || 1);
@@ -2063,6 +2091,8 @@ export function CourseForm({
     })(),
     medicationAdministration: initialCourse?.medicationAdministration || false,
     medicationAdministrationDetails: initialCourse?.medicationAdministrationDetails || "",
+    surveillance247: initialCourse?.surveillance247 || false,
+    surveillance247Details: initialCourse?.surveillance247Details || "",
     webCam: initialCourse?.webCam || false,
     webCamDetails: initialCourse?.webCamDetails || "",
     dailyWalks: initialCourse?.dailyWalks || 1,
@@ -2100,6 +2130,8 @@ export function CourseForm({
       JSON.stringify(specialOpenings) !== i.specialOpenings ||
       medicationAdministration !== i.medicationAdministration ||
       medicationAdministrationDetails !== i.medicationAdministrationDetails ||
+      surveillance247 !== i.surveillance247 ||
+      surveillance247Details !== i.surveillance247Details ||
       webCam !== i.webCam ||
       webCamDetails !== i.webCamDetails ||
       dailyWalks !== i.dailyWalks ||
@@ -2121,6 +2153,7 @@ export function CourseForm({
     parking, parkingDescription, details, termsOfParticipation,
     pricings, closedPeriods, specialOpenings,
     medicationAdministration, medicationAdministrationDetails,
+    surveillance247, surveillance247Details,
     webCam, webCamDetails, dailyWalks,
     ownerCommunication, ownerCommunicationDetails,
     personalizedMealPlan, personalizedMealPlanDetails,
@@ -2362,6 +2395,8 @@ export function CourseForm({
     formData.append("termsOfParticipation", termsOfParticipation);
     formData.append("medicationAdministration", String(medicationAdministration));
     formData.append("medicationAdministrationDetails", medicationAdministrationDetails);
+    formData.append("surveillance247", String(surveillance247));
+    formData.append("surveillance247Details", surveillance247Details);
     formData.append("webCam", String(webCam));
     formData.append("webCamDetails", webCamDetails);
     formData.append("dailyWalks", String(dailyWalks));
@@ -2720,6 +2755,10 @@ export function CourseForm({
                   onMedicationAdministrationChange={setMedicationAdministration}
                   medicationAdministrationDetails={medicationAdministrationDetails}
                   onMedicationAdministrationDetailsChange={setMedicationAdministrationDetails}
+                  surveillance247={surveillance247}
+                  onSurveillance247Change={setSurveillance247}
+                  surveillance247Details={surveillance247Details}
+                  onSurveillance247DetailsChange={setSurveillance247Details}
                   webCam={webCam}
                   onWebCamChange={setWebCam}
                   webCamDetails={webCamDetails}
@@ -2901,6 +2940,10 @@ export function CourseForm({
                   onMedicationAdministrationChange={setMedicationAdministration}
                   medicationAdministrationDetails={medicationAdministrationDetails}
                   onMedicationAdministrationDetailsChange={setMedicationAdministrationDetails}
+                  surveillance247={surveillance247}
+                  onSurveillance247Change={setSurveillance247}
+                  surveillance247Details={surveillance247Details}
+                  onSurveillance247DetailsChange={setSurveillance247Details}
                   webCam={webCam}
                   onWebCamChange={setWebCam}
                   webCamDetails={webCamDetails}

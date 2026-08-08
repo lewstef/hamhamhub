@@ -29,6 +29,8 @@ interface ParsedCourseData {
   termsOfParticipation: string;
   medicationAdministration: boolean;
   medicationAdministrationDetails: string;
+  surveillance247: boolean;
+  surveillance247Details: string;
   webCam: boolean;
   webCamDetails: string;
   dailyWalks: number | null;
@@ -75,6 +77,8 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const termsOfParticipation = formData.get("termsOfParticipation") as string;
   const medicationAdministration = formData.get("medicationAdministration") === "true";
   const medicationAdministrationDetails = formData.get("medicationAdministrationDetails") as string;
+  const surveillance247 = formData.get("surveillance247") === "true";
+  const surveillance247Details = formData.get("surveillance247Details") as string;
   const webCam = formData.get("webCam") === "true";
   const webCamDetails = formData.get("webCamDetails") as string;
   const dailyWalksStr = formData.get("dailyWalks") as string;
@@ -138,6 +142,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
       trainingFieldGoogleBusinessProfile, trainingFieldGoogleMapsLink,
       parking, parkingDescription, details, termsOfParticipation,
       medicationAdministration, medicationAdministrationDetails,
+      surveillance247, surveillance247Details,
       webCam, webCamDetails, dailyWalks,
       ownerCommunication, ownerCommunicationDetails,
       personalizedMealPlan, personalizedMealPlanDetails,
@@ -218,6 +223,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       priceType: d.priceType,
       medicationAdministration: d.medicationAdministration,
       medicationAdministrationDetails: d.medicationAdministration ? d.medicationAdministrationDetails : null,
+      surveillance247: d.surveillance247,
+      surveillance247Details: d.surveillance247 ? d.surveillance247Details : null,
       webCam: d.webCam,
       webCamDetails: d.webCam ? d.webCamDetails : null,
       dailyWalks: d.dailyWalks,
@@ -314,6 +321,8 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         priceType: d.priceType,
         medicationAdministration: d.medicationAdministration,
         medicationAdministrationDetails: d.medicationAdministration ? d.medicationAdministrationDetails : null,
+        surveillance247: d.surveillance247,
+        surveillance247Details: d.surveillance247 ? d.surveillance247Details : null,
         webCam: d.webCam,
         webCamDetails: d.webCam ? d.webCamDetails : null,
         dailyWalks: d.dailyWalks,

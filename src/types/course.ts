@@ -22,6 +22,8 @@ export interface Course {
   priceType?: string | null;
   medicationAdministration?: boolean | null;
   medicationAdministrationDetails?: string | null;
+  surveillance247?: boolean | null;
+  surveillance247Details?: string | null;
   webCam?: boolean | null;
   webCamDetails?: string | null;
   dailyWalks?: number | null;

@@ -93,6 +93,8 @@ export const courses = pgTable("courses", {
   priceType: text("price_type").default("course").notNull(),
   medicationAdministration: boolean("medication_administration").default(false).notNull(),
   medicationAdministrationDetails: text("medication_administration_details"),
+  surveillance247: boolean("surveillance_247").default(false).notNull(),
+  surveillance247Details: text("surveillance_247_details"),
   webCam: boolean("web_cam").default(false).notNull(),
   webCamDetails: text("web_cam_details"),
   dailyWalks: integer("daily_walks"),

@@ -7,7 +7,7 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck } from "lucide-react";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -543,6 +543,12 @@ export function DashboardServiceDetail({
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-600 border border-red-500/20" title={course.medicationAdministrationDetails || ""}>
                                 <Pill className="size-2.5" />
                                 Meds Administered
+                              </span>
+                            )}
+                            {course.surveillance247 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20" title={course.surveillance247Details || ""}>
+                                <ShieldCheck className="size-2.5" />
+                                24/7 Surveillance
                               </span>
                             )}
                             {course.webCam && (

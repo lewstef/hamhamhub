@@ -78,10 +78,9 @@ export default async function RootLayout({
       className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased ${dbTheme === "dark" ? "dark" : ""}`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans">
-        <Script
+      <head>
+        <script
           id="theme-initializer"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -97,6 +96,8 @@ export default async function RootLayout({
             `,
           }}
         />
+      </head>
+      <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider initialTheme={dbTheme}>
           {children}
         </ThemeProvider>

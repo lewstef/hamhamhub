@@ -115,6 +115,8 @@ describe("Courses Server Actions", () => {
       formData.append("priceType", "night");
       formData.append("medicationAdministration", "true");
       formData.append("medicationAdministrationDetails", "Give pill after meals");
+      formData.append("surveillance247", "true");
+      formData.append("surveillance247Details", "Continuous CCTV monitoring");
       formData.append("webCam", "true");
       formData.append("webCamDetails", "Live webcam stream link");
       formData.append("dailyWalks", "3");
@@ -138,6 +140,8 @@ describe("Courses Server Actions", () => {
         priceType: "night",
         medicationAdministration: true,
         medicationAdministrationDetails: "Give pill after meals",
+        surveillance247: true,
+        surveillance247Details: "Continuous CCTV monitoring",
         webCam: true,
         webCamDetails: "Live webcam stream link",
         dailyWalks: 3,

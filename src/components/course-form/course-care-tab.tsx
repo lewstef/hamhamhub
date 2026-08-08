@@ -14,6 +14,10 @@ export interface CourseCareTabProps {
   onMedicationAdministrationChange: (v: boolean) => void;
   medicationAdministrationDetails: string;
   onMedicationAdministrationDetailsChange: (v: string) => void;
+  surveillance247: boolean;
+  onSurveillance247Change: (v: boolean) => void;
+  surveillance247Details: string;
+  onSurveillance247DetailsChange: (v: string) => void;
   webCam: boolean;
   onWebCamChange: (v: boolean) => void;
   webCamDetails: string;
@@ -32,7 +36,7 @@ export interface CourseCareTabProps {
  * CourseCareTab Component
  *
  * Renders boarding-specific care amenity toggles:
- * daily walks, medication administration, personalized meal plan, webcam access, and communication/GPS reports.
+ * daily walks, medication administration, 24/7 surveillance, personalized meal plan, webcam access, and communication/GPS reports.
  */
 export function CourseCareTab({
   isDogWalking = false,
@@ -42,6 +46,10 @@ export function CourseCareTab({
   onMedicationAdministrationChange,
   medicationAdministrationDetails,
   onMedicationAdministrationDetailsChange,
+  surveillance247,
+  onSurveillance247Change,
+  surveillance247Details,
+  onSurveillance247DetailsChange,
   webCam,
   onWebCamChange,
   webCamDetails,
@@ -96,6 +104,24 @@ export function CourseCareTab({
                 ? "e.g. Lockbox code 1234 on side gate, concierge key handoff, alarm disarm code 5678, key drop-off in mailbox"
                 : "e.g. oral tablets, injections, schedule limitations"
             }
+          />
+        </div>
+      </BooleanToggleField>
+
+      <div className="h-px bg-border/60" />
+
+      <BooleanToggleField
+        label="24/7 Surveillance"
+        description="Do you provide 24/7 continuous staff presence and surveillance for boarded pets?"
+        checked={surveillance247}
+        onChange={onSurveillance247Change}
+      >
+        <div className="space-y-2">
+          <Label>24/7 Surveillance Details</Label>
+          <WysiwygEditor
+            value={surveillance247Details}
+            onChange={onSurveillance247DetailsChange}
+            placeholder="e.g. 24/7 on-site staff supervision, live CCTV camera monitoring, night security protocol"
           />
         </div>
       </BooleanToggleField>

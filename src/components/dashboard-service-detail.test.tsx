@@ -39,6 +39,7 @@ vi.mock("lucide-react", () => ({
   Users: () => <div data-testid="users" />,
   CalendarX: () => <div data-testid="calendar-x" />,
   CalendarCheck: () => <div data-testid="calendar-check" />,
+  ShieldCheck: () => <div data-testid="shield-check" />,
   FileText: () => <div data-testid="file-text" />,
   FileCheck: () => <div data-testid="file-check" />,
   DollarSign: () => <div data-testid="dollar-sign" />,
@@ -357,6 +358,8 @@ describe("DashboardServiceDetail Component", () => {
         priceType: "night",
         medicationAdministration: true,
         medicationAdministrationDetails: "Twice daily",
+        surveillance247: true,
+        surveillance247Details: "24/7 CCTV",
         webCam: true,
         webCamDetails: "24/7 stream",
         dailyWalks: 3,
@@ -382,6 +385,7 @@ describe("DashboardServiceDetail Component", () => {
     fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
     expect(screen.getByText("Meds Administered")).toBeDefined();
+    expect(screen.getByText("24/7 Surveillance")).toBeDefined();
     expect(screen.getByText("Webcam")).toBeDefined();
     expect(screen.getByText("3 Walks")).toBeDefined();
     expect(screen.getByText("Updates Sent")).toBeDefined();
