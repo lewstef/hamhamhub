@@ -56,7 +56,7 @@ describe("Courses Server Actions", () => {
       formData.append("certifierName", "SuperDog");
       formData.append("trainerExperienceDescription", "10 years experience");
       formData.append("ageLimitsEnabled", "true");
-      formData.append("ageLimits", "Puppy (Up to 9 months),Senior (8+ years)");
+      formData.append("ageLimits", "Puppy (2-6 mos),Senior (7+ yrs)");
       formData.append("dedicatedField", "true");
       formData.append("trainingFieldDescription", "A great field");
       formData.append("trainingFieldAddress", "123 Bark St");
@@ -72,7 +72,7 @@ describe("Courses Server Actions", () => {
         certifierName: "SuperDog",
         trainerExperienceDescription: "10 years experience",
         ageLimitsEnabled: true,
-        ageLimits: "Puppy (Up to 9 months),Senior (8+ years)",
+        ageLimits: "Puppy (2-6 mos),Senior (7+ yrs)",
         dedicatedField: true,
         trainingFieldDescription: "A great field",
         trainingFieldAddress: "123 Bark St",

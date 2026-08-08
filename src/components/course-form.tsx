@@ -316,10 +316,10 @@ function DayScheduleGrid({
 // ============================================================
 
 const AGE_PHASES = [
-  "Puppy (Up to 9 months)",
-  "Junior (9 to 18 months)",
-  "Adult (18 months to 8 years)",
-  "Senior (8+ years)",
+  "Puppy (2-6 mos)",
+  "Junior (6-12 mos)",
+  "Adult (1-7 yrs)",
+  "Senior (7+ yrs)",
 ] as const;
 
 interface AgeLimitsSectionProps {
@@ -343,37 +343,35 @@ function AgeLimitsSection({
 }: AgeLimitsSectionProps) {
   return (
     <BooleanToggleField
-      label="Age Limits"
+      label="Age Limits & Restrictions"
       description={`Enable if this ${itemNoun.toLowerCase()} has specific age limits/requirements.`}
       checked={ageLimitsEnabled}
       onChange={onAgeLimitsEnabledChange}
     >
-      <div className="space-y-3">
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-          Select Age Phases
-        </Label>
-        <div className="space-y-2">
+      <div className="space-y-2 pt-1">
+        <Label className="text-xs font-semibold">Allowed Dog Age Groups</Label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {AGE_PHASES.map((option) => {
-            const isChecked = selectedAgeLimits.includes(option);
+            const isSelected = selectedAgeLimits.includes(option);
             return (
-              <label
+              <button
                 key={option}
-                className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/10 hover:bg-muted/30 transition-colors cursor-pointer text-sm font-medium"
+                type="button"
+                onClick={() => {
+                  if (isSelected) {
+                    onSelectedAgeLimitsChange(selectedAgeLimits.filter((x) => x !== option));
+                  } else {
+                    onSelectedAgeLimitsChange([...selectedAgeLimits, option]);
+                  }
+                }}
+                className={`h-9 px-3 rounded-xl border text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-input hover:bg-muted/50"
+                }`}
               >
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => {
-                    if (isChecked) {
-                      onSelectedAgeLimitsChange(selectedAgeLimits.filter((x) => x !== option));
-                    } else {
-                      onSelectedAgeLimitsChange([...selectedAgeLimits, option]);
-                    }
-                  }}
-                  className="mt-0.5 rounded border-input text-primary focus:ring-primary size-4"
-                />
-                <span className="text-foreground">{option}</span>
-              </label>
+                {option}
+              </button>
             );
           })}
         </div>
@@ -2612,6 +2610,7 @@ export function CourseForm({
               onToggleAgeLimit={handleToggleAgeLimit}
               itemNoun={itemNoun}
               isDogWalking={isDogWalking}
+              isDogTraining={isDogTraining}
             />
           )}
 

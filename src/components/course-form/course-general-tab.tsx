@@ -23,6 +23,7 @@ interface CourseGeneralTabProps {
   onToggleAgeLimit: (v: string) => void;
   itemNoun: string;
   isDogWalking?: boolean;
+  isDogTraining?: boolean;
 }
 
 /**
@@ -47,7 +48,15 @@ export function CourseGeneralTab({
   onToggleAgeLimit,
   itemNoun,
   isDogWalking = false,
+  isDogTraining = false,
 }: CourseGeneralTabProps) {
+  const hideAgeLimitsOnGeneral =
+    isDogWalking ||
+    isDogTraining ||
+    itemNoun === "Boarding service" ||
+    itemNoun === "Course" ||
+    itemNoun === "Training course";
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       <div className="space-y-2">
@@ -107,7 +116,7 @@ export function CourseGeneralTab({
         </div>
       </BooleanToggleField>
 
-      {!isDogWalking && (
+      {!hideAgeLimitsOnGeneral && (
         <BooleanToggleField
           label="Age Limits &amp; Restrictions"
           description="Specify recommended dog age categories for participation."
@@ -118,24 +127,24 @@ export function CourseGeneralTab({
             <Label className="text-xs font-semibold">Allowed Dog Age Groups</Label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { id: "puppy", label: "Puppy (2-6 mos)" },
-                { id: "junior", label: "Junior (6-12 mos)" },
-                { id: "adult", label: "Adult (1-7 yrs)" },
-                { id: "senior", label: "Senior (7+ yrs)" },
-              ].map((group) => {
-                const isSelected = selectedAgeLimits.includes(group.id);
+                "Puppy (2-6 mos)",
+                "Junior (6-12 mos)",
+                "Adult (1-7 yrs)",
+                "Senior (7+ yrs)",
+              ].map((label) => {
+                const isSelected = selectedAgeLimits.includes(label);
                 return (
                   <button
-                    key={group.id}
+                    key={label}
                     type="button"
-                    onClick={() => onToggleAgeLimit(group.id)}
+                    onClick={() => onToggleAgeLimit(label)}
                     className={`h-9 px-3 rounded-xl border text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer ${
                       isSelected
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background text-muted-foreground border-input hover:bg-muted/50"
                     }`}
                   >
-                    {group.label}
+                    {label}
                   </button>
                 );
               })}

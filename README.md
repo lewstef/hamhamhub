@@ -103,6 +103,9 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Enforced strict client-side and server-side validation ensuring check-out time cannot be before or equal to check-in time (`checkout > checkin`).
   - Added **Web cam** boolean switch (`webCam`) and optional access instructions text input (`webCamDetails`) strictly scoped to the Dog Boarding service (`/dashboard/services/dog-boarding`). Renders a teal `Web Cam` badge on active entries.
   - Added **24/7 Surveillance** boolean switch (`surveillance247`) and optional details text input (`surveillance247Details`) under Medication Administration for Dog Boarding (`/dashboard/services/dog-boarding`). Renders an amber `24/7 Surveillance` badge with tooltip details on active service offerings.
+  - Standardized **Age Limits & Restrictions** options platform-wide to `Puppy (2-6 mos)`, `Junior (6-12 mos)`, `Adult (1-7 yrs)`, and `Senior (7+ yrs)`, replacing legacy text variations and ID keys.
+  - Unified **`AgeLimitsSection` UI display mode** across all tabs to use a 4-column pill-button toggle grid (`grid grid-cols-2 sm:grid-cols-4 gap-2`).
+  - Cleared redundant General tab Age Limits toggles for **Dog Boarding** (`dog-boarding`) and **Dog Training** (`dog-training`), making Age Limits exclusive to the **Terms of Participation** tab on those services.
 - **Dog Sports Training & Dog Training Screen Reorganization**:
   - Reorganized the "Dog training" service (`/dashboard/services/dog-training`) into a clean tabbed layout matching "Dog sports training".
   - Standardized tabs: **General**, **Terms of participation**, **Pricing**, **Schedule**, **Location**, **FAQ**.

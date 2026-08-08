@@ -919,7 +919,7 @@ describe("DashboardServiceDetail Component", () => {
             dedicatedField: false,
             parking: false,
             ageLimitsEnabled: true,
-            ageLimits: "Puppy (Up to 9 months),Junior (9 to 18 months)",
+            ageLimits: "Puppy (2-6 mos),Junior (6-12 mos)",
           },
         ]}
       />
@@ -946,7 +946,7 @@ describe("DashboardServiceDetail Component", () => {
             dedicatedField: false,
             parking: false,
             ageLimitsEnabled: true,
-            ageLimits: "Puppy (Up to 9 months)",
+            ageLimits: "Puppy (2-6 mos)",
           },
         ]}
       />
@@ -973,7 +973,7 @@ describe("DashboardServiceDetail Component", () => {
             dedicatedField: false,
             parking: false,
             ageLimitsEnabled: false,
-            ageLimits: "Puppy (Up to 9 months)",
+            ageLimits: "Puppy (2-6 mos)",
           },
         ]}
       />

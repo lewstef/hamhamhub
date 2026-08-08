@@ -221,6 +221,28 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Parking")).toBeDefined();
   });
 
+  it("should omit Age Limits & Restrictions on General tab for Dog Training but render it on Terms tab", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        serviceSlug="dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // On General tab, Age Limits & Restrictions should be omitted
+    expect(screen.queryByText("Age Limits & Restrictions")).toBeNull();
+
+    // Click Terms tab
+    fireEvent.click(screen.getByRole("button", { name: /Terms/ }));
+
+    // On Terms tab, Age Limits & Restrictions should be present
+    expect(screen.getByText("Age Limits & Restrictions")).toBeDefined();
+  });
+
   it("should render and manage boarding service custom fields correctly", async () => {
     render(
       <CourseForm
@@ -232,6 +254,9 @@ describe("CourseForm Component", () => {
         onSubmitSuccess={onSubmitSuccess}
       />
     );
+
+    // Verify Age Limits & Restrictions is omitted on General tab for Boarding
+    expect(screen.queryByText("Age Limits & Restrictions")).toBeNull();
 
     // Click Care & facilities tab to access Boarding Details
     fireEvent.click(screen.getByRole("button", { name: "Care & facilities" }));
@@ -707,35 +732,28 @@ describe("CourseForm Component", () => {
     expect(screen.queryByText("Select Age Phases")).toBeNull();
 
     // Toggle Age Limits switch
-    const ageLimitsSwitch = screen.getByText("Age Limits").closest(".space-y-4")?.querySelector("button[role='switch']");
+    const ageLimitsSwitch = screen.getByText("Age Limits & Restrictions").closest(".space-y-4")?.querySelector("button[role='switch']");
     expect(ageLimitsSwitch).toBeDefined();
     await act(async () => {
       fireEvent.click(ageLimitsSwitch!);
     });
 
-    // Option phase checkboxes should be visible
-    expect(screen.getByText("Select Age Phases")).toBeDefined();
-    expect(screen.getByText("Puppy (Up to 9 months)")).toBeDefined();
-    expect(screen.getByText("Junior (9 to 18 months)")).toBeDefined();
-    expect(screen.getByText("Adult (18 months to 8 years)")).toBeDefined();
-    expect(screen.getByText("Senior (8+ years)")).toBeDefined();
-
-    // Check puppy and junior phases
-    const puppyCheckbox = screen.getByText("Puppy (Up to 9 months)").closest("label")?.querySelector("input[type='checkbox']") as HTMLInputElement;
-    const teenCheckbox = screen.getByText("Junior (9 to 18 months)").closest("label")?.querySelector("input[type='checkbox']") as HTMLInputElement;
-    expect(puppyCheckbox).toBeDefined();
-    expect(teenCheckbox).toBeDefined();
-
-    expect(puppyCheckbox.checked).toBe(false);
-    await act(async () => {
-      fireEvent.click(puppyCheckbox);
-    });
-    expect(puppyCheckbox.checked).toBe(true);
+    // Option phase pill buttons should be visible
+    expect(screen.getByText("Allowed Dog Age Groups")).toBeDefined();
+    const puppyButton = screen.getByRole("button", { name: "Puppy (2-6 mos)" });
+    const teenButton = screen.getByRole("button", { name: "Junior (6-12 mos)" });
+    expect(puppyButton).toBeDefined();
+    expect(teenButton).toBeDefined();
 
     await act(async () => {
-      fireEvent.click(teenCheckbox);
+      fireEvent.click(puppyButton);
     });
-    expect(teenCheckbox.checked).toBe(true);
+    expect(puppyButton.className).toContain("bg-primary");
+
+    await act(async () => {
+      fireEvent.click(teenButton);
+    });
+    expect(teenButton.className).toContain("bg-primary");
   });
 
   it("should render clean Grooming service form without trainer and facility attribute toggles", () => {
