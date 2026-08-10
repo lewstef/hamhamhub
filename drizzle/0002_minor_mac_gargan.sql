@@ -1,0 +1,3 @@
+ALTER TABLE "courses" ADD CONSTRAINT "courses_service_id_services_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."services"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "services" ADD CONSTRAINT "services_organization_category_organization_categories_id_fk" FOREIGN KEY ("organization_category") REFERENCES "public"."organization_categories"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_organization_category_organization_categories_id_fk" FOREIGN KEY ("organization_category") REFERENCES "public"."organization_categories"("id") ON DELETE set null ON UPDATE no action;

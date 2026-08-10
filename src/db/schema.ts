@@ -15,7 +15,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(), // hashed
   role: text("role").$type<"user" | "employee" | "admin" | "organization">().default("user").notNull(),
   theme: text("theme").$type<"light" | "dark">().default("light").notNull(),
-  organizationCategory: text("organization_category"),
+  organizationCategory: text("organization_category").references(() => organizationCategories.id, { onDelete: "set null" }),
   address: text("address"),
   phoneNumber: text("phone_number"),
   recoveryEmail: text("recovery_email"),
@@ -59,7 +59,7 @@ export const users = pgTable("users", {
 export const services = pgTable("services", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  organizationCategory: text("organization_category").notNull(),
+  organizationCategory: text("organization_category").notNull().references(() => organizationCategories.id, { onDelete: "restrict" }),
   sortOrder: integer("sort_order").default(0).notNull(),
   coursesOrder: text("courses_order"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -77,7 +77,7 @@ export const courses = pgTable("courses", {
   organizationId: uuid("organization_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  serviceId: uuid("service_id"),
+  serviceId: uuid("service_id").references(() => services.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   certifiedTrainer: boolean("certified_trainer").default(false).notNull(),
   certifierName: text("certifier_name"),
