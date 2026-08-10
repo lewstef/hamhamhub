@@ -642,13 +642,16 @@ export async function changeOrganizationPasswordAction(prevState: unknown, formD
 
 /**
  * Permanently deletes an organization account.
+ * Associated records (e.g., courses) are automatically deleted via database-level ON DELETE CASCADE.
  * Includes a role guard — only accounts with role "organization" can be deleted.
  *
- * @param formData.id - Organization user ID to delete (required)
+ * @param {unknown} prevState - Form action state (unused)
+ * @param {FormData} formData - Form data containing `id` of the organization to delete
+ * @param {string} formData.id - Organization user ID to delete (required)
  *
- * @returns `{ success: true }` on successful deletion
- * @returns `{ error: string }` if ID is missing, account not found, wrong role, or DB failure
- * @sideEffect Revalidates `/backoffice/organizations`
+ * @returns {Promise<{ success: true } | { error: string }>} Result object indicating success or error message
+ * @sideEffect Revalidates `/backoffice/organizations` path and cascades deletion of related `courses` rows at DB level
+ * @security Guarded by verifying user role is 'organization' prior to deletion
  */
 export async function deleteOrganizationAction(prevState: unknown, formData: FormData) {
   const id = formData.get("id") as string;
@@ -933,25 +936,25 @@ export async function requestOrganizationVerificationAction(organizationId: stri
       to: "stefan.wrabeli@gmail.com",
       subject: `[HamHamHub] Verification Request: ${org.name} (${categoryName})`,
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; max-w: 600px; color: #1e293b;">
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; color: #1e293b;">
           <h2 style="color: #2563eb; margin-top: 0; display: flex; align-items: center; gap: 8px;">
-            🛡️ Solicitare Verificare Categorie Organizație
+            🛡️ Organization Category Verification Request
           </h2>
-          <p>Organizația <strong>${org.name}</strong> a trimis o solicitare de verificare pentru categoria <strong>${categoryName}</strong>.</p>
+          <p>The organization <strong>${org.name}</strong> has submitted a verification request for category <strong>${categoryName}</strong>.</p>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
-          <h3 style="font-size: 14px; text-transform: uppercase; color: #64748b; margin-bottom: 8px;">Detalii Contact Organizație</h3>
+          <h3 style="font-size: 14px; text-transform: uppercase; color: #64748b; margin-bottom: 8px;">Organization Contact Details</h3>
           <ul style="line-height: 1.6; padding-left: 20px; margin-top: 0;">
-            <li><strong>Nume Organizație:</strong> ${org.name}</li>
-            <li><strong>ID Organizație:</strong> <code>${org.id}</code></li>
-            <li><strong>Categorie:</strong> ${categoryName} (<code>${org.organizationCategory || "—"}</code>)</li>
+            <li><strong>Organization Name:</strong> ${org.name}</li>
+            <li><strong>Organization ID:</strong> <code>${org.id}</code></li>
+            <li><strong>Category:</strong> ${categoryName} (<code>${org.organizationCategory || "—"}</code>)</li>
             <li><strong>Email:</strong> <a href="mailto:${org.email}">${org.email}</a></li>
-            <li><strong>Telefon:</strong> ${org.phoneNumber ? `<a href="tel:${org.phoneNumber}">${org.phoneNumber}</a>` : "—"}</li>
-            <li><strong>Oraș / Adresă:</strong> ${org.addressCity || org.address || "—"}</li>
-            <li><strong>Data Solicitării:</strong> ${requestedAt.toLocaleString()}</li>
-            ${cleanNotes ? `<li><strong>Observații Solicitant:</strong> <blockquote style="background: #f8fafc; padding: 10px; border-left: 3px solid #2563eb; margin: 8px 0;">${cleanNotes}</blockquote></li>` : ""}
+            <li><strong>Phone:</strong> ${org.phoneNumber ? `<a href="tel:${org.phoneNumber}">${org.phoneNumber}</a>` : "—"}</li>
+            <li><strong>City / Address:</strong> ${org.addressCity || org.address || "—"}</li>
+            <li><strong>Request Date:</strong> ${requestedAt.toLocaleString()}</li>
+            ${cleanNotes ? `<li><strong>Applicant Notes:</strong> <blockquote style="background: #f8fafc; padding: 10px; border-left: 3px solid #2563eb; margin: 8px 0;">${cleanNotes}</blockquote></li>` : ""}
           </ul>
           <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
-          <p style="font-size: 13px; color: #64748b;">Puteți revizui această organizație în panoul Backoffice.</p>
+          <p style="font-size: 13px; color: #64748b;">You can review this organization in the Backoffice panel.</p>
         </div>
       `,
     });

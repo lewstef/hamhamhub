@@ -74,7 +74,9 @@ export const serviceTypes = pgTable("service_types", {
 
 export const courses = pgTable("courses", {
   id: uuid("id").primaryKey().defaultRandom(),
-  organizationId: uuid("organization_id").notNull(), // references users.id
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   serviceId: uuid("service_id"),
   name: text("name").notNull(),
   certifiedTrainer: boolean("certified_trainer").default(false).notNull(),
