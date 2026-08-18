@@ -57,6 +57,11 @@ describe("Courses Server Actions", () => {
       formData.append("trainerExperienceDescription", "10 years experience");
       formData.append("ageLimitsEnabled", "true");
       formData.append("ageLimits", "Puppy (2-6 mos),Senior (7+ yrs)");
+      formData.append("acceptedDogSizes", "Small,Medium");
+      formData.append("trainingFormat", "Group Class");
+      formData.append("maxDogsPerGroup", "6");
+      formData.append("indoorFacility", "true");
+      formData.append("indoorFacilityDescription", "200 sqm heated indoor agility arena");
       formData.append("dedicatedField", "true");
       formData.append("trainingFieldDescription", "A great field");
       formData.append("trainingFieldAddress", "123 Bark St");
@@ -73,6 +78,11 @@ describe("Courses Server Actions", () => {
         trainerExperienceDescription: "10 years experience",
         ageLimitsEnabled: true,
         ageLimits: "Puppy (2-6 mos),Senior (7+ yrs)",
+        acceptedDogSizes: "Small,Medium",
+        trainingFormat: "Group Class",
+        maxDogsPerGroup: 6,
+        indoorFacility: true,
+        indoorFacilityDescription: "200 sqm heated indoor agility arena",
         dedicatedField: true,
         trainingFieldDescription: "A great field",
         trainingFieldAddress: "123 Bark St",
@@ -128,6 +138,11 @@ describe("Courses Server Actions", () => {
       formData.append("checkout", "18:00");
       formData.append("checkinWeekend", "09:30");
       formData.append("checkoutWeekend", "16:30");
+      formData.append("playYard", "true");
+      formData.append("playYardDetails", "500 sqm grass yard with splash pool");
+      formData.append("pool", "true");
+      formData.append("poolDetails", "Inground canine pool with life jackets");
+      formData.append("socializationPolicy", "Supervised small group play with temperament testing");
       const testSchedule = JSON.stringify([
         { day: "monday", label: "Monday", enabled: true, checkin: "08:30", checkout: "18:00" },
       ]);
@@ -149,6 +164,11 @@ describe("Courses Server Actions", () => {
         ownerCommunicationDetails: "WhatsApp photo at noon",
         personalizedMealPlan: true,
         personalizedMealPlanDetails: "Raw BARF mix twice a day",
+        playYard: true,
+        playYardDetails: "500 sqm grass yard with splash pool",
+        pool: true,
+        poolDetails: "Inground canine pool with life jackets",
+        socializationPolicy: "Supervised small group play with temperament testing",
         checkin: "08:30",
         checkout: "18:00",
         checkinWeekend: "09:30",
@@ -174,6 +194,7 @@ describe("Courses Server Actions", () => {
       formData.append("emergencyVetTransportDetails", "Emergency vehicle on standby");
       formData.append("maxPetsPerVisit", "2");
       formData.append("additionalPetPolicy", "+20 RON/hr for second dog");
+      formData.append("acceptedDogSizes", "Small,Medium,Large");
 
       const result = await createCourseAction(null, formData);
       expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
@@ -187,6 +208,7 @@ describe("Courses Server Actions", () => {
         emergencyVetTransportDetails: "Emergency vehicle on standby",
         maxPetsPerVisit: 2,
         additionalPetPolicy: "+20 RON/hr for second dog",
+        acceptedDogSizes: "Small,Medium,Large",
       }));
       expect(result).toEqual({ success: true });
     });

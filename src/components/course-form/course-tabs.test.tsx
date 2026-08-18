@@ -450,5 +450,36 @@ describe("CourseForm Subcomponents Suite", () => {
       expect(screen.getByText("Certified Dog Trainer")).toBeDefined();
       expect(screen.getByDisplayValue("Romanian Kennel Club (AChR)")).toBeDefined();
     });
+
+    it("renders Accepted Dog Sizes with Small, Medium, Large, Giant options and handles toggling", () => {
+      const onSelectedDogSizesChange = vi.fn();
+
+      render(
+        <AgeLimitsSection
+          itemNoun="Sitting service"
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onSelectedAgeLimitsChange={vi.fn()}
+          showDogSizes={true}
+          selectedDogSizes={["Small", "Medium"]}
+          onSelectedDogSizesChange={onSelectedDogSizesChange}
+        />
+      );
+
+      expect(screen.getByText("Accepted Dog Sizes")).toBeDefined();
+      expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Medium" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Large" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Giant" })).toBeDefined();
+
+      // Click Large to add
+      fireEvent.click(screen.getByRole("button", { name: "Large" }));
+      expect(onSelectedDogSizesChange).toHaveBeenCalledWith(["Small", "Medium", "Large"]);
+
+      // Click Small to remove
+      fireEvent.click(screen.getByRole("button", { name: "Small" }));
+      expect(onSelectedDogSizesChange).toHaveBeenCalledWith(["Medium"]);
+    });
   });
 });

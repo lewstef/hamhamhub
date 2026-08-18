@@ -47,6 +47,10 @@ vi.mock("lucide-react", () => ({
   HelpCircle: () => <div data-testid="help-circle" />,
   Sliders: () => <div data-testid="sliders" />,
   HeartPulse: () => <div data-testid="heart-pulse" />,
+  Trees: () => <div data-testid="trees" />,
+  Waves: () => <div data-testid="waves" />,
+  GraduationCap: () => <div data-testid="graduation-cap" />,
+  Warehouse: () => <div data-testid="warehouse" />,
 }));
 
 vi.mock("@/app/actions/organizations", () => ({
@@ -444,6 +448,7 @@ describe("DashboardServiceDetail Component", () => {
             veterinaryTrainingCertifier: "USAMV",
             emergencyVetTransport: true,
             maxPetsPerVisit: 2,
+            acceptedDogSizes: "Small, Medium",
             dedicatedField: false,
             parking: false,
           },
@@ -456,6 +461,7 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Vet Training")).toBeDefined();
     expect(screen.getByText("Emergency Vet Transport")).toBeDefined();
     expect(screen.getByText("Up to 2 Pets")).toBeDefined();
+    expect(screen.getByText("Sizes: Small, Medium")).toBeDefined();
   });
 
   it("should show '1 Walk' (singular) when dailyWalks is 1", () => {
@@ -479,6 +485,8 @@ describe("DashboardServiceDetail Component", () => {
             dedicatedField: false,
             parking: false,
             dailyWalks: 1,
+            playYard: true,
+            pool: true,
           },
         ]}
       />
@@ -487,6 +495,37 @@ describe("DashboardServiceDetail Component", () => {
     fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
     expect(screen.getByText("1 Walk")).toBeDefined();
+    expect(screen.getByText("Play Yard")).toBeDefined();
+    expect(screen.getByText("Swimming Pool")).toBeDefined();
+  });
+
+  it("should display Training Format and Indoor Hall badges for dog training offerings", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          {
+            id: "c-1",
+            name: "Puppy Basics",
+            certifiedTrainer: true,
+            trainingFormat: "Group Class",
+            maxDogsPerGroup: 6,
+            indoorFacility: true,
+            dedicatedField: true,
+            parking: true,
+          },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
+
+    expect(screen.getByText("Certified")).toBeDefined();
+    expect(screen.getByText("Group Class (Max 6)")).toBeDefined();
+    expect(screen.getByText("Indoor Hall")).toBeDefined();
   });
 
   it("should open delete confirmation modal when Delete button is clicked", () => {

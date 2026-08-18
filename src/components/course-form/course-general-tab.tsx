@@ -6,6 +6,21 @@ import { Label } from "@/components/ui/label";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
 
+export const DOG_SPORT_DISCIPLINES = [
+  "Agility",
+  "IGP / Schutzhund",
+  "Mondioring",
+  "Ring",
+  "Flyball",
+  "Canine Frisbee / Disc Dog",
+  "Dog dancing",
+  "Hoopers",
+  "Canicross / Bikejoring",
+  "Mantrailing",
+  "Rally Obedience",
+  "Dock Diving",
+] as const;
+
 interface CourseGeneralTabProps {
   name: string;
   onNameChange: (v: string) => void;
@@ -23,6 +38,10 @@ interface CourseGeneralTabProps {
   onVeterinaryTrainingCertifierChange?: (v: string) => void;
   veterinaryTrainingDetails?: string;
   onVeterinaryTrainingDetailsChange?: (v: string) => void;
+  trainingFormat?: string;
+  onTrainingFormatChange?: (v: string) => void;
+  maxDogsPerGroup?: number | null;
+  onMaxDogsPerGroupChange?: (v: number | null) => void;
   ageLimitsEnabled: boolean;
   onAgeLimitsEnabledChange: (v: boolean) => void;
   selectedAgeLimits: string[];
@@ -57,6 +76,10 @@ export function CourseGeneralTab({
   onVeterinaryTrainingCertifierChange,
   veterinaryTrainingDetails = "",
   onVeterinaryTrainingDetailsChange,
+  trainingFormat = "",
+  onTrainingFormatChange,
+  maxDogsPerGroup = null,
+  onMaxDogsPerGroupChange,
   ageLimitsEnabled,
   onAgeLimitsEnabledChange,
   selectedAgeLimits,
@@ -139,6 +162,90 @@ export function CourseGeneralTab({
               );
             })}
           </div>
+        </div>
+      )}
+
+
+      {/* Dog Sports Discipline Preset Selector */}
+      {(isDogSport || itemNoun === "Dog Sport") && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold text-foreground">Sport Discipline</Label>
+            <span className="text-[11px] text-muted-foreground">Select a discipline preset or enter custom name below</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {DOG_SPORT_DISCIPLINES.map((discipline) => {
+              const isSelected = name.trim().toLowerCase() === discipline.toLowerCase();
+              return (
+                <button
+                  key={discipline}
+                  type="button"
+                  onClick={() => onNameChange(discipline)}
+                  className={`h-8 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground hover:bg-muted/30"
+                  }`}
+                >
+                  {discipline}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Training Format / Session Type Preset Selector */}
+      {(isDogTraining || itemNoun === "Course" || itemNoun === "Training course") && onTrainingFormatChange && (
+        <div className="space-y-3 p-4 rounded-xl border border-border/80 bg-muted/20">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold text-foreground">Training Format / Session Type</Label>
+            <span className="text-[11px] text-muted-foreground">Select how training is conducted</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              "Group Class",
+              "Private 1-on-1 Session",
+              "In-Home Training",
+              "Board & Train",
+              "Online Consultation",
+            ].map((format) => {
+              const isSelected = trainingFormat === format;
+              return (
+                <button
+                  key={format}
+                  type="button"
+                  onClick={() => onTrainingFormatChange(format)}
+                  className={`h-8 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground hover:bg-muted/30"
+                  }`}
+                >
+                  {format}
+                </button>
+              );
+            })}
+          </div>
+
+          {trainingFormat === "Group Class" && onMaxDogsPerGroupChange && (
+            <div className="space-y-1.5 pt-2 border-t border-border/60">
+              <Label htmlFor="max-dogs-group" className="text-xs font-semibold">Maximum Dogs Per Group</Label>
+              <Input
+                id="max-dogs-group"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={maxDogsPerGroup || ""}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, "");
+                  onMaxDogsPerGroupChange(val ? parseInt(val, 10) : null);
+                }}
+                placeholder="e.g. 6"
+                className="h-9 text-xs rounded-xl w-36"
+              />
+            </div>
+          )}
         </div>
       )}
 

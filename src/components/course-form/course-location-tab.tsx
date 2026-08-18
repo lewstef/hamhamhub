@@ -36,6 +36,10 @@ interface CourseLocationTabProps {
   onDedicatedFieldChange: (v: boolean) => void;
   trainingFieldDescription: string;
   onTrainingFieldDescriptionChange: (v: string) => void;
+  indoorFacility?: boolean;
+  onIndoorFacilityChange?: (v: boolean) => void;
+  indoorFacilityDescription?: string;
+  onIndoorFacilityDescriptionChange?: (v: string) => void;
   parking: boolean;
   onParkingChange: (v: boolean) => void;
   parkingDescription: string;
@@ -74,6 +78,10 @@ export function CourseLocationTab({
   onDedicatedFieldChange,
   trainingFieldDescription,
   onTrainingFieldDescriptionChange,
+  indoorFacility = false,
+  onIndoorFacilityChange,
+  indoorFacilityDescription = "",
+  onIndoorFacilityDescriptionChange,
   parking,
   onParkingChange,
   parkingDescription,
@@ -511,7 +519,7 @@ export function CourseLocationTab({
         <>
           <BooleanToggleField
             label="Dedicated Training Field"
-            description="Does the class run on a fully closed, dedicated training field?"
+            description="Does the class run on a fully closed, dedicated outdoor training field?"
             checked={dedicatedField}
             onChange={onDedicatedFieldChange}
           >
@@ -525,6 +533,25 @@ export function CourseLocationTab({
                 />
               </div>
               {layout === "flat" && locationInputs}
+            </div>
+          </BooleanToggleField>
+
+          <div className="h-px bg-border/60" />
+
+          {/* Indoor / Covered Training Hall */}
+          <BooleanToggleField
+            label="Indoor / Covered Training Hall"
+            description="Do you have an indoor hall or covered facility for training in bad weather or winter?"
+            checked={indoorFacility}
+            onChange={onIndoorFacilityChange || (() => {})}
+          >
+            <div className="space-y-2">
+              <Label>Indoor Facility Features &amp; Climate Details</Label>
+              <WysiwygEditor
+                value={indoorFacilityDescription}
+                onChange={onIndoorFacilityDescriptionChange || (() => {})}
+                placeholder="e.g. 200 sqm heated indoor arena, non-slip rubber agility flooring, winter heating & summer air conditioning, full agility mirror..."
+              />
             </div>
           </BooleanToggleField>
 

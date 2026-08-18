@@ -52,6 +52,16 @@ interface ParsedCourseData {
   schedule: string | null;
   ageLimitsEnabled: boolean;
   ageLimits: string | null;
+  acceptedDogSizes: string | null;
+  trainingFormat: string | null;
+  maxDogsPerGroup: number | null;
+  indoorFacility: boolean;
+  indoorFacilityDescription: string;
+  playYard: boolean;
+  playYardDetails: string;
+  pool: boolean;
+  poolDetails: string;
+  socializationPolicy: string;
   coverageZones: string | null;
   faq: string | null;
 }
@@ -109,6 +119,17 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const schedule = (formData.get("schedule") as string) || null;
   const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
   const ageLimits = (formData.get("ageLimits") as string) || null;
+  const acceptedDogSizes = (formData.get("acceptedDogSizes") as string) || null;
+  const trainingFormat = (formData.get("trainingFormat") as string) || null;
+  const maxDogsPerGroupStr = formData.get("maxDogsPerGroup") as string;
+  const maxDogsPerGroup = maxDogsPerGroupStr ? parseInt(maxDogsPerGroupStr, 10) : null;
+  const indoorFacility = formData.get("indoorFacility") === "true";
+  const indoorFacilityDescription = (formData.get("indoorFacilityDescription") as string) || "";
+  const playYard = formData.get("playYard") === "true";
+  const playYardDetails = (formData.get("playYardDetails") as string) || "";
+  const pool = formData.get("pool") === "true";
+  const poolDetails = (formData.get("poolDetails") as string) || "";
+  const socializationPolicy = (formData.get("socializationPolicy") as string) || "";
   const coverageZones = (formData.get("coverageZones") as string) || null;
   const faq = (formData.get("faq") as string) || null;
 
@@ -191,7 +212,10 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
       emergencyVetTransport, emergencyVetTransportDetails,
       maxPetsPerVisit, additionalPetPolicy,
       checkin, checkout, checkinWeekend, checkoutWeekend,
-      schedule, ageLimitsEnabled, ageLimits, coverageZones, faq,
+      schedule, ageLimitsEnabled, ageLimits, acceptedDogSizes,
+      trainingFormat, maxDogsPerGroup, indoorFacility, indoorFacilityDescription,
+      playYard, playYardDetails, pool, poolDetails, socializationPolicy,
+      coverageZones, faq,
     },
   };
 }
@@ -294,6 +318,16 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       schedule: d.schedule,
       ageLimitsEnabled: d.ageLimitsEnabled,
       ageLimits: d.ageLimitsEnabled ? d.ageLimits : null,
+      acceptedDogSizes: d.acceptedDogSizes,
+      trainingFormat: d.trainingFormat,
+      maxDogsPerGroup: d.maxDogsPerGroup,
+      indoorFacility: d.indoorFacility,
+      indoorFacilityDescription: d.indoorFacility ? d.indoorFacilityDescription : null,
+      playYard: d.playYard,
+      playYardDetails: d.playYard ? d.playYardDetails : null,
+      pool: d.pool,
+      poolDetails: d.pool ? d.poolDetails : null,
+      socializationPolicy: d.socializationPolicy || null,
       coverageZones: d.coverageZones,
       faq: d.faq,
     });
@@ -399,6 +433,16 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         schedule: d.schedule,
         ageLimitsEnabled: d.ageLimitsEnabled,
         ageLimits: d.ageLimitsEnabled ? d.ageLimits : null,
+        acceptedDogSizes: d.acceptedDogSizes,
+        trainingFormat: d.trainingFormat,
+        maxDogsPerGroup: d.maxDogsPerGroup,
+        indoorFacility: d.indoorFacility,
+        indoorFacilityDescription: d.indoorFacility ? d.indoorFacilityDescription : null,
+        playYard: d.playYard,
+        playYardDetails: d.playYard ? d.playYardDetails : null,
+        pool: d.pool,
+        poolDetails: d.pool ? d.poolDetails : null,
+        socializationPolicy: d.socializationPolicy || null,
         coverageZones: d.coverageZones,
         faq: d.faq,
       })

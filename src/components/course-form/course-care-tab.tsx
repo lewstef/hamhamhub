@@ -312,6 +312,29 @@ export function CourseCareTab({
           />
         </div>
       </BooleanToggleField>
+
+      {!isDogWalking && (
+        <>
+          <div className="h-px bg-border/60" />
+
+          {/* Emergency Vet Transport & First Aid */}
+          <BooleanToggleField
+            label="Emergency Vet Transport & First Aid"
+            description="Do you have a dedicated vehicle and clinic protocol on standby for emergency veterinary visits?"
+            checked={emergencyVetTransport}
+            onChange={onEmergencyVetTransportChange || (() => {})}
+          >
+            <div className="space-y-2">
+              <Label>Emergency Transport &amp; Vet Protocol</Label>
+              <WysiwygEditor
+                value={emergencyVetTransportDetails}
+                onChange={onEmergencyVetTransportDetailsChange || (() => {})}
+                placeholder="e.g. Pet first-aid certified staff on-site 24/7, direct partnership with local 24-hour veterinary emergency hospital, dedicated emergency transport vehicle on standby..."
+              />
+            </div>
+          </BooleanToggleField>
+        </>
+      )}
     </>
   );
 }

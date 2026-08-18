@@ -45,6 +45,16 @@ export interface Course {
   schedule?: string | null;
   ageLimitsEnabled?: boolean | null;
   ageLimits?: string | null;
+  acceptedDogSizes?: string | null;
+  trainingFormat?: string | null;
+  maxDogsPerGroup?: number | null;
+  indoorFacility?: boolean | null;
+  indoorFacilityDescription?: string | null;
+  playYard?: boolean | null;
+  playYardDetails?: string | null;
+  pool?: boolean | null;
+  poolDetails?: string | null;
+  socializationPolicy?: string | null;
   coverageZones?: string | null;
   faq?: string | null;
 }

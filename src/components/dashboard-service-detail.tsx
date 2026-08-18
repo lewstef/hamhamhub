@@ -7,7 +7,7 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse } from "lucide-react";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -594,6 +594,36 @@ export function DashboardServiceDetail({
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-600 border border-cyan-500/20" title={course.additionalPetPolicy || `Max ${course.maxPetsPerVisit} pets per visit`}>
                                 <Users className="size-2.5" />
                                 Up to {course.maxPetsPerVisit} Pets
+                              </span>
+                            )}
+                            {course.acceptedDogSizes && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/10 text-violet-600 border border-violet-500/20" title={`Accepted Dog Sizes: ${course.acceptedDogSizes.split(",").join(", ")}`}>
+                                <Footprints className="size-2.5" />
+                                Sizes: {course.acceptedDogSizes.split(",").join(", ")}
+                              </span>
+                            )}
+                            {course.trainingFormat && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20" title={course.maxDogsPerGroup ? `${course.trainingFormat} (Max ${course.maxDogsPerGroup} dogs)` : course.trainingFormat}>
+                                <GraduationCap className="size-2.5" />
+                                {course.trainingFormat}{course.maxDogsPerGroup ? ` (Max ${course.maxDogsPerGroup})` : ""}
+                              </span>
+                            )}
+                            {course.indoorFacility && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-600 border border-teal-500/20" title={course.indoorFacilityDescription || "Indoor / covered training hall"}>
+                                <Warehouse className="size-2.5" />
+                                Indoor Hall
+                              </span>
+                            )}
+                            {course.playYard && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-lime-500/10 text-lime-600 border border-lime-500/20" title={course.playYardDetails || "Fenced outdoor play yard"}>
+                                <Trees className="size-2.5" />
+                                Play Yard
+                              </span>
+                            )}
+                            {course.pool && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-600 border border-sky-500/20" title={course.poolDetails || "Canine swimming pool & splash area"}>
+                                <Waves className="size-2.5" />
+                                Swimming Pool
                               </span>
                             )}
                             {parseClosedPeriods(course.schedule).map((period, idx) => (

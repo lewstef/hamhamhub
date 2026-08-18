@@ -119,6 +119,24 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
     - **Multi-Pet Accommodation** (maximum pets per visit selector: 1 to 5+ pets + additional pet policy and rates WYSIWYG)
     - **Communication with the Owner** (boolean toggle + photo/video update details WYSIWYG)
   - Structured Dog Sitting services (`isDogSitter` / `slug === "dog-sitting"`) with specialized **Billing Frequency** options scoped strictly to hourly durations (**"1h"**, **"2h"**, **"3h"**, **"4h"**, **"5h"**, **"6h"**, **"7h"**, **"8h"**, **"9h"**, **"10h"**, **"11h"**, **"12h"**), omitting general terms like "per Month", "per session", "Per Day", or "Per Hour".
+- **Accepted Dog Sizes (All Tabbed Services: Sitting, Walking, Boarding, Training, Dog Sports)**:
+  - Added **"Accepted Dog Sizes"** field under **"Age limits & restrictions"** on the **"Terms of participation"** tab across all tabbed services: Dog Sitting (`isDogSitter`), Dog Walking (`isDogWalking`), Dog Boarding (`isBoarding`), Dog Training (`isDogTraining`), and Dog Sports (`isDogSport`).
+  - Features 4 selectable toggle checkboxes: **Small**, **Medium**, **Large**, **Giant** styled identically to "Allowed Dog Age Groups".
+  - Persisted to database as `accepted_dog_sizes` on `courses` and displayed via a dynamic `Sizes: Small, Medium...` badge on dashboard service detail views.
+- **Dog Sports Training Discipline Presets & Indoor Facility**:
+  - Added **Sport Discipline** preset selector on the General tab for Dog Sports with standard presets (**"Agility"**, **"IGP / Schutzhund"**, **"Mondioring"**, **"Ring"**, **"Flyball"**, **"Canine Frisbee / Disc Dog"**, **"Dog dancing"**, **"Hoopers"**, **"Canicross / Bikejoring"**, **"Mantrailing"**, **"Rally Obedience"**, **"Dock Diving"**) that automatically sets the course name on 1-click selection.
+  - Enabled **Indoor / Covered Training Hall** boolean toggle with custom WYSIWYG details on the Location tab for Dog Sports as well.
+- **Dog Training Format / Session Type & Indoor Training Hall**:
+  - Added **Training Format / Session Type** selector on the General tab for Dog Training with presets (**"Group Class"**, **"Private 1-on-1 Session"**, **"In-Home Training"**, **"Board & Train"**, **"Online Consultation"**) and dynamic **Maximum Dogs Per Group** input when "Group Class" is selected.
+  - Added **Indoor / Covered Training Hall** boolean toggle on the Location tab with custom WYSIWYG details for arena size, heating/AC, and non-slip rubber agility flooring.
+  - Rendered dynamic **Training Format** (`GraduationCap` icon) and **Indoor Hall** (`Warehouse` icon) badges on dashboard service detail views.
+- **Dog Boarding "Play yard & socialization" Tab, Dog Pool & Emergency Vet On-Call**:
+  - Added dedicated **"Play yard & socialization"** tab for Dog Boarding with:
+    - **Fenced Outdoor Play Yard & Exercise Area** boolean toggle with custom WYSIWYG details for play yard features, size, and agility obstacles.
+    - **Dog Swimming Pool & Splash Area** boolean toggle with custom WYSIWYG details for pool ramp entry, life jackets, chlorine-free water, and seasonal availability.
+    - **Socialization & Group Play Policy** WYSIWYG editor for temperament testing protocols and small-group vs solitary play management.
+  - Added **Emergency Vet Transport & First Aid** toggle in the **"Care & facilities"** tab for Dog Boarding services with emergency transport & hospital protocol details.
+  - Rendered dynamic **"Play Yard"** and **"Swimming Pool"** badges on dashboard service detail views.
 - **Pricing Input Validation & Fixed Monetary Unit ("lei")**:
   - Enforced positive numeric value validation for all service pricing tiers both on the client side (`CoursePricingTab` & `CourseForm`) and server actions (`parseCourseFormData` in `src/app/actions/courses.ts`).
   - Standardized the monetary unit to **"lei"** across all pricing tier inputs and dashboard service badge displays.

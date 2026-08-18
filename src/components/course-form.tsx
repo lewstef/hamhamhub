@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
-import { ArrowLeft, Loader2, AlertCircle, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck, Sliders, X } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, FileText, HelpCircle, DollarSign, MapPin, Calendar, FileCheck, Sliders, Footprints, X } from "lucide-react";
 import { parseDateString } from "@/components/ui/date-picker-input";
 import { getCartiereForCity } from "@/config/romanian-cartiere";
 import { CourseGeneralTab } from "./course-form/course-general-tab";
 import { CoursePricingTab } from "./course-form/course-pricing-tab";
 import { CourseScheduleTab, DayScheduleGrid } from "./course-form/course-schedule-tab";
 import { CourseCareTab } from "./course-form/course-care-tab";
+import { CoursePlayYardTab } from "./course-form/course-play-yard-tab";
 import { CourseLocationTab } from "./course-form/course-location-tab";
 import { CourseFaqTab } from "./course-form/course-faq-tab";
 import { TrainerAttributesCard } from "./course-form/sections/trainer-attributes-card";
@@ -157,7 +158,7 @@ export function CourseForm({
   const isTabbedLayout = isDogSport || isDogTraining || isBoarding || isDogWalking || isDogSitter;
   const cityName = orgCity || "Cluj-Napoca";
   const cartiereList = getCartiereForCity(cityName);
-  const [activeTab, setActiveTab] = useState<"general" | "terms" | "faq" | "pricing" | "schedule" | "location" | "others">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "terms" | "faq" | "pricing" | "schedule" | "location" | "others" | "playYard">("general");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -173,6 +174,11 @@ export function CourseForm({
   const [selectedAgeLimits, setSelectedAgeLimits] = useState<string[]>(
     initialCourse?.ageLimits
       ? initialCourse.ageLimits.split(",").map((s) => s.trim()).filter(Boolean)
+      : []
+  );
+  const [selectedDogSizes, setSelectedDogSizes] = useState<string[]>(
+    initialCourse?.acceptedDogSizes
+      ? initialCourse.acceptedDogSizes.split(",").map((s) => s.trim()).filter(Boolean)
       : []
   );
 
@@ -210,6 +216,15 @@ export function CourseForm({
   const [emergencyVetTransportDetails, setEmergencyVetTransportDetails] = useState(initialCourse?.emergencyVetTransportDetails || "");
   const [maxPetsPerVisit, setMaxPetsPerVisit] = useState(initialCourse?.maxPetsPerVisit || 1);
   const [additionalPetPolicy, setAdditionalPetPolicy] = useState(initialCourse?.additionalPetPolicy || "");
+  const [playYard, setPlayYard] = useState(initialCourse?.playYard || false);
+  const [playYardDetails, setPlayYardDetails] = useState(initialCourse?.playYardDetails || "");
+  const [pool, setPool] = useState(initialCourse?.pool || false);
+  const [poolDetails, setPoolDetails] = useState(initialCourse?.poolDetails || "");
+  const [socializationPolicy, setSocializationPolicy] = useState(initialCourse?.socializationPolicy || "");
+  const [trainingFormat, setTrainingFormat] = useState(initialCourse?.trainingFormat || "");
+  const [maxDogsPerGroup, setMaxDogsPerGroup] = useState<number | null>(initialCourse?.maxDogsPerGroup ?? null);
+  const [indoorFacility, setIndoorFacility] = useState(initialCourse?.indoorFacility || false);
+  const [indoorFacilityDescription, setIndoorFacilityDescription] = useState(initialCourse?.indoorFacilityDescription || "");
 
   // Boarding check-in and check-out times in 24-hour (hh:mm) format (Work week & Weekend)
   const [checkin, setCheckin] = useState(initialCourse?.checkin || "08:00");
@@ -550,6 +565,18 @@ export function CourseForm({
     formData.append("veterinaryTrainingDetails", veterinaryTrainingDetails);
     formData.append("ageLimitsEnabled", String(ageLimitsEnabled));
     formData.append("ageLimits", selectedAgeLimits.join(","));
+    formData.append("acceptedDogSizes", selectedDogSizes.join(","));
+    formData.append("trainingFormat", trainingFormat);
+    if (maxDogsPerGroup !== null && maxDogsPerGroup !== undefined) {
+      formData.append("maxDogsPerGroup", String(maxDogsPerGroup));
+    }
+    formData.append("indoorFacility", String(indoorFacility));
+    formData.append("indoorFacilityDescription", indoorFacilityDescription);
+    formData.append("playYard", String(playYard));
+    formData.append("playYardDetails", playYardDetails);
+    formData.append("pool", String(pool));
+    formData.append("poolDetails", poolDetails);
+    formData.append("socializationPolicy", socializationPolicy);
     formData.append("dedicatedField", String(dedicatedField));
     formData.append("trainingFieldDescription", trainingFieldDescription);
     formData.append("trainingFieldAddress", trainingFieldAddress);
@@ -728,6 +755,7 @@ export function CourseForm({
               { key: "location" as const, label: "Coverage zones", Icon: MapPin, hasError: false },
               { key: "faq" as const, label: "FAQ", Icon: HelpCircle, hasError: false },
               ...((isBoarding || isDogSitter) ? [{ key: "others" as const, label: "Care & facilities", Icon: Sliders, hasError: false }] : []),
+              ...(isBoarding ? [{ key: "playYard" as const, label: "Play yard & socialization", Icon: Footprints, hasError: false }] : []),
             ]
           ).map(({ key, label, Icon, hasError }) => (
             <button
@@ -772,6 +800,10 @@ export function CourseForm({
               onVeterinaryTrainingCertifierChange={setVeterinaryTrainingCertifier}
               veterinaryTrainingDetails={veterinaryTrainingDetails}
               onVeterinaryTrainingDetailsChange={setVeterinaryTrainingDetails}
+              trainingFormat={trainingFormat}
+              onTrainingFormatChange={setTrainingFormat}
+              maxDogsPerGroup={maxDogsPerGroup}
+              onMaxDogsPerGroupChange={setMaxDogsPerGroup}
               ageLimitsEnabled={ageLimitsEnabled}
               onAgeLimitsEnabledChange={setAgeLimitsEnabled}
               selectedAgeLimits={selectedAgeLimits}
@@ -798,6 +830,9 @@ export function CourseForm({
                   onAgeLimitsEnabledChange={setAgeLimitsEnabled}
                   selectedAgeLimits={selectedAgeLimits}
                   onSelectedAgeLimitsChange={setSelectedAgeLimits}
+                  showDogSizes={isDogWalking || isDogSitter || isBoarding || isDogTraining || isDogSport}
+                  selectedDogSizes={selectedDogSizes}
+                  onSelectedDogSizesChange={setSelectedDogSizes}
                 />
               </div>
 
@@ -889,6 +924,10 @@ export function CourseForm({
                   onGbpChange={setTrainingFieldGoogleBusinessProfile}
                   trainingFieldGoogleMapsLink={trainingFieldGoogleMapsLink}
                   onMapsChange={setTrainingFieldGoogleMapsLink}
+                  indoorFacility={indoorFacility}
+                  onIndoorFacilityChange={setIndoorFacility}
+                  indoorFacilityDescription={indoorFacilityDescription}
+                  onIndoorFacilityDescriptionChange={setIndoorFacilityDescription}
                   parking={parking}
                   onParkingChange={setParking}
                   parkingDescription={parkingDescription}
@@ -957,6 +996,22 @@ export function CourseForm({
                 />
               </div>
             </div>
+          )}
+
+          {/* TAB 8: PLAY YARD & SOCIALIZATION (Boarding only) */}
+          {activeTab === "playYard" && isBoarding && (
+            <CoursePlayYardTab
+              playYard={playYard}
+              onPlayYardChange={setPlayYard}
+              playYardDetails={playYardDetails}
+              onPlayYardDetailsChange={setPlayYardDetails}
+              pool={pool}
+              onPoolChange={setPool}
+              poolDetails={poolDetails}
+              onPoolDetailsChange={setPoolDetails}
+              socializationPolicy={socializationPolicy}
+              onSocializationPolicyChange={setSocializationPolicy}
+            />
           )}
 
           {/* Bottom Action Buttons (tabbed layout) */}
@@ -1073,6 +1128,9 @@ export function CourseForm({
                       onAgeLimitsEnabledChange={setAgeLimitsEnabled}
                       selectedAgeLimits={selectedAgeLimits}
                       onSelectedAgeLimitsChange={setSelectedAgeLimits}
+                      showDogSizes={isDogWalking || isDogSitter || isBoarding || isDogTraining || isDogSport}
+                      selectedDogSizes={selectedDogSizes}
+                      onSelectedDogSizesChange={setSelectedDogSizes}
                     />
 
                     <div className="h-px bg-border/60" />
