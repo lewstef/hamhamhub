@@ -98,5 +98,59 @@ describe("Email Transport Module (src/lib/email.ts)", () => {
 
       expect(result).toEqual({ success: false, error: "Connection refused" });
     });
+
+    it("should handle SSL encryption, port 465, and empty sender name correctly", async () => {
+      const mockSendMail = vi.fn().mockResolvedValue({ messageId: "<ssl-msg@hamhamhub.ro>" });
+      vi.mocked(nodemailer.createTransport).mockReturnValue({
+        sendMail: mockSendMail,
+      } as any);
+
+      vi.mocked(db.select).mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([
+              {
+                key: "smtp_config",
+                value: JSON.stringify({
+                  smtpHost: "smtp.mail.com",
+                  smtpPort: "465",
+                  smtpSecurity: "SSL",
+                  senderName: "",
+                  senderEmail: "ssl-admin@hamhamhub.ro",
+                }),
+              },
+            ]),
+          }),
+        }),
+      } as any);
+
+      const result = await sendMail({
+        to: "recipient@test.com",
+        subject: "SSL Test",
+        html: "<b>SSL</b>",
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          from: "ssl-admin@hamhamhub.ro",
+        })
+      );
+    });
+
+    it("should handle db error in getActiveSmtpConfig gracefully", async () => {
+      vi.mocked(db.select).mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockRejectedValueOnce(new Error("DB timeout")),
+          }),
+        }),
+      } as any);
+
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const config = await getActiveSmtpConfig();
+      expect(config.smtpHost).toBe("smtp.gmail.com");
+      warnSpy.mockRestore();
+    });
   });
 });

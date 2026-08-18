@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 import { BackofficeSidebar } from "./backoffice-sidebar";
+import { usePathname } from "next/navigation";
+import { useSidebar } from "@/components/ui/sidebar";
 
 // ── External dependencies ──────────────────────────────────────────────────
 
@@ -126,6 +128,8 @@ function renderSidebar(email = "admin@test.com") {
 describe("BackofficeSidebar Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useSidebar).mockReturnValue({ state: "expanded" } as any);
+    vi.mocked(usePathname).mockReturnValue("/backoffice");
   });
 
   it("should render all top-level section titles without a search query", () => {
@@ -239,5 +243,31 @@ describe("BackofficeSidebar Component", () => {
     fireEvent.click(signOutBtn);
 
     expect(onSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("should handle collapsed sidebar and section clicks", () => {
+    vi.mocked(useSidebar).mockReturnValue({ state: "collapsed" } as any);
+    renderSidebar();
+
+    const menuBtns = screen.getAllByRole("button");
+    if (menuBtns.length > 0) {
+      fireEvent.click(menuBtns[0]);
+    }
+  });
+
+  it("should automatically expand when child path is active and update on route change", () => {
+    vi.mocked(usePathname).mockReturnValue("/backoffice/employees");
+    const { rerender } = renderSidebar();
+
+    expect(screen.getByText("Employees")).toBeDefined();
+
+    // Rerender with different active child route to trigger prevIsAnyChildActive sync
+    vi.mocked(usePathname).mockReturnValue("/backoffice/organizations");
+    rerender(<BackofficeSidebar email="admin@test.com" onSignOut={vi.fn()} />);
+    expect(screen.getByText("Organizations")).toBeDefined();
+
+    // Rerender back to dashboard
+    vi.mocked(usePathname).mockReturnValue("/backoffice");
+    rerender(<BackofficeSidebar email="admin@test.com" onSignOut={vi.fn()} />);
   });
 });

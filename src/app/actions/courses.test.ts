@@ -324,6 +324,15 @@ describe("Courses Server Actions", () => {
       formData.append("trainingFieldAddress", "456 Bark St");
       formData.append("trainingFieldGoogleBusinessProfile", "https://business.google.com/456");
       formData.append("trainingFieldGoogleMapsLink", "https://maps.google.com/456");
+      formData.append("acceptedDogSizesEnabled", "true");
+      formData.append("acceptedDogSizes", "Small,Medium,Giant");
+      formData.append("trainingFormat", "Private 1-on-1 Session");
+      formData.append("indoorFacility", "true");
+      formData.append("indoorFacilityDescription", "300 sqm heated arena");
+      formData.append("playYard", "true");
+      formData.append("playYardDetails", "1000 sqm play area");
+      formData.append("pool", "true");
+      formData.append("poolDetails", "Chlorine-free dog pool");
 
       const result = await updateCourseAction(null, formData);
       expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
@@ -333,6 +342,15 @@ describe("Courses Server Actions", () => {
         trainingFieldAddress: "456 Bark St",
         trainingFieldGoogleBusinessProfile: "https://business.google.com/456",
         trainingFieldGoogleMapsLink: "https://maps.google.com/456",
+        acceptedDogSizesEnabled: true,
+        acceptedDogSizes: "Small,Medium,Giant",
+        trainingFormat: "Private 1-on-1 Session",
+        indoorFacility: true,
+        indoorFacilityDescription: "300 sqm heated arena",
+        playYard: true,
+        playYardDetails: "1000 sqm play area",
+        pool: true,
+        poolDetails: "Chlorine-free dog pool",
       }));
       expect(result).toEqual({ success: true });
     });
@@ -590,6 +608,35 @@ describe("Courses Server Actions", () => {
       vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       vi.mocked(db.select).mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValueOnce([]) }) }) } as any);
       expect(await deleteCourseAction("course-1")).toEqual({ error: "Course not found" });
+    });
+
+    it("should return validation error when schedule checkout is before checkin or JSON is invalid", async () => {
+      vi.mocked(auth as any).mockResolvedValue({ user: { id: "org-1", role: "organization" }, expires: "" });
+
+      // Invalid schedule JSON
+      const formInvalidJson = new FormData();
+      formInvalidJson.append("organizationId", "org-1");
+      formInvalidJson.append("name", "Schedule Course");
+      formInvalidJson.append("schedule", "invalid-json-string");
+
+      const resInvalidJson = await createCourseAction(null, formInvalidJson);
+      expect(resInvalidJson).toEqual({ error: "Invalid schedule JSON format." });
+
+      // Checkout before checkin
+      const formInvalidTimes = new FormData();
+      formInvalidTimes.append("organizationId", "org-1");
+      formInvalidTimes.append("name", "Schedule Course");
+      formInvalidTimes.append(
+        "schedule",
+        JSON.stringify([
+          { day: "monday", label: "Monday", enabled: true, checkin: "14:00", checkout: "10:00" },
+        ])
+      );
+
+      const resInvalidTimes = await createCourseAction(null, formInvalidTimes);
+      expect(resInvalidTimes).toEqual({
+        error: "Check-out time cannot be before or equal to check-in time for Monday.",
+      });
     });
   });
 });

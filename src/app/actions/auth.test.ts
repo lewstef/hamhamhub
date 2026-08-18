@@ -79,6 +79,13 @@ describe("Core Auth Server Actions", () => {
   });
 
   describe("signUpAction", () => {
+    it("should return error if roleType is staff", async () => {
+      const formData = new FormData();
+      formData.append("roleType", "staff");
+      const result = await signUpAction(null, formData);
+      expect(result).toEqual({ error: "Staff registration is disabled" });
+    });
+
     it("should return error if name or password is missing", async () => {
       const formData = new FormData();
       formData.append("name", "");
@@ -236,6 +243,18 @@ describe("Core Auth Server Actions", () => {
 
       const result = await loginAction(null, formData);
       expect(result).toEqual({ error: "Something went wrong during sign-in." });
+    });
+
+    it("should handle signIn returning undefined without throwing", async () => {
+      const formData = new FormData();
+      formData.append("identifier", "john@example.com");
+      formData.append("password", "correctpass");
+      formData.append("loginType", "user");
+
+      vi.mocked(signIn).mockResolvedValueOnce(undefined as any);
+
+      const result = await loginAction(null, formData);
+      expect(result).toBeUndefined();
     });
   });
 

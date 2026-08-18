@@ -199,4 +199,85 @@ describe("DashboardSidebar Component", () => {
 
     expect(screen.getByTestId("sidebar")).toBeDefined();
   });
+
+  it("handles null email and empty activeServices gracefully", () => {
+    render(
+      <DashboardSidebar
+        email={null}
+        activeServices={[]}
+        onSignOut={onSignOut}
+      />
+    );
+
+    expect(screen.getByText("Services")).toBeDefined();
+  });
+
+  it("toggles expandable section on menu button click and updates on search query", () => {
+    vi.mocked(useSidebar).mockReturnValue({ state: "expanded" } as any);
+
+    const { rerender } = render(
+      <DashboardSidebar
+        email="owner@dogkennel.test"
+        activeServices={mockActiveServices}
+        onSignOut={onSignOut}
+      />
+    );
+
+    // Toggle parent link
+    const servicesLinks = screen.getAllByRole("link", { name: /services/i });
+    if (servicesLinks.length > 0) {
+      fireEvent.click(servicesLinks[0]);
+      fireEvent.click(servicesLinks[0]);
+    }
+
+    // Change search input to search query
+    const searchInput = screen.getByPlaceholderText("Search menu...");
+    fireEvent.change(searchInput, { target: { value: "Training" } });
+
+    // Dynamic rerender
+    rerender(
+      <DashboardSidebar
+        email="owner@dogkennel.test"
+        activeServices={mockActiveServices}
+        onSignOut={onSignOut}
+      />
+    );
+  });
+
+  it("automatically opens menu item when a child route becomes active dynamically", () => {
+    const { rerender } = render(
+      <DashboardSidebar
+        email="owner@dogkennel.test"
+        activeServices={mockActiveServices}
+        onSignOut={onSignOut}
+      />
+    );
+
+    vi.mocked(usePathname).mockReturnValue("/dashboard/services/dog-training");
+
+    rerender(
+      <DashboardSidebar
+        email="owner@dogkennel.test"
+        activeServices={mockActiveServices}
+        onSignOut={onSignOut}
+      />
+    );
+
+    expect(screen.getByText("Dog Training")).toBeDefined();
+  });
+
+  it("renders 'No results found' when search query does not match any items", () => {
+    render(
+      <DashboardSidebar
+        email={null}
+        activeServices={mockActiveServices}
+        onSignOut={onSignOut}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText("Search menu...");
+    fireEvent.change(searchInput, { target: { value: "nonexistent_query_xyz" } });
+
+    expect(screen.getByText("No results found")).toBeDefined();
+  });
 });

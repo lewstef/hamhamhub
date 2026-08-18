@@ -272,7 +272,7 @@ describe("CustomSelect Component", () => {
         id="test-select"
         options={[
           { value: "opt1", label: "Option One" },
-          { value: "opt2", label: "Option Two" },
+          { value: "opt2", label: "Option Two", disabled: true },
           { value: "opt3", label: "Option Three" },
         ]}
       />
@@ -282,16 +282,23 @@ describe("CustomSelect Component", () => {
     fireEvent.keyDown(containerDiv, { key: "ArrowDown" });
     expect(container.querySelector(".custom-scrollbar")).not.toBeNull();
 
+    // Arrow down jumps over disabled opt2 to opt3
+    fireEvent.keyDown(containerDiv, { key: "ArrowDown" });
+    // Arrow up jumps back over disabled opt2 to opt1
+    fireEvent.keyDown(containerDiv, { key: "ArrowUp" });
+
     // Home key
     fireEvent.keyDown(containerDiv, { key: "Home" });
     // End key
     fireEvent.keyDown(containerDiv, { key: "End" });
+    // Enter key selects
+    fireEvent.keyDown(containerDiv, { key: "Enter" });
     // Tab key
     fireEvent.keyDown(containerDiv, { key: "Tab" });
     expect(container.querySelector(".custom-scrollbar")).toBeNull();
 
-    // Reopen and test Escape
-    fireEvent.keyDown(containerDiv, { key: "ArrowDown" });
+    // Reopen with Space and test Escape
+    fireEvent.keyDown(containerDiv, { key: " " });
     expect(container.querySelector(".custom-scrollbar")).not.toBeNull();
     fireEvent.keyDown(containerDiv, { key: "Escape" });
     expect(container.querySelector(".custom-scrollbar")).toBeNull();

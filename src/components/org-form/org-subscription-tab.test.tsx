@@ -51,11 +51,37 @@ describe("OrgSubscriptionTab Component", () => {
     }, { timeout: 1500 });
   });
 
-  it("renders billing invoice history table", () => {
+  it("renders billing invoice history table and handles PDF download click", () => {
+    const alertMock = vi.fn();
+    window.alert = alertMock;
     render(<OrgSubscriptionTab />);
 
     expect(screen.getByText("Billing History & Invoices")).toBeDefined();
     expect(screen.getByText("HHH-2026-0042")).toBeDefined();
     expect(screen.getByText("15 Jul 2026")).toBeDefined();
+
+    const pdfBtns = screen.getAllByRole("button", { name: "PDF" });
+    fireEvent.click(pdfBtns[0]);
+    expect(alertMock).toHaveBeenCalled();
+  });
+
+  it("handles cancelling plan upgrade confirmation via Cancel button and close X", () => {
+    render(<OrgSubscriptionTab />);
+
+    // Open upgrade modal
+    const upgradeBtn = screen.getByRole("button", { name: /Switch to Kennel & School Enterprise/i });
+    fireEvent.click(upgradeBtn);
+    expect(screen.getByText("Confirm Plan Change")).toBeDefined();
+
+    // Click Cancel
+    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelBtn);
+    expect(screen.queryByText("Confirm Plan Change")).toBeNull();
+
+    // Reopen modal and close with X
+    fireEvent.click(upgradeBtn);
+    const closeXBtn = screen.getByRole("button", { name: "×" });
+    fireEvent.click(closeXBtn);
+    expect(screen.queryByText("Confirm Plan Change")).toBeNull();
   });
 });

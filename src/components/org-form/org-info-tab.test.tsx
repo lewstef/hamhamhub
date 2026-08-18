@@ -89,6 +89,34 @@ describe("OrgInfoTab Component", () => {
     fireEvent.click(editNameBtn);
     expect(onOpenNameModal).toHaveBeenCalledTimes(1);
 
+    const editEmailBtn = screen.getByRole("button", { name: /^edit email$/i });
+    fireEvent.click(editEmailBtn);
+    expect(onOpenEmailModal).toHaveBeenCalledTimes(1);
+
+    const editPhoneBtn = screen.getByRole("button", { name: /^edit phone$/i });
+    fireEvent.click(editPhoneBtn);
+    expect(onOpenPhoneModal).toHaveBeenCalledTimes(1);
+
+    const editWebsiteBtn = screen.getByRole("button", { name: /^edit website$/i });
+    fireEvent.click(editWebsiteBtn);
+    expect(onOpenWebsiteModal).toHaveBeenCalledTimes(1);
+
+    const editFbBtn = screen.getByRole("button", { name: /^edit facebook$/i });
+    fireEvent.click(editFbBtn);
+    expect(onOpenFacebookModal).toHaveBeenCalledTimes(1);
+
+    const editInstaBtn = screen.getByRole("button", { name: /^edit instagram$/i });
+    fireEvent.click(editInstaBtn);
+    expect(onOpenInstagramModal).toHaveBeenCalledTimes(1);
+
+    const editTikTokBtn = screen.getByRole("button", { name: /^edit tiktok$/i });
+    fireEvent.click(editTikTokBtn);
+    expect(onOpenTikTokModal).toHaveBeenCalledTimes(1);
+
+    const editLinkedinBtn = screen.getByRole("button", { name: /^edit linkedin$/i });
+    fireEvent.click(editLinkedinBtn);
+    expect(onOpenLinkedinModal).toHaveBeenCalledTimes(1);
+
     const editCategoryBtn = screen.getByRole("button", { name: /^edit category$/i });
     fireEvent.click(editCategoryBtn);
     expect(onOpenCategoryModal).toHaveBeenCalledTimes(1);
@@ -96,5 +124,51 @@ describe("OrgInfoTab Component", () => {
     const editDescBtn = screen.getByRole("button", { name: /^edit description$/i });
     fireEvent.click(editDescBtn);
     expect(onOpenDescriptionModal).toHaveBeenCalledTimes(1);
+  });
+
+  it("handles blank or HTML-only descriptions gracefully", () => {
+    const { rerender } = render(
+      <OrgInfoTab
+        organization={{ ...dummyOrg, description: "<p>   </p>" }}
+        selectedCategoryName="Dog Training School"
+        formattedRegistrationDate="01 Jan 2026"
+        isPending={false}
+        onOpenNameModal={onOpenNameModal}
+        onOpenEmailModal={onOpenEmailModal}
+        onOpenPhoneModal={onOpenPhoneModal}
+        onOpenWebsiteModal={onOpenWebsiteModal}
+        onOpenFacebookModal={onOpenFacebookModal}
+        onOpenInstagramModal={onOpenInstagramModal}
+        onOpenTikTokModal={onOpenTikTokModal}
+        onOpenLinkedinModal={onOpenLinkedinModal}
+        onOpenDescriptionModal={onOpenDescriptionModal}
+        onOpenCategoryModal={onOpenCategoryModal}
+        renderLinkValue={renderLinkValue}
+      />
+    );
+
+    expect(screen.getAllByText("-").length).toBeGreaterThan(0);
+
+    rerender(
+      <OrgInfoTab
+        organization={{ ...dummyOrg, description: null }}
+        selectedCategoryName="Dog Training School"
+        formattedRegistrationDate="01 Jan 2026"
+        isPending={false}
+        onOpenNameModal={onOpenNameModal}
+        onOpenEmailModal={onOpenEmailModal}
+        onOpenPhoneModal={onOpenPhoneModal}
+        onOpenWebsiteModal={onOpenWebsiteModal}
+        onOpenFacebookModal={onOpenFacebookModal}
+        onOpenInstagramModal={onOpenInstagramModal}
+        onOpenTikTokModal={onOpenTikTokModal}
+        onOpenLinkedinModal={onOpenLinkedinModal}
+        onOpenDescriptionModal={onOpenDescriptionModal}
+        onOpenCategoryModal={onOpenCategoryModal}
+        renderLinkValue={renderLinkValue}
+      />
+    );
+
+    expect(screen.getAllByText("-").length).toBeGreaterThan(0);
   });
 });

@@ -183,5 +183,18 @@ describe("Service Types Server Actions", () => {
       const result = await getServiceTypesAction();
       expect(result.length).toBeGreaterThan(0);
     });
+
+    it("should handle error when inserting category services", async () => {
+      mockSelect
+        .mockResolvedValueOnce([
+          { id: "dog_training", name: "Dog training", description: "Desc" },
+        ])
+        .mockResolvedValueOnce([]); // empty services
+
+      mockInsert.mockRejectedValueOnce(new Error("Insert services failed"));
+
+      const result = await getServiceTypesAction();
+      expect(result.length).toBeGreaterThan(0);
+    });
   });
 });

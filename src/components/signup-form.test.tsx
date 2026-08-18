@@ -23,8 +23,10 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+const pushMock = vi.fn();
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: pushMock }),
 }));
 
 vi.mock("react", async (importOriginal) => {
@@ -73,7 +75,8 @@ describe("SignupForm Component", () => {
     expect(screen.getByText("Email already registered.")).toBeDefined();
   });
 
-  it("should render success message when state.success is true", () => {
+  it("should render success message when state.success is true and redirect to /login after timer", () => {
+    vi.useFakeTimers();
     vi.mocked(useActionState).mockImplementationOnce(
       (_action: unknown, _init: unknown) => [{ success: true }, vi.fn(), false]
     );
@@ -81,6 +84,10 @@ describe("SignupForm Component", () => {
     expect(
       screen.getByText("Registration successful! Redirecting to login...")
     ).toBeDefined();
+
+    vi.advanceTimersByTime(1500);
+    expect(pushMock).toHaveBeenCalledWith("/login");
+    vi.useRealTimers();
   });
 
   it("should update the PasswordStrength indicator when password is typed", () => {

@@ -24,6 +24,8 @@ vi.mock("lucide-react", () => ({
   Footprints: () => <div data-testid="footprints" />,
   X: () => <div data-testid="x-icon" />,
   CheckCircle2: () => <div data-testid="check-circle2" />,
+  Search: () => <div data-testid="search" />,
+  Check: () => <div data-testid="check" />,
 }));
 
 vi.mock("@/db", () => ({
@@ -1474,7 +1476,446 @@ describe("CourseForm Component", () => {
     const coverageJsonStr = passedFormData.get("coverageZones") as string;
     expect(coverageJsonStr).toContain("Mănăștur");
   });
+
+  it("should render and submit flat form layout for Dog Grooming service mode", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-grooming"
+        itemNoun="Grooming service"
+        serviceSlug="dog-grooming"
+        orgCity="Bucharest"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Name input in flat layout
+    fireEvent.change(screen.getByLabelText("Grooming service Name"), {
+      target: { value: "Full Bath & Haircut" },
+    });
+
+    // Price input
+    const priceInput = screen.getByLabelText("Price Amount (lei)");
+    fireEvent.change(priceInput, { target: { value: "120" } });
+
+    // Submit flat form
+    const submitBtn = screen.getAllByRole("button", { name: "Create Grooming service" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    expect(passedFormData.get("name")).toBe("Full Bath & Haircut");
+    expect(passedFormData.get("price")).toBe("120");
+    expect(passedFormData.get("priceType")).toBe("service");
+  });
+
+  it("should update and remove multiple pricing tiers in tabbed mode", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
+
+    const { container } = render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        serviceSlug="dog-training"
+        orgCity="Cluj-Napoca"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Enter Course Name
+    fireEvent.change(screen.getByLabelText("Course Name"), {
+      target: { value: "Agility Pro" },
+    });
+
+    // Navigate to Pricing Tab
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+
+    // Update Price 0
+    fireEvent.change(screen.getByLabelText("Price Amount (lei)"), {
+      target: { value: "200" },
+    });
+
+    // Add another price tier (empty)
+    fireEvent.click(screen.getByRole("button", { name: /Add Price Tier/i }));
+    expect(screen.getByText("Price Option #2")).toBeDefined();
+
+    // Populate price option #2
+    const secondPriceInput = document.getElementById("course-price-1") as HTMLInputElement;
+    if (secondPriceInput) {
+      fireEvent.change(secondPriceInput, { target: { value: "350" } });
+    }
+
+    // Remove price option #2 (has data -> modal opens)
+    const removePriceBtns = screen.getAllByTitle("Remove Price Option");
+    if (removePriceBtns.length > 0) {
+      fireEvent.click(removePriceBtns[removePriceBtns.length - 1]);
+      fireEvent.click(screen.getByRole("button", { name: "Confirm Remove" }));
+    }
+
+    // Submit form
+    const formEl = container.querySelector("form")!;
+    await act(async () => {
+      fireEvent.submit(formEl);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    expect(passedFormData.get("name")).toBe("Agility Pro");
+    expect(passedFormData.get("price")).toBe("200");
+  });
+
+  it("should render non-grooming flat layout mode with Trainer attributes, dedicated field, and parking", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-special"
+        itemNoun="Special Service"
+        serviceSlug="other-special"
+        orgCity="Bucharest"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    expect(screen.getByText("Trainer & Facility Attributes")).toBeDefined();
+    expect(screen.getByText("Dedicated Training Field")).toBeDefined();
+    expect(screen.getByText("Parking")).toBeDefined();
+
+    fireEvent.change(screen.getByLabelText("Special Service Name"), {
+      target: { value: "Canine Behavior Assessment" },
+    });
+
+    const priceInput = screen.getByLabelText("Price Amount (lei)");
+    fireEvent.change(priceInput, { target: { value: "180" } });
+
+    const submitBtn = screen.getAllByRole("button", { name: "Create Special Service" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    expect(passedFormData.get("name")).toBe("Canine Behavior Assessment");
+    expect(passedFormData.get("price")).toBe("180");
+  });
+
+  it("should render grooming service in flat mode and handle cancel and action failure", async () => {
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: false, error: "Course name exists" });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-grooming"
+        itemNoun="Grooming Package"
+        serviceSlug="dog-grooming"
+        orgCity="Cluj-Napoca"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Cancel button
+    const cancelBtn = screen.getAllByRole("button", { name: "Cancel" })[0];
+    fireEvent.click(cancelBtn);
+    expect(onCancel).toHaveBeenCalled();
+
+    // Fill name and submit to trigger error branch
+    fireEvent.change(screen.getByLabelText("Grooming Package Name"), {
+      target: { value: "Full Spa & Bath" },
+    });
+    fireEvent.change(screen.getByLabelText("Price Amount (lei)"), {
+      target: { value: "150" },
+    });
+
+    const submitBtn = screen.getAllByRole("button", { name: "Create Grooming Package" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    expect(onSubmitSuccess).not.toHaveBeenCalled();
+    expect(screen.getAllByText("Course name exists")[0]).toBeDefined();
+  });
+
+  it("should handle secondary zones city and cartiere changes in dog walking mode", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-walking"
+        itemNoun="Walking Route"
+        serviceSlug="dog-walking"
+        orgCity="Cluj-Napoca"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Switch to coverage tab
+    const coverageTabBtn = screen.getByRole("button", { name: /coverage/i });
+    fireEvent.click(coverageTabBtn);
+
+    // Add secondary zone
+    const addSecondaryBtn = screen.getByRole("button", { name: /add secondary coverage zone/i });
+    fireEvent.click(addSecondaryBtn);
+
+    // Select secondary city
+    const secSelects = screen.getAllByRole("button", { name: /select secondary city/i });
+    if (secSelects.length > 0) {
+      fireEvent.click(secSelects[0]);
+    }
+
+    // Remove secondary zone
+    const removeZoneBtn = screen.getByRole("button", { name: /remove zone/i });
+    fireEvent.click(removeZoneBtn);
+  });
+
+  it("should validate empty name and invalid price amounts on submit", async () => {
+    const { container } = render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Empty name submit
+    const formEl = container.querySelector("form")!;
+    fireEvent.submit(formEl);
+    expect(screen.getByText("Course name is required.")).toBeDefined();
+
+    // Fill valid name
+    fireEvent.change(screen.getByLabelText("Course Name"), {
+      target: { value: "Agility Mastery" },
+    });
+
+    // Go to pricing tab
+    fireEvent.click(screen.getByRole("button", { name: /pricing/i }));
+
+    // Set invalid zero price on the first pricing tier
+    const priceInput = container.querySelector('input[id^="course-price-"]') as HTMLInputElement;
+    if (priceInput) {
+      fireEvent.change(priceInput, { target: { value: "0" } });
+    }
+
+    fireEvent.submit(formEl);
+    expect(screen.getByText(/Price amount for option #1 must be a positive number in lei/i)).toBeDefined();
+  });
+
+  it("should handle sitting presets selection in dog sitter service mode", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-sitter"
+        itemNoun="Sitting service"
+        serviceSlug="dog-sitter"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Click sitting preset button
+    const presetBtn = screen.getByRole("button", { name: "In home sitting" });
+    expect(presetBtn).toBeDefined();
+    fireEvent.click(presetBtn);
+
+    const nameInput = screen.getByLabelText("Sitting service Name") as HTMLInputElement;
+    expect(nameInput.value).toBe("In home sitting");
+
+    // Click another preset
+    const dayVisitBtn = screen.getByRole("button", { name: "Daytime visit" });
+    fireEvent.click(dayVisitBtn);
+    expect(nameInput.value).toBe("Daytime visit");
+  });
+
+  it("should render flat grooming form and submit successfully", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ success: true, course: { id: "groom-1" } });
+
+    const { container } = render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-grooming"
+        itemNoun="Grooming service"
+        serviceSlug="grooming"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Flat form renders directly without tabs
+    expect(screen.queryByRole("tab")).toBeNull();
+
+    // Set name
+    const nameInput = screen.getByLabelText("Grooming service Name");
+    fireEvent.change(nameInput, { target: { value: "Full Grooming & Bath" } });
+
+    // Set price
+    const priceInput = container.querySelector('input[id^="course-price-"]') as HTMLInputElement;
+    if (priceInput) {
+      fireEvent.change(priceInput, { target: { value: "120" } });
+    }
+
+    // Submit form
+    const formEl = container.querySelector("form")!;
+    await act(async () => {
+      fireEvent.submit(formEl);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    expect(onSubmitSuccess).toHaveBeenCalled();
+  });
+
+  it("should render flat non-grooming mode and update dedicated field, parking, and description inputs", () => {
+    const { container } = render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-custom"
+        itemNoun="Custom service"
+        serviceSlug="custom-other"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Dedicated Field toggle
+    const switches = screen.getAllByRole("switch");
+    if (switches.length > 0) {
+      fireEvent.click(switches[0]);
+    }
+
+    // Set dedicated field address if rendered
+    const addressInput = container.querySelector("#training-field-address");
+    if (addressInput) {
+      fireEvent.change(addressInput, { target: { value: "Canine Park 4" } });
+    }
+
+    // Set GBP link
+    const gbpInput = container.querySelector("#training-field-gbp");
+    if (gbpInput) {
+      fireEvent.change(gbpInput, { target: { value: "https://business.google.com/test" } });
+    }
+
+    // Set Maps link
+    const mapsInput = container.querySelector("#training-field-maps");
+    if (mapsInput) {
+      fireEvent.change(mapsInput, { target: { value: "https://maps.google.com/test" } });
+    }
+
+    // Toggle Parking
+    if (switches.length > 1) {
+      fireEvent.click(switches[1]);
+    }
+  });
+
+  it("should handle safety remove confirmation modal for FAQs and pricing tiers", async () => {
+    const { container } = render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-training"
+        itemNoun="Training course"
+        serviceSlug="dog-training"
+        initialCourse={{
+          id: "c-1",
+          name: "Puppy Class",
+          faq: JSON.stringify([
+            { question: "What age?", answer: "At least 3 months" },
+            { question: "Vaccines needed?", answer: "Full rabies" },
+          ]),
+          price: JSON.stringify([
+            { amount: "100", type: "course", label: "Option 1" },
+            { amount: "200", type: "course", label: "Option 2" },
+          ]),
+        }}
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Go to FAQ tab
+    fireEvent.click(screen.getByRole("button", { name: "FAQ" }));
+
+    // Click remove on the first FAQ
+    const faqRemoveBtns = screen.getAllByTitle("Remove FAQ");
+    fireEvent.click(faqRemoveBtns[0]);
+
+    // Safety modal is displayed
+    expect(screen.getByText("Remove FAQ Item")).toBeDefined();
+
+    // Cancel modal
+    const cancelModalBtns = screen.getAllByRole("button", { name: "Cancel" });
+    fireEvent.click(cancelModalBtns[cancelModalBtns.length - 1]);
+    expect(screen.queryByText("Remove FAQ Item")).toBeNull();
+
+    // Open remove modal again and confirm removal
+    fireEvent.click(screen.getAllByTitle("Remove FAQ")[0]);
+    const confirmBtn = screen.getByRole("button", { name: "Confirm Remove" });
+    fireEvent.click(confirmBtn);
+    expect(screen.queryByDisplayValue("What age?")).toBeNull();
+
+    // Switch to Pricing tab
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+
+    // Click remove on first price tier
+    const removePriceBtns = screen.getAllByTitle("Remove Price Option");
+    if (removePriceBtns.length > 0) {
+      fireEvent.click(removePriceBtns[0]);
+      expect(screen.getByText("Remove Price Option")).toBeDefined();
+
+      // Close modal using top-right × button
+      const closeX = document.querySelector(".fixed button.absolute") as HTMLButtonElement;
+      if (closeX) {
+        fireEvent.click(closeX);
+      }
+      expect(screen.queryByText("Remove Price Option")).toBeNull();
+
+      // Open remove modal again and confirm
+      fireEvent.click(screen.getAllByTitle("Remove Price Option")[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Confirm Remove" }));
+      expect(screen.queryByDisplayValue("100")).toBeNull();
+    }
+  });
+
+  it("handles flat sitting service presets and error alert banner", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ error: "Invalid pricing amount" });
+
+    const { container } = render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sitting"
+        itemNoun="Sitting service"
+        serviceSlug="other-sitting"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Click Sitting type preset
+    const presetBtn = screen.getByRole("button", { name: "In home sitting" });
+    fireEvent.click(presetBtn);
+
+    const nameInput = screen.getByLabelText("Sitting service Name") as HTMLInputElement;
+    expect(nameInput.value).toBe("In home sitting");
+
+    // Submit form to trigger error
+    const formEl = container.querySelector("form")!;
+    await act(async () => {
+      fireEvent.submit(formEl);
+    });
+
+    expect(screen.getByText("Invalid pricing amount")).toBeDefined();
+  });
 });
+
 
 
 

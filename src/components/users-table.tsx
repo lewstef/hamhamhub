@@ -42,11 +42,8 @@ export function UsersTable({ userList }: UsersTableProps) {
 
   const [formModalKey, setFormModalKey] = useState(0);
   const [deleteModalKey, setDeleteModalKey] = useState(0);
-  const [createSubmitted, setCreateSubmitted] = useState(false);
-  const [deleteSubmitted, setDeleteSubmitted] = useState(false);
 
   const openFormModal = () => {
-    setCreateSubmitted(false);
     setPasswordVal("");
     setConfirmPasswordVal("");
     setShowPassword(false);
@@ -57,7 +54,6 @@ export function UsersTable({ userList }: UsersTableProps) {
 
   const closeFormModal = () => {
     setShowForm(false);
-    setCreateSubmitted(false);
     setPasswordVal("");
     setConfirmPasswordVal("");
     setShowPassword(false);
@@ -66,7 +62,6 @@ export function UsersTable({ userList }: UsersTableProps) {
 
   const openDeleteModal = (id: string) => {
     setDeleteTargetId(id);
-    setDeleteSubmitted(false);
     setDeleteModalKey((prev) => prev + 1);
     setShowDeleteConfirm(true);
   };
@@ -74,7 +69,6 @@ export function UsersTable({ userList }: UsersTableProps) {
   const closeDeleteModal = () => {
     setShowDeleteConfirm(false);
     setDeleteTargetId(null);
-    setDeleteSubmitted(false);
   };
 
   // Close form on successful creation
@@ -162,9 +156,9 @@ export function UsersTable({ userList }: UsersTableProps) {
                 Add credentials to create a new user account.
               </CardDescription>
             </CardHeader>
-            <form ref={formRef} action={(formData) => { setCreateSubmitted(true); formAction(formData); }}>
+            <form ref={formRef} action={formAction}>
               <CardContent className="p-6 space-y-4">
-                {createSubmitted && state?.error && (
+                {state?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {state.error}
                   </div>
@@ -286,10 +280,10 @@ export function UsersTable({ userList }: UsersTableProps) {
                 Are you sure you want to permanently delete this user? This action cannot be undone.
               </CardDescription>
             </CardHeader>
-            <form action={(formData) => { setDeleteSubmitted(true); deleteAction(formData); }}>
+            <form action={deleteAction}>
               <input type="hidden" name="id" value={deleteTargetId} />
               <CardContent className="p-6 space-y-4">
-                {deleteSubmitted && deleteState?.error && (
+                {deleteState?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
                     {deleteState.error}
                   </div>

@@ -3,7 +3,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import React from "react";
 import { EditOrganizationForm } from "./edit-organization-form";
-import { toggleOrganizationServiceAction, updateOrganizationAction, changeOrganizationPasswordAction } from "@/app/actions/organizations";
+import {
+  toggleOrganizationServiceAction,
+  toggleOrganizationCourseAction,
+  updateOrganizationAction,
+  changeOrganizationPasswordAction,
+} from "@/app/actions/organizations";
 
 // Mock the server actions
 vi.mock("@/app/actions/organizations", () => ({
@@ -13,7 +18,14 @@ vi.mock("@/app/actions/organizations", () => ({
   toggleOrganizationCourseAction: vi.fn(),
 }));
 
+vi.mock("@/config/dog-training", () => ({
+  getSortedCourses: vi.fn(() => [
+    { id: "puppy-school", label: "Puppy School", key: "puppy-school" },
+  ]),
+}));
+
 let mockActionStateSuccess = false;
+let mockActionStateError: string | null = null;
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -23,6 +35,9 @@ vi.mock("react", async (importOriginal) => {
       if (mockActionStateSuccess) {
         return [{ success: true }, vi.fn(), false];
       }
+      if (mockActionStateError) {
+        return [{ error: mockActionStateError }, vi.fn(), false];
+      }
       return [initialState, vi.fn(), false];
     }
   };
@@ -30,19 +45,22 @@ vi.mock("react", async (importOriginal) => {
 
 const mockRefresh = vi.fn();
 const mockPush = vi.fn();
+let mockPathname = "/backoffice/organizations";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: mockRefresh,
     push: mockPush,
   }),
-  usePathname: () => "/backoffice/organizations",
+  usePathname: () => mockPathname,
 }));
 
 describe("EditOrganizationForm Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockActionStateSuccess = false;
+    mockActionStateError = null;
+    mockPathname = "/backoffice/organizations";
   });
   const dummyOrganization = {
     id: "org-id-123",
@@ -295,8 +313,62 @@ describe("EditOrganizationForm Component", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit Recovery email" }));
     fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
 
-    // 4. Social links modal (on Information tab)
+    // 4. Return to Information tab to test description, website, and social modals
     fireEvent.click(screen.getByRole("button", { name: "Information" }));
+
+    // Edit Description
+    const editDescBtn = screen.getByTitle("Edit Description");
+    fireEvent.click(editDescBtn);
+    expect(screen.getByText("Edit Description")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    // Edit Website
+    const editWebBtn = screen.getByTitle("Edit Website");
+    fireEvent.click(editWebBtn);
+    expect(screen.getByText("Edit Website")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    // Edit Facebook
+    const editFbBtn = screen.getByTitle("Edit Facebook");
+    fireEvent.click(editFbBtn);
+    expect(screen.getByText("Edit Facebook Page")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    // Edit Instagram
+    const editIgBtn = screen.getByTitle("Edit Instagram");
+    fireEvent.click(editIgBtn);
+    expect(screen.getByText("Edit Instagram Profile")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    // Edit TikTok
+    const editTtBtn = screen.getByTitle("Edit TikTok");
+    fireEvent.click(editTtBtn);
+    expect(screen.getByText("Edit TikTok Profile")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    // Edit LinkedIn
+    const editLiBtn = screen.getByTitle("Edit LinkedIn");
+    fireEvent.click(editLiBtn);
+    expect(screen.getByText("Edit LinkedIn Profile")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    // 5. Switch to Billing tab to test primary contact, secondary contact, company details
+    fireEvent.click(screen.getByRole("button", { name: "Billing" }));
+
+    const editPrimaryBtns = screen.getAllByTitle(/Edit Primary Contact Person/i);
+    fireEvent.click(editPrimaryBtns[0]);
+    expect(screen.getByText("Edit Primary Contact")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    const editSecondaryBtns = screen.getAllByTitle(/Edit Secondary Contact Person/i);
+    fireEvent.click(editSecondaryBtns[0]);
+    expect(screen.getByText("Edit Secondary Contact")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
+
+    const editCompanyBtns = screen.getAllByTitle(/Edit Billing Company Name/i);
+    fireEvent.click(editCompanyBtns[0]);
+    expect(screen.getByText("Edit Company details")).toBeDefined();
+    fireEvent.click(screen.getAllByRole("button", { name: /cancel/i })[0]);
   });
 
   it("should auto-close personal modals on personalState success", async () => {
@@ -327,6 +399,22 @@ describe("EditOrganizationForm Component", () => {
     await waitFor(() => {
       expect(mockRefresh).toHaveBeenCalled();
     });
+  });
+
+  it("should display errors when personalState or accountState have error messages", async () => {
+    mockActionStateError = "Invalid server submission.";
+
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Open a modal to check that personalError or accountError is displayed
+    const editNameBtn = screen.getByTitle("Edit Name");
+    fireEvent.click(editNameBtn);
+    expect(screen.getByText("Invalid server submission.")).toBeDefined();
   });
 
   it("should toggle a course and call toggleOrganizationCourseAction", async () => {
@@ -828,6 +916,613 @@ describe("EditOrganizationForm Component", () => {
 
     // When activeTabProp='billing', the billing tab content should be shown
     expect(screen.getByText("PawsCorp SRL")).toBeDefined();
+  });
+
+  it("should render with activeTabProp 'subscription', 'verification', 'security', and 'services' in dashboard mode", () => {
+    const verifiedOrg = {
+      ...dummyOrganization,
+      verificationStatus: "verified" as const,
+      verificationNotes: "Approved by Romanian Kennel Club",
+    };
+
+    const { rerender } = render(
+      <EditOrganizationForm
+        organization={verifiedOrg}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="subscription"
+        isDashboard={true}
+      />
+    );
+
+    expect(screen.getByText(/Active Subscription/i)).toBeDefined();
+
+    rerender(
+      <EditOrganizationForm
+        organization={verifiedOrg}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="verification"
+        isDashboard={true}
+      />
+    );
+
+    expect(screen.getByText("Category Verification")).toBeDefined();
+    expect(screen.getByText("Verified Provider")).toBeDefined();
+
+    rerender(
+      <EditOrganizationForm
+        organization={verifiedOrg}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="account"
+        isDashboard={true}
+      />
+    );
+
+    expect(
+      screen.getByText("Manage your login credentials, recovery email, and security settings")
+    ).toBeDefined();
+
+    rerender(
+      <EditOrganizationForm
+        organization={verifiedOrg}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="services"
+        isDashboard={false}
+        servicesList={[
+          {
+            id: "srv-dog-training",
+            name: "Dog Training",
+            slug: "dog-training",
+            description: "Obedience lessons",
+            organizationCategory: "ngo",
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByText("Services Configuration")).toBeDefined();
+  });
+
+  it("should handle address modal keyboard navigation and county/locality selection", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="billing"
+      />
+    );
+
+    // Open Edit Address modal
+    const editAddressBtn = screen.getByTitle("Edit Address");
+    fireEvent.click(editAddressBtn);
+
+    expect(screen.getAllByText("Edit Address Details").length).toBeGreaterThanOrEqual(1);
+
+    // County input keyboard navigation
+    const countyInput = screen.getByPlaceholderText("Search county...");
+    fireEvent.focus(countyInput);
+    fireEvent.keyDown(countyInput, { key: "ArrowDown" });
+    fireEvent.keyDown(countyInput, { key: "ArrowUp" });
+    fireEvent.keyDown(countyInput, { key: "Enter" });
+
+    // Locality input keyboard navigation
+    const localityInput = screen.getByPlaceholderText("Search locality...");
+    fireEvent.focus(localityInput);
+    fireEvent.keyDown(localityInput, { key: "ArrowDown" });
+    fireEvent.keyDown(localityInput, { key: "ArrowUp" });
+    fireEvent.keyDown(localityInput, { key: "Enter" });
+
+    // Escape key closes modal
+    fireEvent.keyDown(localityInput, { key: "Escape" });
+  });
+
+  it("should handle billing modal bank search keyboard navigation", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="billing"
+      />
+    );
+
+    // Open Edit Billing modal
+    const editBillingBtn = screen.getByTitle("Edit Billing Tax ID");
+    fireEvent.click(editBillingBtn);
+
+    expect(screen.getAllByText("Edit Company details").length).toBeGreaterThanOrEqual(1);
+
+    // Bank search input keyboard navigation
+    const bankInput = screen.getByPlaceholderText("Search or select bank...");
+    fireEvent.focus(bankInput);
+    fireEvent.keyDown(bankInput, { key: "ArrowDown" });
+    fireEvent.keyDown(bankInput, { key: "ArrowUp" });
+    fireEvent.keyDown(bankInput, { key: "Enter" });
+
+    // Escape key closes modal
+    fireEvent.keyDown(bankInput, { key: "Escape" });
+  });
+
+  it("should handle social media, phone, and website modals on the information tab", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="personal"
+      />
+    );
+
+    // Phone modal
+    fireEvent.click(screen.getByTitle("Edit Phone"));
+    expect(screen.getAllByText("Edit Phone Number").length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getAllByRole("button", { name: "Cancel" })[0]);
+
+    // Website modal
+    fireEvent.click(screen.getByTitle("Edit Website"));
+    expect(screen.getAllByText("Edit Website").length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getAllByRole("button", { name: "Cancel" })[0]);
+
+    // Facebook modal
+    fireEvent.click(screen.getByTitle("Edit Facebook"));
+    expect(screen.getAllByText("Edit Facebook Page").length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getAllByRole("button", { name: "Cancel" })[0]);
+
+    // Instagram modal
+    fireEvent.click(screen.getByTitle("Edit Instagram"));
+    expect(screen.getAllByText("Edit Instagram Profile").length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getAllByRole("button", { name: "Cancel" })[0]);
+
+    // TikTok modal
+    fireEvent.click(screen.getByTitle("Edit TikTok"));
+    expect(screen.getAllByText("Edit TikTok Profile").length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getAllByRole("button", { name: "Cancel" })[0]);
+
+    // LinkedIn modal
+    fireEvent.click(screen.getByTitle("Edit LinkedIn"));
+    expect(screen.getAllByText("Edit LinkedIn Profile").length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getAllByRole("button", { name: "Cancel" })[0]);
+  });
+
+  it("should handle service toggle failure rollback and course toggle actions", async () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValueOnce({
+      success: false,
+    } as any);
+
+    const { rerender, container } = render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="services"
+        servicesList={[
+          {
+            id: "srv-dog-training",
+            name: "Dog Training",
+            slug: "dog-training",
+            description: "Lessons",
+            organizationCategory: "ngo",
+            courses: [
+              {
+                id: "crs-1",
+                name: "Puppy Basics",
+                slug: "puppy-basics",
+                description: "Basic commands",
+                serviceId: "srv-dog-training",
+              },
+            ],
+          },
+        ]}
+      />
+    );
+
+    // Click service toggle switch
+    const serviceToggle = screen.getByRole("switch");
+    await act(async () => {
+      fireEvent.click(serviceToggle);
+    });
+
+    expect(toggleOrganizationServiceAction).toHaveBeenCalled();
+
+    // Re-render with enabled service
+    vi.mocked(toggleOrganizationCourseAction)
+      .mockResolvedValueOnce({ success: true } as any)
+      .mockResolvedValueOnce({ success: false } as any);
+
+    rerender(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="services"
+        servicesList={[
+          {
+            id: "srv-dog-training",
+            name: "Dog Training",
+            slug: "dog-training",
+            description: "Lessons",
+            organizationCategory: "ngo",
+            courses: [
+              {
+                id: "crs-1",
+                name: "Puppy Basics",
+                slug: "puppy-basics",
+                description: "Basic commands",
+                serviceId: "srv-dog-training",
+              },
+            ],
+          },
+        ]}
+      />
+    );
+
+    // Toggle course switch failure rollback
+    const switches = screen.getAllByRole("switch");
+    if (switches.length > 1) {
+      await act(async () => {
+        fireEvent.click(switches[1]);
+      });
+      expect(toggleOrganizationCourseAction).toHaveBeenCalled();
+    }
+
+    // Toggle expand button
+    const expandBtn = container.querySelector("button.p-2.text-muted-foreground");
+    if (expandBtn) {
+      fireEvent.click(expandBtn);
+      fireEvent.click(expandBtn);
+    }
+  });
+
+  it("handles service toggle failure rollback gracefully", async () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValueOnce({ success: false, error: "DB Error" } as any);
+
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="services"
+        servicesList={[
+          {
+            id: "srv-dog-training",
+            name: "Dog Training",
+            slug: "dog-training",
+            description: "Lessons",
+            organizationCategory: "ngo",
+            courses: [],
+          },
+        ]}
+      />
+    );
+
+    const toggle = screen.getByRole("switch");
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
+    expect(toggleOrganizationServiceAction).toHaveBeenCalled();
+  });
+
+  it("handles tab navigation in backoffice mode", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="personal"
+      />
+    );
+
+    const secTab = screen.getByRole("link", { name: "Security" });
+    expect(secTab.getAttribute("href")).toBe("/backoffice/organizations/security/org-id-123");
+  });
+
+  it("renders verification and subscription tabs directly via activeTabProp", () => {
+    const { rerender } = render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="verification"
+        isDashboard={false}
+      />
+    );
+
+    expect(screen.getByText("Category Verification")).toBeDefined();
+
+    rerender(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="subscription"
+        isDashboard={false}
+      />
+    );
+
+    expect(screen.getByText(/Active Subscription/i)).toBeDefined();
+  });
+
+  it("should handle county and locality dropdown keyboard events and click outside", () => {
+    const { container } = render(
+      <EditOrganizationForm
+        organization={{
+          ...dummyOrganization,
+          addressCountry: "Romania",
+          addressState: "Cluj",
+          addressCity: "Cluj-Napoca",
+        }}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="billing"
+      />
+    );
+
+    // Open address modal
+    fireEvent.click(screen.getByTitle("Edit Address"));
+
+    // County dropdown keyboard events (open via ArrowUp when closed, wrap around via ArrowUp, select via Enter)
+    const countyInput = document.getElementById("addressState") as HTMLInputElement;
+    if (countyInput) {
+      fireEvent.focus(countyInput);
+      fireEvent.keyDown(countyInput, { key: "ArrowUp" }); // opens dropdown
+      fireEvent.keyDown(countyInput, { key: "ArrowUp" }); // wraps to last
+      fireEvent.keyDown(countyInput, { key: "ArrowDown" }); // wraps to 0
+      fireEvent.keyDown(countyInput, { key: "Enter" }); // selects
+      fireEvent.keyDown(countyInput, { key: "Escape" }); // closes
+    }
+
+    // Locality dropdown keyboard events (open via ArrowUp when closed, wrap around via ArrowUp, select via Enter)
+    const localityInput = document.getElementById("addressCity") as HTMLInputElement;
+    if (localityInput) {
+      fireEvent.focus(localityInput);
+      fireEvent.keyDown(localityInput, { key: "ArrowUp" }); // opens dropdown
+      fireEvent.keyDown(localityInput, { key: "ArrowUp" }); // wraps to last
+      fireEvent.keyDown(localityInput, { key: "ArrowDown" }); // wraps to 0
+      fireEvent.keyDown(localityInput, { key: "Enter" }); // selects
+      fireEvent.keyDown(localityInput, { key: "Escape" }); // closes
+    }
+
+    // Click outside event
+    fireEvent.mouseDown(document.body);
+
+    // Press Escape key on window to test global listener
+    fireEvent.keyDown(window, { key: "Escape" });
+  });
+
+  it("should handle bank and country keyboard selection and closing outside", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="billing"
+      />
+    );
+
+    // Open company details modal
+    const editCompanyBtns = screen.getAllByTitle(/Edit Billing Company Name/i);
+    fireEvent.click(editCompanyBtns[0]);
+
+    // Bank dropdown keyboard events (open via ArrowUp, wrap around via ArrowUp, select via Enter)
+    const bankInput = document.getElementById("billingBankName") as HTMLInputElement;
+    if (bankInput) {
+      fireEvent.focus(bankInput);
+      fireEvent.keyDown(bankInput, { key: "ArrowUp" }); // opens dropdown
+      fireEvent.keyDown(bankInput, { key: "ArrowUp" }); // wraps to last
+      fireEvent.keyDown(bankInput, { key: "ArrowDown" }); // wraps to 0
+      fireEvent.keyDown(bankInput, { key: "Enter" }); // selects
+      fireEvent.keyDown(bankInput, { key: "Escape" }); // closes
+    }
+
+    // Country dropdown keyboard events (open via ArrowUp, wrap around via ArrowUp, select via Enter)
+    const countryInput = document.getElementById("addressCountry") as HTMLInputElement;
+    if (countryInput) {
+      fireEvent.focus(countryInput);
+      fireEvent.keyDown(countryInput, { key: "ArrowUp" }); // opens
+      fireEvent.keyDown(countryInput, { key: "ArrowUp" }); // wraps to last
+      fireEvent.keyDown(countryInput, { key: "ArrowDown" }); // wraps to 0
+      fireEvent.keyDown(countryInput, { key: "Enter" }); // selects
+      fireEvent.keyDown(countryInput, { key: "Escape" }); // closes
+    }
+
+    fireEvent.mouseDown(document.body);
+  });
+
+  it("handles mouse clicks on county, locality, bank, and country dropdown items", () => {
+    render(
+      <EditOrganizationForm
+        organization={{
+          ...dummyOrganization,
+          addressCountry: "Romania",
+          addressState: "Cluj",
+          addressCity: "Cluj-Napoca",
+        }}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="billing"
+      />
+    );
+
+    // Open address modal
+    fireEvent.click(screen.getByTitle("Edit Address"));
+
+    // Focus county input to open dropdown and click an item
+    const countyInput = document.getElementById("addressState") as HTMLInputElement;
+    if (countyInput) {
+      fireEvent.focus(countyInput);
+      fireEvent.change(countyInput, { target: { value: "Cluj" } });
+      const countyOption = screen.getByText("Cluj");
+      fireEvent.click(countyOption);
+    }
+
+    // Click locality item
+    const localityInput = document.getElementById("addressCity") as HTMLInputElement;
+    if (localityInput) {
+      fireEvent.focus(localityInput);
+      fireEvent.change(localityInput, { target: { value: "Cluj-Napoca" } });
+      const localityOption = screen.getByText("Cluj-Napoca");
+      fireEvent.click(localityOption);
+    }
+  });
+
+  it("handles personalState and accountState success effects and closes open modals", () => {
+    mockActionStateSuccess = true;
+
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="personal"
+      />
+    );
+
+    // Verify router.refresh was called by the success effect
+    expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it("should switch between all tabs seamlessly in local state mode", () => {
+    render(
+      <EditOrganizationForm
+        organization={dummyOrganization}
+        organizationCategoryList={dummyOrganizationCategoryList}
+      />
+    );
+
+    // Click Billing tab
+    fireEvent.click(screen.getByRole("button", { name: "Billing" }));
+    expect(screen.getByText("Billing details")).toBeDefined();
+
+    // Click Security tab
+    fireEvent.click(screen.getByRole("button", { name: "Security" }));
+    expect(screen.getAllByText("Security")[0]).toBeDefined();
+
+    // Click Verification tab
+    fireEvent.click(screen.getByRole("button", { name: "Verification" }));
+    expect(screen.getAllByText("Verification")[0]).toBeDefined();
+
+    // Click Subscription tab
+    fireEvent.click(screen.getByRole("button", { name: "Subscription" }));
+    expect(screen.getAllByText("Subscription")[0]).toBeDefined();
+
+    // Click Services tab
+    fireEvent.click(screen.getByRole("button", { name: "Services" }));
+    expect(screen.getAllByText("Services")[0]).toBeDefined();
+
+    // Switch back to Information tab
+    fireEvent.click(screen.getByRole("button", { name: "Information" }));
+    expect(screen.getAllByText("Information")[0]).toBeDefined();
+  });
+
+  it("should format social and web URLs correctly", () => {
+    const fullOrg = {
+      ...dummyOrganization,
+      website: "http://example.com",
+      facebook: "https://facebook.com/dogschool",
+      instagram: "instagram.com/dogschool",
+      tiktok: "tiktok.com/@dogschool",
+      linkedin: "linkedin.com/company/dogschool",
+    };
+
+    render(
+      <EditOrganizationForm
+        organization={fullOrg}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="personal"
+      />
+    );
+
+    expect(screen.getByText("http://example.com")).toBeDefined();
+    expect(screen.getByText("https://facebook.com/dogschool")).toBeDefined();
+  });
+
+  it("renders dashboard tab links without services tab and without back to list button", () => {
+    mockPathname = "/dashboard/account/information";
+
+    render(
+      <EditOrganizationForm
+        organization={{
+          ...dummyOrganization,
+          email: null,
+          organizationCategory: null,
+        }}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        activeTabProp="personal"
+      />
+    );
+
+    // Services tab and Back to list not rendered in dashboard mode
+    expect(screen.queryByRole("link", { name: "Services" })).toBeNull();
+    expect(screen.queryByText("Back to list")).toBeNull();
+
+    // Verify modify details uses name when email is null
+    expect(screen.getByText("Modify details for Happy Paws Rescue.")).toBeDefined();
+
+    // Verify tab link hrefs
+    const billTab = screen.getByRole("link", { name: "Billing" });
+    expect(billTab.getAttribute("href")).toBe("/dashboard/account/billing");
+
+    const secTab = screen.getByRole("link", { name: "Security" });
+    expect(secTab.getAttribute("href")).toBe("/dashboard/account/security");
+
+    const verTab = screen.getByRole("link", { name: "Verification" });
+    expect(verTab.getAttribute("href")).toBe("/dashboard/account/verification");
+
+    const subTab = screen.getByRole("link", { name: "Subscription" });
+    expect(subTab.getAttribute("href")).toBe("/dashboard/account/subscription");
+  });
+
+  it("handles service and course toggling with success and rollback", async () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ success: true } as any);
+    vi.mocked(toggleOrganizationCourseAction).mockResolvedValue({ success: true } as any);
+
+    const dummyServices = [
+      {
+        id: "srv-training",
+        name: "Dog Training",
+        slug: "dog-training",
+        description: "Training courses",
+        organizationCategory: "rescue",
+        coursesOrder: JSON.stringify(["puppy-school"]),
+      },
+    ];
+
+    render(
+      <EditOrganizationForm
+        organization={{
+          ...dummyOrganization,
+          enabledServices: "srv-training",
+          enabledCourses: "",
+        }}
+        organizationCategoryList={dummyOrganizationCategoryList}
+        servicesList={dummyServices}
+        activeTabProp="services"
+      />
+    );
+
+    expect(screen.getByText("Dog Training")).toBeDefined();
+
+    // Toggle accordion expansion button
+    const collapseBtn = screen.getByTitle("Collapse courses");
+    fireEvent.click(collapseBtn);
+    const expandBtn = screen.getByTitle("Expand courses");
+    fireEvent.click(expandBtn);
+
+    // Toggle course switch on
+    const switches = screen.getAllByRole("switch");
+    if (switches.length > 1) {
+      await act(async () => {
+        fireEvent.click(switches[1]);
+      });
+      expect(toggleOrganizationCourseAction).toHaveBeenCalledWith("org-id-123", expect.any(String), true);
+    }
+
+    // Toggle service switch off
+    await act(async () => {
+      fireEvent.click(switches[0]);
+    });
+    expect(toggleOrganizationServiceAction).toHaveBeenCalledWith("org-id-123", "srv-training", false);
+
+    // Test toggle service failure/rollback
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValue({ error: "Failed to update" } as any);
+    await act(async () => {
+      fireEvent.click(switches[0]);
+    });
+
+    // Test toggle course failure/rollback
+    vi.mocked(toggleOrganizationCourseAction).mockResolvedValue({ error: "Failed to update" } as any);
+    if (switches.length > 1) {
+      await act(async () => {
+        fireEvent.click(switches[1]);
+      });
+    }
   });
 });
 

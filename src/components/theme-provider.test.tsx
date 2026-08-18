@@ -157,4 +157,81 @@ describe("ThemeProvider / useTheme", () => {
     // After the effect runs with a saved "dark" value, the DOM class should be added
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
+
+  it("should handle savedTheme = 'light' on mount", async () => {
+    localStorage.setItem("theme", "light");
+    document.documentElement.classList.add("dark");
+
+    await act(async () => {
+      renderHook(() => useTheme(), {
+        wrapper: ({ children }) => (
+          <ProviderWrapper initialTheme="dark">{children}</ProviderWrapper>
+        ),
+      });
+    });
+
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+  });
+
+  it("should respect systemPrefersDark = true on mount when no localStorage", async () => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: true,
+        media: "(prefers-color-scheme: dark)",
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+      })),
+    });
+
+    await act(async () => {
+      renderHook(() => useTheme(), {
+        wrapper: ({ children }) => (
+          <ProviderWrapper initialTheme="light">{children}</ProviderWrapper>
+        ),
+      });
+    });
+
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+  });
+
+  it("should update state when initialTheme prop changes", () => {
+    let currentTheme: "light" | "dark" = "light";
+    const { result, rerender } = renderHook(
+      () => useTheme(),
+      {
+        wrapper: ({ children }) => (
+          <ThemeProvider initialTheme={currentTheme}>{children}</ThemeProvider>
+        ),
+      }
+    );
+
+    expect(result.current.theme).toBe("light");
+
+    currentTheme = "dark";
+    rerender();
+    expect(result.current.theme).toBe("dark");
+  });
+
+  it("should catch and warn if updateUserThemeAction throws", async () => {
+    const { updateUserThemeAction } = await import("@/app/actions/auth");
+    vi.mocked(updateUserThemeAction).mockRejectedValueOnce(new Error("DB Down"));
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const { result } = renderHook(() => useTheme(), {
+      wrapper: ({ children }) => (
+        <ProviderWrapper initialTheme="light">{children}</ProviderWrapper>
+      ),
+    });
+
+    await act(async () => {
+      await result.current.setTheme("dark");
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Failed to persist theme to database:",
+      expect.any(Error)
+    );
+    warnSpy.mockRestore();
+  });
 });

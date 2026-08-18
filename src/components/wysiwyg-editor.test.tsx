@@ -63,19 +63,34 @@ describe("WysiwygEditor Component", () => {
     fireEvent.keyDown(editableArea, { key: "i", ctrlKey: true });
     expect(document.execCommand).toHaveBeenCalledWith("italic", false, "");
 
-    // Ctrl+U
-    fireEvent.keyDown(editableArea, { key: "u", ctrlKey: true });
+    // Meta+B, Meta+I, Meta+U (Mac)
+    fireEvent.keyDown(editableArea, { key: "b", metaKey: true });
+    fireEvent.keyDown(editableArea, { key: "i", metaKey: true });
+    fireEvent.keyDown(editableArea, { key: "u", metaKey: true });
+    expect(document.execCommand).toHaveBeenCalledWith("bold", false, "");
+    expect(document.execCommand).toHaveBeenCalledWith("italic", false, "");
     expect(document.execCommand).toHaveBeenCalledWith("underline", false, "");
+
+    // Other key (Ctrl+Z) and plain key
+    fireEvent.keyDown(editableArea, { key: "z", ctrlKey: true });
+    fireEvent.keyDown(editableArea, { key: "a", ctrlKey: false, metaKey: false });
   });
 
-  it("calls onChange when typing inside contentEditable div", () => {
+  it("calls onChange when typing inside contentEditable div and synchronizes value prop", () => {
     const onChange = vi.fn();
-    const { container } = render(<WysiwygEditor value="" onChange={onChange} />);
+    const { container, rerender } = render(<WysiwygEditor value="" onChange={onChange} />);
 
     const editableArea = container.querySelector('[contenteditable="true"]') as HTMLElement;
     editableArea.innerHTML = "New content text";
     fireEvent.input(editableArea);
 
     expect(onChange).toHaveBeenCalledWith("New content text");
+
+    // Dynamic value prop change
+    rerender(<WysiwygEditor value="<p>Updated prop</p>" onChange={onChange} />);
+    expect(editableArea.innerHTML).toBe("<p>Updated prop</p>");
+
+    rerender(<WysiwygEditor value="" onChange={onChange} />);
+    expect(editableArea.innerHTML).toBe("");
   });
 });

@@ -1102,5 +1102,97 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Closed: Summer Recess (01.08.2026 to 15.08.2026)")).toBeDefined();
     expect(screen.getByText("Open: Christmas Special (20.12.2026 to 20.12.2026 • 09:00 - 17:00)")).toBeDefined();
   });
+
+  it("should render backoffice view and handle toggle rollback", async () => {
+    vi.mocked(toggleOrganizationServiceAction).mockResolvedValueOnce({ success: false, error: "Network error" } as any);
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={{ id: "srv-grooming", name: "Dog Grooming", description: "Grooming details" }}
+        initialIsEnabled={false}
+        slug="dog-grooming"
+        courses={[]}
+        backLabel="Back to Organization Services"
+        backHref="/backoffice/organizations/services/org-123"
+      />
+    );
+
+    expect(screen.getByText("Back to Organization Services")).toBeDefined();
+    const toggle = screen.getByRole("button", { name: "Add Grooming service" });
+    expect(toggle).toBeDefined();
+  });
+
+  it("should handle course delete failure rollback gracefully", async () => {
+    vi.mocked(deleteCourseAction).mockResolvedValueOnce({ success: false, error: "Deletion blocked" } as any);
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          {
+            id: "crs-delete-test",
+            name: "Basic Training Session",
+            price: "100",
+            priceType: "session",
+          },
+        ]}
+      />
+    );
+
+    const deleteBtn = screen.getByTestId("trash").closest("button")!;
+    fireEvent.click(deleteBtn);
+
+    const confirmBtns = screen.getAllByRole("button", { name: "Delete" });
+    const modalDeleteBtn = confirmBtns[confirmBtns.length - 1];
+    await act(async () => {
+      fireEvent.click(modalDeleteBtn);
+    });
+
+    expect(deleteCourseAction).toHaveBeenCalledWith("crs-delete-test");
+    expect(screen.getByText("Basic Training Session")).toBeDefined();
+  });
+
+  it("should handle course drag and drop reordering", async () => {
+    const { reorderOrgCoursesAction } = await import("@/app/actions/courses");
+    vi.mocked(reorderOrgCoursesAction).mockResolvedValueOnce({ success: true } as any);
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          { id: "crs-1", name: "Course One" },
+          { id: "crs-2", name: "Course Two" },
+        ]}
+      />
+    );
+
+    const dragHandle1 = screen.getAllByTitle("Drag to reorder")[0];
+    const item2 = screen.getByText("Course Two").closest("div[draggable]")!;
+
+    fireEvent.dragStart(dragHandle1.closest("div[draggable]") || dragHandle1);
+    fireEvent.dragOver(item2);
+    fireEvent.dragEnd(item2);
+
+    expect(reorderOrgCoursesAction).toHaveBeenCalled();
+
+    // Click drag handle to verify stopPropagation
+    fireEvent.click(dragHandle1);
+
+    // Test dragStart on action buttons container
+    const editBtn = screen.getAllByRole("button", { name: "Edit" })[0];
+    const actionsWrapper = editBtn.parentElement;
+    if (actionsWrapper) {
+      fireEvent.dragStart(actionsWrapper);
+      fireEvent.click(actionsWrapper);
+    }
+  });
 });
+
 

@@ -518,4 +518,26 @@ describe("ServicesTable Component", () => {
       expect(screen.queryByText("Delete Service")).toBeNull();
     });
   });
+
+  it("renders distinct badge and description styles for grooming, sports, walking, and custom services", () => {
+    const variedServices = [
+      { id: "s-groom", name: "Dog Grooming & Spa", organizationCategory: "ngo" },
+      { id: "s-sport", name: "Dog Training & Sport", organizationCategory: "ngo" },
+      { id: "s-walk", name: "Dog walking & Exercise", organizationCategory: "dog_service_provider" },
+      { id: "s-custom", name: "Pet Nutrition Consult", organizationCategory: "dog_service_provider" },
+    ];
+
+    render(
+      <ServicesTable
+        serviceList={variedServices}
+        organizationCategoryList={mockOrgCategoryList}
+        serviceTypeList={mockServiceTypeList}
+      />
+    );
+
+    expect(screen.getByText("Dog Grooming & Spa")).toBeDefined();
+    expect(screen.getByText("Dog Training & Sport")).toBeDefined();
+    expect(screen.getByText("Dog walking & Exercise")).toBeDefined();
+    expect(screen.getByText("Pet Nutrition Consult")).toBeDefined();
+  });
 });

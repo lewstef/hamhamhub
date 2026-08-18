@@ -11,6 +11,7 @@ import {
   toggleOrganizationCourseAction,
   requestOrganizationVerificationAction,
   updateOrganizationVerificationStatusAction,
+  requestNewCartierAction,
 } from "./organizations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -784,6 +785,140 @@ describe("Organization Server Actions", () => {
       const res = await updateOrganizationVerificationStatusAction("org-1", "verified");
       expect(res.success).toBe(true);
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account/verification");
+    });
+
+    it("should reject update verification status when unauthenticated or non-admin role", async () => {
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
+      const resUnauth = await updateOrganizationVerificationStatusAction("org-1", "verified");
+      expect(resUnauth).toEqual({ error: "Unauthenticated. Please log in." });
+
+      vi.mocked(auth as any).mockResolvedValueOnce({
+        user: { id: "org-1", role: "organization", name: "Org" },
+        expires: "date",
+      });
+      const resForbidden = await updateOrganizationVerificationStatusAction("org-1", "verified");
+      expect(resForbidden).toEqual({ error: "Forbidden. Only backoffice staff can alter verification status." });
+    });
+
+    it("should handle DB error when updating verification status", async () => {
+      vi.mocked(auth as any).mockResolvedValueOnce({
+        user: { id: "admin-1", role: "admin", name: "Admin" },
+        expires: "date",
+      });
+      mockUpdate.mockRejectedValueOnce(new Error("DB failure"));
+
+      const res = await updateOrganizationVerificationStatusAction("org-1", "verified");
+      expect(res).toEqual({ error: "Failed to update verification status. Please try again." });
+    });
+
+    it("should handle email failure and database error in requestOrganizationVerificationAction", async () => {
+      vi.mocked(auth as any).mockResolvedValueOnce({
+        user: { id: "org-1", role: "organization", name: "Org 1" },
+        expires: "date",
+      });
+
+      mockSelect
+        .mockResolvedValueOnce([{ id: "org-1", name: "Test Org", email: "test@org.com", organizationCategory: "ngo", categoryVerificationStatus: "unverified" }])
+        .mockResolvedValueOnce([{ id: "ngo", name: "NGO Category" }]);
+      mockUpdate.mockResolvedValueOnce([{ id: "org-1" }]);
+      vi.mocked(sendMail).mockResolvedValueOnce({ error: "Mail server unreachable" });
+
+      const res = await requestOrganizationVerificationAction("org-1");
+      expect(res.success).toBe(true);
+
+      // DB exception branch
+      vi.mocked(auth as any).mockResolvedValueOnce({
+        user: { id: "org-1", role: "organization", name: "Org 1" },
+        expires: "date",
+      });
+      mockSelect.mockResolvedValueOnce([{ id: "org-1", name: "Test Org", email: "test@org.com", organizationCategory: "ngo", categoryVerificationStatus: "unverified" }]);
+      mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
+      const failRes = await requestOrganizationVerificationAction("org-1");
+      expect(failRes).toEqual({ error: "An error occurred while submitting your verification request. Please try again." });
+    });
+
+    it("should validate youtube, google business profile, and website URLs in updateOrganizationAction", async () => {
+      vi.mocked(auth as any).mockResolvedValue({
+        user: { id: "admin-1", role: "admin", name: "Admin" },
+        expires: "date",
+      });
+
+      const fdYoutube = new FormData();
+      fdYoutube.append("id", "org-1");
+      fdYoutube.append("name", "Org 1");
+      fdYoutube.append("organizationCategory", "ngo");
+      fdYoutube.append("youtube", "invalid-youtube-url");
+      const resYoutube = await updateOrganizationAction(null, fdYoutube);
+      expect(resYoutube.error).toContain("Please enter a valid YouTube URL");
+
+      const fdWebsite = new FormData();
+      fdWebsite.append("id", "org-1");
+      fdWebsite.append("name", "Org 1");
+      fdWebsite.append("organizationCategory", "ngo");
+      fdWebsite.append("website", "invalid-web-url");
+      const resWebsite = await updateOrganizationAction(null, fdWebsite);
+      expect(resWebsite.error).toContain("Please enter a valid website URL");
+
+      const fdGoogle = new FormData();
+      fdGoogle.append("id", "org-1");
+      fdGoogle.append("name", "Org 1");
+      fdGoogle.append("organizationCategory", "ngo");
+      fdGoogle.append("googleBusinessProfile", "invalid-google-url");
+      const resGoogle = await updateOrganizationAction(null, fdGoogle);
+      expect(resGoogle.error).toContain("Please enter a valid Google Business Profile URL");
+    });
+
+    it("should enforce authorization guards in requestOrganizationVerificationAction", async () => {
+      // Unauthenticated
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
+      const unauthRes = await requestOrganizationVerificationAction("org-1");
+      expect(unauthRes).toEqual({ error: "Unauthenticated. Please log in." });
+
+      // User role forbidden
+      vi.mocked(auth as any).mockResolvedValueOnce({
+        user: { id: "u-1", role: "user" },
+        expires: "date",
+      });
+      const userRes = await requestOrganizationVerificationAction("org-1");
+      expect(userRes).toEqual({ error: "Forbidden. Insufficient permissions." });
+
+      // Organization role for different org
+      vi.mocked(auth as any).mockResolvedValueOnce({
+        user: { id: "org-2", role: "organization" },
+        expires: "date",
+      });
+      const diffOrgRes = await requestOrganizationVerificationAction("org-1");
+      expect(diffOrgRes).toEqual({
+        error: "Forbidden. You can only request verification for your own organization.",
+      });
+    });
+
+    it("should rethrow redirect exceptions and handle new cartier email responses in organizations actions", async () => {
+      vi.mocked(auth as any).mockResolvedValue({
+        user: { id: "admin-1", role: "admin" },
+        expires: "date",
+      });
+
+      // Next redirect rethrow
+      mockUpdate.mockRejectedValueOnce({ digest: "NEXT_REDIRECT;replace;/login" });
+      const fd = new FormData();
+      fd.append("id", "org-1");
+      fd.append("password", "ValidPass123!");
+      fd.append("confirmPassword", "ValidPass123!");
+      await expect(changeOrganizationPasswordAction(null, fd)).rejects.toEqual(
+        expect.objectContaining({ digest: "NEXT_REDIRECT;replace;/login" })
+      );
+
+      // requestNewCartierAction with sendMail error and notes
+      vi.mocked(sendMail).mockResolvedValueOnce({ error: "SMTP timeout" });
+      const cartierRes = await requestNewCartierAction({
+        cityName: "Cluj",
+        cartierName: "Zorilor",
+        notes: "Please add this zone",
+      });
+      expect(cartierRes).toEqual({
+        error: "A apărut o eroare la trimiterea solicitării. Vă rugăm să încercați din nou.",
+      });
     });
   });
 });

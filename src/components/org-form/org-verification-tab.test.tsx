@@ -124,4 +124,71 @@ describe("OrgVerificationTab Component", () => {
 
     expect(orgActions.updateOrganizationVerificationStatusAction).toHaveBeenCalledWith("org-123", "verified");
   });
+
+  it("handles verification request error feedback", async () => {
+    vi.mocked(orgActions.requestOrganizationVerificationAction).mockResolvedValue({
+      error: "Submission failed due to invalid state.",
+    });
+
+    render(
+      <OrgVerificationTab
+        organization={{ ...dummyOrg, organizationCategory: null }}
+        organizationCategoryList={[]}
+        isBackoffice={false}
+      />
+    );
+
+    const submitBtn = screen.getByRole("button", { name: /Request Category Verification/i });
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(screen.getByText("Submission failed due to invalid state.")).toBeDefined();
+  });
+
+  it("handles backoffice admin reject and revoke actions with error feedback", async () => {
+    vi.mocked(orgActions.updateOrganizationVerificationStatusAction).mockResolvedValue({
+      error: "Permission denied",
+    });
+
+    const pendingOrg: Organization = {
+      ...dummyOrg,
+      verificationStatus: "pending",
+    };
+
+    const { rerender } = render(
+      <OrgVerificationTab
+        organization={pendingOrg}
+        organizationCategoryList={dummyCategories}
+        isBackoffice={true}
+      />
+    );
+
+    // Reject request
+    const rejectBtn = screen.getByRole("button", { name: /Reject Request/i });
+    await act(async () => {
+      fireEvent.click(rejectBtn);
+    });
+    expect(orgActions.updateOrganizationVerificationStatusAction).toHaveBeenCalledWith("org-123", "unverified");
+    expect(screen.getByText("Permission denied")).toBeDefined();
+
+    // Revoke verified status
+    const verifiedOrg: Organization = {
+      ...dummyOrg,
+      verificationStatus: "verified",
+    };
+    rerender(
+      <OrgVerificationTab
+        organization={verifiedOrg}
+        organizationCategoryList={dummyCategories}
+        isBackoffice={true}
+      />
+    );
+
+    const revokeBtn = screen.getByRole("button", { name: /Revoke Verification/i });
+    await act(async () => {
+      fireEvent.click(revokeBtn);
+    });
+    expect(orgActions.updateOrganizationVerificationStatusAction).toHaveBeenCalledWith("org-123", "unverified");
+  });
 });

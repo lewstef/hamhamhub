@@ -151,6 +151,39 @@ describe("TimePickerSelect Component", () => {
 
     fireEvent.keyDown(input, { key: "Escape" });
     expect(screen.queryByRole("button", { name: "08:30" })).toBeNull();
+
+    // ArrowUp to open dropdown
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+    expect(screen.getByRole("button", { name: "08:30" })).toBeDefined();
+
+    // ArrowUp when at 0 doesn't go below 0
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+
+    // ArrowDown until the end and beyond
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "ArrowDown" }); // Beyond length - 1
+
+    // ArrowUp moves highlight up
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(handleChange).toHaveBeenCalledWith("09:00");
+  });
+
+  it("handles empty options array gracefully", () => {
+    render(
+      <TimePickerSelect
+        id="checkin-time"
+        value=""
+        onChange={() => {}}
+        options={[]}
+      />
+    );
+
+    const input = screen.getByRole("textbox");
+    fireEvent.focus(input);
+    expect(screen.queryByRole("button", { name: "08:00" })).toBeNull();
   });
 
   it("updates highlight on mouseEnter", () => {

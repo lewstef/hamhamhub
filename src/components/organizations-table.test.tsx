@@ -454,4 +454,128 @@ describe("OrganizationsTable Component", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(screen.queryByText("Register Organization")).toBeNull();
   });
+
+  it("handles organization search filtering and pagination", () => {
+    const largeOrgs = Array.from({ length: 15 }, (_, i) => ({
+      id: `org-test-${i}`,
+      name: `Shelter ${i}`,
+      email: `shelter${i}@test.com`,
+      organizationCategory: "ngo",
+      createdAt: new Date("2026-01-01"),
+    }));
+
+    const { container } = render(
+      <OrganizationsTable
+        organizationList={largeOrgs}
+        organizationCategoryList={mockCategories}
+      />
+    );
+
+    // Initial pagination metrics
+    expect(container.textContent).toContain("Showing 1–10 of 15 organizations");
+
+    // Search for specific org
+    const searchInput = screen.getByPlaceholderText(/Search by name or email/i);
+    fireEvent.change(searchInput, { target: { value: "Shelter 14" } });
+    expect(screen.getByText("Shelter 14")).toBeDefined();
+    expect(screen.queryByText("Shelter 2")).toBeNull();
+
+    // Clear search and test pagination next / prev / page 2 buttons
+    fireEvent.change(searchInput, { target: { value: "" } });
+    const pageTwoBtn = screen.getByRole("button", { name: "2" });
+    fireEvent.click(pageTwoBtn);
+    expect(container.textContent).toContain("Showing 11–15 of 15 organizations");
+
+    const prevBtn = screen.getAllByRole("button").find(btn => btn.querySelector("svg.lucide-chevron-left"));
+    if (prevBtn) {
+      fireEvent.click(prevBtn);
+      expect(container.textContent).toContain("Showing 1–10 of 15 organizations");
+    }
+
+    const nextBtn = screen.getAllByRole("button").find(btn => btn.querySelector("svg.lucide-chevron-right"));
+    if (nextBtn) {
+      fireEvent.click(nextBtn);
+      expect(container.textContent).toContain("Showing 11–15 of 15 organizations");
+    }
+  });
+
+  it("should handle Category delete modal cancellation via Cancel and X buttons", () => {
+    render(
+      <OrganizationsTable
+        organizationList={mockOrgs}
+        organizationCategoryList={mockCategories}
+      />
+    );
+
+    // Switch to Categories tab
+    fireEvent.click(screen.getByRole("button", { name: /Categories/i }));
+
+    // Find and click Delete category button
+    const deleteBtn = screen.getByTitle("Delete Category");
+    fireEvent.click(deleteBtn);
+
+    expect(screen.getByText("Are you sure you want to permanently delete this organization category? This action cannot be undone.")).toBeDefined();
+
+    // Cancel via button
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByText("Are you sure you want to permanently delete this organization category? This action cannot be undone.")).toBeNull();
+
+    // Reopen and close via X button
+    fireEvent.click(deleteBtn);
+    const closeBtn = screen.getAllByRole("button").find(btn => btn.querySelector("svg.lucide-x"));
+    expect(closeBtn).toBeDefined();
+    fireEvent.click(closeBtn!);
+    expect(screen.queryByText("Are you sure you want to permanently delete this organization category? This action cannot be undone.")).toBeNull();
+  });
+
+  it("should handle search filtering on organizations tab and display empty state when none match", () => {
+    render(
+      <OrganizationsTable
+        organizationList={mockOrgs}
+        organizationCategoryList={mockCategories}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText("Search by name or email...");
+    fireEvent.change(searchInput, { target: { value: "NonExistentOrgXYZ" } });
+    expect(screen.getByText("No organization accounts found.")).toBeDefined();
+
+    fireEvent.change(searchInput, { target: { value: "Sirius" } });
+    expect(screen.getByText("Sirius Rescue")).toBeDefined();
+  });
+
+  it("should handle email link click with stopPropagation and render fallback for missing email/category", () => {
+    const orgWithNulls = [
+      {
+        id: "org-null",
+        name: "Anonymous Org",
+        email: null,
+        phoneNumber: null,
+        organizationCategory: null,
+        createdAt: new Date("2026-01-01"),
+        isSuperAdmin: false,
+      },
+      {
+        id: "org-contact",
+        name: "Contact Org",
+        email: "contact@org.ro",
+        phoneNumber: null,
+        organizationCategory: "custom-cat",
+        createdAt: new Date("2026-01-01"),
+        isSuperAdmin: false,
+      },
+    ];
+
+    render(
+      <OrganizationsTable
+        organizationList={orgWithNulls as any}
+        organizationCategoryList={mockCategories}
+      />
+    );
+
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+
+    const emailLink = screen.getByText("contact@org.ro");
+    fireEvent.click(emailLink);
+  });
 });

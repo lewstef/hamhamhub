@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 import { ServiceTypesTable } from "./service-types-table";
 
@@ -9,7 +9,26 @@ vi.mock("@/app/actions/service-types", () => ({
   updateServiceTypeAction: vi.fn(),
 }));
 
+let mockActionState: any = null;
+
+vi.mock("react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react")>();
+  return {
+    ...actual,
+    useActionState: (action: any, initialState: any) => {
+      if (mockActionState) {
+        return [mockActionState, vi.fn(), false];
+      }
+      return [initialState, vi.fn(), false];
+    },
+  };
+});
+
 describe("ServiceTypesTable Component", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockActionState = null;
+  });
   const dummyServiceTypesList = [
     { id: "dog_training", name: "Dog training", description: "Behavioral training", applicableTo: [], fields: [] },
     { id: "dog_boarding", name: "Dog boarding", description: "Overnight stays", applicableTo: [], fields: [] },
@@ -154,7 +173,7 @@ describe("ServiceTypesTable Component", () => {
     expect(descTextarea).toBeDefined();
   });
 
-  it("should update input value when user types in the name field of the edit modal", () => {
+  it("should update input value when user types in the name field and submit form", () => {
     render(<ServiceTypesTable serviceTypesList={dummyServiceTypesList} />);
 
     fireEvent.click(screen.getAllByTitle(/Edit /)[0]);
@@ -162,5 +181,19 @@ describe("ServiceTypesTable Component", () => {
     const nameInput = screen.getByDisplayValue("Dog training") as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: "Dog Training Updated" } });
     expect(nameInput.value).toBe("Dog Training Updated");
+
+    const saveBtn = screen.getByRole("button", { name: "Save Changes" });
+    fireEvent.submit(saveBtn.closest("form")!);
+  });
+
+  it("should auto-close edit modal when action state reports success", async () => {
+    mockActionState = { success: true };
+    render(<ServiceTypesTable serviceTypesList={dummyServiceTypesList} />);
+
+    fireEvent.click(screen.getAllByTitle(/Edit /)[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Edit Service Type:/)).toBeNull();
+    });
   });
 });

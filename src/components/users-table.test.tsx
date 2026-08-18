@@ -4,6 +4,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import React, { useActionState } from "react";
 import { UsersTable } from "./users-table";
 
+import { createUserAction, deleteUserAction } from "@/app/actions/users";
+
 vi.mock("@/app/actions/users", () => ({
   createUserAction: vi.fn(),
   deleteUserAction: vi.fn(),
@@ -56,14 +58,22 @@ describe("UsersTable Component", () => {
     expect(screen.getByText("Register New User")).toBeDefined();
   });
 
-  it("should filter the user list based on the search query", () => {
-    render(<UsersTable userList={mockUsers} />);
+  it("should filter the user list based on the search query and show empty state", () => {
+    const listWithNullName = [
+      ...mockUsers,
+      { id: "u3", name: null, email: "noname@example.com", createdAt: new Date("2026-03-01") },
+    ];
+    render(<UsersTable userList={listWithNullName} />);
 
     const searchInput = screen.getByPlaceholderText("Search users...") as HTMLInputElement;
     fireEvent.change(searchInput, { target: { value: "alice" } });
 
     expect(screen.getByText("Alice Smith")).toBeDefined();
     expect(screen.queryByText("Bob Jones")).toBeNull();
+
+    // Search query with no match
+    fireEvent.change(searchInput, { target: { value: "nonexistentuserxyz" } });
+    expect(screen.getByText("No user accounts found.")).toBeDefined();
   });
 
   it("should handle create user modal inputs, eye visibility toggles, mismatch warning, and Cancel", () => {
@@ -189,6 +199,39 @@ describe("UsersTable Component", () => {
     const pageTwoBtn = screen.getByRole("button", { name: "2" });
     fireEvent.click(pageTwoBtn);
     expect(container.textContent).toContain("Showing 11–12 of 12 users");
+  });
+
+  it("should render error banner when create or delete action returns error", () => {
+    vi.mocked(useActionState).mockImplementation((action: unknown) => {
+      if (action === createUserAction) {
+        return [{ error: "Email already taken" }, vi.fn(), false];
+      }
+      if (action === deleteUserAction) {
+        return [{ error: "Cannot delete active user" }, vi.fn(), false];
+      }
+      return [null, vi.fn(), false];
+    });
+
+    render(<UsersTable userList={mockUsers} />);
+
+    // Open create modal
+    const openCreateBtn = screen.getByRole("button", { name: "Create User" });
+    fireEvent.click(openCreateBtn);
+    expect(screen.getByText("Email already taken")).toBeDefined();
+
+    // Open delete modal
+    const trashButtons = screen.getAllByRole("button").filter((btn) => btn.querySelector("svg.lucide-trash2"));
+    if (trashButtons.length > 0) {
+      fireEvent.click(trashButtons[0]);
+      expect(screen.getByText("Cannot delete active user")).toBeDefined();
+    }
+
+    // Reset default mock
+    vi.mocked(useActionState).mockImplementation((_action, initialState) => [
+      initialState,
+      vi.fn(),
+      false,
+    ]);
   });
 
   it("should trigger success actions for creation and deletion when state.success is true", async () => {

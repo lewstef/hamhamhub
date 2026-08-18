@@ -137,6 +137,92 @@ describe("System Server Actions — SMTP Config", () => {
       const result = await updateSmtpConfigAction({}, formData);
       expect(result).toEqual({ success: true });
     });
+
+    it("should preserve existing password when smtpPassword is empty in form data", async () => {
+      const { db } = await import("@/db");
+      vi.mocked(auth).mockResolvedValue({
+        user: { role: "admin" },
+      } as any);
+
+      // Mock existing config with saved password
+      vi.mocked(db.select).mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([
+              { value: JSON.stringify({ smtpPassword: "preservedSecretPassword123" }) },
+            ]),
+          }),
+        }),
+      } as any);
+
+      const formData = new FormData();
+      formData.append("smtpHost", "smtp.gmail.com");
+      formData.append("smtpPort", "587");
+      formData.append("smtpSecurity", "TLS");
+      formData.append("smtpUsername", "no-reply@hamhamhub.ro");
+      formData.append("smtpPassword", ""); // empty password to trigger preservation
+      formData.append("senderName", "HamHamHub System");
+      formData.append("senderEmail", "no-reply@hamhamhub.ro");
+
+      const result = await updateSmtpConfigAction({}, formData);
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should fallback gracefully if existing config JSON is malformed", async () => {
+      const { db } = await import("@/db");
+      vi.mocked(auth).mockResolvedValue({
+        user: { role: "admin" },
+      } as any);
+
+      vi.mocked(db.select).mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockResolvedValueOnce([
+              { value: "malformed-not-json" },
+            ]),
+          }),
+        }),
+      } as any);
+
+      const formData = new FormData();
+      formData.append("smtpHost", "smtp.gmail.com");
+      formData.append("smtpPort", "587");
+      formData.append("smtpSecurity", "TLS");
+      formData.append("smtpUsername", "no-reply@hamhamhub.ro");
+      formData.append("smtpPassword", "");
+      formData.append("senderName", "HamHamHub System");
+      formData.append("senderEmail", "no-reply@hamhamhub.ro");
+
+      const result = await updateSmtpConfigAction({}, formData);
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should return error when database throws during update", async () => {
+      const { db } = await import("@/db");
+      vi.mocked(auth).mockResolvedValue({
+        user: { role: "admin" },
+      } as any);
+
+      vi.mocked(db.select).mockReturnValueOnce({
+        from: vi.fn().mockReturnValueOnce({
+          where: vi.fn().mockReturnValueOnce({
+            limit: vi.fn().mockRejectedValueOnce(new Error("DB offline")),
+          }),
+        }),
+      } as any);
+
+      const formData = new FormData();
+      formData.append("smtpHost", "smtp.gmail.com");
+      formData.append("smtpPort", "587");
+      formData.append("smtpSecurity", "TLS");
+      formData.append("smtpUsername", "no-reply@hamhamhub.ro");
+      formData.append("smtpPassword", "pass");
+      formData.append("senderName", "HamHamHub System");
+      formData.append("senderEmail", "no-reply@hamhamhub.ro");
+
+      const result = await updateSmtpConfigAction({}, formData);
+      expect(result).toEqual({ error: "An unexpected error occurred while saving SMTP configuration." });
+    });
   });
 
   describe("sendTestEmailAction", () => {

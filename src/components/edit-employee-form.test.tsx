@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React, { useActionState } from "react";
 import { EditEmployeeForm } from "./edit-employee-form";
+import { updateEmployeeAction, changeEmployeePasswordAction } from "@/app/actions/employees";
 
 vi.mock("@/app/actions/employees", () => ({
   updateEmployeeAction: vi.fn(),
@@ -121,5 +122,18 @@ describe("EditEmployeeForm Component", () => {
 
     render(<EditEmployeeForm employee={mockEmployee} />);
     expect(screen.getByText("Username is already taken")).toBeDefined();
+  });
+
+  it("should show password error banner when password action state error occurs", () => {
+    vi.mocked(useActionState).mockImplementation((action: unknown, init: unknown) => {
+      if (action === changeEmployeePasswordAction) {
+        return [{ error: "Password does not meet requirements" }, vi.fn(), false];
+      }
+      return [init, vi.fn(), false];
+    });
+
+    render(<EditEmployeeForm employee={mockEmployee} />);
+    fireEvent.click(screen.getByRole("button", { name: "Password" }));
+    expect(screen.getByText("Password does not meet requirements")).toBeDefined();
   });
 });

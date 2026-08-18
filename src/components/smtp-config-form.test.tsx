@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import React from "react";
+import React, { useActionState } from "react";
 import { SmtpConfigForm } from "./smtp-config-form";
 import { updateSmtpConfigAction, sendTestEmailAction } from "@/app/actions/system";
 
@@ -10,9 +10,32 @@ vi.mock("@/app/actions/system", () => ({
   sendTestEmailAction: vi.fn(),
 }));
 
+let mockSaveState: any = null;
+let mockTestState: any = null;
+const mockSaveAction = vi.fn();
+const mockTestAction = vi.fn();
+
+vi.mock("react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react")>();
+  return {
+    ...actual,
+    useActionState: (action: any, initialState: any) => {
+      if (action === updateSmtpConfigAction) {
+        return [mockSaveState || initialState, mockSaveAction, false];
+      }
+      if (action === sendTestEmailAction) {
+        return [mockTestState || initialState, mockTestAction, false];
+      }
+      return [initialState, vi.fn(), false];
+    },
+  };
+});
+
 describe("SmtpConfigForm Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSaveState = null;
+    mockTestState = null;
   });
 
   it("renders with default inputs when no initialConfig is provided", () => {
@@ -87,6 +110,94 @@ describe("SmtpConfigForm Component", () => {
     const dispatchBtn = screen.getByRole("button", { name: /Dispatch Test Email/i });
     fireEvent.click(dispatchBtn);
 
-    expect(sendTestEmailAction).toHaveBeenCalled();
+    expect(mockTestAction).toHaveBeenCalled();
+  });
+
+  it("handles changing input fields and submitting main config form", () => {
+    render(<SmtpConfigForm />);
+
+    // Change Host
+    fireEvent.change(screen.getByDisplayValue("smtp.gmail.com"), {
+      target: { value: "smtp.mailgun.org" },
+    });
+    expect(screen.getByDisplayValue("smtp.mailgun.org")).toBeDefined();
+
+    // Change Port
+    fireEvent.change(screen.getByDisplayValue("587"), {
+      target: { value: "465" },
+    });
+    expect(screen.getByDisplayValue("465")).toBeDefined();
+
+    // Change Username
+    fireEvent.change(screen.getByDisplayValue("notifications@hamhamhub.ro"), {
+      target: { value: "new-user@hamhamhub.ro" },
+    });
+    expect(screen.getByDisplayValue("new-user@hamhamhub.ro")).toBeDefined();
+
+    // Change Password
+    const passwordInput = screen.getByPlaceholderText("••••••••••••");
+    fireEvent.change(passwordInput, { target: { value: "Secret123!" } });
+    expect(screen.getByDisplayValue("Secret123!")).toBeDefined();
+
+    // Change Sender Name
+    const senderNameInput = screen.getByPlaceholderText("e.g. HamHamHub System");
+    fireEvent.change(senderNameInput, { target: { value: "HamHamHub Admin" } });
+    expect(screen.getByDisplayValue("HamHamHub Admin")).toBeDefined();
+
+    // Change Sender Email
+    const senderEmailInput = screen.getByPlaceholderText("no-reply@hamhamhub.ro");
+    fireEvent.change(senderEmailInput, { target: { value: "support@hamhamhub.ro" } });
+    expect(screen.getByDisplayValue("support@hamhamhub.ro")).toBeDefined();
+
+    // Submit form
+    const saveBtn = screen.getByRole("button", { name: /Save Configuration/i });
+    fireEvent.submit(saveBtn.closest("form")!);
+    expect(mockSaveAction).toHaveBeenCalled();
+  });
+
+  it("renders with custom initial config and handles null passwords", () => {
+    render(
+      <SmtpConfigForm
+        initialConfig={{
+          smtpHost: "smtp.office365.com",
+          smtpPort: "587",
+          smtpSecurity: "STARTTLS",
+          smtpUsername: "admin@office.com",
+          senderName: "Office Bot",
+          senderEmail: "bot@office.com",
+        }}
+      />
+    );
+
+    expect(screen.getByDisplayValue("smtp.office365.com")).toBeDefined();
+    expect(screen.getByDisplayValue("Office Bot")).toBeDefined();
+    expect(screen.getByDisplayValue("bot@office.com")).toBeDefined();
+  });
+
+  it("renders saveState error and success banners", () => {
+    mockSaveState = { error: "Failed to connect to SMTP server." };
+    const { rerender } = render(<SmtpConfigForm />);
+    expect(screen.getByText("Failed to connect to SMTP server.")).toBeDefined();
+
+    mockSaveState = { success: true };
+    rerender(<SmtpConfigForm />);
+    expect(screen.getByText("SMTP server configuration updated successfully!")).toBeDefined();
+  });
+
+  it("renders test email error and success banners inside modal", () => {
+    mockTestState = { error: "Recipient mailbox unavailable." };
+    const { rerender } = render(<SmtpConfigForm />);
+
+    // Open modal
+    fireEvent.click(screen.getByRole("button", { name: /Send Test Email/i }));
+    // Submit test form
+    const dispatchBtn = screen.getByRole("button", { name: /Dispatch Test Email/i });
+    fireEvent.submit(dispatchBtn.closest("form")!);
+    expect(screen.getByText("Recipient mailbox unavailable.")).toBeDefined();
+
+    mockTestState = { success: true };
+    rerender(<SmtpConfigForm />);
+    fireEvent.submit(dispatchBtn.closest("form")!);
+    expect(screen.getByText("Test email sent successfully! Transport connection verified.")).toBeDefined();
   });
 });
