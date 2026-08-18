@@ -16,7 +16,8 @@ describe("OrgServicesTab Component", () => {
   const dummyOrg: Organization = {
     id: "org-123",
     name: "Dog School SRL",
-    category: "dog_school",
+    email: "contact@dogschool.test",
+    organizationCategory: "dog_school",
   };
 
   const dummyServices: Service[] = [
@@ -26,7 +27,7 @@ describe("OrgServicesTab Component", () => {
       slug: "dog-training",
       description: "Obedience classes",
       organizationCategory: "dog_school",
-      coursesOrder: ["basic_obedience"],
+      coursesOrder: JSON.stringify(["basic_obedience"]),
     },
     {
       id: "srv-2",

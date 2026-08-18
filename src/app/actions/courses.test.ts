@@ -31,20 +31,20 @@ describe("Courses Server Actions", () => {
 
   describe("createCourseAction", () => {
     it("should fail if unauthorized", async () => {
-      vi.mocked(auth).mockResolvedValueOnce(null);
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
       const result = await createCourseAction(null, new FormData());
       expect(result).toEqual({ error: "Unauthorized access" });
     });
 
     it("should fail if name is missing", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();
       const result = await createCourseAction(null, formData);
       expect(result).toEqual({ error: "Course name is required." });
     });
 
     it("should successfully insert new course", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
       vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
 
@@ -84,7 +84,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should successfully insert new course when user is an admin", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
       const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
       vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
 
@@ -105,7 +105,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should successfully insert new boarding offering with custom boarding attributes", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
       vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
 
@@ -159,7 +159,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should fail schedule time format validation", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();
       formData.append("name", "VIP Stay");
       formData.append("schedule", JSON.stringify([
@@ -171,7 +171,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should fail check-in format validation", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();
       formData.append("name", "VIP Stay");
       formData.append("checkin", "25:00");
@@ -181,7 +181,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should fail check-out format validation", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();
       formData.append("name", "VIP Stay");
       formData.append("checkout", "18:65");
@@ -191,7 +191,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should fail weekend check-in format validation", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();
       formData.append("name", "VIP Stay");
       formData.append("checkinWeekend", "25:00");
@@ -201,7 +201,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should fail weekend check-out format validation", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();
       formData.append("name", "VIP Stay");
       formData.append("checkoutWeekend", "18:65");
@@ -211,7 +211,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should fail if organization ID is missing for admin", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
       const formData = new FormData();
       formData.append("name", "Admin Course");
       const result = await createCourseAction(null, formData);
@@ -219,7 +219,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should return error on DB failure", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const mockValues = vi.fn().mockRejectedValueOnce(new Error("DB insertion failed"));
       vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
 
@@ -233,20 +233,20 @@ describe("Courses Server Actions", () => {
 
   describe("updateCourseAction", () => {
     it("should fail if unauthorized", async () => {
-      vi.mocked(auth).mockResolvedValueOnce(null);
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
       const result = await updateCourseAction(null, new FormData());
       expect(result).toEqual({ error: "Unauthorized access" });
     });
 
     it("should fail if course ID or name is missing", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();
       const result = await updateCourseAction(null, formData);
       expect(result).toEqual({ error: "Course ID is required." });
     });
 
     it("should update a course when user is the owner", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -279,7 +279,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should update a course when user is an admin even if they don't own it", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
       
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-other" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -302,7 +302,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should fail if organization user tries to update a course owned by another organization", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
 
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-different" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -318,7 +318,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should clear conditional fields (trainer name and venue details) when their respective toggles are false", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
 
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -352,7 +352,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should return error on DB failure", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
 
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -374,7 +374,7 @@ describe("Courses Server Actions", () => {
 
   describe("deleteCourseAction", () => {
     it("should delete course when owner", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
 
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -389,7 +389,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should delete course when user is an admin even if they don't own it", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
 
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-other" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -404,7 +404,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should fail if organization user tries to delete a course owned by another organization", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
 
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-different" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -416,7 +416,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should return error on DB failure", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
 
       const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
       const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
@@ -434,13 +434,13 @@ describe("Courses Server Actions", () => {
 
   describe("reorderOrgCoursesAction", () => {
     it("should fail if unauthorized", async () => {
-      vi.mocked(auth).mockResolvedValueOnce(null);
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
       const result = await reorderOrgCoursesAction(["course-1", "course-2"]);
       expect(result).toEqual({ error: "Unauthorized access" });
     });
 
     it("should reorder courses when user is the owner", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
 
       const mockWhereUpdate = vi.fn().mockResolvedValue({ count: 1 });
       const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
@@ -452,7 +452,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should reorder courses when user is an admin", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "admin-1", role: "admin" }, expires: "" });
 
       const mockWhereUpdate = vi.fn().mockResolvedValue({ count: 1 });
       const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
@@ -464,7 +464,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should return error on DB failure", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
 
       const mockWhereUpdate = vi.fn().mockRejectedValueOnce(new Error("DB update failed"));
       const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
@@ -477,7 +477,7 @@ describe("Courses Server Actions", () => {
 
   describe("Additional branch tests for courses.ts", () => {
     it("should allow employee role to create, update, and delete courses", async () => {
-      vi.mocked(auth).mockResolvedValue({ user: { id: "emp-1", role: "employee" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValue({ user: { id: "emp-1", role: "employee" }, expires: "" });
 
       // Create
       const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
@@ -511,7 +511,7 @@ describe("Courses Server Actions", () => {
     });
 
     it("should return error if course to update is not found", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       vi.mocked(db.select).mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValueOnce([]) }) }) } as any);
 
       const formData = new FormData();
@@ -524,11 +524,11 @@ describe("Courses Server Actions", () => {
 
     it("should return error if course to delete is not found or unauthorized", async () => {
       // Unauthenticated
-      vi.mocked(auth).mockResolvedValueOnce(null);
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
       expect(await deleteCourseAction("course-1")).toEqual({ error: "Unauthorized access" });
 
       // Course not found
-      vi.mocked(auth).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       vi.mocked(db.select).mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValueOnce([]) }) }) } as any);
       expect(await deleteCourseAction("course-1")).toEqual({ error: "Course not found" });
     });

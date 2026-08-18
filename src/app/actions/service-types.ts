@@ -28,14 +28,18 @@ export async function getServiceTypesAction(): Promise<ServiceType[]> {
     dbList = [];
   }
 
-  if (dbList.length === 0) {
+  const dbIds = new Set((dbList || []).map((item) => item.id));
+  const missingSeedData = serviceTypesList
+    .filter((st) => !dbIds.has(st.id))
+    .map((st) => ({
+      id: st.id,
+      name: st.name,
+      description: st.description,
+    }));
+
+  if (missingSeedData.length > 0) {
     try {
-      const seedData = serviceTypesList.map((st) => ({
-        id: st.id,
-        name: st.name,
-        description: st.description,
-      }));
-      await db.insert(serviceTypes).values(seedData);
+      await db.insert(serviceTypes).values(missingSeedData);
       const refreshed = await db.select().from(serviceTypes);
       if (Array.isArray(refreshed)) {
         dbList = refreshed;
@@ -43,31 +47,31 @@ export async function getServiceTypesAction(): Promise<ServiceType[]> {
     } catch {
       // Ignored for mocked tests
     }
+  }
 
-    // Ensure default services rows exist for applicable categories on seed
-    try {
-      const existingServices = await db.select().from(services);
-      if (Array.isArray(existingServices)) {
-        const existingServiceKeys = new Set(existingServices.map((s) => `${s.organizationCategory}:${s.name}`));
+  // Ensure default services rows exist for applicable categories on seed or new service addition
+  try {
+    const existingServices = await db.select().from(services);
+    if (Array.isArray(existingServices)) {
+      const existingServiceKeys = new Set(existingServices.map((s) => `${s.organizationCategory}:${s.name}`));
 
-        const servicesToInsert: { name: string; organizationCategory: string }[] = [];
-        for (const st of serviceTypesList) {
-          for (const cat of st.applicableTo) {
-            const key = `${cat}:${st.name}`;
-            if (!existingServiceKeys.has(key)) {
-              servicesToInsert.push({ name: st.name, organizationCategory: cat });
-              existingServiceKeys.add(key);
-            }
+      const servicesToInsert: { name: string; organizationCategory: string }[] = [];
+      for (const st of serviceTypesList) {
+        for (const cat of st.applicableTo) {
+          const key = `${cat}:${st.name}`;
+          if (!existingServiceKeys.has(key)) {
+            servicesToInsert.push({ name: st.name, organizationCategory: cat });
+            existingServiceKeys.add(key);
           }
         }
-
-        if (servicesToInsert.length > 0) {
-          await db.insert(services).values(servicesToInsert);
-        }
       }
-    } catch {
-      // Ignored for mocked tests
+
+      if (servicesToInsert.length > 0) {
+        await db.insert(services).values(servicesToInsert);
+      }
     }
+  } catch {
+    // Ignored for mocked tests
   }
 
   // Merge dynamic properties from database with configurations

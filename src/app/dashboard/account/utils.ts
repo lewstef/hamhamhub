@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, services, serviceTypes } from "@/db/schema";
+import { users, services, serviceTypes, organizationEnabledServices, organizationEnabledCourses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -46,8 +46,6 @@ export async function getDashboardAccountData() {
       googleBusinessProfile: users.googleBusinessProfile,
       description: users.description,
       createdAt: users.createdAt,
-      enabledServices: users.enabledServices,
-      enabledCourses: users.enabledCourses,
       billingCompanyName: users.billingCompanyName,
       billingTaxId: users.billingTaxId,
       billingTradeRegistryNumber: users.billingTradeRegistryNumber,
@@ -68,6 +66,30 @@ export async function getDashboardAccountData() {
     .where(eq(users.id, id))
     .limit(1);
 
+  if (!organization) {
+    notFound();
+  }
+
+  const [enabledServicesRows, enabledCoursesRows] = await Promise.all([
+    db
+      .select({ serviceId: organizationEnabledServices.serviceId })
+      .from(organizationEnabledServices)
+      .where(eq(organizationEnabledServices.organizationId, id)),
+    db
+      .select({ courseId: organizationEnabledCourses.courseId })
+      .from(organizationEnabledCourses)
+      .where(eq(organizationEnabledCourses.organizationId, id)),
+  ]);
+
+  const enabledServices = enabledServicesRows.map((r) => r.serviceId).join(",") || null;
+  const enabledCourses = enabledCoursesRows.map((r) => r.courseId).join(",") || null;
+
+  const organizationWithEnabled = {
+    ...organization,
+    enabledServices,
+    enabledCourses,
+  };
+
   if (!organization || organization.role !== "organization") {
     notFound();
   }
@@ -87,6 +109,7 @@ export async function getDashboardAccountData() {
       .from(services)
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
       .where(eq(services.organizationCategory, organization.organizationCategory))
+      .orderBy(services.sortOrder, services.createdAt)
       .then((rows) =>
         rows.map((r) => {
           const fallbackSlug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
@@ -102,7 +125,7 @@ export async function getDashboardAccountData() {
   }
 
   return {
-    organization,
+    organization: organizationWithEnabled,
     organizationCategoryList,
     servicesList,
   };

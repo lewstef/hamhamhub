@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { serviceTypesList, type ServiceType, type FormField } from "./service-types";
 
 describe("serviceTypesList config", () => {
-  it("should export exactly 5 service types", () => {
-    expect(serviceTypesList).toHaveLength(5);
+  it("should export exactly 6 service types", () => {
+    expect(serviceTypesList).toHaveLength(6);
   });
 
   it("should have a unique id for every service type", () => {
@@ -31,7 +31,7 @@ describe("serviceTypesList config", () => {
   });
 
   it("should have at least one field for configurable service types", () => {
-    for (const st of serviceTypesList.filter((s) => s.id !== "dog_grooming")) {
+    for (const st of serviceTypesList.filter((s) => s.id !== "dog_grooming" && s.id !== "dog_sitter")) {
       expect(st.fields.length).toBeGreaterThan(0);
     }
   });
@@ -119,5 +119,13 @@ describe("serviceTypesList config", () => {
     expect(dg).toBeDefined();
     expect(dg!.name).toBe("Dog grooming");
     expect(dg!.applicableTo).toContain("dog_service_provider");
+  });
+
+  it("should include a 'dog_sitter' service type applicable to dog_service_provider and ngo", () => {
+    const ds = serviceTypesList.find((s) => s.id === "dog_sitter");
+    expect(ds).toBeDefined();
+    expect(ds!.name).toBe("Dog sitter");
+    expect(ds!.applicableTo).toContain("dog_service_provider");
+    expect(ds!.applicableTo).toContain("ngo");
   });
 });

@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, services, serviceTypes, courses } from "@/db/schema";
+import { users, services, serviceTypes, courses, organizationEnabledServices, organizationEnabledCourses } from "@/db/schema";
 import { and, eq, or, isNull } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -32,8 +32,6 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
       id: users.id,
       role: users.role,
       organizationCategory: users.organizationCategory,
-      enabledServices: users.enabledServices,
-      enabledCourses: users.enabledCourses,
       addressCity: users.addressCity,
       address: users.address,
     })
@@ -74,11 +72,18 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
     notFound();
   }
 
-  // Parse enabled service list
-  const enabledList = organization.enabledServices
-    ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
-    : [];
+  const [enabledServicesRows, enabledCoursesRows] = await Promise.all([
+    db
+      .select({ serviceId: organizationEnabledServices.serviceId })
+      .from(organizationEnabledServices)
+      .where(eq(organizationEnabledServices.organizationId, organization.id)),
+    db
+      .select({ courseId: organizationEnabledCourses.courseId })
+      .from(organizationEnabledCourses)
+      .where(eq(organizationEnabledCourses.organizationId, organization.id)),
+  ]);
 
+  const enabledList = enabledServicesRows.map((s) => s.serviceId);
   const isEnabled = enabledList.includes(service.id);
 
   const formattedService = {
@@ -88,9 +93,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
     coursesOrder: service.coursesOrder,
   };
 
-  const enabledCourseIds = organization.enabledCourses
-    ? organization.enabledCourses.split(",").map((s) => s.trim()).filter(Boolean)
-    : [];
+  const enabledCourseIds = enabledCoursesRows.map((s) => s.courseId);
 
   let orgCourses: any[] = [];
   if (slug === "dog-training") {
@@ -104,7 +107,7 @@ export default async function DashboardServiceDetailPage({ params }: PageProps) 
         )
       )
       .orderBy(courses.sortOrder, courses.createdAt);
-  } else if (slug === "sport-dog-training" || slug === "dog-boarding" || slug === "dog-grooming" || slug === "dog-walking") {
+  } else if (slug === "sport-dog-training" || slug === "dog-boarding" || slug === "dog-grooming" || slug === "dog-walking" || slug === "dog-sitter") {
     orgCourses = await db
       .select()
       .from(courses)

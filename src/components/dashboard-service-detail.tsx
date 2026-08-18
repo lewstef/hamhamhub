@@ -206,7 +206,8 @@ export function DashboardServiceDetail({
   const isDogBoarding = serviceName === "dog boarding";
   const isDogGrooming = serviceName === "dog grooming";
   const isDogWalking = serviceName === "dog walking" || slug === "dog-walking";
-  const isDynamicCourses = isDogTraining || isSportDogTraining || isDogBoarding || isDogGrooming || isDogWalking;
+  const isDogSitter = serviceName === "dog sitter" || slug === "dog-sitter";
+  const isDynamicCourses = isDogTraining || isSportDogTraining || isDogBoarding || isDogGrooming || isDogWalking || isDogSitter;
   const itemNoun = isSportDogTraining
     ? "Dog Sport"
     : isDogBoarding
@@ -215,6 +216,8 @@ export function DashboardServiceDetail({
     ? "Grooming service"
     : isDogWalking
     ? "Walking service"
+    : isDogSitter
+    ? "Sitting service"
     : "Course";
 
   const handleToggle = () => {
@@ -527,13 +530,13 @@ export function DashboardServiceDetail({
                                 Ages: {course.ageLimits.split(",").length} {course.ageLimits.split(",").length === 1 ? "Phase" : "Phases"}
                               </span>
                             )}
-                            {slug !== "dog-walking" && course.dedicatedField && (
+                            {slug !== "dog-walking" && slug !== "dog-sitter" && course.dedicatedField && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/10 text-sky-600 border border-sky-500/20">
                                 <MapPin className="size-2.5" />
                                 Field
                               </span>
                             )}
-                            {slug !== "dog-walking" && course.parking && (
+                            {slug !== "dog-walking" && slug !== "dog-sitter" && course.parking && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                                 <Car className="size-2.5" />
                                 Parking

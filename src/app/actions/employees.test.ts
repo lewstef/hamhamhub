@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   createEmployeeAction,
   updateEmployeeAction,
@@ -77,7 +78,7 @@ vi.mock("bcryptjs", () => ({
 describe("Employee Server Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(auth).mockResolvedValue({
+    vi.mocked(auth as any).mockResolvedValue({
       user: { id: "admin-id", role: "admin", email: "admin@example.com" },
       expires: "dummy",
     });
@@ -172,7 +173,7 @@ describe("Employee Server Actions", () => {
     });
 
     it("should return error if session is missing or unauthorized", async () => {
-      vi.mocked(auth).mockResolvedValueOnce(null);
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
       const formData = new FormData();
       formData.append("name", "John Doe");
       formData.append("username", "johndoe");
@@ -185,7 +186,7 @@ describe("Employee Server Actions", () => {
     });
 
     it("should return error if non-admin user tries to create an employee", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "employee-id", role: "employee", email: "employee@example.com" },
         expires: "dummy",
       });

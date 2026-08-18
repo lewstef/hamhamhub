@@ -241,14 +241,14 @@ describe("Core Auth Server Actions", () => {
 
   describe("updateUserThemeAction", () => {
     it("should return error if user is not authenticated", async () => {
-      vi.mocked(auth).mockResolvedValueOnce(null);
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
 
       const result = await updateUserThemeAction("dark");
       expect(result).toEqual({ error: "Not authenticated" });
     });
 
     it("should return error if theme is invalid", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "user-id", name: "John", email: "john@example.com", role: "user" },
         expires: "any",
       });
@@ -258,7 +258,7 @@ describe("Core Auth Server Actions", () => {
     });
 
     it("should successfully update theme in database", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "user-id", name: "John", email: "john@example.com", role: "user" },
         expires: "any",
       });
@@ -272,7 +272,7 @@ describe("Core Auth Server Actions", () => {
     });
 
     it("should return error on database update exception", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "user-id", name: "John", email: "john@example.com", role: "user" },
         expires: "any",
       });

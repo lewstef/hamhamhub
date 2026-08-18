@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, services, serviceTypes } from "@/db/schema";
+import { users, services, serviceTypes, organizationEnabledServices, organizationEnabledCourses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -25,8 +25,6 @@ export default async function DashboardServicesPage() {
       id: users.id,
       role: users.role,
       organizationCategory: users.organizationCategory,
-      enabledServices: users.enabledServices,
-      enabledCourses: users.enabledCourses,
     })
     .from(users)
     .where(eq(users.id, id))
@@ -70,7 +68,7 @@ export default async function DashboardServicesPage() {
       .from(services)
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
       .where(eq(services.organizationCategory, organization.organizationCategory))
-      .orderBy(services.sortOrder)
+      .orderBy(services.sortOrder, services.createdAt)
       .then((rows) =>
         rows.map((r) => {
           const fallbackSlug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
@@ -85,15 +83,19 @@ export default async function DashboardServicesPage() {
       );
   }
 
-  // Parse list of enabled service IDs
-  const initialEnabledIds = organization.enabledServices
-    ? organization.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
-    : [];
+  const [enabledServicesRows, enabledCoursesRows] = await Promise.all([
+    db
+      .select({ serviceId: organizationEnabledServices.serviceId })
+      .from(organizationEnabledServices)
+      .where(eq(organizationEnabledServices.organizationId, organization.id)),
+    db
+      .select({ courseId: organizationEnabledCourses.courseId })
+      .from(organizationEnabledCourses)
+      .where(eq(organizationEnabledCourses.organizationId, organization.id)),
+  ]);
 
-  // Parse list of enabled course IDs
-  const initialEnabledCourseIds = organization.enabledCourses
-    ? organization.enabledCourses.split(",").map((s) => s.trim()).filter(Boolean)
-    : [];
+  const initialEnabledIds = enabledServicesRows.map((r) => r.serviceId);
+  const initialEnabledCourseIds = enabledCoursesRows.map((r) => r.courseId);
 
   return (
     <div className="space-y-6 max-w-5xl">

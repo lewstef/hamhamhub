@@ -124,7 +124,7 @@ describe("DashboardServiceDetail Component", () => {
     render(
       <DashboardServiceDetail
         organizationId="org-123"
-        service={{ id: "srv-sport-dog-training", name: "Dog sports training", description: "Dog sports", slug: "sport-dog-training", category: "cynological" }}
+        service={{ id: "srv-sport-dog-training", name: "Dog sports training", description: "Dog sports" }}
         initialIsEnabled={true}
         slug="sport-dog-training"
       />

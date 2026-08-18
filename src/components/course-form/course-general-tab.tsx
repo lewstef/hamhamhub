@@ -24,12 +24,15 @@ interface CourseGeneralTabProps {
   itemNoun: string;
   isDogWalking?: boolean;
   isDogTraining?: boolean;
+  isDogSport?: boolean;
+  isDogSitter?: boolean;
+  hideAgeLimits?: boolean;
 }
 
 /**
  * CourseGeneralTab Component
  *
- * Renders the General tab fields: Name, Details (rich text), Trainer Certifications, and Age Limits.
+ * Renders the General tab fields: Name, Details (rich text), and Trainer Certifications.
  */
 export function CourseGeneralTab({
   name,
@@ -49,13 +52,21 @@ export function CourseGeneralTab({
   itemNoun,
   isDogWalking = false,
   isDogTraining = false,
+  isDogSport = false,
+  isDogSitter = false,
+  hideAgeLimits = false,
 }: CourseGeneralTabProps) {
   const hideAgeLimitsOnGeneral =
+    hideAgeLimits ||
     isDogWalking ||
     isDogTraining ||
+    isDogSport ||
+    isDogSitter ||
+    itemNoun === "Dog Sport" ||
     itemNoun === "Boarding service" ||
     itemNoun === "Course" ||
-    itemNoun === "Training course";
+    itemNoun === "Training course" ||
+    itemNoun === "Sitting service";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

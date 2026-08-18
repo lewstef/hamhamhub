@@ -11,6 +11,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - Documenting all new or modified Server Actions in `src/app/actions/` with complete JSDoc comments explaining input parameters, return values, side effects, redirect behavior, and security guards.
   - Adding comments to complex frontend logic or new components explaining their purpose, state management, and props.
 
+# Course & Service Form Rules
+- **Age Limits Placement**: In all tabbed service modes (`Dog Sport`, `Dog Training`, `Dog Boarding`, `Dog Walking`, `Dog Sitting`), **"Age Limits & Restrictions"** must **only** be rendered on the **"Terms of participation"** tab (Tab 2). It must NEVER be rendered on the "General" tab in tabbed layout modes. It is only rendered in the single-form view for flat/non-tabbed services (e.g., Grooming).
+
 # Known Issues & Gotchas
 
 ## Turbopack dev cache stale 404s (Next.js 16)
@@ -20,4 +23,5 @@ Remove-Item -Recurse -Force .next
 npm run dev
 ```
 This was confirmed on 2026-07-10 on the `/backoffice/organizations/account-information/[id]` route.
+
 

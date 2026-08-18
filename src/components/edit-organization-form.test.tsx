@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import React from "react";
 import { EditOrganizationForm } from "./edit-organization-form";
@@ -262,7 +262,8 @@ describe("EditOrganizationForm Component", () => {
     const subscriptionTabBtn = screen.getByRole("button", { name: "Subscription" });
     fireEvent.click(subscriptionTabBtn);
 
-    expect(screen.getByText("No subscription details currently configured.")).toBeDefined();
+    expect(screen.getByText("Active Subscription")).toBeDefined();
+    expect(screen.getByText("Subscription Plans & Tiers")).toBeDefined();
   });
 
   it("should open and close Edit Category, Email, Recovery Email, and Social modals", () => {

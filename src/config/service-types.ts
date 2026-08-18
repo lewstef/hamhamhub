@@ -138,4 +138,11 @@ export const serviceTypesList: ServiceType[] = [
     applicableTo: ["dog_service_provider"],
     fields: [],
   },
+  {
+    id: "dog_sitter",
+    name: "Dog sitter",
+    description: "In-home pet sitting, drop-in visits, and personalized care for dogs.",
+    applicableTo: ["dog_service_provider", "ngo"],
+    fields: [],
+  },
 ];

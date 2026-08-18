@@ -64,14 +64,15 @@ describe("Service Types Server Actions", () => {
           { id: "sport_dog_training", name: "Dog sports training", description: "DB Desc" },
           { id: "dog_walking", name: "Dog walking", description: "DB Desc" },
           { id: "dog_grooming", name: "Dog grooming", description: "DB Desc" },
+          { id: "dog_sitter", name: "Dog sitter", description: "DB Desc" },
         ]);
 
-      mockInsert.mockResolvedValueOnce({ count: 5 });
+      mockInsert.mockResolvedValueOnce({ count: 6 });
 
       const result = await getServiceTypesAction();
 
       expect(mockInsert).toHaveBeenCalled();
-      expect(result.length).toBe(5);
+      expect(result.length).toBe(6);
       expect(result[0].name).toBe("Dog training");
       expect(result[0].description).toBe("DB Desc");
       // Check that field configuration is preserved
@@ -81,6 +82,11 @@ describe("Service Types Server Actions", () => {
     it("should return merged db values if database list has records", async () => {
       mockSelect.mockResolvedValueOnce([
         { id: "dog_training", name: "Updated Training Name", description: "Updated Training Desc" },
+        { id: "dog_boarding", name: "Dog boarding", description: "DB Desc" },
+        { id: "sport_dog_training", name: "Dog sports training", description: "DB Desc" },
+        { id: "dog_walking", name: "Dog walking", description: "DB Desc" },
+        { id: "dog_grooming", name: "Dog grooming", description: "DB Desc" },
+        { id: "dog_sitter", name: "Dog sitter", description: "DB Desc" },
       ]);
 
       const result = await getServiceTypesAction();

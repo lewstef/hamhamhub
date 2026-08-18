@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, services, serviceTypes } from "@/db/schema";
+import { users, services, serviceTypes, organizationEnabledServices, organizationEnabledCourses } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getOrganizationCategories } from "@/app/actions/organizations";
@@ -44,8 +44,6 @@ export async function getOrganizationData(id: string) {
       googleBusinessProfile: users.googleBusinessProfile,
       description: users.description,
       createdAt: users.createdAt,
-      enabledServices: users.enabledServices,
-      enabledCourses: users.enabledCourses,
       billingCompanyName: users.billingCompanyName,
       billingTaxId: users.billingTaxId,
       billingTradeRegistryNumber: users.billingTradeRegistryNumber,
@@ -70,6 +68,26 @@ export async function getOrganizationData(id: string) {
   if (!organization || organization.role !== "organization") {
     notFound();
   }
+
+  const [enabledServicesRows, enabledCoursesRows] = await Promise.all([
+    db
+      .select({ serviceId: organizationEnabledServices.serviceId })
+      .from(organizationEnabledServices)
+      .where(eq(organizationEnabledServices.organizationId, id)),
+    db
+      .select({ courseId: organizationEnabledCourses.courseId })
+      .from(organizationEnabledCourses)
+      .where(eq(organizationEnabledCourses.organizationId, id)),
+  ]);
+
+  const enabledServices = enabledServicesRows.map((r) => r.serviceId).join(",") || null;
+  const enabledCourses = enabledCoursesRows.map((r) => r.courseId).join(",") || null;
+
+  const organizationWithEnabled = {
+    ...organization,
+    enabledServices,
+    enabledCourses,
+  };
 
   const organizationCategoryList = await getOrganizationCategories();
 
@@ -108,7 +126,7 @@ export async function getOrganizationData(id: string) {
       .from(services)
       .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
       .where(eq(services.organizationCategory, organization.organizationCategory))
-      .orderBy(services.sortOrder);
+      .orderBy(services.sortOrder, services.createdAt);
 
     servicesList = rawServices.map((s) => {
       const fallbackSlug = s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
@@ -120,7 +138,7 @@ export async function getOrganizationData(id: string) {
   }
 
   return {
-    organization,
+    organization: organizationWithEnabled,
     organizationCategoryList,
     servicesList,
   };

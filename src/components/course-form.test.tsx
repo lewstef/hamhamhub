@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import React from "react";
 import { CourseForm } from "./course-form";
@@ -228,6 +228,28 @@ describe("CourseForm Component", () => {
         serviceId="srv-dog-training"
         itemNoun="Course"
         serviceSlug="dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // On General tab, Age Limits & Restrictions should be omitted
+    expect(screen.queryByText("Age Limits & Restrictions")).toBeNull();
+
+    // Click Terms tab
+    fireEvent.click(screen.getByRole("button", { name: /Terms/ }));
+
+    // On Terms tab, Age Limits & Restrictions should be present
+    expect(screen.getByText("Age Limits & Restrictions")).toBeDefined();
+  });
+
+  it("should omit Age Limits & Restrictions on General tab for Dog Sport and render it on Terms tab", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-sport"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
         onCancel={onCancel}
         onSubmitSuccess={onSubmitSuccess}
       />

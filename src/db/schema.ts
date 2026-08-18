@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer, boolean, primaryKey } from "drizzle-orm/pg-core";
 
 export const organizationCategories = pgTable("organization_categories", {
   id: text("id").primaryKey(), // Sluggified name, e.g. "ngo", "dog_kennel"
@@ -24,8 +24,6 @@ export const users = pgTable("users", {
   addressCity: text("address_city"),
   addressLine: text("address_line"),
   addressZip: text("address_zip"),
-  enabledServices: text("enabled_services"),
-  enabledCourses: text("enabled_courses"),
   facebook: text("facebook"),
   instagram: text("instagram"),
   tiktok: text("tiktok"),
@@ -125,3 +123,32 @@ export const systemSettings = pgTable("system_settings", {
     .notNull()
     .$onUpdate(() => new Date()),
 });
+
+export const organizationEnabledServices = pgTable(
+  "organization_enabled_services",
+  {
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    serviceId: uuid("service_id")
+      .notNull()
+      .references(() => services.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.organizationId, table.serviceId] }),
+  ]
+);
+
+export const organizationEnabledCourses = pgTable(
+  "organization_enabled_courses",
+  {
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    courseId: text("course_id").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.organizationId, table.courseId] }),
+  ]
+);
+

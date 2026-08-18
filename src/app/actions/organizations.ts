@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { users, organizationCategories } from "@/db/schema";
+import { users, organizationCategories, organizationEnabledServices, organizationEnabledCourses } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
@@ -699,7 +699,7 @@ export async function deleteOrganizationAction(prevState: unknown, formData: For
 export async function toggleOrganizationServiceAction(organizationId: string, serviceId: string, enabled: boolean) {
   try {
     const [org] = await db
-      .select({ enabledServices: users.enabledServices })
+      .select({ id: users.id })
       .from(users)
       .where(eq(users.id, organizationId))
       .limit(1);
@@ -708,21 +708,21 @@ export async function toggleOrganizationServiceAction(organizationId: string, se
       return { error: "Organization not found" };
     }
 
-    let enabledList = org.enabledServices ? org.enabledServices.split(",").map(id => id.trim()).filter(Boolean) : [];
     if (enabled) {
-      if (!enabledList.includes(serviceId)) {
-        enabledList.push(serviceId);
-      }
+      await db
+        .insert(organizationEnabledServices)
+        .values({ organizationId, serviceId })
+        .onConflictDoNothing();
     } else {
-      enabledList = enabledList.filter((id) => id !== serviceId);
+      await db
+        .delete(organizationEnabledServices)
+        .where(
+          and(
+            eq(organizationEnabledServices.organizationId, organizationId),
+            eq(organizationEnabledServices.serviceId, serviceId)
+          )
+        );
     }
-
-    const nextVal = enabledList.join(",");
-
-    await db
-      .update(users)
-      .set({ enabledServices: nextVal || null })
-      .where(eq(users.id, organizationId));
 
     revalidatePath("/dashboard/services");
     revalidatePath("/dashboard/account");
@@ -737,8 +737,7 @@ export async function toggleOrganizationServiceAction(organizationId: string, se
 /**
  * Toggles the active status of an individual course under a service for a specific organization.
  *
- * Adds or removes the course ID to/from the organization's comma-separated list of active courses.
- * Sorted according to a predefined display order.
+ * Inserts or deletes the course record in the `organization_enabled_courses` junction table.
  *
  * @param {string} organizationId - The database ID of the organization to modify.
  * @param {string} courseId - The unique ID of the course to toggle.
@@ -750,7 +749,7 @@ export async function toggleOrganizationServiceAction(organizationId: string, se
 export async function toggleOrganizationCourseAction(organizationId: string, courseId: string, enabled: boolean) {
   try {
     const [org] = await db
-      .select({ enabledCourses: users.enabledCourses })
+      .select({ id: users.id })
       .from(users)
       .where(eq(users.id, organizationId))
       .limit(1);
@@ -759,35 +758,21 @@ export async function toggleOrganizationCourseAction(organizationId: string, cou
       return { error: "Organization not found" };
     }
 
-    let enabledList = org.enabledCourses ? org.enabledCourses.split(",").map(id => id.trim()).filter(Boolean) : [];
     if (enabled) {
-      if (!enabledList.includes(courseId)) {
-        enabledList.push(courseId);
-      }
+      await db
+        .insert(organizationEnabledCourses)
+        .values({ organizationId, courseId })
+        .onConflictDoNothing();
     } else {
-      enabledList = enabledList.filter((id) => id !== courseId);
+      await db
+        .delete(organizationEnabledCourses)
+        .where(
+          and(
+            eq(organizationEnabledCourses.organizationId, organizationId),
+            eq(organizationEnabledCourses.courseId, courseId)
+          )
+        );
     }
-
-    const courseOrder = [
-      "dog-training:basic",
-      "dog-training:group",
-      "dog-training:private",
-      "dog-training:sar",
-      "dog-training:show",
-    ];
-
-    enabledList.sort((a, b) => {
-      const idxA = courseOrder.indexOf(a);
-      const idxB = courseOrder.indexOf(b);
-      return (idxA !== -1 ? idxA : 999) - (idxB !== -1 ? idxB : 999);
-    });
-
-    const nextVal = enabledList.join(",");
-
-    await db
-      .update(users)
-      .set({ enabledCourses: nextVal || null })
-      .where(eq(users.id, organizationId));
 
     revalidatePath("/dashboard/services");
     revalidatePath("/dashboard/account");

@@ -15,6 +15,7 @@ import type { SecondaryCoverageZone } from "@/types/course";
 interface CourseLocationTabProps {
   layout: "tabbed" | "flat";
   isDogWalking: boolean;
+  isDogSitter?: boolean;
   isBoarding: boolean;
   cityName: string;
   cartiereList: string[] | null;
@@ -46,12 +47,13 @@ interface CourseLocationTabProps {
 /**
  * CourseLocationTab Component
  *
- * Renders City / Address fields, Primary & Secondary Cartiere Coverage Zones (Dog Walking),
+ * Renders City / Address fields, Primary & Secondary Cartiere Coverage Zones (Dog Walking & Dog Sitter),
  * Dedicated Training Field toggle, and Parking options.
  */
 export function CourseLocationTab({
   layout,
   isDogWalking,
+  isDogSitter = false,
   isBoarding,
   cityName,
   cartiereList,
@@ -79,6 +81,7 @@ export function CourseLocationTab({
   hideDedicatedField = false,
   hideParking = false,
 }: CourseLocationTabProps) {
+  const isCoverageZonesMode = isDogWalking || isDogSitter;
   const [isRequestCartierOpen, setIsRequestCartierOpen] = useState(false);
   const [newCartierName, setNewCartierName] = useState("");
   const [newCartierNotes, setNewCartierNotes] = useState("");
@@ -127,12 +130,12 @@ export function CourseLocationTab({
         />
       </div>
 
-      {isDogWalking && cartiereList && (
+      {isCoverageZonesMode && cartiereList && (
         <div className="space-y-4 pt-2 border-t border-border/60">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="space-y-1">
               <Label className="text-xs font-bold text-foreground">Neighborhood Coverage Zones (Cartiere)</Label>
-              <p className="text-[11px] text-muted-foreground">Configure specific neighborhoods in {cityName} where you offer dog walking services.</p>
+              <p className="text-[11px] text-muted-foreground">Configure specific neighborhoods in {cityName} where you offer services.</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -211,7 +214,7 @@ export function CourseLocationTab({
                   Secondary Coverage Zones
                 </Label>
                 <p className="text-[11px] text-muted-foreground">
-                  Add additional cities where your dog walking services operate.
+                  Add additional cities where your services operate.
                 </p>
               </div>
               <Button
@@ -334,7 +337,7 @@ export function CourseLocationTab({
               <div className="p-4 rounded-xl border border-dashed border-border/80 bg-muted/5 text-center py-6 space-y-1">
                 <p className="text-xs font-semibold text-foreground">No Secondary Coverage Zones Added</p>
                 <p className="text-[11px] text-muted-foreground">
-                  If you walk dogs in adjacent cities, click "Add Secondary Coverage Zone" above.
+                  If you offer services in adjacent cities, click "Add Secondary Coverage Zone" above.
                 </p>
               </div>
             )}
@@ -342,7 +345,7 @@ export function CourseLocationTab({
         </div>
       )}
 
-      {isRequestCartierOpen && (
+      {isCoverageZonesMode && isRequestCartierOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-xl relative animate-in zoom-in-95 duration-200 space-y-4">
             <button
@@ -455,7 +458,7 @@ export function CourseLocationTab({
         </div>
       )}
 
-      {!isDogWalking && (
+      {!isCoverageZonesMode && (
         <>
           <div className="space-y-2">
             <Label htmlFor="training-field-address" className="text-xs font-semibold">Address</Label>

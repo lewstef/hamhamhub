@@ -62,7 +62,7 @@ vi.mock("@/components/ui/sidebar", () => ({
     "aria-expanded"?: boolean;
   }) => {
     if (renderProp) {
-      return React.cloneElement(renderProp, { ...props, "data-active": isActive }, children);
+      return React.cloneElement(renderProp, { ...props, "data-active": isActive } as any, children);
     }
     return <button onClick={onClick}>{children}</button>;
   },
@@ -83,7 +83,7 @@ vi.mock("@/components/ui/sidebar", () => ({
     isActive?: boolean;
   }) => {
     if (renderProp) {
-      return React.cloneElement(renderProp, { ...props, "data-active": isActive }, children);
+      return React.cloneElement(renderProp, { ...props, "data-active": isActive } as any, children);
     }
     return <span>{children}</span>;
   },

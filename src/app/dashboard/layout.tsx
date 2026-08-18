@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
-import { users, services, serviceTypes } from "@/db/schema";
+import { users, services, serviceTypes, organizationEnabledServices } from "@/db/schema";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
@@ -30,7 +30,6 @@ export default async function DashboardLayout({
   const [org] = await db
     .select({
       organizationCategory: users.organizationCategory,
-      enabledServices: users.enabledServices,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -38,19 +37,24 @@ export default async function DashboardLayout({
 
   let activeServices: { id: string; name: string; slug: string }[] = [];
   if (org?.organizationCategory) {
-    const dbServices = await db
-      .select({
-        id: services.id,
-        name: services.name,
-        serviceTypeId: serviceTypes.id,
-      })
-      .from(services)
-      .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
-      .where(eq(services.organizationCategory, org.organizationCategory));
+    const [dbServices, enabledServiceRows] = await Promise.all([
+      db
+        .select({
+          id: services.id,
+          name: services.name,
+          serviceTypeId: serviceTypes.id,
+        })
+        .from(services)
+        .leftJoin(serviceTypes, eq(services.name, serviceTypes.name))
+        .where(eq(services.organizationCategory, org.organizationCategory))
+        .orderBy(services.sortOrder, services.createdAt),
+      db
+        .select({ serviceId: organizationEnabledServices.serviceId })
+        .from(organizationEnabledServices)
+        .where(eq(organizationEnabledServices.organizationId, session.user.id)),
+    ]);
 
-    const enabledIds = org.enabledServices
-      ? org.enabledServices.split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
+    const enabledIds = enabledServiceRows.map((s) => s.serviceId);
 
     activeServices = dbServices
       .filter((s) => enabledIds.includes(s.id))

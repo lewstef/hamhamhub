@@ -103,9 +103,7 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Enforced strict client-side and server-side validation ensuring check-out time cannot be before or equal to check-in time (`checkout > checkin`).
   - Added **Web cam** boolean switch (`webCam`) and optional access instructions text input (`webCamDetails`) strictly scoped to the Dog Boarding service (`/dashboard/services/dog-boarding`). Renders a teal `Web Cam` badge on active entries.
   - Added **24/7 Surveillance** boolean switch (`surveillance247`) and optional details text input (`surveillance247Details`) under Medication Administration for Dog Boarding (`/dashboard/services/dog-boarding`). Renders an amber `24/7 Surveillance` badge with tooltip details on active service offerings.
-  - Standardized **Age Limits & Restrictions** options platform-wide to `Puppy (2-6 mos)`, `Junior (6-12 mos)`, `Adult (1-7 yrs)`, and `Senior (7+ yrs)`, replacing legacy text variations and ID keys.
-  - Unified **`AgeLimitsSection` UI display mode** across all tabs to use a 4-column pill-button toggle grid (`grid grid-cols-2 sm:grid-cols-4 gap-2`).
-  - Cleared redundant General tab Age Limits toggles for **Dog Boarding** (`dog-boarding`) and **Dog Training** (`dog-training`), making Age Limits exclusive to the **Terms of Participation** tab on those services.
+  - Standardized **Age Limits & Restrictions** placement platform-wide: in all tabbed service configurators (**Dog Sport**, **Dog Training**, **Dog Boarding**, **Dog Walking**, **Dog Sitting**), Age Limits is exclusively rendered on the **Terms of participation** tab (Tab 2) alongside prerequisites and vaccination rules, omitting it from the General tab. It is only rendered in the single-form view for flat/non-tabbed service types (e.g., Grooming).
 - **Dog Sports Training & Dog Training Screen Reorganization**:
   - Reorganized the "Dog training" service (`/dashboard/services/dog-training`) into a clean tabbed layout matching "Dog sports training".
   - Standardized tabs: **General**, **Terms of participation**, **Pricing**, **Schedule**, **Location**, **FAQ**.
@@ -195,7 +193,8 @@ The backoffice system integrates completely dynamic configuration layers for bus
 - Dynamic color badges represent distinct category types (e.g. green for NGO, blue for Kennel, purple for Association, indigo for Provider).
 
 ### B. Service Types Configuration (`/backoffice/services/types`)
-- Custom names and descriptions for service templates (Dog training, Dog boarding, Dog sports training, Dog walking, Dog grooming, etc.) are managed in the database `service_types` table.
+- Custom names and descriptions for service templates (Dog training, Dog boarding, Dog sports training, Dog walking, Dog grooming, Dog sitter, etc.) are managed in the database `service_types` table.
+- Added **Dog sitter** as a core service template applicable to **Dog service provider** and **NGO** (`applicableTo: ["dog_service_provider", "ngo"]`) with a dedicated dynamic offerings management page (`/dashboard/services/dog-sitter`). Leverages the tabbed navigation layout with item noun **"Sitting service"**, default hourly pricing, and neighborhood coverage zone (Cartiere & Secondary Cities) controls matching the Dog walking service layout.
 - Added **Dog grooming** as a core sub-service under **Dog service provider** (`applicableTo: ["dog_service_provider"]`) with dedicated dynamic offerings management page (`/dashboard/services/dog-grooming`). Cleared irrelevant training and facility attribute toggles (Certified Trainer, Dedicated Field, Parking, Medication, Daily Walks, Meal Plan, Age Limits, Check-in/out), providing a clean form focused on Grooming Service Name, Pricing (per service/session/hour), Details, Terms, and FAQs.
 - Renamed "Dog Sports Training" to **"Dog sports training"** to align with standardized lowercase naming conventions across all service templates.
 - Admin can modify names and descriptions through an edit popup, instantly propagating updates to page views and validation rules.
@@ -205,6 +204,7 @@ The backoffice system integrates completely dynamic configuration layers for bus
 - Each category card has an **"Add Service Type"** button that opens a context-aware modal titled **"Add Service Types to {Category Name}"**.
 - The organization category is **locked** in the modal — it is pre-set by the card clicked and cannot be changed, preventing accidental cross-category assignments.
 - Already-registered service types display a "Registered" badge and cannot be re-selected.
+- **Synchronized Service Sort Ordering**: Drag-and-drop service reordering configured in `/backoffice/services` updates `services.sortOrder` in the database. The client dashboard sidebar navigation (`DashboardLayout` & `DashboardSidebar`) queries active services sorted by `.orderBy(services.sortOrder, services.createdAt)`, ensuring the left-hand navigation menu strictly matches the ordering defined in `/backoffice/services`.
 
 ---
 
@@ -338,12 +338,27 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
 
 ---
 
+- **Subscription & Tier Management Tab (`/dashboard/account/subscription` and `/backoffice/organizations/subscription/[id]`)**:
+  - Implemented the full-featured `OrgSubscriptionTab` component displaying the active subscription tier ("Professional", "Starter", "Enterprise"), billing cycle toggle (Monthly vs Annual with 17% savings badge), real-time usage quotas, and directory placement badges.
+  - Interactive Plan Upgrade / Switcher modal providing dynamic plan confirmation and confirmation state transitions.
+  - Tax-compliant billing history & invoices table with invoice number, date, amount, status badge, and PDF download triggers.
+- **Modularized Course Form & Sub-Service Architecture (`src/components/course-form/`)**:
+  - Refactored the monolithic 3,100+ line `CourseForm` into lightweight, decoupled tab components (`CourseGeneralTab`, `CoursePricingTab`, `CourseScheduleTab`, `CourseLocationTab`, `CourseCareTab`, `CourseFaqTab`) and reusable sections (`AgeLimitsSection`, `TrainerAttributesCard`).
+  - Implemented complete day-by-day scheduling with Mon-Fri/All copy presets, multi-pricing tier options, Romainan cartiere coverage zones (primary + secondary multi-city zones), safe removal modal confirmations, and client-side closure/opening overlap detection.
+- **Idempotent Database Seeding (`src/db/seed.ts`)**:
+  - Safe, idempotent database initialization script that seeds default cynological organization categories (`dog_school`, `dog_kennel`, `veterinary_clinic`, `pet_sitting`, `grooming_salon`) if not present, bypassing admin creation which is handled interactively at `/initialization`.
+
+---
+
 ## 8. Commands & Verification
 
 ### Running Locally
 ```bash
 # Start development environment
 npm run dev
+
+# Run Database Seeding
+npm run db:seed
 
 # Run Production Build Check
 npm run build
@@ -352,7 +367,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (548 tests across 47 test files)
+# Run all tests (607 tests across 58 test files)
 npm run test
 
 # Run with coverage report
@@ -360,16 +375,15 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
 
 ### Test Coverage Metrics
-- **Statements**: **86.48%**
-- **Lines**: **87.74%**
-- **Functions**: **82.50%**
-- **Branches**: **77.78%**
+- **Test Suites**: **58 passed (58 total)**
+- **Tests**: **607 passed (607 total)**
+- **Type Checking**: **0 TypeScript errors (`npx tsc --noEmit`)**
 
 ### Test Coverage Summary
 | Area | Files Covered |
 | :--- | :--- |
-| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations` (including `requestNewCartierAction`), `services`, `service-types`, `courses`, `system` |
-| Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards) |
-| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form` (modular tabs: `org-info-tab`, `org-billing-tab`, `org-security-tab`, `org-subscription-tab`, `org-services-tab`, `org-verification-tab`; modular modals: `org-edit-name-category-modal`, `org-edit-contact-modal`, `org-edit-address-modal`, `org-edit-billing-modal`, `org-edit-password-modal`, `org-edit-description-modal`), `dashboard-services-list`, `services-table`, `course-form` (modular sub-components: `course-general-tab`, `course-pricing-tab`, `course-schedule-tab`, `course-care-tab`, `course-location-tab`, `course-faq-tab`), `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `select-menu` (`SelectMenu`, `SelectMenuItem`), `service-type-preview-form`, `smtp-config-form`, `time-picker-select`, `toggle-switch`, `boolean-toggle-field` |
+| Server actions | `auth`, `initialization`, `employees`, `users`, `organizations` (including `requestNewCartierAction`), `services`, `service-types`, `courses`, `system`, `cartier-request` |
+| Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards), `proxy.ts` (Next.js 16 auth proxy / middleware) |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `dashboard-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form` (modular tabs: `org-info-tab`, `org-billing-tab`, `org-security-tab`, `org-subscription-tab`, `org-services-tab`, `org-verification-tab`; modular modals: `org-edit-name-category-modal`, `org-edit-contact-modal`, `org-edit-address-modal`, `org-edit-billing-modal`, `org-edit-password-modal`, `org-edit-description-modal`), `dashboard-services-list`, `services-table`, `course-form` (modular sub-components: `course-general-tab`, `course-pricing-tab`, `course-schedule-tab`, `course-care-tab`, `course-location-tab`, `course-faq-tab`, `age-limits-section`, `trainer-attributes-card`), `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `select-menu` (`SelectMenu`, `SelectMenuItem`), `service-type-preview-form`, `smtp-config-form`, `time-picker-select`, `toggle-switch`, `boolean-toggle-field` |
 | Config, Types & utilities | `types/course` (100% coverage), `config/service-types`, `config/dog-training`, `config/romanian-territory`, `config/romanian-cartiere`, `lib/utils`, `lib/email`, `lib/validation`, `lib/validations` (`auth`, `organizations`, `courses`, `employees`, `users`, `system`, `validations.test.ts`) |
 | Hooks | `use-mobile` |

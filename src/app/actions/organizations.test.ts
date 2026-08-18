@@ -40,6 +40,7 @@ vi.mock("@/auth", () => ({
 
 vi.mock("@/db", () => {
   let lastTable = "";
+  let lastOp = "select";
   const chain: any = {};
 
   chain.from = vi.fn().mockImplementation((table) => {
@@ -55,10 +56,19 @@ vi.mock("@/db", () => {
   chain.limit = vi.fn().mockImplementation(() => {
     return chain;
   });
-  chain.values = vi.fn().mockImplementation(() => {
-    return mockInsert();
+  chain.onConflictDoNothing = vi.fn().mockImplementation(() => {
+    return chain;
   });
-  chain.then = vi.fn().mockImplementation((onfulfilled) => {
+  chain.values = vi.fn().mockImplementation(() => {
+    return chain;
+  });
+  chain.then = vi.fn().mockImplementation((onfulfilled, onrejected) => {
+    if (lastOp === "insert") {
+      return Promise.resolve().then(() => mockInsert()).then(onfulfilled, onrejected);
+    }
+    if (lastOp === "delete") {
+      return Promise.resolve().then(() => mockDelete()).then(onfulfilled, onrejected);
+    }
     if (lastTable === "organization_categories") {
       const categories = [
         { id: "ngo", name: "NGO", description: "NGO Description" },
@@ -68,14 +78,20 @@ vi.mock("@/db", () => {
       ];
       const customVal = mockCategorySelect();
       const val = customVal !== undefined ? customVal : categories;
-      return Promise.resolve(val).then(onfulfilled);
+      return Promise.resolve(val).then(onfulfilled, onrejected);
     }
-    return Promise.resolve(mockSelect()).then(onfulfilled);
+    return Promise.resolve().then(() => mockSelect()).then(onfulfilled, onrejected);
   });
 
   const db = {
-    select: vi.fn().mockReturnValue(chain),
-    insert: vi.fn().mockReturnValue(chain),
+    select: vi.fn().mockImplementation(() => {
+      lastOp = "select";
+      return chain;
+    }),
+    insert: vi.fn().mockImplementation(() => {
+      lastOp = "insert";
+      return chain;
+    }),
     update: vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockImplementation(() => {
@@ -83,10 +99,9 @@ vi.mock("@/db", () => {
         }),
       }),
     }),
-    delete: vi.fn().mockReturnValue({
-      where: vi.fn().mockImplementation(() => {
-        return mockDelete();
-      }),
+    delete: vi.fn().mockImplementation(() => {
+      lastOp = "delete";
+      return chain;
     }),
   };
 
@@ -458,7 +473,7 @@ describe("Organization Server Actions", () => {
       formData.append("password", "newsecurepassword");
       formData.append("confirmPassword", "newsecurepassword");
 
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "org-id", role: "organization", name: "Org" },
         expires: "expires-date",
       });
@@ -476,7 +491,7 @@ describe("Organization Server Actions", () => {
       formData.append("confirmPassword", "newsecurepassword");
       formData.append("currentPassword", "wrongpassword");
 
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "org-id", role: "organization", name: "Org" },
         expires: "expires-date",
       });
@@ -496,7 +511,7 @@ describe("Organization Server Actions", () => {
       formData.append("confirmPassword", "newsecurepassword");
       formData.append("currentPassword", "correctpassword");
 
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "org-id", role: "organization", name: "Org" },
         expires: "expires-date",
       });
@@ -517,7 +532,7 @@ describe("Organization Server Actions", () => {
       formData.append("confirmPassword", "newpassword123");
       formData.append("currentPassword", "oldpassword123");
 
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "org-id", role: "organization", name: "Org User" },
         expires: "expires-date",
       });
@@ -586,53 +601,37 @@ describe("Organization Server Actions", () => {
   describe("toggleOrganizationServiceAction", () => {
     it("should return error if organization is not found", async () => {
       mockSelect.mockResolvedValueOnce([]);
+
       const result = await toggleOrganizationServiceAction("nonexistent-org", "srv-1", true);
       expect(result).toEqual({ error: "Organization not found" });
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(mockInsert).not.toHaveBeenCalled();
+      expect(mockDelete).not.toHaveBeenCalled();
     });
 
-    it("should add a service ID to the enabled list", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledServices: "srv-2" }]);
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
+    it("should insert a service ID into junction table when enabled is true", async () => {
+      mockSelect.mockResolvedValueOnce([{ id: "org-id" }]);
+      mockInsert.mockResolvedValueOnce({ count: 1 });
 
       const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockInsert).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/services");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
       expect(result).toEqual({ success: true });
     });
 
-    it("should not add a duplicate service ID to the enabled list", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledServices: "srv-1,srv-2" }]);
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
-
-      const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
-      expect(mockUpdate).toHaveBeenCalled();
-      expect(result).toEqual({ success: true });
-    });
-
-    it("should remove a service ID from the enabled list", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledServices: "srv-1,srv-2" }]);
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
+    it("should delete a service ID from junction table when enabled is false", async () => {
+      mockSelect.mockResolvedValueOnce([{ id: "org-id" }]);
+      mockDelete.mockResolvedValueOnce({ count: 1 });
 
       const result = await toggleOrganizationServiceAction("org-id", "srv-1", false);
-      expect(mockUpdate).toHaveBeenCalled();
-      expect(result).toEqual({ success: true });
-    });
-
-    it("should handle null enabledServices (start from empty list)", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledServices: null }]);
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
-
-      const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
+      expect(mockDelete).toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
 
     it("should return error on DB failure", async () => {
-      // Trigger failure via the update step (select resolves normally first)
-      mockSelect.mockResolvedValueOnce([{ enabledServices: "srv-2" }]);
-      mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
+      mockSelect.mockResolvedValueOnce([{ id: "org-id" }]);
+      mockInsert.mockRejectedValueOnce(new Error("DB offline"));
 
       const result = await toggleOrganizationServiceAction("org-id", "srv-1", true);
       expect(result).toEqual({ error: "Failed to toggle service. Please try again." });
@@ -642,56 +641,39 @@ describe("Organization Server Actions", () => {
   describe("toggleOrganizationCourseAction", () => {
     it("should return error if organization is not found", async () => {
       mockSelect.mockResolvedValueOnce([]);
- 
+
       const result = await toggleOrganizationCourseAction("nonexistent-org", "dog-training:basic", true);
       expect(result).toEqual({ error: "Organization not found" });
-      expect(mockUpdate).not.toHaveBeenCalled();
+      expect(mockInsert).not.toHaveBeenCalled();
+      expect(mockDelete).not.toHaveBeenCalled();
     });
- 
-    it("should add a course ID to the enabled courses list", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledCourses: "dog-training:group" }]);
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
- 
+
+    it("should insert a course ID into junction table when enabled is true", async () => {
+      mockSelect.mockResolvedValueOnce([{ id: "org-id" }]);
+      mockInsert.mockResolvedValueOnce({ count: 1 });
+
       const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", true);
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockInsert).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/services");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard/account");
       expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
       expect(revalidatePath).toHaveBeenCalledWith("/backoffice/organizations/services");
       expect(result).toEqual({ success: true });
     });
- 
-    it("should not add a duplicate course ID", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledCourses: "dog-training:basic,dog-training:group" }]);
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
- 
-      const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", true);
-      expect(mockUpdate).toHaveBeenCalled();
-      expect(result).toEqual({ success: true });
-    });
- 
-    it("should remove a course ID from the enabled list", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledCourses: "dog-training:basic,dog-training:group" }]);
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
- 
+
+    it("should delete a course ID from junction table when enabled is false", async () => {
+      mockSelect.mockResolvedValueOnce([{ id: "org-id" }]);
+      mockDelete.mockResolvedValueOnce({ count: 1 });
+
       const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", false);
-      expect(mockUpdate).toHaveBeenCalled();
+      expect(mockDelete).toHaveBeenCalled();
       expect(result).toEqual({ success: true });
     });
- 
-    it("should handle null enabledCourses (start from empty list)", async () => {
-      mockSelect.mockResolvedValueOnce([{ enabledCourses: null }]);
-      mockUpdate.mockResolvedValueOnce({ count: 1 });
- 
-      const result = await toggleOrganizationCourseAction("org-id", "dog-training:sar", true);
-      expect(result).toEqual({ success: true });
-    });
- 
+
     it("should return error on DB failure", async () => {
-      // Trigger failure via the update step (select resolves normally first)
-      mockSelect.mockResolvedValueOnce([{ enabledCourses: "dog-training:group" }]);
-      mockUpdate.mockRejectedValueOnce(new Error("DB offline"));
- 
+      mockSelect.mockResolvedValueOnce([{ id: "org-id" }]);
+      mockInsert.mockRejectedValueOnce(new Error("DB offline"));
+
       const result = await toggleOrganizationCourseAction("org-id", "dog-training:basic", true);
       expect(result).toEqual({ error: "Failed to toggle course. Please try again." });
     });
@@ -714,7 +696,7 @@ describe("Organization Server Actions", () => {
       formData.append("confirmPassword", "newsecurepassword");
       formData.append("currentPassword", "somepassword");
 
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "org-id", role: "organization", name: "Org" },
         expires: "expires-date",
       });
@@ -747,13 +729,13 @@ describe("Organization Server Actions", () => {
 
   describe("Category Verification Server Actions", () => {
     it("should return error if user is unauthenticated when requesting verification", async () => {
-      vi.mocked(auth).mockResolvedValueOnce(null);
+      vi.mocked(auth as any).mockResolvedValueOnce(null);
       const res = await requestOrganizationVerificationAction("org-1");
       expect(res).toEqual({ error: "Unauthenticated. Please log in." });
     });
 
     it("should return error if client user attempts to request verification", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "u-1", role: "user", name: "User" },
         expires: "date",
       });
@@ -762,7 +744,7 @@ describe("Organization Server Actions", () => {
     });
 
     it("should return error if organization is not found", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "org-1", role: "organization", name: "Org 1" },
         expires: "date",
       });
@@ -772,7 +754,7 @@ describe("Organization Server Actions", () => {
     });
 
     it("should submit verification request and dispatch email successfully", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "org-1", role: "organization", name: "Org 1" },
         expires: "date",
       });
@@ -793,7 +775,7 @@ describe("Organization Server Actions", () => {
     });
 
     it("should allow backoffice admin to update verification status", async () => {
-      vi.mocked(auth).mockResolvedValueOnce({
+      vi.mocked(auth as any).mockResolvedValueOnce({
         user: { id: "admin-1", role: "admin", name: "Admin" },
         expires: "date",
       });
