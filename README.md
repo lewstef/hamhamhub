@@ -110,6 +110,11 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Added an **Others** tab for existing Dog Training fields that are not mapped to standard tabs (`Communication with the Owner` and `Personalized Meal Plan`), preserving all existing functionality without adding unrequested fields.
 - **Dog Grooming Sidebar Redirection**:
   - Updated active service slug resolution in `src/app/dashboard/layout.tsx` to automatically fall back to normalized service name slugs (`s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")`).
+- **Dog Sitting Service Tabbed Organization, Sitting Types, Veterinary Training, Care & Facilities & Hourly Billing Frequencies**:
+  - Added a **Sitting Type** quick preset selector on the General tab with standard presets (**"In home sitting"**, **"Daytime visit"**, **"Daytime visit with walk"**, **"Overnight stay"**) that auto-fills and configures the service name with 1 click.
+  - Added a **Veterinary Training** toggle on the General tab directly under "Certified dog trainer", capturing the certifying institution/body name and qualifications/experience details.
+  - Added a **Care & facilities** tab for Dog Sitting services offering **Medication Administration** (boolean toggle + instruction details WYSIWYG) and **Communication with the Owner** (boolean toggle + photo/video update details WYSIWYG), mirroring the Dog Boarding care workflow while omitting irrelevant boarding-only fields.
+  - Structured Dog Sitting services (`isDogSitter` / `slug === "dog-sitting"`) with specialized **Billing Frequency** options scoped strictly to hourly durations (**"1h"**, **"2h"**, **"3h"**, **"4h"**, **"5h"**, **"6h"**, **"7h"**, **"8h"**, **"9h"**, **"10h"**, **"11h"**, **"12h"**), omitting general terms like "per Month", "per session", "Per Day", or "Per Hour".
 - **Dog Walking Service Layout, Tabbed Reorganization & Cartiere Coverage Zones**:
   - Removed the static "Service Status" toggle card from the Dog Walking service view (`/dashboard/services/dog-walking`).
   - Reorganized Dog Walking form into the standardized tabbed layout (**General**, **Terms of participation**, **Pricing**, **Schedule**, **Location**, **FAQ**).

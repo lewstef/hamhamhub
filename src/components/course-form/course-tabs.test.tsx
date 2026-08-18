@@ -91,6 +91,77 @@ describe("CourseForm Subcomponents Suite", () => {
       expect(screen.getByDisplayValue("Agility Foundations")).toBeDefined();
       expect(screen.getByDisplayValue("FCI Dog Trainer License")).toBeDefined();
     });
+
+    it("renders Sitting Type presets for sitting service", () => {
+      const onNameChange = vi.fn();
+
+      render(
+        <CourseGeneralTab
+          name=""
+          onNameChange={onNameChange}
+          details=""
+          onDetailsChange={vi.fn()}
+          certifiedTrainer={false}
+          onCertifiedTrainerChange={vi.fn()}
+          certifierName=""
+          onCertifierNameChange={vi.fn()}
+          trainerExperienceDescription=""
+          onTrainerExperienceDescriptionChange={vi.fn()}
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onToggleAgeLimit={vi.fn()}
+          itemNoun="Sitting service"
+          isDogWalking={false}
+          isDogTraining={false}
+          isDogSitter={true}
+        />
+      );
+
+      expect(screen.getByText("Sitting Type")).toBeDefined();
+      expect(screen.getByRole("button", { name: "Daytime visit with walk" })).toBeDefined();
+      const daytimeBtn = screen.getByRole("button", { name: "Daytime visit" });
+      fireEvent.click(daytimeBtn);
+
+      expect(onNameChange).toHaveBeenCalledWith("Daytime visit");
+    });
+
+    it("renders Veterinary Training toggle for Sitting service and handles callbacks", () => {
+      const onVetChange = vi.fn();
+      const onVetCertifierChange = vi.fn();
+
+      render(
+        <CourseGeneralTab
+          name="Day Sitting"
+          onNameChange={vi.fn()}
+          details=""
+          onDetailsChange={vi.fn()}
+          certifiedTrainer={false}
+          onCertifiedTrainerChange={vi.fn()}
+          certifierName=""
+          onCertifierNameChange={vi.fn()}
+          trainerExperienceDescription=""
+          onTrainerExperienceDescriptionChange={vi.fn()}
+          veterinaryTraining={true}
+          onVeterinaryTrainingChange={onVetChange}
+          veterinaryTrainingCertifier="USAMV Diploma"
+          onVeterinaryTrainingCertifierChange={onVetCertifierChange}
+          veterinaryTrainingDetails="Clinical nurse background"
+          onVeterinaryTrainingDetailsChange={vi.fn()}
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onToggleAgeLimit={vi.fn()}
+          itemNoun="Sitting service"
+          isDogWalking={false}
+          isDogTraining={false}
+          isDogSitter={true}
+        />
+      );
+
+      expect(screen.getByText("Veterinary Training")).toBeDefined();
+      expect(screen.getByDisplayValue("USAMV Diploma")).toBeDefined();
+    });
   });
 
   describe("CoursePricingTab", () => {
@@ -122,6 +193,27 @@ describe("CourseForm Subcomponents Suite", () => {
       const addBtn = screen.getByRole("button", { name: /add price tier/i });
       fireEvent.click(addBtn);
       expect(onAdd).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders Sitting service 1h to 12h billing frequency options", () => {
+      render(
+        <CoursePricingTab
+          itemNoun="Sitting service"
+          isBoarding={false}
+          isGrooming={false}
+          pricings={[{ amount: "50", type: "1h", label: "" }]}
+          onAdd={vi.fn()}
+          onUpdate={vi.fn()}
+          onRemove={vi.fn()}
+          isDogWalking={false}
+          isDogSitter={true}
+        />
+      );
+
+      expect(screen.getAllByText("1h").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("12h").length).toBeGreaterThan(0);
+      expect(screen.queryByText("Per Month")).toBeNull();
+      expect(screen.queryByText("Per Session")).toBeNull();
     });
   });
 
@@ -245,6 +337,43 @@ describe("CourseForm Subcomponents Suite", () => {
 
       expect(screen.getByText("Medication Administration")).toBeDefined();
       expect(screen.getByText("24/7 Surveillance")).toBeDefined();
+    });
+
+    it("renders Sitting mode care fields: Medication and Communication only", () => {
+      render(
+        <CourseCareTab
+          isDogWalking={false}
+          isDogSitter={true}
+          dailyWalks={1}
+          onDailyWalksChange={vi.fn()}
+          medicationAdministration={true}
+          onMedicationAdministrationChange={vi.fn()}
+          medicationAdministrationDetails="Oral tablets with meals"
+          onMedicationAdministrationDetailsChange={vi.fn()}
+          surveillance247={false}
+          onSurveillance247Change={vi.fn()}
+          surveillance247Details=""
+          onSurveillance247DetailsChange={vi.fn()}
+          webCam={false}
+          onWebCamChange={vi.fn()}
+          webCamDetails=""
+          onWebCamDetailsChange={vi.fn()}
+          ownerCommunication={true}
+          onOwnerCommunicationChange={vi.fn()}
+          ownerCommunicationDetails="Daily photo updates via WhatsApp"
+          onOwnerCommunicationDetailsChange={vi.fn()}
+          personalizedMealPlan={false}
+          onPersonalizedMealPlanChange={vi.fn()}
+          personalizedMealPlanDetails=""
+          onPersonalizedMealPlanDetailsChange={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText("Medication Administration")).toBeDefined();
+      expect(screen.getByText("Communication with the Owner")).toBeDefined();
+      expect(screen.queryByLabelText("Daily Walks")).toBeNull();
+      expect(screen.queryByText("24/7 Surveillance")).toBeNull();
+      expect(screen.queryByText("Webcam")).toBeNull();
     });
   });
 

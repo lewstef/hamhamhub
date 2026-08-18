@@ -265,6 +265,81 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Age Limits & Restrictions")).toBeDefined();
   });
 
+  it("should render correct placeholder for Sitting service name and details", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-dog-sitting"
+        itemNoun="Sitting service"
+        serviceSlug="dog-sitting"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    expect(
+      screen.getByPlaceholderText("e.g. In-Home Sitting, Daytime Visit, Overnight Care")
+    ).toBeDefined();
+    expect(
+      screen.getByPlaceholderText(
+        "Describe what the sitting service includes (feeding, playtime, supervision, home visits)..."
+      )
+    ).toBeDefined();
+
+    // Verify Sitting Type presets are rendered and interactive
+    expect(screen.getByText("Sitting Type")).toBeDefined();
+    const inHomePresetBtn = screen.getByRole("button", { name: "In home sitting" });
+    const daytimePresetBtn = screen.getByRole("button", { name: "Daytime visit" });
+    const daytimeWalkPresetBtn = screen.getByRole("button", { name: "Daytime visit with walk" });
+    const overnightPresetBtn = screen.getByRole("button", { name: "Overnight stay" });
+    expect(inHomePresetBtn).toBeDefined();
+    expect(daytimePresetBtn).toBeDefined();
+    expect(daytimeWalkPresetBtn).toBeDefined();
+    expect(overnightPresetBtn).toBeDefined();
+
+    // Click In home sitting preset
+    fireEvent.click(inHomePresetBtn);
+    expect(screen.getByDisplayValue("In home sitting")).toBeDefined();
+
+    // Click Daytime visit with walk preset
+    fireEvent.click(daytimeWalkPresetBtn);
+    expect(screen.getByDisplayValue("Daytime visit with walk")).toBeDefined();
+
+    // Click Overnight stay preset
+    fireEvent.click(overnightPresetBtn);
+    expect(screen.getByDisplayValue("Overnight stay")).toBeDefined();
+
+    // Click Pricing Tab
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+
+    // Sitting frequency options should include 1h up to 12h
+    expect(screen.getAllByText("1h").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("2h").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("6h").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("12h").length).toBeGreaterThan(0);
+
+    // Standard options should be omitted for Sitting service
+    expect(screen.queryByText("Per Month")).toBeNull();
+    expect(screen.queryByText("Per Session")).toBeNull();
+    expect(screen.queryByText("Per Day")).toBeNull();
+    expect(screen.queryByText("Per Hour")).toBeNull();
+
+    // Click Care & facilities tab
+    fireEvent.click(screen.getByRole("button", { name: "Care & facilities" }));
+
+    // Verify Veterinary Training field is rendered on General tab
+    fireEvent.click(screen.getByRole("button", { name: "General" }));
+    expect(screen.getByText("Veterinary Training")).toBeDefined();
+    const vetToggle = screen.getAllByRole("switch").find((s) =>
+      s.closest("div")?.textContent?.includes("Veterinary Training")
+    );
+    expect(vetToggle).toBeDefined();
+    if (vetToggle) {
+      fireEvent.click(vetToggle);
+      expect(screen.getByPlaceholderText("e.g. USAMV, Veterinary Technician Certification, Vet Assistant Diploma")).toBeDefined();
+    }
+  });
+
   it("should render and manage boarding service custom fields correctly", async () => {
     render(
       <CourseForm

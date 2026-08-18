@@ -8,6 +8,7 @@ import { CustomSelect } from "@/components/ui/custom-select";
 
 export interface CourseCareTabProps {
   isDogWalking?: boolean;
+  isDogSitter?: boolean;
   dailyWalks: number;
   onDailyWalksChange: (v: number) => void;
   medicationAdministration: boolean;
@@ -35,11 +36,12 @@ export interface CourseCareTabProps {
 /**
  * CourseCareTab Component
  *
- * Renders boarding-specific care amenity toggles:
+ * Renders boarding/sitting-specific care amenity toggles:
  * daily walks, medication administration, 24/7 surveillance, personalized meal plan, webcam access, and communication/GPS reports.
  */
 export function CourseCareTab({
   isDogWalking = false,
+  isDogSitter = false,
   dailyWalks,
   onDailyWalksChange,
   medicationAdministration,
@@ -63,6 +65,46 @@ export function CourseCareTab({
   personalizedMealPlanDetails,
   onPersonalizedMealPlanDetailsChange,
 }: CourseCareTabProps) {
+  if (isDogSitter) {
+    return (
+      <>
+        <BooleanToggleField
+          label="Medication Administration"
+          description="Can you administer medication or medical care?"
+          checked={medicationAdministration}
+          onChange={onMedicationAdministrationChange}
+        >
+          <div className="space-y-2">
+            <Label>Medication Administration Instructions</Label>
+            <WysiwygEditor
+              value={medicationAdministrationDetails}
+              onChange={onMedicationAdministrationDetailsChange}
+              placeholder="e.g. oral tablets, injections, schedule limitations"
+            />
+          </div>
+        </BooleanToggleField>
+
+        <div className="h-px bg-border/60" />
+
+        <BooleanToggleField
+          label="Communication with the Owner"
+          description="Will you provide regular photo/video updates to the owner?"
+          checked={ownerCommunication}
+          onChange={onOwnerCommunicationChange}
+        >
+          <div className="space-y-2">
+            <Label>Communication Updates Details</Label>
+            <WysiwygEditor
+              value={ownerCommunicationDetails}
+              onChange={onOwnerCommunicationDetailsChange}
+              placeholder="e.g. daily photos via WhatsApp, sitting visit summaries"
+            />
+          </div>
+        </BooleanToggleField>
+      </>
+    );
+  }
+
   return (
     <>
       <div className="space-y-2">

@@ -18,6 +18,9 @@ interface ParsedCourseData {
   certifiedTrainer: boolean;
   certifierName: string;
   trainerExperienceDescription: string;
+  veterinaryTraining: boolean;
+  veterinaryTrainingCertifier: string;
+  veterinaryTrainingDetails: string;
   dedicatedField: boolean;
   trainingFieldDescription: string;
   trainingFieldAddress: string;
@@ -66,6 +69,9 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const certifiedTrainer = formData.get("certifiedTrainer") === "true";
   const certifierName = formData.get("certifierName") as string;
   const trainerExperienceDescription = formData.get("trainerExperienceDescription") as string;
+  const veterinaryTraining = formData.get("veterinaryTraining") === "true";
+  const veterinaryTrainingCertifier = (formData.get("veterinaryTrainingCertifier") as string) || "";
+  const veterinaryTrainingDetails = (formData.get("veterinaryTrainingDetails") as string) || "";
   const dedicatedField = formData.get("dedicatedField") === "true";
   const trainingFieldDescription = formData.get("trainingFieldDescription") as string;
   const trainingFieldAddress = formData.get("trainingFieldAddress") as string;
@@ -138,6 +144,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
     data: {
       name, price, priceType, serviceId,
       certifiedTrainer, certifierName, trainerExperienceDescription,
+      veterinaryTraining, veterinaryTrainingCertifier, veterinaryTrainingDetails,
       dedicatedField, trainingFieldDescription, trainingFieldAddress,
       trainingFieldGoogleBusinessProfile, trainingFieldGoogleMapsLink,
       parking, parkingDescription, details, termsOfParticipation,
@@ -157,11 +164,15 @@ function revalidateCourseServicePaths() {
   revalidatePath("/dashboard/services/dog-training");
   revalidatePath("/dashboard/services/sport-dog-training");
   revalidatePath("/dashboard/services/dog-boarding");
+  revalidatePath("/dashboard/services/dog-sitting");
+  revalidatePath("/dashboard/services/dog-walking");
   revalidatePath("/dashboard/services/dog-grooming");
-  revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
-  revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
-  revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
-  revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
+  revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]", "page");
+  revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]", "page");
+  revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]", "page");
+  revalidatePath("/backoffice/organizations/services/dog-sitting/[...courseSlugAndId]", "page");
+  revalidatePath("/backoffice/organizations/services/dog-walking/[...courseSlugAndId]", "page");
+  revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]", "page");
 }
 
 /**
@@ -210,6 +221,9 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       certifiedTrainer: d.certifiedTrainer,
       certifierName: d.certifiedTrainer ? d.certifierName : null,
       trainerExperienceDescription: d.trainerExperienceDescription,
+      veterinaryTraining: d.veterinaryTraining,
+      veterinaryTrainingCertifier: d.veterinaryTraining ? d.veterinaryTrainingCertifier : null,
+      veterinaryTrainingDetails: d.veterinaryTraining ? d.veterinaryTrainingDetails : null,
       dedicatedField: d.dedicatedField,
       trainingFieldDescription: d.dedicatedField ? d.trainingFieldDescription : null,
       trainingFieldAddress: d.dedicatedField ? d.trainingFieldAddress : null,
@@ -308,6 +322,9 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         certifiedTrainer: d.certifiedTrainer,
         certifierName: d.certifiedTrainer ? d.certifierName : null,
         trainerExperienceDescription: d.trainerExperienceDescription,
+        veterinaryTraining: d.veterinaryTraining,
+        veterinaryTrainingCertifier: d.veterinaryTraining ? d.veterinaryTrainingCertifier : null,
+        veterinaryTrainingDetails: d.veterinaryTraining ? d.veterinaryTrainingDetails : null,
         dedicatedField: d.dedicatedField,
         trainingFieldDescription: d.dedicatedField ? d.trainingFieldDescription : null,
         trainingFieldAddress: d.dedicatedField ? d.trainingFieldAddress : null,
@@ -387,11 +404,15 @@ export async function deleteCourseAction(courseId: string) {
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
     revalidatePath("/dashboard/services/dog-boarding");
+    revalidatePath("/dashboard/services/dog-sitting");
+    revalidatePath("/dashboard/services/dog-walking");
     revalidatePath("/dashboard/services/dog-grooming");
-    revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/dog-sitting/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/dog-walking/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]", "page");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete course:", error);
@@ -433,11 +454,15 @@ export async function reorderOrgCoursesAction(orderedCourseIds: string[]) {
     revalidatePath("/dashboard/services/dog-training");
     revalidatePath("/dashboard/services/sport-dog-training");
     revalidatePath("/dashboard/services/dog-boarding");
+    revalidatePath("/dashboard/services/dog-sitting");
+    revalidatePath("/dashboard/services/dog-walking");
     revalidatePath("/dashboard/services/dog-grooming");
-    revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]");
-    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]");
+    revalidatePath("/backoffice/organizations/services/dog-training/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/sport-dog-training/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/dog-boarding/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/dog-sitting/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/dog-walking/[...courseSlugAndId]", "page");
+    revalidatePath("/backoffice/organizations/services/dog-grooming/[...courseSlugAndId]", "page");
     return { success: true };
   } catch (error) {
     console.error("Failed to reorder organization courses:", error);

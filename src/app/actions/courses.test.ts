@@ -158,6 +158,31 @@ describe("Courses Server Actions", () => {
       expect(result).toEqual({ success: true });
     });
 
+    it("should successfully insert sitting service with veterinary training attributes", async () => {
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
+
+      const formData = new FormData();
+      formData.append("name", "Medical Day Sitting");
+      formData.append("price", "80");
+      formData.append("priceType", "1h");
+      formData.append("veterinaryTraining", "true");
+      formData.append("veterinaryTrainingCertifier", "USAMV Vet Tech");
+      formData.append("veterinaryTrainingDetails", "Veterinary nurse with 5 years clinical experience");
+
+      const result = await createCourseAction(null, formData);
+      expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
+        name: "Medical Day Sitting",
+        price: "80",
+        priceType: "1h",
+        veterinaryTraining: true,
+        veterinaryTrainingCertifier: "USAMV Vet Tech",
+        veterinaryTrainingDetails: "Veterinary nurse with 5 years clinical experience",
+      }));
+      expect(result).toEqual({ success: true });
+    });
+
     it("should fail schedule time format validation", async () => {
       vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();

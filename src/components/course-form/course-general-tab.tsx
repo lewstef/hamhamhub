@@ -17,6 +17,12 @@ interface CourseGeneralTabProps {
   onCertifierNameChange: (v: string) => void;
   trainerExperienceDescription: string;
   onTrainerExperienceDescriptionChange: (v: string) => void;
+  veterinaryTraining?: boolean;
+  onVeterinaryTrainingChange?: (v: boolean) => void;
+  veterinaryTrainingCertifier?: string;
+  onVeterinaryTrainingCertifierChange?: (v: string) => void;
+  veterinaryTrainingDetails?: string;
+  onVeterinaryTrainingDetailsChange?: (v: string) => void;
   ageLimitsEnabled: boolean;
   onAgeLimitsEnabledChange: (v: boolean) => void;
   selectedAgeLimits: string[];
@@ -32,7 +38,7 @@ interface CourseGeneralTabProps {
 /**
  * CourseGeneralTab Component
  *
- * Renders the General tab fields: Name, Details (rich text), and Trainer Certifications.
+ * Renders the General tab fields: Name, Details (rich text), Trainer Certifications, and Veterinary Training.
  */
 export function CourseGeneralTab({
   name,
@@ -45,6 +51,12 @@ export function CourseGeneralTab({
   onCertifierNameChange,
   trainerExperienceDescription,
   onTrainerExperienceDescriptionChange,
+  veterinaryTraining = false,
+  onVeterinaryTrainingChange,
+  veterinaryTrainingCertifier = "",
+  onVeterinaryTrainingCertifierChange,
+  veterinaryTrainingDetails = "",
+  onVeterinaryTrainingDetailsChange,
   ageLimitsEnabled,
   onAgeLimitsEnabledChange,
   selectedAgeLimits,
@@ -68,8 +80,68 @@ export function CourseGeneralTab({
     itemNoun === "Training course" ||
     itemNoun === "Sitting service";
 
+  const getNamePlaceholder = () => {
+    if (isDogSitter || itemNoun === "Sitting service") {
+      return "e.g. In-Home Sitting, Daytime Visit, Overnight Care";
+    }
+    if (isDogWalking || itemNoun === "Dog Walking" || itemNoun === "Walking service") {
+      return "e.g. Standard Neighborhood Walk";
+    }
+    if (itemNoun === "Boarding service") {
+      return "e.g. Standard Room, VIP Cabin";
+    }
+    return "e.g. Agility, IGP, Obedience";
+  };
+
+  const getDetailsPlaceholder = () => {
+    if (isDogSitter || itemNoun === "Sitting service") {
+      return "Describe what the sitting service includes (feeding, playtime, supervision, home visits)...";
+    }
+    if (isDogWalking || itemNoun === "Dog Walking" || itemNoun === "Walking service") {
+      return "Describe the walking routine, duration, group size, and route details...";
+    }
+    if (itemNoun === "Boarding service") {
+      return "Describe accommodation amenities, feeding schedules, room features, and daily care routines...";
+    }
+    return "What does the program include? Explain course objectives, discipline details...";
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Sitting Type Preset Selector */}
+      {(isDogSitter || itemNoun === "Sitting service") && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold text-foreground">Sitting Type</Label>
+            <span className="text-[11px] text-muted-foreground">Select a standard preset or customize name below</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              "In home sitting",
+              "Daytime visit",
+              "Daytime visit with walk",
+              "Overnight stay",
+            ].map((preset) => {
+              const isSelected = name.trim().toLowerCase() === preset.toLowerCase();
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => onNameChange(preset)}
+                  className={`h-8 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground hover:bg-muted/30"
+                  }`}
+                >
+                  {preset}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="course-name">{itemNoun} Name</Label>
         <Input
@@ -77,13 +149,7 @@ export function CourseGeneralTab({
           type="text"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
-          placeholder={
-            itemNoun === "Boarding service"
-              ? "e.g. Standard Room, VIP Cabin"
-              : isDogWalking
-              ? "e.g. Standard Neighborhood Walk"
-              : "e.g. Agility, IGP, Obedience"
-          }
+          placeholder={getNamePlaceholder()}
           className="h-10 text-xs rounded-xl"
           required
         />
@@ -94,7 +160,7 @@ export function CourseGeneralTab({
         <WysiwygEditor
           value={details}
           onChange={onDetailsChange}
-          placeholder="What does the program include? Explain course objectives, discipline details..."
+          placeholder={getDetailsPlaceholder()}
         />
       </div>
 
@@ -126,6 +192,37 @@ export function CourseGeneralTab({
           </div>
         </div>
       </BooleanToggleField>
+
+      {(isDogSitter || itemNoun === "Sitting service") && (
+        <BooleanToggleField
+          label="Veterinary Training"
+          description="Indicate whether the sitter has veterinary qualifications or specialized medical handling training."
+          checked={veterinaryTraining}
+          onChange={onVeterinaryTrainingChange || (() => {})}
+        >
+          <div className="space-y-4 pt-1">
+            <div className="space-y-2">
+              <Label htmlFor="vet-certifier-name">Certifier / Institution Name</Label>
+              <Input
+                id="vet-certifier-name"
+                type="text"
+                value={veterinaryTrainingCertifier}
+                onChange={(e) => onVeterinaryTrainingCertifierChange?.(e.target.value)}
+                placeholder="e.g. USAMV, Veterinary Technician Certification, Vet Assistant Diploma"
+                className="h-10 text-xs rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Veterinary Qualifications &amp; Experience</Label>
+              <WysiwygEditor
+                value={veterinaryTrainingDetails}
+                onChange={onVeterinaryTrainingDetailsChange || (() => {})}
+                placeholder="Describe veterinary background, clinical training, emergency first aid certifications..."
+              />
+            </div>
+          </div>
+        </BooleanToggleField>
+      )}
 
       {!hideAgeLimitsOnGeneral && (
         <BooleanToggleField

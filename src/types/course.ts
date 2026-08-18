@@ -9,6 +9,9 @@ export interface Course {
   certifiedTrainer: boolean;
   certifierName?: string | null;
   trainerExperienceDescription?: string | null;
+  veterinaryTraining?: boolean | null;
+  veterinaryTrainingCertifier?: string | null;
+  veterinaryTrainingDetails?: string | null;
   dedicatedField: boolean;
   trainingFieldDescription?: string | null;
   trainingFieldAddress?: string | null;

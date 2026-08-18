@@ -166,6 +166,9 @@ export function CourseForm({
   const [certifiedTrainer, setCertifiedTrainer] = useState(initialCourse?.certifiedTrainer || false);
   const [certifierName, setCertifierName] = useState(initialCourse?.certifierName || "");
   const [trainerExperienceDescription, setTrainerExperienceDescription] = useState(initialCourse?.trainerExperienceDescription || "");
+  const [veterinaryTraining, setVeterinaryTraining] = useState(initialCourse?.veterinaryTraining || false);
+  const [veterinaryTrainingCertifier, setVeterinaryTrainingCertifier] = useState(initialCourse?.veterinaryTrainingCertifier || "");
+  const [veterinaryTrainingDetails, setVeterinaryTrainingDetails] = useState(initialCourse?.veterinaryTrainingDetails || "");
   const [ageLimitsEnabled, setAgeLimitsEnabled] = useState(initialCourse?.ageLimitsEnabled || false);
   const [selectedAgeLimits, setSelectedAgeLimits] = useState<string[]>(
     initialCourse?.ageLimits
@@ -188,7 +191,7 @@ export function CourseForm({
   const [details, setDetails] = useState(initialCourse?.details || "");
   const [termsOfParticipation, setTermsOfParticipation] = useState(initialCourse?.termsOfParticipation || "");
 
-  const defaultPriceType = isBoarding ? "night" : isGrooming ? "service" : isDogSitter ? "hour" : "course";
+  const defaultPriceType = isBoarding ? "night" : isGrooming ? "service" : isDogSitter ? "1h" : isDogWalking ? "walk" : "course";
   const [pricings, setPricings] = useState<CoursePricingItem[]>(() =>
     parseCoursePricings(initialCourse?.price, initialCourse?.priceType, defaultPriceType)
   );
@@ -527,6 +530,9 @@ export function CourseForm({
     formData.append("certifiedTrainer", String(certifiedTrainer));
     formData.append("certifierName", certifierName);
     formData.append("trainerExperienceDescription", trainerExperienceDescription);
+    formData.append("veterinaryTraining", String(veterinaryTraining));
+    formData.append("veterinaryTrainingCertifier", veterinaryTrainingCertifier);
+    formData.append("veterinaryTrainingDetails", veterinaryTrainingDetails);
     formData.append("ageLimitsEnabled", String(ageLimitsEnabled));
     formData.append("ageLimits", selectedAgeLimits.join(","));
     formData.append("dedicatedField", String(dedicatedField));
@@ -591,6 +597,9 @@ export function CourseForm({
     if (certifiedTrainer !== (initialCourse?.certifiedTrainer || false)) return true;
     if (certifierName !== (initialCourse?.certifierName || "")) return true;
     if (trainerExperienceDescription !== (initialCourse?.trainerExperienceDescription || "")) return true;
+    if (veterinaryTraining !== (initialCourse?.veterinaryTraining || false)) return true;
+    if (veterinaryTrainingCertifier !== (initialCourse?.veterinaryTrainingCertifier || "")) return true;
+    if (veterinaryTrainingDetails !== (initialCourse?.veterinaryTrainingDetails || "")) return true;
     if (ageLimitsEnabled !== (initialCourse?.ageLimitsEnabled || false)) return true;
     if (dedicatedField !== (initialCourse?.dedicatedField || false)) return true;
     if (trainingFieldDescription !== (initialCourse?.trainingFieldDescription || "")) return true;
@@ -613,6 +622,7 @@ export function CourseForm({
     return false;
   }, [
     name, details, termsOfParticipation, certifiedTrainer, certifierName, trainerExperienceDescription,
+    veterinaryTraining, veterinaryTrainingCertifier, veterinaryTrainingDetails,
     ageLimitsEnabled, dedicatedField, trainingFieldDescription, trainingFieldAddress,
     trainingFieldGoogleBusinessProfile, trainingFieldGoogleMapsLink, parking, parkingDescription,
     medicationAdministration, medicationAdministrationDetails, surveillance247, surveillance247Details,
@@ -692,7 +702,7 @@ export function CourseForm({
               { key: "schedule" as const, label: "Schedule", Icon: Calendar, hasError: !!scheduleOverlapError },
               { key: "location" as const, label: "Coverage zones", Icon: MapPin, hasError: false },
               { key: "faq" as const, label: "FAQ", Icon: HelpCircle, hasError: false },
-              ...(isBoarding ? [{ key: "others" as const, label: "Care & facilities", Icon: Sliders, hasError: false }] : []),
+              ...((isBoarding || isDogSitter) ? [{ key: "others" as const, label: "Care & facilities", Icon: Sliders, hasError: false }] : []),
             ]
           ).map(({ key, label, Icon, hasError }) => (
             <button
@@ -731,6 +741,12 @@ export function CourseForm({
               onCertifierNameChange={setCertifierName}
               trainerExperienceDescription={trainerExperienceDescription}
               onTrainerExperienceDescriptionChange={setTrainerExperienceDescription}
+              veterinaryTraining={veterinaryTraining}
+              onVeterinaryTrainingChange={setVeterinaryTraining}
+              veterinaryTrainingCertifier={veterinaryTrainingCertifier}
+              onVeterinaryTrainingCertifierChange={setVeterinaryTrainingCertifier}
+              veterinaryTrainingDetails={veterinaryTrainingDetails}
+              onVeterinaryTrainingDetailsChange={setVeterinaryTrainingDetails}
               ageLimitsEnabled={ageLimitsEnabled}
               onAgeLimitsEnabledChange={setAgeLimitsEnabled}
               selectedAgeLimits={selectedAgeLimits}
@@ -783,6 +799,7 @@ export function CourseForm({
                 onUpdate={handleUpdatePriceTier}
                 onRemove={requestRemovePriceTier}
                 isDogWalking={isDogWalking}
+                isDogSitter={isDogSitter}
               />
             </div>
           )}
@@ -874,11 +891,14 @@ export function CourseForm({
                 <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
                   <h3 className="text-base font-bold text-foreground">Care &amp; Facilities</h3>
                   <p className="text-xs text-muted-foreground">
-                    Configure specialized boarding amenities, webcam access, meal customization, and owner updates.
+                    {isDogSitter
+                      ? "Configure medication administration instructions and photo/video communication updates for sitting visits."
+                      : "Configure specialized boarding amenities, webcam access, meal customization, and owner updates."}
                   </p>
                 </div>
                 <CourseCareTab
                   isDogWalking={isDogWalking}
+                  isDogSitter={isDogSitter}
                   dailyWalks={dailyWalks}
                   onDailyWalksChange={setDailyWalks}
                   medicationAdministration={medicationAdministration}
@@ -932,6 +952,40 @@ export function CourseForm({
         <div className="grid grid-cols-1 lg:grid-cols-[64%_36%] gap-6">
           {/* Column 1 — 64% Width */}
           <div className="space-y-6">
+            {/* Sitting Type Preset Selector (flat mode) */}
+            {(isDogSitter || itemNoun === "Sitting service") && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-foreground">Sitting Type</Label>
+                  <span className="text-[11px] text-muted-foreground">Select a standard preset or customize name below</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "In home sitting",
+                    "Daytime visit",
+                    "Daytime visit with walk",
+                    "Overnight stay",
+                  ].map((preset) => {
+                    const isSelected = name.trim().toLowerCase() === preset.toLowerCase();
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setName(preset)}
+                        className={`h-8 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground hover:bg-muted/30"
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="course-name">{itemNoun} Name</Label>
               <Input
@@ -940,9 +994,15 @@ export function CourseForm({
                 placeholder={
                   itemNoun === "Boarding service"
                     ? "e.g. Standard Room, VIP Cabin"
+                    : isDogSitter || itemNoun === "Sitting service"
+                    ? "e.g. In-Home Sitting, Daytime Visit, Overnight Care"
+                    : isDogWalking || itemNoun === "Dog Walking" || itemNoun === "Walking service"
+                    ? "e.g. Standard Neighborhood Walk, 60-Min Adventure Walk"
                     : isGrooming
                     ? "e.g. Full Grooming & Bath"
-                    : "e.g. Puppy Socialization Class"
+                    : isDogTraining || itemNoun === "Training course"
+                    ? "e.g. Puppy Socialization Class, Basic Obedience"
+                    : "e.g. Agility, IGP, Obedience"
                 }
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -1144,6 +1204,7 @@ export function CourseForm({
               onUpdate={handleUpdatePriceTier}
               onRemove={requestRemovePriceTier}
               compact
+              isDogSitter={isDogSitter}
             />
 
             {/* Submit Actions */}

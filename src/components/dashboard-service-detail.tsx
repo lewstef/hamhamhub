@@ -524,6 +524,12 @@ export function DashboardServiceDetail({
                                 Certified
                               </span>
                             )}
+                            {course.veterinaryTraining && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-600 border border-teal-500/20" title={course.veterinaryTrainingDetails || course.veterinaryTrainingCertifier || ""}>
+                                <Award className="size-2.5" />
+                                Vet Training
+                              </span>
+                            )}
                             {course.ageLimitsEnabled && course.ageLimits && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/10 text-violet-600 border border-violet-500/20" title={course.ageLimits}>
                                 <Users className="size-2.5" />

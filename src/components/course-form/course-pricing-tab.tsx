@@ -18,6 +18,7 @@ interface CoursePricingTabProps {
   onRemove: (index: number) => void;
   compact?: boolean;
   isDogWalking?: boolean;
+  isDogSitter?: boolean;
 }
 
 /**
@@ -35,9 +36,11 @@ export function CoursePricingTab({
   onRemove,
   compact = false,
   isDogWalking = false,
+  isDogSitter = false,
 }: CoursePricingTabProps) {
   const isItemBoarding = isBoarding || itemNoun === "Boarding service";
   const isItemGrooming = isGrooming || itemNoun === "Grooming service";
+  const isItemSitting = isDogSitter || itemNoun === "Sitting service";
 
   const priceTypeOptions = useMemo(
     () =>
@@ -49,6 +52,21 @@ export function CoursePricingTab({
             { value: "walk", label: "Per Walk" },
             { value: "month", label: "Per Monthly Package (Workweek)" },
             { value: "addl_dog", label: "Per Additional Household Dog" },
+          ]
+        : isItemSitting
+        ? [
+            { value: "1h", label: "1h" },
+            { value: "2h", label: "2h" },
+            { value: "3h", label: "3h" },
+            { value: "4h", label: "4h" },
+            { value: "5h", label: "5h" },
+            { value: "6h", label: "6h" },
+            { value: "7h", label: "7h" },
+            { value: "8h", label: "8h" },
+            { value: "9h", label: "9h" },
+            { value: "10h", label: "10h" },
+            { value: "11h", label: "11h" },
+            { value: "12h", label: "12h" },
           ]
         : isItemBoarding
         ? [
@@ -71,7 +89,7 @@ export function CoursePricingTab({
             { value: "hour", label: "Per Hour" },
             { value: "day", label: "Per Day" },
           ],
-    [itemNoun, isItemBoarding, isItemGrooming, isDogWalking]
+    [itemNoun, isItemBoarding, isItemGrooming, isDogWalking, isItemSitting]
   );
 
   return (
