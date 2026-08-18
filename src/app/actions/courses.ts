@@ -41,6 +41,10 @@ interface ParsedCourseData {
   ownerCommunicationDetails: string;
   personalizedMealPlan: boolean;
   personalizedMealPlanDetails: string;
+  emergencyVetTransport: boolean;
+  emergencyVetTransportDetails: string;
+  maxPetsPerVisit: number | null;
+  additionalPetPolicy: string;
   checkin: string | null;
   checkout: string | null;
   checkinWeekend: string | null;
@@ -93,6 +97,11 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const ownerCommunicationDetails = formData.get("ownerCommunicationDetails") as string;
   const personalizedMealPlan = formData.get("personalizedMealPlan") === "true";
   const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
+  const emergencyVetTransport = formData.get("emergencyVetTransport") === "true";
+  const emergencyVetTransportDetails = (formData.get("emergencyVetTransportDetails") as string) || "";
+  const maxPetsPerVisitStr = formData.get("maxPetsPerVisit") as string;
+  const maxPetsPerVisit = maxPetsPerVisitStr ? parseInt(maxPetsPerVisitStr, 10) : null;
+  const additionalPetPolicy = (formData.get("additionalPetPolicy") as string) || "";
   const checkin = (formData.get("checkin") as string) || null;
   const checkout = (formData.get("checkout") as string) || null;
   const checkinWeekend = (formData.get("checkinWeekend") as string) || null;
@@ -102,6 +111,32 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const ageLimits = (formData.get("ageLimits") as string) || null;
   const coverageZones = (formData.get("coverageZones") as string) || null;
   const faq = (formData.get("faq") as string) || null;
+
+  if (price) {
+    const trimmed = price.trim();
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsedPricings = JSON.parse(trimmed);
+        if (Array.isArray(parsedPricings)) {
+          for (let i = 0; i < parsedPricings.length; i++) {
+            const item = parsedPricings[i];
+            const amt = typeof item === "object" && item?.amount !== undefined ? String(item.amount).trim() : String(item).trim();
+            const num = Number(amt);
+            if (!amt || isNaN(num) || num <= 0) {
+              return { error: `Price amount for option #${i + 1} must be a positive number in lei.` };
+            }
+          }
+        }
+      } catch (e) {
+        return { error: "Invalid price JSON format." };
+      }
+    } else {
+      const num = Number(trimmed);
+      if (isNaN(num) || num <= 0) {
+        return { error: "Price must be a positive number in lei." };
+      }
+    }
+  }
 
   const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
   if (checkin && !timeRegex.test(checkin)) {
@@ -153,6 +188,8 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
       webCam, webCamDetails, dailyWalks,
       ownerCommunication, ownerCommunicationDetails,
       personalizedMealPlan, personalizedMealPlanDetails,
+      emergencyVetTransport, emergencyVetTransportDetails,
+      maxPetsPerVisit, additionalPetPolicy,
       checkin, checkout, checkinWeekend, checkoutWeekend,
       schedule, ageLimitsEnabled, ageLimits, coverageZones, faq,
     },
@@ -246,6 +283,10 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       ownerCommunicationDetails: d.ownerCommunication ? d.ownerCommunicationDetails : null,
       personalizedMealPlan: d.personalizedMealPlan,
       personalizedMealPlanDetails: d.personalizedMealPlan ? d.personalizedMealPlanDetails : null,
+      emergencyVetTransport: d.emergencyVetTransport,
+      emergencyVetTransportDetails: d.emergencyVetTransport ? d.emergencyVetTransportDetails : null,
+      maxPetsPerVisit: d.maxPetsPerVisit,
+      additionalPetPolicy: d.additionalPetPolicy || null,
       checkin: d.checkin,
       checkout: d.checkout,
       checkinWeekend: d.checkinWeekend,
@@ -347,6 +388,10 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         ownerCommunicationDetails: d.ownerCommunication ? d.ownerCommunicationDetails : null,
         personalizedMealPlan: d.personalizedMealPlan,
         personalizedMealPlanDetails: d.personalizedMealPlan ? d.personalizedMealPlanDetails : null,
+        emergencyVetTransport: d.emergencyVetTransport,
+        emergencyVetTransportDetails: d.emergencyVetTransport ? d.emergencyVetTransportDetails : null,
+        maxPetsPerVisit: d.maxPetsPerVisit,
+        additionalPetPolicy: d.additionalPetPolicy || null,
         checkin: d.checkin,
         checkout: d.checkout,
         checkinWeekend: d.checkinWeekend,

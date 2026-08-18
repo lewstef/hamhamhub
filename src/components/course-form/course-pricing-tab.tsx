@@ -137,16 +137,28 @@ export function CoursePricingTab({
 
             <div className={compact ? "space-y-2" : "grid grid-cols-1 sm:grid-cols-3 gap-3"}>
               <div className="space-y-1">
-                <Label htmlFor={`course-price-${index}`}>Price Amount</Label>
-                <Input
-                  id={`course-price-${index}`}
-                  type="text"
-                  placeholder="e.g. 500 or 150/session"
-                  value={tier.amount}
-                  onChange={(e) => onUpdate(index, "amount", e.target.value)}
-                  className="bg-background text-xs font-semibold h-9"
-                  required
-                />
+                <Label htmlFor={`course-price-${index}`}>Price Amount (lei)</Label>
+                <div className="relative">
+                  <Input
+                    id={`course-price-${index}`}
+                    type="text"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    placeholder="e.g. 500"
+                    value={tier.amount}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/,/g, ".");
+                      if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                        onUpdate(index, "amount", val);
+                      }
+                    }}
+                    className="bg-background text-xs font-semibold h-9 pr-10"
+                    required
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground pointer-events-none select-none">
+                    lei
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -166,6 +178,7 @@ export function CoursePricingTab({
                 <Input
                   id={`course-price-label-${index}`}
                   type="text"
+                  autoComplete="off"
                   placeholder="e.g. Early Bird, Standard, VIP"
                   value={tier.label || ""}
                   onChange={(e) => onUpdate(index, "label", e.target.value)}

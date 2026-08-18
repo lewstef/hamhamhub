@@ -46,6 +46,7 @@ vi.mock("lucide-react", () => ({
   Calendar: () => <div data-testid="calendar" />,
   HelpCircle: () => <div data-testid="help-circle" />,
   Sliders: () => <div data-testid="sliders" />,
+  HeartPulse: () => <div data-testid="heart-pulse" />,
 }));
 
 vi.mock("@/app/actions/organizations", () => ({
@@ -243,7 +244,7 @@ describe("DashboardServiceDetail Component", () => {
         certifiedTrainer: false,
         dedicatedField: false,
         parking: false,
-        price: "$100",
+        price: "100",
         priceType: "course",
       },
       {
@@ -252,7 +253,7 @@ describe("DashboardServiceDetail Component", () => {
         certifiedTrainer: false,
         dedicatedField: false,
         parking: false,
-        price: "$50",
+        price: "50",
         priceType: "month",
       },
     ];
@@ -270,8 +271,8 @@ describe("DashboardServiceDetail Component", () => {
     const expandBtns = screen.getAllByRole("button", { name: /Expand/ });
     expandBtns.forEach((btn) => fireEvent.click(btn));
 
-    expect(screen.getByText("$100 / course")).toBeDefined();
-    expect(screen.getByText("$50 / month")).toBeDefined();
+    expect(screen.getByText("100 lei / course")).toBeDefined();
+    expect(screen.getByText("50 lei / month")).toBeDefined();
   });
 
   it("should hide toggle button and identifier description for Dog Boarding", () => {
@@ -309,7 +310,7 @@ describe("DashboardServiceDetail Component", () => {
         certifiedTrainer: false,
         dedicatedField: false,
         parking: true,
-        price: "120 RON",
+        price: "120",
         priceType: "night",
       },
       {
@@ -318,7 +319,7 @@ describe("DashboardServiceDetail Component", () => {
         certifiedTrainer: false,
         dedicatedField: false,
         parking: true,
-        price: "250 RON",
+        price: "250",
         priceType: "day",
       },
     ];
@@ -336,8 +337,8 @@ describe("DashboardServiceDetail Component", () => {
     const expandBtns = screen.getAllByRole("button", { name: /Expand/ });
     expandBtns.forEach((btn) => fireEvent.click(btn));
 
-    expect(screen.getByText("120 RON / night")).toBeDefined();
-    expect(screen.getByText("250 RON / day")).toBeDefined();
+    expect(screen.getByText("120 lei / night")).toBeDefined();
+    expect(screen.getByText("250 lei / day")).toBeDefined();
   });
 
   it("should display custom badges (Meds, Walks, Updates, Meals) for Boarding services", () => {
@@ -419,6 +420,42 @@ describe("DashboardServiceDetail Component", () => {
     expect(screen.getByText("Certified")).toBeDefined();
     expect(screen.getByText("Field")).toBeDefined();
     expect(screen.getByText("Parking")).toBeDefined();
+  });
+
+  it("should display Vet Training, Emergency Vet Transport, and Up to 2 Pets badges for dog sitting offerings", () => {
+    const sittingService = {
+      id: "srv-dog-sitting",
+      name: "Dog sitter",
+      description: "In-home sitting.",
+    };
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={sittingService}
+        initialIsEnabled={true}
+        slug="dog-sitter"
+        courses={[
+          {
+            id: "s-1",
+            name: "Medical In-Home Sitting",
+            certifiedTrainer: false,
+            veterinaryTraining: true,
+            veterinaryTrainingCertifier: "USAMV",
+            emergencyVetTransport: true,
+            maxPetsPerVisit: 2,
+            dedicatedField: false,
+            parking: false,
+          },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
+
+    expect(screen.getByText("Vet Training")).toBeDefined();
+    expect(screen.getByText("Emergency Vet Transport")).toBeDefined();
+    expect(screen.getByText("Up to 2 Pets")).toBeDefined();
   });
 
   it("should show '1 Walk' (singular) when dailyWalks is 1", () => {
@@ -985,8 +1022,8 @@ describe("DashboardServiceDetail Component", () => {
 
   it("should render multi-pricing badges and closed period badges when present", () => {
     const multiPriceJson = JSON.stringify([
-      { amount: "200 RON", type: "course", label: "Basic" },
-      { amount: "800 RON", type: "month", label: "Monthly" },
+      { amount: "200", type: "course", label: "Basic" },
+      { amount: "800", type: "month", label: "Monthly" },
     ]);
     const scheduleWithClosedAndSpecialJson = JSON.stringify({
       weeklySchedule: [],
@@ -1021,8 +1058,8 @@ describe("DashboardServiceDetail Component", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Expand/ }));
 
-    expect(screen.getByText("Basic: 200 RON / course")).toBeDefined();
-    expect(screen.getByText("Monthly: 800 RON / month")).toBeDefined();
+    expect(screen.getByText("Basic: 200 lei / course")).toBeDefined();
+    expect(screen.getByText("Monthly: 800 lei / month")).toBeDefined();
     expect(screen.getByText("Closed: Summer Recess (01.08.2026 to 15.08.2026)")).toBeDefined();
     expect(screen.getByText("Open: Christmas Special (20.12.2026 to 20.12.2026 • 09:00 - 17:00)")).toBeDefined();
   });

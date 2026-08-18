@@ -7,7 +7,7 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse } from "lucide-react";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -584,6 +584,18 @@ export function DashboardServiceDetail({
                                 Meal Plan
                               </span>
                             )}
+                            {course.emergencyVetTransport && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" title={course.emergencyVetTransportDetails || ""}>
+                                <HeartPulse className="size-2.5" />
+                                Emergency Vet Transport
+                              </span>
+                            )}
+                            {course.maxPetsPerVisit && course.maxPetsPerVisit > 1 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-600 border border-cyan-500/20" title={course.additionalPetPolicy || `Max ${course.maxPetsPerVisit} pets per visit`}>
+                                <Users className="size-2.5" />
+                                Up to {course.maxPetsPerVisit} Pets
+                              </span>
+                            )}
                             {parseClosedPeriods(course.schedule).map((period, idx) => (
                               <span
                                 key={idx}
@@ -607,14 +619,23 @@ export function DashboardServiceDetail({
                             {course.price &&
                               parseCoursePricings(course.price, course.priceType, itemNoun.toLowerCase()).map((pTier, pIdx) => {
                                 if (!pTier.amount) return null;
-                                const typeLabel = pTier.type === "half_day"
+                                const rawType = pTier.type || "";
+                                const typeLabel = rawType === "half_day"
                                   ? "half day"
-                                  : ["month", "night", "day", "half_day", "service", "session", "hour", "course"].includes(pTier.type || "")
-                                  ? pTier.type
+                                  : rawType === "walk_30min"
+                                  ? "30min walk"
+                                  : rawType === "walk_45min"
+                                  ? "45min walk"
+                                  : rawType === "walk_60min"
+                                  ? "60min walk"
+                                  : rawType === "addl_dog"
+                                  ? "addl dog"
+                                  : ["1h", "2h", "3h", "4h", "5h", "6h", "7h", "8h", "9h", "10h", "11h", "12h", "month", "night", "day", "service", "session", "hour", "course", "walk"].includes(rawType)
+                                  ? rawType
                                   : itemNoun.toLowerCase();
                                 const displayText = pTier.label
-                                  ? `${pTier.label}: ${pTier.amount} / ${typeLabel}`
-                                  : `${pTier.amount} / ${typeLabel}`;
+                                  ? `${pTier.label}: ${pTier.amount} lei / ${typeLabel}`
+                                  : `${pTier.amount} lei / ${typeLabel}`;
                                 return (
                                   <span
                                     key={pIdx}

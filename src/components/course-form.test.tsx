@@ -167,7 +167,7 @@ describe("CourseForm Component", () => {
       fireEvent.click(pricingTab);
     });
 
-    const priceInput = screen.getByLabelText("Price Amount");
+    const priceInput = screen.getByLabelText(/Price Amount/);
     fireEvent.change(priceInput, { target: { value: "150" } });
 
     const select = screen.getByLabelText("Billing Frequency");
@@ -326,6 +326,18 @@ describe("CourseForm Component", () => {
 
     // Click Care & facilities tab
     fireEvent.click(screen.getByRole("button", { name: "Care & facilities" }));
+
+    // Verify Sitting Care amenities: Medication, Emergency Vet Transport, Multi-Pet Accommodation, Communication
+    expect(screen.getByText("Medication Administration")).toBeDefined();
+    expect(screen.getByText("Emergency Vet Transport & First Aid")).toBeDefined();
+    expect(screen.getByText("Maximum Pets Per Visit / Booking")).toBeDefined();
+    expect(screen.getByText("Additional Pet Policy & Rates")).toBeDefined();
+    expect(screen.getByText("Communication with the Owner")).toBeDefined();
+
+    // Verify Boarding-only fields are omitted in Sitting mode
+    expect(screen.queryByLabelText("Daily Walks")).toBeNull();
+    expect(screen.queryByText("24/7 Surveillance")).toBeNull();
+    expect(screen.queryByText("Webcam")).toBeNull();
 
     // Verify Veterinary Training field is rendered on General tab
     fireEvent.click(screen.getByRole("button", { name: "General" }));
@@ -535,7 +547,7 @@ describe("CourseForm Component", () => {
     await act(async () => {
       fireEvent.click(pricingTab);
     });
-    expect((screen.getByLabelText("Price Amount") as HTMLInputElement).value).toBe("200");
+    expect((screen.getByLabelText(/Price Amount/) as HTMLInputElement).value).toBe("200");
   });
 
   it("should trigger onCancel when Back button is clicked", () => {
@@ -944,8 +956,8 @@ describe("CourseForm Component", () => {
 
     // 3. Pricing Tab: Fill Price Amount and Billing Frequency
     fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
-    const priceInput = screen.getByLabelText("Price Amount");
-    fireEvent.change(priceInput, { target: { value: "400 RON" } });
+    const priceInput = screen.getByLabelText(/Price Amount/);
+    fireEvent.change(priceInput, { target: { value: "400" } });
 
     const select = screen.getByLabelText("Billing Frequency");
     fireEvent.change(select, { target: { value: "month" } });
@@ -965,7 +977,7 @@ describe("CourseForm Component", () => {
     expect(passedFormData.get("trainingFieldAddress")).toBe("Str. Canine 15, Cluj");
     expect(passedFormData.get("trainingFieldGoogleBusinessProfile")).toBe("https://business.google.com/site/mondioring");
     expect(passedFormData.get("trainingFieldGoogleMapsLink")).toBe("https://maps.google.com/place/mondioring");
-    expect(passedFormData.get("price")).toBe("400 RON");
+    expect(passedFormData.get("price")).toBe("400");
     expect(passedFormData.get("priceType")).toBe("month");
     expect(onSubmitSuccess).toHaveBeenCalled();
   });
@@ -1027,8 +1039,8 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Price Option #1")).toBeDefined();
 
     // Fill tier 1
-    const price1 = screen.getByLabelText("Price Amount");
-    fireEvent.change(price1, { target: { value: "200 RON" } });
+    const price1 = screen.getByLabelText(/Price Amount/);
+    fireEvent.change(price1, { target: { value: "200" } });
 
     // Click Add Price Tier
     const addTierBtn = screen.getByRole("button", { name: "Add Price Tier" });
@@ -1037,8 +1049,8 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Price Option #2")).toBeDefined();
 
     // Fill tier 2
-    const price2 = screen.getByLabelText("Price Amount", { selector: "#course-price-1" });
-    fireEvent.change(price2, { target: { value: "800 RON" } });
+    const price2 = screen.getByLabelText(/Price Amount/, { selector: "#course-price-1" });
+    fireEvent.change(price2, { target: { value: "800" } });
 
     const label2 = screen.getByLabelText("Label / Title (Optional)", { selector: "#course-price-label-1" });
     fireEvent.change(label2, { target: { value: "Monthly Pass" } });
@@ -1052,8 +1064,8 @@ describe("CourseForm Component", () => {
     expect(createCourseAction).toHaveBeenCalled();
     const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
     const priceJsonStr = passedFormData.get("price") as string;
-    expect(priceJsonStr).toContain("200 RON");
-    expect(priceJsonStr).toContain("800 RON");
+    expect(priceJsonStr).toContain("200");
+    expect(priceJsonStr).toContain("800");
     expect(priceJsonStr).toContain("Monthly Pass");
   });
 

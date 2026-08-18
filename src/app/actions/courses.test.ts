@@ -170,6 +170,10 @@ describe("Courses Server Actions", () => {
       formData.append("veterinaryTraining", "true");
       formData.append("veterinaryTrainingCertifier", "USAMV Vet Tech");
       formData.append("veterinaryTrainingDetails", "Veterinary nurse with 5 years clinical experience");
+      formData.append("emergencyVetTransport", "true");
+      formData.append("emergencyVetTransportDetails", "Emergency vehicle on standby");
+      formData.append("maxPetsPerVisit", "2");
+      formData.append("additionalPetPolicy", "+20 RON/hr for second dog");
 
       const result = await createCourseAction(null, formData);
       expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
@@ -179,6 +183,10 @@ describe("Courses Server Actions", () => {
         veterinaryTraining: true,
         veterinaryTrainingCertifier: "USAMV Vet Tech",
         veterinaryTrainingDetails: "Veterinary nurse with 5 years clinical experience",
+        emergencyVetTransport: true,
+        emergencyVetTransportDetails: "Emergency vehicle on standby",
+        maxPetsPerVisit: 2,
+        additionalPetPolicy: "+20 RON/hr for second dog",
       }));
       expect(result).toEqual({ success: true });
     });

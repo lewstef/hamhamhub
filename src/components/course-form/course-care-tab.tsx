@@ -31,13 +31,22 @@ export interface CourseCareTabProps {
   onPersonalizedMealPlanChange: (v: boolean) => void;
   personalizedMealPlanDetails: string;
   onPersonalizedMealPlanDetailsChange: (v: string) => void;
+  emergencyVetTransport?: boolean;
+  onEmergencyVetTransportChange?: (v: boolean) => void;
+  emergencyVetTransportDetails?: string;
+  onEmergencyVetTransportDetailsChange?: (v: string) => void;
+  maxPetsPerVisit?: number;
+  onMaxPetsPerVisitChange?: (v: number) => void;
+  additionalPetPolicy?: string;
+  onAdditionalPetPolicyChange?: (v: string) => void;
 }
 
 /**
  * CourseCareTab Component
  *
  * Renders boarding/sitting-specific care amenity toggles:
- * daily walks, medication administration, 24/7 surveillance, personalized meal plan, webcam access, and communication/GPS reports.
+ * daily walks, medication administration, emergency vet transport, multi-pet policy,
+ * 24/7 surveillance, personalized meal plan, webcam access, and communication/GPS reports.
  */
 export function CourseCareTab({
   isDogWalking = false,
@@ -64,13 +73,22 @@ export function CourseCareTab({
   onPersonalizedMealPlanChange,
   personalizedMealPlanDetails,
   onPersonalizedMealPlanDetailsChange,
+  emergencyVetTransport = false,
+  onEmergencyVetTransportChange,
+  emergencyVetTransportDetails = "",
+  onEmergencyVetTransportDetailsChange,
+  maxPetsPerVisit = 1,
+  onMaxPetsPerVisitChange,
+  additionalPetPolicy = "",
+  onAdditionalPetPolicyChange,
 }: CourseCareTabProps) {
   if (isDogSitter) {
     return (
       <>
+        {/* Medication Administration */}
         <BooleanToggleField
           label="Medication Administration"
-          description="Can you administer medication or medical care?"
+          description="Can you administer medication or medical care to pets during visits?"
           checked={medicationAdministration}
           onChange={onMedicationAdministrationChange}
         >
@@ -79,13 +97,66 @@ export function CourseCareTab({
             <WysiwygEditor
               value={medicationAdministrationDetails}
               onChange={onMedicationAdministrationDetailsChange}
-              placeholder="e.g. oral tablets, injections, schedule limitations"
+              placeholder="e.g. oral tablets, injections, insulin administration, schedule limitations"
             />
           </div>
         </BooleanToggleField>
 
         <div className="h-px bg-border/60" />
 
+        {/* Emergency Vet Transport & First Aid */}
+        <BooleanToggleField
+          label="Emergency Vet Transport & First Aid"
+          description="Do you have a vehicle and pet first-aid capabilities to transport pets to an emergency veterinary clinic?"
+          checked={emergencyVetTransport}
+          onChange={onEmergencyVetTransportChange || (() => {})}
+        >
+          <div className="space-y-2">
+            <Label>Emergency Transport &amp; Vet Protocol</Label>
+            <WysiwygEditor
+              value={emergencyVetTransportDetails}
+              onChange={onEmergencyVetTransportDetailsChange || (() => {})}
+              placeholder="e.g. Pet first-aid certified, 24/7 dedicated vehicle on standby, direct partnership with local 24/7 emergency clinic..."
+            />
+          </div>
+        </BooleanToggleField>
+
+        <div className="h-px bg-border/60" />
+
+        {/* Multi-Pet Accommodation */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="max-pets" className="text-xs font-semibold">Maximum Pets Per Visit / Booking</Label>
+              <span className="text-[11px] text-muted-foreground">Select max pets accommodated simultaneously</span>
+            </div>
+            <CustomSelect
+              id="max-pets"
+              value={maxPetsPerVisit || 1}
+              onChange={(val) => onMaxPetsPerVisitChange?.(parseInt(val, 10))}
+              options={[
+                { value: 1, label: "1 pet per visit" },
+                { value: 2, label: "2 pets from same household" },
+                { value: 3, label: "3 pets from same household" },
+                { value: 4, label: "4 pets from same household" },
+                { value: 5, label: "5+ pets (custom multi-pet)" },
+              ]}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Additional Pet Policy &amp; Rates</Label>
+            <WysiwygEditor
+              value={additionalPetPolicy}
+              onChange={onAdditionalPetPolicyChange || (() => {})}
+              placeholder="e.g. +20 RON/hour for each additional dog from the same household. Cats and small pets welcomed at flat rate..."
+            />
+          </div>
+        </div>
+
+        <div className="h-px bg-border/60" />
+
+        {/* Communication with Owner */}
         <BooleanToggleField
           label="Communication with the Owner"
           description="Will you provide regular photo/video updates to the owner?"

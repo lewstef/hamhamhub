@@ -206,6 +206,10 @@ export function CourseForm({
   const [ownerCommunicationDetails, setOwnerCommunicationDetails] = useState(initialCourse?.ownerCommunicationDetails || "");
   const [personalizedMealPlan, setPersonalizedMealPlan] = useState(initialCourse?.personalizedMealPlan || false);
   const [personalizedMealPlanDetails, setPersonalizedMealPlanDetails] = useState(initialCourse?.personalizedMealPlanDetails || "");
+  const [emergencyVetTransport, setEmergencyVetTransport] = useState(initialCourse?.emergencyVetTransport || false);
+  const [emergencyVetTransportDetails, setEmergencyVetTransportDetails] = useState(initialCourse?.emergencyVetTransportDetails || "");
+  const [maxPetsPerVisit, setMaxPetsPerVisit] = useState(initialCourse?.maxPetsPerVisit || 1);
+  const [additionalPetPolicy, setAdditionalPetPolicy] = useState(initialCourse?.additionalPetPolicy || "");
 
   // Boarding check-in and check-out times in 24-hour (hh:mm) format (Work week & Weekend)
   const [checkin, setCheckin] = useState(initialCourse?.checkin || "08:00");
@@ -512,6 +516,17 @@ export function CourseForm({
       return;
     }
 
+    for (let i = 0; i < pricings.length; i++) {
+      const p = pricings[i];
+      if (p.amount && p.amount.trim()) {
+        const num = Number(p.amount);
+        if (isNaN(num) || num <= 0) {
+          setError(`Price amount for option #${i + 1} must be a positive number in lei.`);
+          return;
+        }
+      }
+    }
+
     setError(null);
     const formData = new FormData();
     if (isEdit && initialCourse?.id) {
@@ -555,6 +570,10 @@ export function CourseForm({
     formData.append("ownerCommunicationDetails", ownerCommunicationDetails);
     formData.append("personalizedMealPlan", String(personalizedMealPlan));
     formData.append("personalizedMealPlanDetails", personalizedMealPlanDetails);
+    formData.append("emergencyVetTransport", String(emergencyVetTransport));
+    formData.append("emergencyVetTransportDetails", emergencyVetTransportDetails);
+    formData.append("maxPetsPerVisit", String(maxPetsPerVisit));
+    formData.append("additionalPetPolicy", additionalPetPolicy);
 
     if (isBoarding) {
       formData.append("checkin", checkin);
@@ -619,6 +638,10 @@ export function CourseForm({
     if (ownerCommunicationDetails !== (initialCourse?.ownerCommunicationDetails || "")) return true;
     if (personalizedMealPlan !== (initialCourse?.personalizedMealPlan || false)) return true;
     if (personalizedMealPlanDetails !== (initialCourse?.personalizedMealPlanDetails || "")) return true;
+    if (emergencyVetTransport !== (initialCourse?.emergencyVetTransport || false)) return true;
+    if (emergencyVetTransportDetails !== (initialCourse?.emergencyVetTransportDetails || "")) return true;
+    if (maxPetsPerVisit !== (initialCourse?.maxPetsPerVisit || 1)) return true;
+    if (additionalPetPolicy !== (initialCourse?.additionalPetPolicy || "")) return true;
     return false;
   }, [
     name, details, termsOfParticipation, certifiedTrainer, certifierName, trainerExperienceDescription,
@@ -627,7 +650,9 @@ export function CourseForm({
     trainingFieldGoogleBusinessProfile, trainingFieldGoogleMapsLink, parking, parkingDescription,
     medicationAdministration, medicationAdministrationDetails, surveillance247, surveillance247Details,
     webCam, webCamDetails, dailyWalks, ownerCommunication, ownerCommunicationDetails,
-    personalizedMealPlan, personalizedMealPlanDetails, initialCourse
+    personalizedMealPlan, personalizedMealPlanDetails,
+    emergencyVetTransport, emergencyVetTransportDetails, maxPetsPerVisit, additionalPetPolicy,
+    initialCourse
   ]);
 
   const handleCancel = () => {
@@ -892,7 +917,7 @@ export function CourseForm({
                   <h3 className="text-base font-bold text-foreground">Care &amp; Facilities</h3>
                   <p className="text-xs text-muted-foreground">
                     {isDogSitter
-                      ? "Configure medication administration instructions and photo/video communication updates for sitting visits."
+                      ? "Configure medication administration, emergency vet transport, multi-pet policy, and owner photo updates."
                       : "Configure specialized boarding amenities, webcam access, meal customization, and owner updates."}
                   </p>
                 </div>
@@ -921,6 +946,14 @@ export function CourseForm({
                   onPersonalizedMealPlanChange={setPersonalizedMealPlan}
                   personalizedMealPlanDetails={personalizedMealPlanDetails}
                   onPersonalizedMealPlanDetailsChange={setPersonalizedMealPlanDetails}
+                  emergencyVetTransport={emergencyVetTransport}
+                  onEmergencyVetTransportChange={setEmergencyVetTransport}
+                  emergencyVetTransportDetails={emergencyVetTransportDetails}
+                  onEmergencyVetTransportDetailsChange={setEmergencyVetTransportDetails}
+                  maxPetsPerVisit={maxPetsPerVisit}
+                  onMaxPetsPerVisitChange={setMaxPetsPerVisit}
+                  additionalPetPolicy={additionalPetPolicy}
+                  onAdditionalPetPolicyChange={setAdditionalPetPolicy}
                 />
               </div>
             </div>

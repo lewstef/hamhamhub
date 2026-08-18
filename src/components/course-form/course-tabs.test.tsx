@@ -339,7 +339,10 @@ describe("CourseForm Subcomponents Suite", () => {
       expect(screen.getByText("24/7 Surveillance")).toBeDefined();
     });
 
-    it("renders Sitting mode care fields: Medication and Communication only", () => {
+    it("renders Sitting mode care fields: Medication, Emergency Vet Transport, Multi-Pet, and Communication", () => {
+      const onEmergencyChange = vi.fn();
+      const onMaxPetsChange = vi.fn();
+
       render(
         <CourseCareTab
           isDogWalking={false}
@@ -366,10 +369,21 @@ describe("CourseForm Subcomponents Suite", () => {
           onPersonalizedMealPlanChange={vi.fn()}
           personalizedMealPlanDetails=""
           onPersonalizedMealPlanDetailsChange={vi.fn()}
+          emergencyVetTransport={true}
+          onEmergencyVetTransportChange={onEmergencyChange}
+          emergencyVetTransportDetails="Vehicle ready 24/7"
+          onEmergencyVetTransportDetailsChange={vi.fn()}
+          maxPetsPerVisit={2}
+          onMaxPetsPerVisitChange={onMaxPetsChange}
+          additionalPetPolicy="+25 RON/hr for second dog"
+          onAdditionalPetPolicyChange={vi.fn()}
         />
       );
 
       expect(screen.getByText("Medication Administration")).toBeDefined();
+      expect(screen.getByText("Emergency Vet Transport & First Aid")).toBeDefined();
+      expect(screen.getByText("Maximum Pets Per Visit / Booking")).toBeDefined();
+      expect(screen.getByText("Additional Pet Policy & Rates")).toBeDefined();
       expect(screen.getByText("Communication with the Owner")).toBeDefined();
       expect(screen.queryByLabelText("Daily Walks")).toBeNull();
       expect(screen.queryByText("24/7 Surveillance")).toBeNull();

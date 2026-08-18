@@ -34,6 +34,10 @@ export interface Course {
   ownerCommunicationDetails?: string | null;
   personalizedMealPlan?: boolean | null;
   personalizedMealPlanDetails?: string | null;
+  emergencyVetTransport?: boolean | null;
+  emergencyVetTransportDetails?: string | null;
+  maxPetsPerVisit?: number | null;
+  additionalPetPolicy?: string | null;
   checkin?: string | null;
   checkout?: string | null;
   checkinWeekend?: string | null;
