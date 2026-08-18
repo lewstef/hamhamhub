@@ -462,6 +462,8 @@ describe("CourseForm Subcomponents Suite", () => {
           selectedAgeLimits={[]}
           onSelectedAgeLimitsChange={vi.fn()}
           showDogSizes={true}
+          dogSizesEnabled={true}
+          onDogSizesEnabledChange={vi.fn()}
           selectedDogSizes={["Small", "Medium"]}
           onSelectedDogSizesChange={onSelectedDogSizesChange}
         />

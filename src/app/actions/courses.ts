@@ -52,6 +52,7 @@ interface ParsedCourseData {
   schedule: string | null;
   ageLimitsEnabled: boolean;
   ageLimits: string | null;
+  acceptedDogSizesEnabled: boolean;
   acceptedDogSizes: string | null;
   trainingFormat: string | null;
   maxDogsPerGroup: number | null;
@@ -119,6 +120,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const schedule = (formData.get("schedule") as string) || null;
   const ageLimitsEnabled = formData.get("ageLimitsEnabled") === "true";
   const ageLimits = (formData.get("ageLimits") as string) || null;
+  const acceptedDogSizesEnabled = formData.get("acceptedDogSizesEnabled") === "true";
   const acceptedDogSizes = (formData.get("acceptedDogSizes") as string) || null;
   const trainingFormat = (formData.get("trainingFormat") as string) || null;
   const maxDogsPerGroupStr = formData.get("maxDogsPerGroup") as string;
@@ -212,7 +214,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
       emergencyVetTransport, emergencyVetTransportDetails,
       maxPetsPerVisit, additionalPetPolicy,
       checkin, checkout, checkinWeekend, checkoutWeekend,
-      schedule, ageLimitsEnabled, ageLimits, acceptedDogSizes,
+      schedule, ageLimitsEnabled, ageLimits, acceptedDogSizesEnabled, acceptedDogSizes,
       trainingFormat, maxDogsPerGroup, indoorFacility, indoorFacilityDescription,
       playYard, playYardDetails, pool, poolDetails, socializationPolicy,
       coverageZones, faq,
@@ -318,7 +320,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       schedule: d.schedule,
       ageLimitsEnabled: d.ageLimitsEnabled,
       ageLimits: d.ageLimitsEnabled ? d.ageLimits : null,
-      acceptedDogSizes: d.acceptedDogSizes,
+      acceptedDogSizesEnabled: d.acceptedDogSizesEnabled,
+      acceptedDogSizes: d.acceptedDogSizesEnabled ? d.acceptedDogSizes : null,
       trainingFormat: d.trainingFormat,
       maxDogsPerGroup: d.maxDogsPerGroup,
       indoorFacility: d.indoorFacility,
@@ -433,7 +436,8 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         schedule: d.schedule,
         ageLimitsEnabled: d.ageLimitsEnabled,
         ageLimits: d.ageLimitsEnabled ? d.ageLimits : null,
-        acceptedDogSizes: d.acceptedDogSizes,
+        acceptedDogSizesEnabled: d.acceptedDogSizesEnabled,
+        acceptedDogSizes: d.acceptedDogSizesEnabled ? d.acceptedDogSizes : null,
         trainingFormat: d.trainingFormat,
         maxDogsPerGroup: d.maxDogsPerGroup,
         indoorFacility: d.indoorFacility,

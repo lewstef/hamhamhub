@@ -57,6 +57,7 @@ describe("Courses Server Actions", () => {
       formData.append("trainerExperienceDescription", "10 years experience");
       formData.append("ageLimitsEnabled", "true");
       formData.append("ageLimits", "Puppy (2-6 mos),Senior (7+ yrs)");
+      formData.append("acceptedDogSizesEnabled", "true");
       formData.append("acceptedDogSizes", "Small,Medium");
       formData.append("trainingFormat", "Group Class");
       formData.append("maxDogsPerGroup", "6");
@@ -78,6 +79,7 @@ describe("Courses Server Actions", () => {
         trainerExperienceDescription: "10 years experience",
         ageLimitsEnabled: true,
         ageLimits: "Puppy (2-6 mos),Senior (7+ yrs)",
+        acceptedDogSizesEnabled: true,
         acceptedDogSizes: "Small,Medium",
         trainingFormat: "Group Class",
         maxDogsPerGroup: 6,
@@ -194,6 +196,7 @@ describe("Courses Server Actions", () => {
       formData.append("emergencyVetTransportDetails", "Emergency vehicle on standby");
       formData.append("maxPetsPerVisit", "2");
       formData.append("additionalPetPolicy", "+20 RON/hr for second dog");
+      formData.append("acceptedDogSizesEnabled", "true");
       formData.append("acceptedDogSizes", "Small,Medium,Large");
 
       const result = await createCourseAction(null, formData);
@@ -208,6 +211,7 @@ describe("Courses Server Actions", () => {
         emergencyVetTransportDetails: "Emergency vehicle on standby",
         maxPetsPerVisit: 2,
         additionalPetPolicy: "+20 RON/hr for second dog",
+        acceptedDogSizesEnabled: true,
         acceptedDogSizes: "Small,Medium,Large",
       }));
       expect(result).toEqual({ success: true });

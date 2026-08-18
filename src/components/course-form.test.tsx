@@ -257,10 +257,20 @@ describe("CourseForm Component", () => {
     // On Terms tab, Age Limits & Restrictions and Accepted Dog Sizes should be present
     expect(screen.getByText("Age Limits & Restrictions")).toBeDefined();
     expect(screen.getByText("Accepted Dog Sizes")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Medium" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Large" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Giant" })).toBeDefined();
+
+    // Toggle on Accepted Dog Sizes
+    const sizesSection = screen.getByText("Accepted Dog Sizes").closest(".space-y-4");
+    const sizesSwitch = sizesSection?.querySelector("button[role='switch']");
+    expect(sizesSwitch).toBeDefined();
+    if (sizesSwitch) {
+      await act(async () => {
+        fireEvent.click(sizesSwitch);
+      });
+      expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Medium" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Large" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Giant" })).toBeDefined();
+    }
 
     // Click Location tab
     fireEvent.click(screen.getByRole("button", { name: "Coverage zones" }));
@@ -316,7 +326,17 @@ describe("CourseForm Component", () => {
     // On Terms tab, Age Limits & Restrictions and Accepted Dog Sizes should be present
     expect(screen.getByText("Age Limits & Restrictions")).toBeDefined();
     expect(screen.getByText("Accepted Dog Sizes")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
+
+    // Toggle on Accepted Dog Sizes
+    const sportSizesSection = screen.getByText("Accepted Dog Sizes").closest(".space-y-4");
+    const sportSizesSwitch = sportSizesSection?.querySelector("button[role='switch']");
+    expect(sportSizesSwitch).toBeDefined();
+    if (sportSizesSwitch) {
+      await act(async () => {
+        fireEvent.click(sportSizesSwitch);
+      });
+      expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
+    }
 
     // Click Location tab
     fireEvent.click(screen.getByRole("button", { name: "Coverage zones" }));
@@ -325,7 +345,7 @@ describe("CourseForm Component", () => {
     expect(screen.getByText("Indoor / Covered Training Hall")).toBeDefined();
   });
 
-  it("should render correct placeholder for Sitting service name and details", () => {
+  it("should render correct placeholder for Sitting service name and details", async () => {
     render(
       <CourseForm
         organizationId="org-1"
@@ -414,10 +434,18 @@ describe("CourseForm Component", () => {
     // Verify Accepted Dog Sizes is rendered on Terms tab
     fireEvent.click(screen.getByRole("button", { name: "Terms of participation" }));
     expect(screen.getByText("Accepted Dog Sizes")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Medium" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Large" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Giant" })).toBeDefined();
+    const sittingSizesSection = screen.getByText("Accepted Dog Sizes").closest(".space-y-4");
+    const sittingSizesSwitch = sittingSizesSection?.querySelector("button[role='switch']");
+    expect(sittingSizesSwitch).toBeDefined();
+    if (sittingSizesSwitch) {
+      await act(async () => {
+        fireEvent.click(sittingSizesSwitch);
+      });
+      expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Medium" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Large" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Giant" })).toBeDefined();
+    }
   });
 
   it("should render and manage boarding service custom fields correctly", async () => {
@@ -543,10 +571,18 @@ describe("CourseForm Component", () => {
     // Switch to Terms tab and check Accepted Dog Sizes
     fireEvent.click(screen.getByRole("button", { name: "Terms" }));
     expect(screen.getByText("Accepted Dog Sizes")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Medium" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Large" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Giant" })).toBeDefined();
+    const boardingSizesSection = screen.getByText("Accepted Dog Sizes").closest(".space-y-4");
+    const boardingSizesSwitch = boardingSizesSection?.querySelector("button[role='switch']");
+    expect(boardingSizesSwitch).toBeDefined();
+    if (boardingSizesSwitch) {
+      await act(async () => {
+        fireEvent.click(boardingSizesSwitch);
+      });
+      expect(screen.getByRole("button", { name: "Small" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Medium" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Large" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Giant" })).toBeDefined();
+    }
 
     // Switch to Play yard & socialization tab
     fireEvent.click(screen.getByRole("button", { name: "Play yard & socialization" }));

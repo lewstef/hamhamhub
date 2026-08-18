@@ -43,19 +43,35 @@ export interface Course {
   checkinWeekend?: string | null;
   checkoutWeekend?: string | null;
   schedule?: string | null;
+  /** Age Limits & Restrictions toggle */
   ageLimitsEnabled?: boolean | null;
+  /** Comma-separated list of accepted dog age groups (e.g. "Puppy (2-6 mos),Adult (1-7 yrs)") */
   ageLimits?: string | null;
+  /** Accepted Dog Sizes toggle */
+  acceptedDogSizesEnabled?: boolean | null;
+  /** Comma-separated list of accepted dog sizes (e.g. "Small,Medium,Large,Giant") */
   acceptedDogSizes?: string | null;
+  /** Training Format / Session Type preset (e.g. "Group Class", "Private 1-on-1 Session", "In-Home Training", "Board & Train", "Online Consultation") */
   trainingFormat?: string | null;
+  /** Maximum number of dogs allowed in a group training session */
   maxDogsPerGroup?: number | null;
+  /** Whether the facility includes an indoor / covered weatherproof training hall */
   indoorFacility?: boolean | null;
+  /** Rich text description of indoor facility features, size, climate control, and flooring */
   indoorFacilityDescription?: string | null;
+  /** Fenced Outdoor Play Yard toggle for Dog Boarding */
   playYard?: boolean | null;
+  /** Rich text description of play yard amenities, security fencing, and agility features */
   playYardDetails?: string | null;
+  /** Dog Swimming Pool & Splash Area toggle for Dog Boarding */
   pool?: boolean | null;
+  /** Rich text description of pool entry, water quality, and life jacket safety */
   poolDetails?: string | null;
+  /** Socialization & Group Play Policy for Dog Boarding */
   socializationPolicy?: string | null;
+  /** Primary & Secondary coverage zones serialized JSON */
   coverageZones?: string | null;
+  /** FAQs serialized JSON */
   faq?: string | null;
 }
 

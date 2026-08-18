@@ -116,6 +116,7 @@ export const courses = pgTable("courses", {
   schedule: text("schedule"),
   ageLimitsEnabled: boolean("age_limits_enabled").default(false).notNull(),
   ageLimits: text("age_limits"),
+  acceptedDogSizesEnabled: boolean("accepted_dog_sizes_enabled").default(false).notNull(),
   acceptedDogSizes: text("accepted_dog_sizes"),
   trainingFormat: text("training_format"),
   maxDogsPerGroup: integer("max_dogs_per_group"),

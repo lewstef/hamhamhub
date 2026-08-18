@@ -176,6 +176,7 @@ export function CourseForm({
       ? initialCourse.ageLimits.split(",").map((s) => s.trim()).filter(Boolean)
       : []
   );
+  const [dogSizesEnabled, setDogSizesEnabled] = useState(initialCourse?.acceptedDogSizesEnabled || false);
   const [selectedDogSizes, setSelectedDogSizes] = useState<string[]>(
     initialCourse?.acceptedDogSizes
       ? initialCourse.acceptedDogSizes.split(",").map((s) => s.trim()).filter(Boolean)
@@ -565,6 +566,7 @@ export function CourseForm({
     formData.append("veterinaryTrainingDetails", veterinaryTrainingDetails);
     formData.append("ageLimitsEnabled", String(ageLimitsEnabled));
     formData.append("ageLimits", selectedAgeLimits.join(","));
+    formData.append("acceptedDogSizesEnabled", String(dogSizesEnabled));
     formData.append("acceptedDogSizes", selectedDogSizes.join(","));
     formData.append("trainingFormat", trainingFormat);
     if (maxDogsPerGroup !== null && maxDogsPerGroup !== undefined) {
@@ -831,6 +833,8 @@ export function CourseForm({
                   selectedAgeLimits={selectedAgeLimits}
                   onSelectedAgeLimitsChange={setSelectedAgeLimits}
                   showDogSizes={isDogWalking || isDogSitter || isBoarding || isDogTraining || isDogSport}
+                  dogSizesEnabled={dogSizesEnabled}
+                  onDogSizesEnabledChange={setDogSizesEnabled}
                   selectedDogSizes={selectedDogSizes}
                   onSelectedDogSizesChange={setSelectedDogSizes}
                 />
@@ -1129,6 +1133,8 @@ export function CourseForm({
                       selectedAgeLimits={selectedAgeLimits}
                       onSelectedAgeLimitsChange={setSelectedAgeLimits}
                       showDogSizes={isDogWalking || isDogSitter || isBoarding || isDogTraining || isDogSport}
+                      dogSizesEnabled={dogSizesEnabled}
+                      onDogSizesEnabledChange={setDogSizesEnabled}
                       selectedDogSizes={selectedDogSizes}
                       onSelectedDogSizesChange={setSelectedDogSizes}
                     />
