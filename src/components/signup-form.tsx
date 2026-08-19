@@ -12,7 +12,6 @@ import { PasswordStrength } from "@/components/password-strength";
 
 export function SignupForm() {
   const router = useRouter();
-  const [roleType, setRoleType] = useState<"user" | "staff">("user");
   const [passwordVal, setPasswordVal] = useState("");
   const [state, formAction, isPending] = useActionState(signUpAction, null);
 

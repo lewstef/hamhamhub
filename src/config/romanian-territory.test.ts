@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ROMANIAN_COUNTIES, ROMANIAN_LOCALITIES_BY_COUNTY, getCountyLocalities } from "./romanian-territory";
+import { ROMANIAN_COUNTIES, getCountyLocalities } from "./romanian-territory";
 
 describe("Romanian Territory Configuration", () => {
   it("should contain 42 Romanian counties", () => {

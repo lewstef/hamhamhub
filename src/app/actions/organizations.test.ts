@@ -821,7 +821,7 @@ describe("Organization Server Actions", () => {
         .mockResolvedValueOnce([{ id: "org-1", name: "Test Org", email: "test@org.com", organizationCategory: "ngo", categoryVerificationStatus: "unverified" }])
         .mockResolvedValueOnce([{ id: "ngo", name: "NGO Category" }]);
       mockUpdate.mockResolvedValueOnce([{ id: "org-1" }]);
-      vi.mocked(sendMail).mockResolvedValueOnce({ error: "Mail server unreachable" });
+      vi.mocked(sendMail).mockResolvedValueOnce({ success: false, error: "Mail server unreachable" });
 
       const res = await requestOrganizationVerificationAction("org-1");
       expect(res.success).toBe(true);
@@ -910,7 +910,7 @@ describe("Organization Server Actions", () => {
       );
 
       // requestNewCartierAction with sendMail error and notes
-      vi.mocked(sendMail).mockResolvedValueOnce({ error: "SMTP timeout" });
+      vi.mocked(sendMail).mockResolvedValueOnce({ success: false, error: "SMTP timeout" });
       const cartierRes = await requestNewCartierAction({
         cityName: "Cluj",
         cartierName: "Zorilor",

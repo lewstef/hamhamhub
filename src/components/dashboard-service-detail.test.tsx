@@ -5,6 +5,7 @@ import React from "react";
 import { DashboardServiceDetail } from "./dashboard-service-detail";
 import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
 import { deleteCourseAction, createCourseAction } from "@/app/actions/courses";
+import { createMockCourse } from "@/testing/mock-factories";
 
 vi.mock("lucide-react", () => ({
   ArrowLeft: () => <div data-testid="arrow-left" />,
@@ -1133,12 +1134,12 @@ describe("DashboardServiceDetail Component", () => {
         initialIsEnabled={true}
         slug="dog-training"
         courses={[
-          {
+          createMockCourse({
             id: "crs-delete-test",
             name: "Basic Training Session",
             price: "100",
             priceType: "session",
-          },
+          }),
         ]}
       />
     );
@@ -1167,8 +1168,8 @@ describe("DashboardServiceDetail Component", () => {
         initialIsEnabled={true}
         slug="dog-training"
         courses={[
-          { id: "crs-1", name: "Course One" },
-          { id: "crs-2", name: "Course Two" },
+          createMockCourse({ id: "crs-1", name: "Course One" }),
+          createMockCourse({ id: "crs-2", name: "Course Two" }),
         ]}
       />
     );

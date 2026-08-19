@@ -1,6 +1,5 @@
 // @vitest-environment happy-dom
-import * as React from "react";
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useIsMobile } from "./use-mobile";
 

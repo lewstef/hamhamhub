@@ -43,6 +43,10 @@ interface ParsedCourseData {
   personalizedMealPlanDetails: string;
   emergencyVetTransport: boolean;
   emergencyVetTransportDetails: string;
+  plantWatering: boolean;
+  plantWateringDetails: string;
+  nonSmoker: boolean;
+  spokenLanguages: string | null;
   maxPetsPerVisit: number | null;
   additionalPetPolicy: string;
   checkin: string | null;
@@ -110,6 +114,10 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const personalizedMealPlanDetails = formData.get("personalizedMealPlanDetails") as string;
   const emergencyVetTransport = formData.get("emergencyVetTransport") === "true";
   const emergencyVetTransportDetails = (formData.get("emergencyVetTransportDetails") as string) || "";
+  const plantWatering = formData.get("plantWatering") === "true";
+  const plantWateringDetails = (formData.get("plantWateringDetails") as string) || "";
+  const nonSmoker = formData.get("nonSmoker") === "true";
+  const spokenLanguages = (formData.get("spokenLanguages") as string) || null;
   const maxPetsPerVisitStr = formData.get("maxPetsPerVisit") as string;
   const maxPetsPerVisit = maxPetsPerVisitStr ? parseInt(maxPetsPerVisitStr, 10) : null;
   const additionalPetPolicy = (formData.get("additionalPetPolicy") as string) || "";
@@ -168,6 +176,9 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   if (checkout && !timeRegex.test(checkout)) {
     return { error: "Invalid work week check-out time format. Use hh:mm (24h)." };
   }
+  if (checkin && checkout && checkout <= checkin) {
+    return { error: "Check-out time cannot be before or equal to check-in time." };
+  }
   if (checkinWeekend && !timeRegex.test(checkinWeekend)) {
     return { error: "Invalid weekend check-in time format. Use hh:mm (24h)." };
   }
@@ -212,6 +223,8 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
       ownerCommunication, ownerCommunicationDetails,
       personalizedMealPlan, personalizedMealPlanDetails,
       emergencyVetTransport, emergencyVetTransportDetails,
+      plantWatering, plantWateringDetails,
+      nonSmoker, spokenLanguages,
       maxPetsPerVisit, additionalPetPolicy,
       checkin, checkout, checkinWeekend, checkoutWeekend,
       schedule, ageLimitsEnabled, ageLimits, acceptedDogSizesEnabled, acceptedDogSizes,

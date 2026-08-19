@@ -15,14 +15,16 @@ describe("Database Schema (src/db/schema.ts)", () => {
   });
 
   it("triggers $onUpdate handlers for updatedAt columns", () => {
-    const usersUpdatedAt = (schema.users as any).updatedAt;
+    const usersCols = schema.users as unknown as Record<string, { onUpdateFn?: () => unknown }>;
+    const usersUpdatedAt = usersCols.updatedAt;
     expect(usersUpdatedAt).toBeDefined();
     if (usersUpdatedAt && typeof usersUpdatedAt.onUpdateFn === "function") {
       const date = usersUpdatedAt.onUpdateFn();
       expect(date).toBeInstanceOf(Date);
     }
 
-    const settingsUpdatedAt = (schema.systemSettings as any).updatedAt;
+    const settingsCols = schema.systemSettings as unknown as Record<string, { onUpdateFn?: () => unknown }>;
+    const settingsUpdatedAt = settingsCols.updatedAt;
     expect(settingsUpdatedAt).toBeDefined();
     if (settingsUpdatedAt && typeof settingsUpdatedAt.onUpdateFn === "function") {
       const date = settingsUpdatedAt.onUpdateFn();
@@ -31,18 +33,18 @@ describe("Database Schema (src/db/schema.ts)", () => {
   });
 
   it("verifies courses table contains all required sub-service columns", () => {
-    const cols = schema.courses;
-    expect((cols as any).acceptedDogSizesEnabled).toBeDefined();
-    expect((cols as any).acceptedDogSizes).toBeDefined();
-    expect((cols as any).trainingFormat).toBeDefined();
-    expect((cols as any).maxDogsPerGroup).toBeDefined();
-    expect((cols as any).indoorFacility).toBeDefined();
-    expect((cols as any).indoorFacilityDescription).toBeDefined();
-    expect((cols as any).playYard).toBeDefined();
-    expect((cols as any).playYardDetails).toBeDefined();
-    expect((cols as any).pool).toBeDefined();
-    expect((cols as any).poolDetails).toBeDefined();
-    expect((cols as any).socializationPolicy).toBeDefined();
+    const cols = schema.courses as unknown as Record<string, unknown>;
+    expect(cols.acceptedDogSizesEnabled).toBeDefined();
+    expect(cols.acceptedDogSizes).toBeDefined();
+    expect(cols.trainingFormat).toBeDefined();
+    expect(cols.maxDogsPerGroup).toBeDefined();
+    expect(cols.indoorFacility).toBeDefined();
+    expect(cols.indoorFacilityDescription).toBeDefined();
+    expect(cols.playYard).toBeDefined();
+    expect(cols.playYardDetails).toBeDefined();
+    expect(cols.pool).toBeDefined();
+    expect(cols.poolDetails).toBeDefined();
+    expect(cols.socializationPolicy).toBeDefined();
   });
 
   it("evaluates foreign key reference functions across all tables", () => {
@@ -55,9 +57,9 @@ describe("Database Schema (src/db/schema.ts)", () => {
     ];
 
     for (const table of allTables) {
-      for (const col of Object.values(table)) {
-        if (col && typeof (col as any).reference === "function") {
-          const ref = (col as any).reference();
+      for (const col of Object.values(table as unknown as Record<string, unknown>)) {
+        if (col && typeof col === "object" && "reference" in col && typeof (col as { reference: () => unknown }).reference === "function") {
+          const ref = (col as { reference: () => unknown }).reference();
           expect(ref).toBeDefined();
         }
       }

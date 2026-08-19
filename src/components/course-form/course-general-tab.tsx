@@ -5,21 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
+import {
+  SPOKEN_LANGUAGES_LIST,
+  DOG_SPORT_DISCIPLINES,
+  DOG_TRAINING_FORMATS,
+} from "@/types/course";
 
-export const DOG_SPORT_DISCIPLINES = [
-  "Agility",
-  "IGP / Schutzhund",
-  "Mondioring",
-  "Ring",
-  "Flyball",
-  "Canine Frisbee / Disc Dog",
-  "Dog dancing",
-  "Hoopers",
-  "Canicross / Bikejoring",
-  "Mantrailing",
-  "Rally Obedience",
-  "Dock Diving",
-] as const;
+export { DOG_SPORT_DISCIPLINES, DOG_TRAINING_FORMATS };
 
 interface CourseGeneralTabProps {
   name: string;
@@ -42,6 +34,8 @@ interface CourseGeneralTabProps {
   onTrainingFormatChange?: (v: string) => void;
   maxDogsPerGroup?: number | null;
   onMaxDogsPerGroupChange?: (v: number | null) => void;
+  spokenLanguages?: string[];
+  onToggleLanguage?: (lang: string) => void;
   ageLimitsEnabled: boolean;
   onAgeLimitsEnabledChange: (v: boolean) => void;
   selectedAgeLimits: string[];
@@ -80,6 +74,8 @@ export function CourseGeneralTab({
   onTrainingFormatChange,
   maxDogsPerGroup = null,
   onMaxDogsPerGroupChange,
+  spokenLanguages = ["Romanian", "English"],
+  onToggleLanguage = () => {},
   ageLimitsEnabled,
   onAgeLimitsEnabledChange,
   selectedAgeLimits,
@@ -166,12 +162,12 @@ export function CourseGeneralTab({
       )}
 
 
-      {/* Dog Sports Discipline Preset Selector */}
+      {/* Dog Sport Disciplines Selector */}
       {(isDogSport || itemNoun === "Dog Sport") && (
-        <div className="space-y-2">
+        <div className="space-y-3 p-4 rounded-xl border border-border/80 bg-muted/20">
           <div className="flex items-center justify-between">
             <Label className="text-xs font-semibold text-foreground">Sport Discipline</Label>
-            <span className="text-[11px] text-muted-foreground">Select a discipline preset or enter custom name below</span>
+            <span className="text-[11px] text-muted-foreground">Select a standard discipline or customize name below</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {DOG_SPORT_DISCIPLINES.map((discipline) => {
@@ -195,21 +191,15 @@ export function CourseGeneralTab({
         </div>
       )}
 
-      {/* Training Format / Session Type Preset Selector */}
-      {(isDogTraining || itemNoun === "Course" || itemNoun === "Training course") && onTrainingFormatChange && (
+      {/* Dog Training Format Selector (Group Class, Private 1-on-1, etc.) */}
+      {(isDogTraining || itemNoun === "Training course" || itemNoun === "Course") && onTrainingFormatChange && (
         <div className="space-y-3 p-4 rounded-xl border border-border/80 bg-muted/20">
           <div className="flex items-center justify-between">
             <Label className="text-xs font-semibold text-foreground">Training Format / Session Type</Label>
             <span className="text-[11px] text-muted-foreground">Select how training is conducted</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {[
-              "Group Class",
-              "Private 1-on-1 Session",
-              "In-Home Training",
-              "Board & Train",
-              "Online Consultation",
-            ].map((format) => {
+            {DOG_TRAINING_FORMATS.map((format) => {
               const isSelected = trainingFormat === format;
               return (
                 <button
@@ -269,6 +259,34 @@ export function CourseGeneralTab({
           onChange={onDetailsChange}
           placeholder={getDetailsPlaceholder()}
         />
+      </div>
+
+      {/* Spoken Languages Selector */}
+      <div className="space-y-3 p-4 rounded-xl border border-border/80 bg-muted/20">
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs font-semibold text-foreground">Spoken Languages</Label>
+          <span className="text-[11px] text-muted-foreground">Select the languages staff / instructors can comfortably communicate in with pet owners</span>
+        </div>
+        <div className="flex flex-wrap gap-2 pt-1">
+          {SPOKEN_LANGUAGES_LIST.map((lang) => {
+            const isSelected = spokenLanguages.includes(lang);
+            return (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => onToggleLanguage(lang)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer select-none flex items-center gap-1.5 ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs font-bold"
+                    : "bg-card text-muted-foreground hover:bg-muted/70 hover:text-foreground border-border"
+                }`}
+              >
+                {isSelected && <span>✓</span>}
+                {lang}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <BooleanToggleField

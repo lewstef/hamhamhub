@@ -48,10 +48,10 @@ describe("romanian-cartiere module", () => {
 
   it("should handle null and empty string inputs gracefully", () => {
     expect(normalizeCityName("")).toBe("");
-    expect(normalizeCityName(null as any)).toBe("");
+    expect(normalizeCityName(null as unknown as string)).toBe("");
     expect(getCartiereForCity("")).toBeNull();
-    expect(getCartiereForCity(null as any)).toBeNull();
+    expect(getCartiereForCity(null as unknown as string)).toBeNull();
     expect(isCitySupported("")).toBe(false);
-    expect(isCitySupported(null as any)).toBe(false);
+    expect(isCitySupported(null as unknown as string)).toBe(false);
   });
 });

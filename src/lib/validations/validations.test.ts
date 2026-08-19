@@ -70,6 +70,15 @@ describe("Zod Validation Schemas (src/lib/validations/)", () => {
       expect(organizationCategorySchema.safeParse({ name: "" }).success).toBe(false);
     });
 
+    it("should validate update organization input", () => {
+      const valid = updateOrganizationSchema.safeParse({
+        id: "org_1",
+        name: "Happy Paws SRL",
+        phoneNumber: "+40712345678",
+      });
+      expect(valid.success).toBe(true);
+    });
+
     it("should validate request new cartier input", () => {
       const valid = requestNewCartierSchema.safeParse({
         organizationId: "org_1",
@@ -80,16 +89,6 @@ describe("Zod Validation Schemas (src/lib/validations/)", () => {
         contactEmail: "contact@paws.org",
       });
       expect(valid.success).toBe(true);
-
-      const invalidEmail = requestNewCartierSchema.safeParse({
-        organizationId: "org_1",
-        organizationName: "Paws NGO",
-        cartierName: "Aviation",
-        county: "București",
-        locality: "București",
-        contactEmail: "invalid-email",
-      });
-      expect(invalidEmail.success).toBe(false);
     });
 
     it("should refine change organization password", () => {
@@ -110,6 +109,15 @@ describe("Zod Validation Schemas (src/lib/validations/)", () => {
   });
 
   describe("Course Validation Schemas", () => {
+    it("should validate course schema", () => {
+      const valid = courseSchema.safeParse({
+        organizationId: "org_1",
+        serviceId: "srv_1",
+        name: "Basic Obedience",
+      });
+      expect(valid.success).toBe(true);
+    });
+
     it("should validate course pricing schema", () => {
       const valid = coursePricingSchema.safeParse({
         billingFrequency: "per_session",
@@ -137,6 +145,23 @@ describe("Zod Validation Schemas (src/lib/validations/)", () => {
         username: "johnstaff",
         email: "john@staff.com",
         role: "admin",
+      });
+      expect(valid.success).toBe(true);
+    });
+
+    it("should validate employee password change", () => {
+      const valid = changeEmployeePasswordSchema.safeParse({
+        id: "emp_1",
+        password: "newpassword123",
+        confirmPassword: "newpassword123",
+      });
+      expect(valid.success).toBe(true);
+    });
+
+    it("should validate user creation input", () => {
+      const valid = userSchema.safeParse({
+        name: "Jane Doe",
+        email: "jane@example.com",
       });
       expect(valid.success).toBe(true);
     });

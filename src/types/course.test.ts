@@ -1,6 +1,13 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from "vitest";
-import { parseCoverageZones, serializeCoverageZones, CoverageZonesData } from "./course";
+import {
+  parseCoverageZones,
+  serializeCoverageZones,
+  CoverageZonesData,
+  SPOKEN_LANGUAGES_LIST,
+  DOG_SPORT_DISCIPLINES,
+  DOG_TRAINING_FORMATS,
+} from "./course";
 
 describe("Course Types & Coverage Zone Helpers (src/types/course.ts)", () => {
   describe("parseCoverageZones", () => {
@@ -69,8 +76,8 @@ describe("Course Types & Coverage Zone Helpers (src/types/course.ts)", () => {
     });
 
     it("returns empty arrays if raw input is non-string non-JSON object or number", () => {
-      expect(parseCoverageZones(12345 as any)).toEqual({ primary: [], secondary: [] });
-      expect(parseCoverageZones({ invalid: true } as any)).toEqual({ primary: [], secondary: [] });
+      expect(parseCoverageZones(12345 as unknown as string)).toEqual({ primary: [], secondary: [] });
+      expect(parseCoverageZones({ invalid: true } as unknown as string)).toEqual({ primary: [], secondary: [] });
     });
   });
 
@@ -83,6 +90,48 @@ describe("Course Types & Coverage Zone Helpers (src/types/course.ts)", () => {
       const jsonStr = serializeCoverageZones(data);
       expect(jsonStr).toBe(JSON.stringify(data));
       expect(parseCoverageZones(jsonStr)).toEqual(data);
+    });
+  });
+
+  describe("SPOKEN_LANGUAGES_LIST", () => {
+    it("contains Romanian, English, Hungarian, German, French, Italian, Spanish, and Ukrainian", () => {
+      expect(SPOKEN_LANGUAGES_LIST).toContain("Romanian");
+      expect(SPOKEN_LANGUAGES_LIST).toContain("English");
+      expect(SPOKEN_LANGUAGES_LIST).toContain("Hungarian");
+      expect(SPOKEN_LANGUAGES_LIST).toContain("German");
+      expect(SPOKEN_LANGUAGES_LIST).toContain("French");
+      expect(SPOKEN_LANGUAGES_LIST).toContain("Italian");
+      expect(SPOKEN_LANGUAGES_LIST).toContain("Spanish");
+      expect(SPOKEN_LANGUAGES_LIST).toContain("Ukrainian");
+      expect(SPOKEN_LANGUAGES_LIST.length).toBe(8);
+    });
+  });
+
+  describe("DOG_SPORT_DISCIPLINES", () => {
+    it("contains Mantrailing and Search & rescue along with other core disciplines", () => {
+      expect(DOG_SPORT_DISCIPLINES).toContain("Mantrailing");
+      expect(DOG_SPORT_DISCIPLINES).toContain("Search & rescue");
+      expect(DOG_SPORT_DISCIPLINES).toContain("Agility");
+      expect(DOG_SPORT_DISCIPLINES).toContain("IGP / Schutzhund");
+      expect(DOG_SPORT_DISCIPLINES).toContain("Mondioring");
+    });
+  });
+
+  describe("DOG_TRAINING_FORMATS", () => {
+    it("contains Truffle hunting, Show handling, and Security & Protection after In-Home Training", () => {
+      expect(DOG_TRAINING_FORMATS).toContain("In-Home Training");
+      expect(DOG_TRAINING_FORMATS).toContain("Truffle hunting");
+      expect(DOG_TRAINING_FORMATS).toContain("Show handling");
+      expect(DOG_TRAINING_FORMATS).toContain("Security & Protection");
+
+      const inHomeIdx = DOG_TRAINING_FORMATS.indexOf("In-Home Training");
+      const truffleIdx = DOG_TRAINING_FORMATS.indexOf("Truffle hunting");
+      const showIdx = DOG_TRAINING_FORMATS.indexOf("Show handling");
+      const securityIdx = DOG_TRAINING_FORMATS.indexOf("Security & Protection");
+
+      expect(truffleIdx).toBe(inHomeIdx + 1);
+      expect(showIdx).toBe(inHomeIdx + 2);
+      expect(securityIdx).toBe(inHomeIdx + 3);
     });
   });
 });

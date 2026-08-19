@@ -22,7 +22,7 @@ describe("Proxy / Middleware Module (src/proxy.ts)", () => {
       nextUrl: { pathname: "/dashboard/courses" },
     };
 
-    const response = (proxy as any)(mockReq as any);
+    const response = (proxy as (req: unknown) => NextResponse)(mockReq);
     expect(response).toBeDefined();
     expect(response instanceof NextResponse).toBe(true);
   });

@@ -93,6 +93,42 @@ describe("CourseForm Subcomponents Suite", () => {
       expect(screen.getByDisplayValue("FCI Dog Trainer License")).toBeDefined();
     });
 
+    it("renders Dog Sport disciplines including Mantrailing and Search & rescue", () => {
+      const onNameChange = vi.fn();
+
+      render(
+        <CourseGeneralTab
+          name=""
+          onNameChange={onNameChange}
+          details=""
+          onDetailsChange={vi.fn()}
+          certifiedTrainer={false}
+          onCertifiedTrainerChange={vi.fn()}
+          certifierName=""
+          onCertifierNameChange={vi.fn()}
+          trainerExperienceDescription=""
+          onTrainerExperienceDescriptionChange={vi.fn()}
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onToggleAgeLimit={vi.fn()}
+          itemNoun="Dog Sport"
+          isDogWalking={false}
+          isDogTraining={false}
+          isDogSport={true}
+          isDogSitter={false}
+        />
+      );
+
+      expect(screen.getByText("Sport Discipline")).toBeDefined();
+      expect(screen.getByRole("button", { name: "Agility" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Mantrailing" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Search & rescue" })).toBeDefined();
+
+      fireEvent.click(screen.getByRole("button", { name: "Search & rescue" }));
+      expect(onNameChange).toHaveBeenCalledWith("Search & rescue");
+    });
+
     it("renders Sitting Type presets for sitting service", () => {
       const onNameChange = vi.fn();
 
@@ -162,6 +198,43 @@ describe("CourseForm Subcomponents Suite", () => {
 
       expect(screen.getByText("Veterinary Training")).toBeDefined();
       expect(screen.getByDisplayValue("USAMV Diploma")).toBeDefined();
+    });
+
+    it("renders Spoken Languages selector across dog services in General Tab and triggers toggle", () => {
+      const onToggleLanguage = vi.fn();
+
+      render(
+        <CourseGeneralTab
+          name="Basic Obedience"
+          onNameChange={vi.fn()}
+          details=""
+          onDetailsChange={vi.fn()}
+          certifiedTrainer={false}
+          onCertifiedTrainerChange={vi.fn()}
+          certifierName=""
+          onCertifierNameChange={vi.fn()}
+          trainerExperienceDescription=""
+          onTrainerExperienceDescriptionChange={vi.fn()}
+          spokenLanguages={["Romanian", "English"]}
+          onToggleLanguage={onToggleLanguage}
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onToggleAgeLimit={vi.fn()}
+          itemNoun="Training course"
+          isDogWalking={false}
+          isDogTraining={true}
+        />
+      );
+
+      expect(screen.getByText("Spoken Languages")).toBeDefined();
+      expect(screen.getByRole("button", { name: /Romanian/i })).toBeDefined();
+      expect(screen.getByRole("button", { name: /English/i })).toBeDefined();
+      expect(screen.getByRole("button", { name: /Hungarian/i })).toBeDefined();
+
+      const germanBtn = screen.getByRole("button", { name: /German/i });
+      fireEvent.click(germanBtn);
+      expect(onToggleLanguage).toHaveBeenCalledWith("German");
     });
   });
 
@@ -956,6 +1029,30 @@ describe("CourseForm Subcomponents Suite", () => {
       expect(screen.getByText("Key Access & Home Entry Protocol")).toBeDefined();
       expect(screen.getByText("Post-Walk Feeding & Treat Customization")).toBeDefined();
       expect(screen.getByText("GPS Route Tracking & Post-Walk Reports")).toBeDefined();
+    });
+
+    it("renders Dog Sitter care tab with Non-Smoker and Plant Watering", () => {
+      const onNonSmokerChange = vi.fn();
+      const onPlantWateringChange = vi.fn();
+      const onPlantWateringDetailsChange = vi.fn();
+
+      render(
+        <CourseCareTab
+          isDogWalking={false}
+          isDogSitter={true}
+          nonSmoker={true}
+          onNonSmokerChange={onNonSmokerChange}
+          plantWatering={true}
+          onPlantWateringChange={onPlantWateringChange}
+          plantWateringDetails="Daily plant watering"
+          onPlantWateringDetailsChange={onPlantWateringDetailsChange}
+          medicationAdministration={false}
+          onMedicationAdministrationChange={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText("Non-Smoker Sitter")).toBeDefined();
+      expect(screen.getByText("Plant & Garden Watering")).toBeDefined();
     });
   });
 });

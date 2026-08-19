@@ -154,7 +154,7 @@ export function DayScheduleGrid({
 
 interface CourseScheduleTabProps {
   isDogSport: boolean;
-  scheduleOverlapError: string | null;
+  scheduleOverlapError?: string | null;
   weeklySchedule: DayScheduleItem[];
   onUpdateDaySchedule: (dayKey: DayKey, field: keyof DayScheduleItem, value: any) => void;
   onCopyMonToWorkweek: () => void;

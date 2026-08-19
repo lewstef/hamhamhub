@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { serviceTypesList, type ServiceType, type FormField } from "./service-types";
+import { serviceTypesList, type FormField } from "./service-types";
 
 describe("serviceTypesList config", () => {
   it("should export exactly 6 service types", () => {

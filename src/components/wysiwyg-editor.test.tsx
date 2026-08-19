@@ -22,7 +22,7 @@ describe("WysiwygEditor Component", () => {
 
   it("triggers document.execCommand and onChange on toolbar button clicks", () => {
     const onChange = vi.fn();
-    const { container } = render(<WysiwygEditor value="" onChange={onChange} />);
+    render(<WysiwygEditor value="" onChange={onChange} />);
 
     // Click Bold button
     fireEvent.click(screen.getByTitle("Bold"));

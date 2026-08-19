@@ -930,7 +930,6 @@ describe("EditOrganizationForm Component", () => {
         organization={verifiedOrg}
         organizationCategoryList={dummyOrganizationCategoryList}
         activeTabProp="subscription"
-        isDashboard={true}
       />
     );
 
@@ -941,7 +940,6 @@ describe("EditOrganizationForm Component", () => {
         organization={verifiedOrg}
         organizationCategoryList={dummyOrganizationCategoryList}
         activeTabProp="verification"
-        isDashboard={true}
       />
     );
 
@@ -953,7 +951,6 @@ describe("EditOrganizationForm Component", () => {
         organization={verifiedOrg}
         organizationCategoryList={dummyOrganizationCategoryList}
         activeTabProp="account"
-        isDashboard={true}
       />
     );
 
@@ -966,7 +963,6 @@ describe("EditOrganizationForm Component", () => {
         organization={verifiedOrg}
         organizationCategoryList={dummyOrganizationCategoryList}
         activeTabProp="services"
-        isDashboard={false}
         servicesList={[
           {
             id: "srv-dog-training",
@@ -1098,15 +1094,6 @@ describe("EditOrganizationForm Component", () => {
             slug: "dog-training",
             description: "Lessons",
             organizationCategory: "ngo",
-            courses: [
-              {
-                id: "crs-1",
-                name: "Puppy Basics",
-                slug: "puppy-basics",
-                description: "Basic commands",
-                serviceId: "srv-dog-training",
-              },
-            ],
           },
         ]}
       />
@@ -1137,15 +1124,6 @@ describe("EditOrganizationForm Component", () => {
             slug: "dog-training",
             description: "Lessons",
             organizationCategory: "ngo",
-            courses: [
-              {
-                id: "crs-1",
-                name: "Puppy Basics",
-                slug: "puppy-basics",
-                description: "Basic commands",
-                serviceId: "srv-dog-training",
-              },
-            ],
           },
         ]}
       />
@@ -1183,7 +1161,6 @@ describe("EditOrganizationForm Component", () => {
             slug: "dog-training",
             description: "Lessons",
             organizationCategory: "ngo",
-            courses: [],
           },
         ]}
       />
@@ -1215,7 +1192,6 @@ describe("EditOrganizationForm Component", () => {
         organization={dummyOrganization}
         organizationCategoryList={dummyOrganizationCategoryList}
         activeTabProp="verification"
-        isDashboard={false}
       />
     );
 
@@ -1226,7 +1202,6 @@ describe("EditOrganizationForm Component", () => {
         organization={dummyOrganization}
         organizationCategoryList={dummyOrganizationCategoryList}
         activeTabProp="subscription"
-        isDashboard={false}
       />
     );
 

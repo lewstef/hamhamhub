@@ -373,8 +373,11 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
   - Interactive Plan Upgrade / Switcher modal providing dynamic plan confirmation and confirmation state transitions.
   - Tax-compliant billing history & invoices table with invoice number, date, amount, status badge, and PDF download triggers.
 - **Modularized Course Form & Sub-Service Architecture (`src/components/course-form/`)**:
-  - Refactored the monolithic 3,100+ line `CourseForm` into lightweight, decoupled tab components (`CourseGeneralTab`, `CoursePricingTab`, `CourseScheduleTab`, `CourseLocationTab`, `CourseCareTab`, `CourseFaqTab`) and reusable sections (`AgeLimitsSection`, `TrainerAttributesCard`).
-  - Implemented complete day-by-day scheduling with Mon-Fri/All copy presets, multi-pricing tier options, Romainan cartiere coverage zones (primary + secondary multi-city zones), safe removal modal confirmations, and client-side closure/opening overlap detection.
+  - Refactored the monolithic `CourseForm` into lightweight, decoupled tab components (`CourseGeneralTab`, `CoursePricingTab`, `CourseScheduleTab`, `CourseLocationTab`, `CourseCareTab`, `CourseFaqTab`, `CoursePlayYardTab`) managed by the centralized `useCourseForm` hook.
+  - Implemented complete day-by-day scheduling with Mon-Fri/All copy presets, multi-pricing tier options, Romanian cartiere coverage zones (primary + secondary multi-city zones), safe removal modal confirmations, and client-side closure/opening overlap detection.
+  - **Expanded Dog Training Formats & Dog Sport Disciplines**: Added **Truffle hunting**, **Show handling**, and **Security & Protection** session types to Dog Training; added **Mantrailing** and **Search & rescue** to Dog Sport disciplines.
+  - **Multi-Service Spoken Languages**: Integrated multi-lingual staff / trainer communication badges via **Spoken Languages** selection (`Romanian`, `English`, `Hungarian`, `German`, `French`, `Italian`, `Spanish`, `Ukrainian`) across **all dog services** (`Dog Sport`, `Dog Training`, `Dog Boarding`, `Dog Walking`, `Dog Sitting`, `Grooming`).
+  - **Dog Sitter Specialized Care & Attributes**: In-home sitting customization including **Plant & Garden Watering** with WYSIWYG care instructions, **Non-Smoker Sitter** verification, multi-pet accommodation limits, and emergency veterinary transport protocols.
 - **Idempotent Database Seeding (`src/db/seed.ts`)**:
   - Safe, idempotent database initialization script that seeds default cynological organization categories (`dog_school`, `dog_kennel`, `veterinary_clinic`, `pet_sitting`, `grooming_salon`) if not present, bypassing admin creation which is handled interactively at `/initialization`.
 
@@ -397,7 +400,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (607 tests across 58 test files)
+# Run all tests (727 tests across 62 test files)
 npm run test
 
 # Run with coverage report
@@ -405,15 +408,16 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 ```
 
 ### Test Coverage Metrics
-- **Test Suites**: **58 passed (58 total)**
-- **Tests**: **607 passed (607 total)**
+- **Test Suites**: **62 passed (62 total)**
+- **Tests**: **727 passed (727 total)**
 - **Type Checking**: **0 TypeScript errors (`npx tsc --noEmit`)**
+- **Production Build**: **0 errors across all 26 App Router routes (`npm run build`)**
 
 ### Test Coverage Summary
 | Area | Files Covered |
 | :--- | :--- |
 | Server actions | `auth`, `initialization`, `employees`, `users`, `organizations` (including `requestNewCartierAction`), `services`, `service-types`, `courses`, `system`, `cartier-request` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards), `proxy.ts` (Next.js 16 auth proxy / middleware) |
-| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `dashboard-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form` (modular tabs: `org-info-tab`, `org-billing-tab`, `org-security-tab`, `org-subscription-tab`, `org-services-tab`, `org-verification-tab`; modular modals: `org-edit-name-category-modal`, `org-edit-contact-modal`, `org-edit-address-modal`, `org-edit-billing-modal`, `org-edit-password-modal`, `org-edit-description-modal`), `dashboard-services-list`, `services-table`, `course-form` (modular sub-components: `course-general-tab`, `course-pricing-tab`, `course-schedule-tab`, `course-care-tab`, `course-location-tab`, `course-faq-tab`, `age-limits-section`, `trainer-attributes-card`), `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `select-menu` (`SelectMenu`, `SelectMenuItem`), `service-type-preview-form`, `smtp-config-form`, `time-picker-select`, `toggle-switch`, `boolean-toggle-field` |
-| Config, Types & utilities | `types/course` (100% coverage), `config/service-types`, `config/dog-training`, `config/romanian-territory`, `config/romanian-cartiere`, `lib/utils`, `lib/email`, `lib/validation`, `lib/validations` (`auth`, `organizations`, `courses`, `employees`, `users`, `system`, `validations.test.ts`) |
+| Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `dashboard-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form` (modular tabs: `org-info-tab`, `org-billing-tab`, `org-security-tab`, `org-subscription-tab`, `org-services-tab`, `org-verification-tab`; modular modals: `org-edit-name-category-modal`, `org-edit-contact-modal`, `org-edit-address-modal`, `org-edit-billing-modal`, `org-edit-password-modal`, `org-edit-description-modal`), `dashboard-services-list`, `services-table`, `course-form` (modular sub-components: `course-general-tab`, `course-pricing-tab`, `course-schedule-tab`, `course-care-tab`, `course-location-tab`, `course-faq-tab`, `course-play-yard-tab`, `age-limits-section`, `trainer-attributes-card`), `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `select-menu` (`SelectMenu`, `SelectMenuItem`), `service-type-preview-form`, `smtp-config-form`, `time-picker-select`, `toggle-switch`, `boolean-toggle-field` |
+| Config, Types & utilities | `types/course` (100% coverage), `config/service-types`, `config/dog-training`, `config/romanian-territory`, `config/romanian-cartiere`, `lib/utils`, `lib/email`, `lib/validation`, `lib/validations` (`auth`, `organizations`, `courses`, `employees`, `users`, `system`, `validations.test.ts`), `testing/mock-factories` |
 | Hooks | `use-mobile` |

@@ -36,6 +36,10 @@ export interface Course {
   personalizedMealPlanDetails?: string | null;
   emergencyVetTransport?: boolean | null;
   emergencyVetTransportDetails?: string | null;
+  plantWatering?: boolean | null;
+  plantWateringDetails?: string | null;
+  nonSmoker?: boolean | null;
+  spokenLanguages?: string | null;
   maxPetsPerVisit?: number | null;
   additionalPetPolicy?: string | null;
   checkin?: string | null;
@@ -104,20 +108,30 @@ export function parseCoverageZones(raw?: string | null): CoverageZonesData {
       return { primary: parsed.map((s) => String(s).trim()).filter(Boolean), secondary: [] };
     }
     if (parsed && typeof parsed === "object") {
-      const primary = Array.isArray(parsed.primary)
-        ? parsed.primary.map((s: any) => String(s).trim()).filter(Boolean)
+      const parsedObj = parsed as { primary?: unknown[]; secondary?: unknown[] };
+      const primary = Array.isArray(parsedObj.primary)
+        ? parsedObj.primary.map((s: unknown) => String(s).trim()).filter(Boolean)
         : [];
-      const secondary: SecondaryCoverageZone[] = Array.isArray(parsed.secondary)
-        ? parsed.secondary
-            .filter((item: any) => item && typeof item.city === "string" && Array.isArray(item.cartiere))
-            .map((item: any) => ({
+      const secondary: SecondaryCoverageZone[] = Array.isArray(parsedObj.secondary)
+        ? (parsedObj.secondary
+            .filter((item: unknown): item is { city: string; cartiere: unknown[] } => {
+              return (
+                typeof item === "object" &&
+                item !== null &&
+                "city" in item &&
+                typeof (item as Record<string, unknown>).city === "string" &&
+                "cartiere" in item &&
+                Array.isArray((item as Record<string, unknown>).cartiere)
+              );
+            })
+            .map((item) => ({
               city: item.city.trim(),
-              cartiere: item.cartiere.map((c: any) => String(c).trim()).filter(Boolean),
-            }))
+              cartiere: item.cartiere.map((c: unknown) => String(c).trim()).filter(Boolean),
+            })))
         : [];
       return { primary, secondary };
     }
-  } catch (e) {
+  } catch {
     if (typeof raw === "string") {
       const primary = raw.split(",").map((s) => s.trim()).filter(Boolean);
       return { primary, secondary: [] };
@@ -132,3 +146,56 @@ export function parseCoverageZones(raw?: string | null): CoverageZonesData {
 export function serializeCoverageZones(data: CoverageZonesData): string {
   return JSON.stringify(data);
 }
+
+/**
+ * Standard list of spoken languages supported for Dog Sitter and care services.
+ */
+export const SPOKEN_LANGUAGES_LIST = [
+  "Romanian",
+  "English",
+  "Hungarian",
+  "German",
+  "French",
+  "Italian",
+  "Spanish",
+  "Ukrainian",
+] as const;
+
+export type SpokenLanguage = typeof SPOKEN_LANGUAGES_LIST[number];
+
+/**
+ * Standard list of Dog Sport Disciplines.
+ */
+export const DOG_SPORT_DISCIPLINES = [
+  "Agility",
+  "IGP / Schutzhund",
+  "Mondioring",
+  "Ring",
+  "Flyball",
+  "Canine Frisbee / Disc Dog",
+  "Dog dancing",
+  "Hoopers",
+  "Canicross / Bikejoring",
+  "Mantrailing",
+  "Search & rescue",
+  "Rally Obedience",
+  "Dock Diving",
+] as const;
+
+export type DogSportDiscipline = typeof DOG_SPORT_DISCIPLINES[number];
+
+/**
+ * Standard list of Dog Training Formats / Session Types.
+ */
+export const DOG_TRAINING_FORMATS = [
+  "Group Class",
+  "Private 1-on-1 Session",
+  "In-Home Training",
+  "Truffle hunting",
+  "Show handling",
+  "Security & Protection",
+  "Board & Train",
+  "Online Consultation",
+] as const;
+
+export type DogTrainingFormat = typeof DOG_TRAINING_FORMATS[number];

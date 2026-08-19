@@ -117,11 +117,13 @@ export function CustomSelect({
     }
   }, [highlightedIndex, isOpen]);
 
-  useEffect(() => {
-    if (isControlled) {
-      setInternalValue(String(controlledValue));
-    }
-  }, [controlledValue, isControlled]);
+  const [prevControlledValue, setPrevControlledValue] = useState(controlledValue);
+
+  // Adjust internal value during render if controlledValue changes
+  if (isControlled && controlledValue !== prevControlledValue) {
+    setPrevControlledValue(controlledValue);
+    setInternalValue(String(controlledValue));
+  }
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -140,23 +142,18 @@ export function CustomSelect({
     if (!isControlled) {
       setInternalValue(val);
     }
-    if (onChange) {
-      onChange(val);
-    }
+    onChange?.(val);
     setIsOpen(false);
     setSearchQuery("");
-    triggerRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (disabled) return;
 
     if (!isOpen) {
-      if (["ArrowDown", "ArrowUp", "Enter", " "].includes(e.key)) {
+      if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(e.key)) {
         e.preventDefault();
         setIsOpen(true);
-        const activeIdx = filteredOptions.findIndex((opt) => String(opt.value) === activeValue);
-        setHighlightedIndex(activeIdx >= 0 ? activeIdx : 0);
       }
       return;
     }
@@ -164,48 +161,29 @@ export function CustomSelect({
     switch (e.key) {
       case "ArrowDown": {
         e.preventDefault();
-        let next = highlightedIndex + 1;
-        while (next < filteredOptions.length && filteredOptions[next]?.disabled) {
-          next++;
-        }
-        if (next < filteredOptions.length) {
-          setHighlightedIndex(next);
+        if (filteredOptions.length > 0) {
+          setHighlightedIndex((prev) => (prev < filteredOptions.length - 1 ? prev + 1 : 0));
         }
         break;
       }
       case "ArrowUp": {
         e.preventDefault();
-        let prev = highlightedIndex - 1;
-        while (prev >= 0 && filteredOptions[prev]?.disabled) {
-          prev--;
-        }
-        if (prev >= 0) {
-          setHighlightedIndex(prev);
+        if (filteredOptions.length > 0) {
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : filteredOptions.length - 1));
         }
         break;
       }
-      case "Home": {
-        e.preventDefault();
-        const first = filteredOptions.findIndex((opt) => !opt.disabled);
-        if (first >= 0) setHighlightedIndex(first);
-        break;
-      }
-      case "End": {
-        e.preventDefault();
-        for (let i = filteredOptions.length - 1; i >= 0; i--) {
-          if (!filteredOptions[i].disabled) {
-            setHighlightedIndex(i);
-            break;
-          }
+      case "Enter":
+      case " ": {
+        // If typing in search input, Space should type a space unless item is chosen via Enter
+        if (e.key === " " && searchQuery.length > 0) {
+          break;
         }
-        break;
-      }
-      case "Enter": {
         e.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
-          const opt = filteredOptions[highlightedIndex];
-          if (!opt.disabled) {
-            handleSelect(String(opt.value));
+          const selected = filteredOptions[highlightedIndex];
+          if (!selected.disabled) {
+            handleSelect(String(selected.value));
           }
         }
         break;
@@ -214,7 +192,6 @@ export function CustomSelect({
         e.preventDefault();
         setIsOpen(false);
         setSearchQuery("");
-        triggerRef.current?.focus();
         break;
       }
       case "Tab": {
@@ -225,7 +202,7 @@ export function CustomSelect({
     }
   };
 
-  const heightClass = size === "sm" ? "h-8 py-1 text-xs font-semibold" : "h-9 py-1.5 text-xs font-semibold";
+  const heightClass = size === "sm" ? "h-8 py-1" : "h-9 py-1.5";
 
   return (
     <div ref={containerRef} onKeyDown={handleKeyDown} className="relative w-full">
@@ -265,7 +242,7 @@ export function CustomSelect({
         }}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full min-w-0 rounded-lg border border-input px-2.5 py-1 transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 h-9 pr-7 text-xs font-semibold bg-background cursor-pointer select-none flex items-center justify-between relative ${
+        className={`w-full min-w-0 rounded-lg border border-input px-2.5 transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 pr-7 text-xs font-semibold bg-background cursor-pointer select-none flex items-center justify-between relative ${heightClass} ${
           hasError ? "border-destructive focus-visible:ring-destructive" : ""
         } ${className}`}
       >

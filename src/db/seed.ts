@@ -1,5 +1,5 @@
 import { db } from "./index";
-import { organizationCategories, services } from "./schema";
+import { organizationCategories } from "./schema";
 import { eq } from "drizzle-orm";
 
 const DEFAULT_CATEGORIES = [

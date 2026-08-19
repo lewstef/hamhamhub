@@ -6,35 +6,43 @@ import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { CustomSelect } from "@/components/ui/custom-select";
 
+import { SPOKEN_LANGUAGES_LIST } from "@/types/course";
+
 export interface CourseCareTabProps {
   isDogWalking?: boolean;
   isDogSitter?: boolean;
-  dailyWalks: number;
-  onDailyWalksChange: (v: number) => void;
-  medicationAdministration: boolean;
-  onMedicationAdministrationChange: (v: boolean) => void;
-  medicationAdministrationDetails: string;
-  onMedicationAdministrationDetailsChange: (v: string) => void;
-  surveillance247: boolean;
-  onSurveillance247Change: (v: boolean) => void;
-  surveillance247Details: string;
-  onSurveillance247DetailsChange: (v: string) => void;
-  webCam: boolean;
-  onWebCamChange: (v: boolean) => void;
-  webCamDetails: string;
-  onWebCamDetailsChange: (v: string) => void;
-  ownerCommunication: boolean;
-  onOwnerCommunicationChange: (v: boolean) => void;
-  ownerCommunicationDetails: string;
-  onOwnerCommunicationDetailsChange: (v: string) => void;
-  personalizedMealPlan: boolean;
-  onPersonalizedMealPlanChange: (v: boolean) => void;
-  personalizedMealPlanDetails: string;
-  onPersonalizedMealPlanDetailsChange: (v: string) => void;
+  dailyWalks?: number;
+  onDailyWalksChange?: (v: number) => void;
+  medicationAdministration?: boolean;
+  onMedicationAdministrationChange?: (v: boolean) => void;
+  medicationAdministrationDetails?: string;
+  onMedicationAdministrationDetailsChange?: (v: string) => void;
+  surveillance247?: boolean;
+  onSurveillance247Change?: (v: boolean) => void;
+  surveillance247Details?: string;
+  onSurveillance247DetailsChange?: (v: string) => void;
+  webCam?: boolean;
+  onWebCamChange?: (v: boolean) => void;
+  webCamDetails?: string;
+  onWebCamDetailsChange?: (v: string) => void;
+  ownerCommunication?: boolean;
+  onOwnerCommunicationChange?: (v: boolean) => void;
+  ownerCommunicationDetails?: string;
+  onOwnerCommunicationDetailsChange?: (v: string) => void;
+  personalizedMealPlan?: boolean;
+  onPersonalizedMealPlanChange?: (v: boolean) => void;
+  personalizedMealPlanDetails?: string;
+  onPersonalizedMealPlanDetailsChange?: (v: string) => void;
   emergencyVetTransport?: boolean;
   onEmergencyVetTransportChange?: (v: boolean) => void;
   emergencyVetTransportDetails?: string;
   onEmergencyVetTransportDetailsChange?: (v: string) => void;
+  plantWatering?: boolean;
+  onPlantWateringChange?: (v: boolean) => void;
+  plantWateringDetails?: string;
+  onPlantWateringDetailsChange?: (v: string) => void;
+  nonSmoker?: boolean;
+  onNonSmokerChange?: (v: boolean) => void;
   maxPetsPerVisit?: number;
   onMaxPetsPerVisitChange?: (v: number) => void;
   additionalPetPolicy?: string;
@@ -45,46 +53,82 @@ export interface CourseCareTabProps {
  * CourseCareTab Component
  *
  * Renders boarding/sitting-specific care amenity toggles:
- * daily walks, medication administration, emergency vet transport, multi-pet policy,
+ * daily walks, medication administration, emergency vet transport, plant watering,
+ * non-smoker, multi-pet policy,
  * 24/7 surveillance, personalized meal plan, webcam access, and communication/GPS reports.
  */
 export function CourseCareTab({
   isDogWalking = false,
   isDogSitter = false,
-  dailyWalks,
-  onDailyWalksChange,
-  medicationAdministration,
-  onMedicationAdministrationChange,
-  medicationAdministrationDetails,
-  onMedicationAdministrationDetailsChange,
-  surveillance247,
-  onSurveillance247Change,
-  surveillance247Details,
-  onSurveillance247DetailsChange,
-  webCam,
-  onWebCamChange,
-  webCamDetails,
-  onWebCamDetailsChange,
-  ownerCommunication,
-  onOwnerCommunicationChange,
-  ownerCommunicationDetails,
-  onOwnerCommunicationDetailsChange,
-  personalizedMealPlan,
-  onPersonalizedMealPlanChange,
-  personalizedMealPlanDetails,
-  onPersonalizedMealPlanDetailsChange,
+  dailyWalks = 1,
+  onDailyWalksChange = () => {},
+  medicationAdministration = false,
+  onMedicationAdministrationChange = () => {},
+  medicationAdministrationDetails = "",
+  onMedicationAdministrationDetailsChange = () => {},
+  surveillance247 = false,
+  onSurveillance247Change = () => {},
+  surveillance247Details = "",
+  onSurveillance247DetailsChange = () => {},
+  webCam = false,
+  onWebCamChange = () => {},
+  webCamDetails = "",
+  onWebCamDetailsChange = () => {},
+  ownerCommunication = false,
+  onOwnerCommunicationChange = () => {},
+  ownerCommunicationDetails = "",
+  onOwnerCommunicationDetailsChange = () => {},
+  personalizedMealPlan = false,
+  onPersonalizedMealPlanChange = () => {},
+  personalizedMealPlanDetails = "",
+  onPersonalizedMealPlanDetailsChange = () => {},
   emergencyVetTransport = false,
-  onEmergencyVetTransportChange,
+  onEmergencyVetTransportChange = () => {},
   emergencyVetTransportDetails = "",
-  onEmergencyVetTransportDetailsChange,
+  onEmergencyVetTransportDetailsChange = () => {},
+  plantWatering = false,
+  onPlantWateringChange = () => {},
+  plantWateringDetails = "",
+  onPlantWateringDetailsChange = () => {},
+  nonSmoker = false,
+  onNonSmokerChange = () => {},
   maxPetsPerVisit = 1,
-  onMaxPetsPerVisitChange,
+  onMaxPetsPerVisitChange = () => {},
   additionalPetPolicy = "",
-  onAdditionalPetPolicyChange,
+  onAdditionalPetPolicyChange = () => {},
 }: CourseCareTabProps) {
   if (isDogSitter) {
     return (
       <>
+        {/* Non-Smoker Sitter */}
+        <BooleanToggleField
+          label="Non-Smoker Sitter"
+          description="Is the pet sitter a non-smoker for smoke-free in-home sitting?"
+          checked={nonSmoker}
+          onChange={onNonSmokerChange || (() => {})}
+        />
+
+        <div className="h-px bg-border/60" />
+
+        {/* Plant & Garden Watering */}
+        <BooleanToggleField
+          label="Plant & Garden Watering"
+          description="Can you water indoor houseplants or garden plants during visits?"
+          checked={plantWatering}
+          onChange={onPlantWateringChange || (() => {})}
+        >
+          <div className="space-y-2">
+            <Label>Plant Watering Instructions &amp; Capacity</Label>
+            <WysiwygEditor
+              value={plantWateringDetails}
+              onChange={onPlantWateringDetailsChange || (() => {})}
+              placeholder="e.g. Daily balcony plant watering, indoor houseplant care, garden sprinkler scheduling..."
+            />
+          </div>
+        </BooleanToggleField>
+
+        <div className="h-px bg-border/60" />
+
         {/* Medication Administration */}
         <BooleanToggleField
           label="Medication Administration"

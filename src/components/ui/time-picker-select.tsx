@@ -71,19 +71,22 @@ export function TimePickerSelect({
   hasError = false,
 }: TimePickerSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  useEffect(() => {
+  // Adjust highlighted index during render when isOpen changes
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       const activeIdx = options.indexOf(value);
       setHighlightedIndex(activeIdx >= 0 ? activeIdx : 0);
     } else {
       setHighlightedIndex(-1);
     }
-  }, [isOpen, options, value]);
+  }
 
   useEffect(() => {
     if (isOpen && highlightedIndex >= 0 && optionRefs.current[highlightedIndex]) {

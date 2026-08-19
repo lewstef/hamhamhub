@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useActionState, useEffect } from "react";
+import React, { useState, useActionState } from "react";
 import { updateSmtpConfigAction, sendTestEmailAction } from "@/app/actions/system";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CustomSelect } from "@/components/ui/custom-select";
-import { Server, Mail, ShieldCheck, Key, Eye, EyeOff, Send, CheckCircle2, AlertCircle } from "lucide-react";
+import { Server, Mail, ShieldCheck, Eye, EyeOff, Send, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface SmtpConfigFormProps {
   initialConfig?: {
@@ -36,7 +36,9 @@ export function SmtpConfigForm({ initialConfig }: SmtpConfigFormProps) {
   const [senderEmail, setSenderEmail] = useState(initialConfig?.senderEmail || "no-reply@hamhamhub.ro");
   const [testRecipient, setTestRecipient] = useState("");
 
-  useEffect(() => {
+  const [prevConfig, setPrevConfig] = useState(initialConfig);
+  if (initialConfig !== prevConfig) {
+    setPrevConfig(initialConfig);
     if (initialConfig) {
       if (initialConfig.smtpHost) setHost(initialConfig.smtpHost);
       if (initialConfig.smtpPort) setPort(initialConfig.smtpPort);
@@ -45,7 +47,7 @@ export function SmtpConfigForm({ initialConfig }: SmtpConfigFormProps) {
       if (initialConfig.senderName) setSenderName(initialConfig.senderName);
       if (initialConfig.senderEmail) setSenderEmail(initialConfig.senderEmail);
     }
-  }, [initialConfig]);
+  }
 
   const [testModalKey, setTestModalKey] = useState(0);
   const [testSubmitted, setTestSubmitted] = useState(false);

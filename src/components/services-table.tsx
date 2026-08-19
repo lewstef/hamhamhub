@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useRef, useEffect } from "react";
+import { useState, useActionState, useRef, useEffect, useMemo } from "react";
 import {
   createServiceAction,
   deleteServiceAction,
@@ -14,7 +14,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import {
   X,
   Trash2,
-  ChevronRight,
   Sparkles,
   GraduationCap,
   Home,
@@ -25,7 +24,7 @@ import {
   Search,
   GripVertical,
 } from "lucide-react";
-import { DOG_TRAINING_COURSES, getSortedCourses } from "@/config/dog-training";
+import { getSortedCourses } from "@/config/dog-training";
 
 interface FormField {
   name: string;
@@ -127,37 +126,43 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
 
   // Reordering states
   const [services, setServices] = useState<Service[]>(serviceList);
-  const [coursesMap, setCoursesMap] = useState<Record<string, any[]>>({});
+  const [coursesMapOverrides, setCoursesMapOverrides] = useState<Record<string, ReturnType<typeof getSortedCourses>>>({});
   
+  const [prevServiceList, setPrevServiceList] = useState(serviceList);
+  if (serviceList !== prevServiceList) {
+    setPrevServiceList(serviceList);
+    setServices(serviceList);
+    setCoursesMapOverrides({});
+  }
+
+  // Derive courses map from services directly
+  const coursesMap = useMemo(() => {
+    const nextMap: Record<string, ReturnType<typeof getSortedCourses>> = {};
+    for (const s of services) {
+      if (s.name.toLowerCase() === "dog training") {
+        nextMap[s.id] = coursesMapOverrides[s.id] ?? getSortedCourses(s.coursesOrder);
+      }
+    }
+    return nextMap;
+  }, [services, coursesMapOverrides]);
+
   const [draggedServiceId, setDraggedServiceId] = useState<string | null>(null);
   const [draggedServiceCategory, setDraggedServiceCategory] = useState<string | null>(null);
   
   const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null);
   const [draggedCourseParentId, setDraggedCourseParentId] = useState<string | null>(null);
 
-  // Sync services state with prop
-  useEffect(() => {
-    setServices(serviceList);
-  }, [serviceList]);
-
-  // Sync courses lists with custom orders
-  useEffect(() => {
-    const nextMap: Record<string, any[]> = {};
-    for (const s of services) {
-      if (s.name.toLowerCase() === "dog training") {
-        nextMap[s.id] = getSortedCourses(s.coursesOrder);
-      }
-    }
-    setCoursesMap(nextMap);
-  }, [services]);
-
   // Set selections to currently registered services when switching category or when serviceList changes
-  useEffect(() => {
+  const [prevCategory, setPrevCategory] = useState(formOrgCategory);
+  const [prevFormServiceList, setPrevFormServiceList] = useState(serviceList);
+  if (formOrgCategory !== prevCategory || serviceList !== prevFormServiceList) {
+    setPrevCategory(formOrgCategory);
+    setPrevFormServiceList(serviceList);
     const registered = serviceList
       .filter((s) => s.organizationCategory === formOrgCategory)
       .map((s) => s.name);
     setSelectedServiceNames(registered);
-  }, [formOrgCategory, serviceList]);
+  }
 
   const [formModalKey, setFormModalKey] = useState(0);
   const [deleteModalKey, setDeleteModalKey] = useState(0);
@@ -271,10 +276,10 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
     if (draggedIdx !== -1 && targetIdx !== -1) {
       const [draggedItem] = list.splice(draggedIdx, 1);
       list.splice(targetIdx, 0, draggedItem);
-      setCoursesMap({
-        ...coursesMap,
+      setCoursesMapOverrides((prev) => ({
+        ...prev,
         [serviceId]: list,
-      });
+      }));
     }
   };
 
@@ -430,10 +435,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                               variant="ghost"
                               size="icon-sm"
                               className="opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive text-muted-foreground focus:opacity-100 shrink-0 ml-2"
-                              onClick={() => {
-                                setDeleteTargetId(s.id);
-                                setShowDeleteConfirm(true);
-                              }}
+                              onClick={() => openDeleteModal(s.id)}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>

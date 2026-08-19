@@ -76,17 +76,19 @@ export function DatePickerInput({
   // Parse initial view month/year from value or current date
   const parsed = React.useMemo(() => parseDateString(value), [value]);
 
+  const [prevValue, setPrevValue] = useState(value);
   const [viewYear, setViewYear] = useState(() => parsed?.year || new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(() => (parsed ? parsed.month : new Date().getMonth()));
 
-  // Sync view month/year when popover opens or value changes
-  useEffect(() => {
+  // Adjust view month/year during render when value changes
+  if (value !== prevValue) {
+    setPrevValue(value);
     const res = parseDateString(value);
     if (res) {
       setViewYear(res.year);
       setViewMonth(res.month);
     }
-  }, [value]);
+  }
 
   // Close calendar popover on click outside
   useEffect(() => {

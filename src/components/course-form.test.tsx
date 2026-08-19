@@ -5,6 +5,7 @@ import React from "react";
 import { CourseForm } from "./course-form";
 import { parseCoverageZones } from "@/types/course";
 import { createCourseAction, updateCourseAction } from "@/app/actions/courses";
+import { createMockCourse } from "@/testing/mock-factories";
 
 vi.mock("lucide-react", () => ({
   ArrowLeft: () => <div data-testid="arrow-left" />,
@@ -244,6 +245,9 @@ describe("CourseForm Component", () => {
     expect(screen.getByRole("button", { name: "Group Class" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Private 1-on-1 Session" })).toBeDefined();
     expect(screen.getByRole("button", { name: "In-Home Training" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Truffle hunting" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Show handling" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Security & Protection" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Board & Train" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Online Consultation" })).toBeDefined();
 
@@ -1609,7 +1613,7 @@ describe("CourseForm Component", () => {
   });
 
   it("should render grooming service in flat mode and handle cancel and action failure", async () => {
-    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: false, error: "Course name exists" });
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ error: "Course name exists" });
 
     render(
       <CourseForm
@@ -1739,7 +1743,7 @@ describe("CourseForm Component", () => {
   });
 
   it("should render flat grooming form and submit successfully", async () => {
-    vi.mocked(createCourseAction).mockResolvedValue({ success: true, course: { id: "groom-1" } });
+    vi.mocked(createCourseAction).mockResolvedValue({ success: true });
 
     const { container } = render(
       <CourseForm
@@ -1824,7 +1828,7 @@ describe("CourseForm Component", () => {
         serviceId="srv-training"
         itemNoun="Training course"
         serviceSlug="dog-training"
-        initialCourse={{
+        initialCourse={createMockCourse({
           id: "c-1",
           name: "Puppy Class",
           faq: JSON.stringify([
@@ -1835,7 +1839,7 @@ describe("CourseForm Component", () => {
             { amount: "100", type: "course", label: "Option 1" },
             { amount: "200", type: "course", label: "Option 2" },
           ]),
-        }}
+        })}
         onCancel={onCancel}
         onSubmitSuccess={onSubmitSuccess}
       />

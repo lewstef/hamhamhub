@@ -10,16 +10,7 @@ export default defineConfig({
     globals: true,
     css: false,
     pool: "threads",
-    poolOptions: {
-      threads: {
-        maxThreads: cpuCount,
-        minThreads: Math.max(1, Math.floor(cpuCount / 2)),
-      },
-      forks: {
-        maxForks: cpuCount,
-        minForks: Math.max(1, Math.floor(cpuCount / 2)),
-      },
-    },
+    fileParallelism: true,
     maxConcurrency: cpuCount,
   },
   resolve: {

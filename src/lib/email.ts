@@ -105,8 +105,9 @@ export async function sendMail(options: SendMailOptions): Promise<{ success: boo
     });
 
     return { success: true, messageId: info.messageId };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("sendMail error:", error);
-    return { success: false, error: error.message || "Failed to dispatch email." };
+    const message = error instanceof Error ? error.message : "Failed to dispatch email.";
+    return { success: false, error: message };
   }
 }

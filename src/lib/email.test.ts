@@ -54,7 +54,7 @@ describe("Email Transport Module (src/lib/email.ts)", () => {
             ]),
           }),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof db.select>);
 
       const config = await getActiveSmtpConfig();
       expect(config.smtpHost).toBe("email-smtp.eu-central-1.amazonaws.com");
@@ -67,7 +67,7 @@ describe("Email Transport Module (src/lib/email.ts)", () => {
       const mockSendMail = vi.fn().mockResolvedValue({ messageId: "<msg-123@hamhamhub.ro>" });
       vi.mocked(nodemailer.createTransport).mockReturnValue({
         sendMail: mockSendMail,
-      } as any);
+      } as unknown as ReturnType<typeof nodemailer.createTransport>);
 
       const result = await sendMail({
         to: "user@test.com",
@@ -88,7 +88,7 @@ describe("Email Transport Module (src/lib/email.ts)", () => {
     it("should return error object when nodemailer fails", async () => {
       vi.mocked(nodemailer.createTransport).mockReturnValue({
         sendMail: vi.fn().mockRejectedValue(new Error("Connection refused")),
-      } as any);
+      } as unknown as ReturnType<typeof nodemailer.createTransport>);
 
       const result = await sendMail({
         to: "user@test.com",
@@ -103,7 +103,7 @@ describe("Email Transport Module (src/lib/email.ts)", () => {
       const mockSendMail = vi.fn().mockResolvedValue({ messageId: "<ssl-msg@hamhamhub.ro>" });
       vi.mocked(nodemailer.createTransport).mockReturnValue({
         sendMail: mockSendMail,
-      } as any);
+      } as unknown as ReturnType<typeof nodemailer.createTransport>);
 
       vi.mocked(db.select).mockReturnValueOnce({
         from: vi.fn().mockReturnValueOnce({
@@ -122,7 +122,7 @@ describe("Email Transport Module (src/lib/email.ts)", () => {
             ]),
           }),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof db.select>);
 
       const result = await sendMail({
         to: "recipient@test.com",
@@ -145,7 +145,7 @@ describe("Email Transport Module (src/lib/email.ts)", () => {
             limit: vi.fn().mockRejectedValueOnce(new Error("DB timeout")),
           }),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof db.select>);
 
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       const config = await getActiveSmtpConfig();

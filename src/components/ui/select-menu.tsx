@@ -72,7 +72,6 @@ export const SelectMenuItem = forwardRef<HTMLButtonElement, SelectMenuItemProps>
       <button
         ref={ref}
         type="button"
-        aria-selected={isSelected}
         disabled={disabled}
         className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${fontClass} ${
           isHighlighted

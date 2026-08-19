@@ -123,7 +123,7 @@ describe("TimePickerSelect Component", () => {
 
   it("supports keyboard navigation (ArrowDown, ArrowUp, Enter, Escape)", () => {
     const handleChange = vi.fn();
-    const { container } = render(
+    render(
       <TimePickerSelect
         id="checkin-time"
         value="08:00"

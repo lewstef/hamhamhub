@@ -10,8 +10,14 @@ export const DOG_TRAINING_COURSES = [] as const;
 
 export type DogTrainingCourse = typeof DOG_TRAINING_COURSES[number];
 
-export const COURSE_KEY_TO_DB_ID: Record<string, string> = {};
+export interface SortedCourse {
+  id: string;
+  key?: string;
+  label: string;
+  description?: string;
+}
 
-export function getSortedCourses(coursesOrderString?: string | null): any[] {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function getSortedCourses(_coursesOrderString?: string | null): SortedCourse[] {
   return [];
 }

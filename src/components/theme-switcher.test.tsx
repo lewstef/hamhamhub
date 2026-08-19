@@ -23,7 +23,7 @@ describe("ThemeSwitcher Component", () => {
   });
 
   it("should toggle the theme when button is clicked", () => {
-    const { container } = render(
+    render(
       <ThemeProvider initialTheme="light">
         <ThemeSwitcher />
       </ThemeProvider>

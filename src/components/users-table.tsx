@@ -12,7 +12,7 @@ import { PasswordStrength } from "@/components/password-strength";
 
 interface User {
   id: string;
-  name: string;
+  name: string | null;
   email: string | null;
   createdAt: Date;
 }
@@ -348,8 +348,8 @@ export function UsersTable({ userList }: UsersTableProps) {
                   pagedUsers.map((u) => (
                     <tr key={u.id} className="hover:bg-muted/40 transition-colors">
                       <td className="px-4 py-3.5 max-w-0">
-                        <span title={u.name} className="block truncate font-medium">
-                          {u.name}
+                        <span title={u.name ?? undefined} className="block truncate font-medium">
+                          {u.name || "—"}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 max-w-0">
