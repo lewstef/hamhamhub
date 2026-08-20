@@ -26,6 +26,7 @@ import {
   SidebarMenuSubButton,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { normalizeSearchText } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -212,14 +213,13 @@ export function DashboardSidebar({ email, activeServices = [], onSignOut }: Side
     { id: "account", title: "Account", href: "/dashboard/account", icon: User },
   ];
 
-  const filteredMenu = searchQuery
+  const q = normalizeSearchText(searchQuery);
+  const filteredMenu = q
     ? (menuData
         .map((section) => {
-          const isSectionMatch = section.title
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase());
+          const isSectionMatch = normalizeSearchText(section.title).includes(q);
           const filteredItems = section.items?.filter((item) =>
-            item.label.toLowerCase().includes(searchQuery.toLowerCase())
+            normalizeSearchText(item.label).includes(q)
           );
 
           if (isSectionMatch || (filteredItems && filteredItems.length > 0)) {

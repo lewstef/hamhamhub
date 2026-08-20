@@ -578,4 +578,46 @@ describe("OrganizationsTable Component", () => {
     const emailLink = screen.getByText("contact@org.ro");
     fireEvent.click(emailLink);
   });
+
+  it("should filter organizations and categories with diacritic-insensitive search", () => {
+    const diacriticOrgs = [
+      {
+        id: "org-1",
+        name: "Școala Canină Brașov",
+        email: "brasov@scoala.ro",
+        phoneNumber: "0712345678",
+        organizationCategory: "dog_school",
+        createdAt: new Date("2026-01-01"),
+        isSuperAdmin: false,
+      },
+      {
+        id: "org-2",
+        name: "Pensiune Canină Călărași",
+        email: "calarasi@pensiune.ro",
+        phoneNumber: "0787654321",
+        organizationCategory: "dog_kennel",
+        createdAt: new Date("2026-01-02"),
+        isSuperAdmin: false,
+      },
+    ];
+
+    render(
+      <OrganizationsTable
+        organizationList={diacriticOrgs as any}
+        organizationCategoryList={mockCategories}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText("Search by name or email...");
+
+    // Search without diacritics
+    fireEvent.change(searchInput, { target: { value: "brasov" } });
+    expect(screen.getByText("Școala Canină Brașov")).toBeDefined();
+    expect(screen.queryByText("Pensiune Canină Călărași")).toBeNull();
+
+    // Search with diacritics
+    fireEvent.change(searchInput, { target: { value: "școala" } });
+    expect(screen.getByText("Școala Canină Brașov")).toBeDefined();
+    expect(screen.queryByText("Pensiune Canină Călărași")).toBeNull();
+  });
 });

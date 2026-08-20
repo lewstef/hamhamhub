@@ -245,4 +245,25 @@ describe("UsersTable Component", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(screen.queryByText("Register New User")).toBeNull();
   });
+
+  it("should filter users with diacritic-insensitive search", () => {
+    const diacriticUsers = [
+      { id: "u-1", name: "Cătălin Ștefan", email: "catalin@example.com", createdAt: new Date() },
+      { id: "u-2", name: "Mihai Popa", email: "mihai@example.com", createdAt: new Date() },
+    ];
+
+    render(<UsersTable userList={diacriticUsers} />);
+
+    const searchInput = screen.getByPlaceholderText("Search users...");
+
+    // Searching without diacritics
+    fireEvent.change(searchInput, { target: { value: "catalin stefan" } });
+    expect(screen.getByText("Cătălin Ștefan")).toBeDefined();
+    expect(screen.queryByText("Mihai Popa")).toBeNull();
+
+    // Searching with diacritics
+    fireEvent.change(searchInput, { target: { value: "cătălin" } });
+    expect(screen.getByText("Cătălin Ștefan")).toBeDefined();
+    expect(screen.queryByText("Mihai Popa")).toBeNull();
+  });
 });

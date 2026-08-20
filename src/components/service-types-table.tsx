@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Eye, Pencil, X } from "lucide-react";
 import { updateServiceTypeAction } from "@/app/actions/service-types";
+import { normalizeSearchText } from "@/lib/utils";
 
 interface FormField {
   name: string;
@@ -65,12 +66,15 @@ export function ServiceTypesTable({ serviceTypesList }: ServiceTypesTableProps) 
     }
   }, [state]);
 
-  const filtered = serviceTypesList.filter((item) => {
-    return (
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.description.toLowerCase().includes(search.toLowerCase())
-    );
-  });
+  const q = normalizeSearchText(search);
+  const filtered = q
+    ? serviceTypesList.filter((item) => {
+        return (
+          normalizeSearchText(item.name).includes(q) ||
+          normalizeSearchText(item.description).includes(q)
+        );
+      })
+    : serviceTypesList;
 
   return (
     <div className="space-y-6">

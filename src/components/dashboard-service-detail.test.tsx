@@ -52,6 +52,11 @@ vi.mock("lucide-react", () => ({
   Waves: () => <div data-testid="waves" />,
   GraduationCap: () => <div data-testid="graduation-cap" />,
   Warehouse: () => <div data-testid="warehouse" />,
+  Languages: () => <div data-testid="languages" />,
+  CigaretteOff: () => <div data-testid="cigarette-off" />,
+  Sprout: () => <div data-testid="sprout" />,
+  Weight: () => <div data-testid="weight" />,
+  Search: () => <div data-testid="search" />,
 }));
 
 vi.mock("@/app/actions/organizations", () => ({
@@ -1194,6 +1199,85 @@ describe("DashboardServiceDetail Component", () => {
       fireEvent.click(actionsWrapper);
     }
   });
+
+  it("should filter courses list based on search query in DashboardServiceDetail", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          createMockCourse({ id: "crs-1", name: "Puppy Socialization", details: "Play time for young pups" }),
+          createMockCourse({ id: "crs-2", name: "Agility Masters", details: "Obstacle courses and jumps" }),
+          createMockCourse({ id: "crs-3", name: "Behavioral Fix", details: "Fix reactive barking" }),
+        ]}
+      />
+    );
+
+    expect(screen.getByText("Puppy Socialization")).toBeDefined();
+    expect(screen.getByText("Agility Masters")).toBeDefined();
+    expect(screen.getByText("Behavioral Fix")).toBeDefined();
+    expect(screen.getByText("courses")).toBeDefined();
+
+    // Type into search input
+    const searchInput = screen.getByPlaceholderText(/search courses by name/i);
+    fireEvent.change(searchInput, { target: { value: "Agility" } });
+
+    expect(screen.getByText("Agility Masters")).toBeDefined();
+    expect(screen.queryByText("Puppy Socialization")).toBeNull();
+    expect(screen.queryByText("Behavioral Fix")).toBeNull();
+
+    // Search query with no match
+    fireEvent.change(searchInput, { target: { value: "NonExistentTerm" } });
+    expect(screen.getByText(/No courses found matching/i)).toBeDefined();
+    const clearButtons = screen.getAllByRole("button", { name: "Clear search" });
+    expect(clearButtons.length).toBeGreaterThan(0);
+
+    // Click clear search
+    fireEvent.click(clearButtons[0]);
+    expect(screen.getByText("Puppy Socialization")).toBeDefined();
+    expect(screen.getByText("Agility Masters")).toBeDefined();
+    expect(screen.getByText("Behavioral Fix")).toBeDefined();
+  });
+
+  it("should match courses regardless of diacritics in search query or course name", () => {
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={trainingService}
+        initialIsEnabled={true}
+        slug="dog-training"
+        courses={[
+          createMockCourse({ id: "crs-1", name: "Dresaj Cățeluși Începători", details: "Curs de învățare și socializare" }),
+          createMockCourse({ id: "crs-2", name: "Agility Avansat", details: "Sărituri și obstacole" }),
+        ]}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search courses by name/i);
+
+    // Searching without diacritics for a name that has diacritics
+    fireEvent.change(searchInput, { target: { value: "catelusi" } });
+    expect(screen.getByText("Dresaj Cățeluși Începători")).toBeDefined();
+    expect(screen.queryByText("Agility Avansat")).toBeNull();
+
+    // Searching with diacritics ("învățare") for details
+    fireEvent.change(searchInput, { target: { value: "invatare" } });
+    expect(screen.getByText("Dresaj Cățeluși Începători")).toBeDefined();
+    expect(screen.queryByText("Agility Avansat")).toBeNull();
+
+    // Searching with diacritics ("cățeluși")
+    fireEvent.change(searchInput, { target: { value: "cățeluși" } });
+    expect(screen.getByText("Dresaj Cățeluși Începători")).toBeDefined();
+    expect(screen.queryByText("Agility Avansat")).toBeNull();
+
+    // Searching for "sarituri" without diacritics matching "Sărituri"
+    fireEvent.change(searchInput, { target: { value: "sarituri" } });
+    expect(screen.getByText("Agility Avansat")).toBeDefined();
+    expect(screen.queryByText("Dresaj Cățeluși Începători")).toBeNull();
+  });
 });
+
 
 

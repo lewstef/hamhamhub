@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useMemo } from "react";
 import { Course, formatWeightRanges } from "@/types/course";
 import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
 import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/courses";
 import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse, Languages, CigaretteOff, Sprout, Weight } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse, Languages, CigaretteOff, Sprout, Weight, Search } from "lucide-react";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { cn, normalizeSearchText } from "@/lib/utils";
 
 const DAY_SHORT_NAMES: Record<string, string> = {
   monday: "Mon",
@@ -192,6 +193,7 @@ export function DashboardServiceDetail({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Sync localCourses with courses prop
   useEffect(() => {
@@ -199,6 +201,48 @@ export function DashboardServiceDetail({
       setLocalCourses(courses);
     }
   }, [courses]);
+
+  // Filter courses based on search query with diacritic-insensitivity
+  const filteredCourses = useMemo(() => {
+    const query = normalizeSearchText(searchQuery);
+    if (!query) return localCourses;
+
+    return localCourses.filter((course) => {
+      const match = (val?: string | null) => normalizeSearchText(val).includes(query);
+
+      return (
+        match(course.name) ||
+        match(course.details) ||
+        match(course.trainingFormat) ||
+        match(course.termsOfParticipation) ||
+        match(course.price) ||
+        match(course.priceType) ||
+        match(course.certifierName) ||
+        match(course.trainerExperienceDescription) ||
+        match(course.veterinaryTrainingDetails) ||
+        match(course.trainingFieldDescription) ||
+        match(course.trainingFieldAddress) ||
+        match(course.parkingDescription) ||
+        match(course.spokenLanguages) ||
+        match(course.acceptedDogWeight) ||
+        match(course.acceptedDogSizes) ||
+        match(course.ageLimits) ||
+        match(course.playYardDetails) ||
+        match(course.poolDetails) ||
+        match(course.socializationPolicy) ||
+        match(course.plantWateringDetails) ||
+        match(course.medicationAdministrationDetails) ||
+        match(course.surveillance247Details) ||
+        match(course.webCamDetails) ||
+        match(course.ownerCommunicationDetails) ||
+        match(course.personalizedMealPlanDetails) ||
+        match(course.emergencyVetTransportDetails) ||
+        match(course.additionalPetPolicy) ||
+        match(course.coverageZones) ||
+        match(course.faq)
+      );
+    });
+  }, [localCourses, searchQuery]);
 
   const serviceName = service?.name?.toLowerCase() || "";
   const isDogTraining = serviceName === "dog training";
@@ -389,14 +433,64 @@ export function DashboardServiceDetail({
 
           {/* Dog Training Dynamic Courses Listing */}
           {isDynamicCourses && (
-            <div className="space-y-2">
+            <div className="space-y-3">
+              {/* Search and Filter Bar */}
+              {localCourses.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-1">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      type="text"
+                      placeholder={`Search ${itemNoun.toLowerCase()}s by name, details, topic, discipline...`}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 pr-8 h-9 text-xs rounded-xl border-input bg-background/80 focus-visible:bg-background"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery("")}
+                        aria-label="Clear search"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-muted transition-colors cursor-pointer"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 px-1">
+                    <span className="font-semibold text-foreground">
+                      {filteredCourses.length}
+                    </span>
+                    <span>of</span>
+                    <span className="font-semibold text-foreground">
+                      {localCourses.length}
+                    </span>
+                    <span>{itemNoun.toLowerCase()}{localCourses.length === 1 ? "" : "s"}</span>
+                  </div>
+                </div>
+              )}
+
               {localCourses.length === 0 ? (
                 <div className="text-center p-12 border border-dashed border-border rounded-2xl text-muted-foreground bg-muted/5">
                   No {itemNoun.toLowerCase()}s created yet. Click "Add {itemNoun}" above to add your first {itemNoun.toLowerCase()}.
                 </div>
+              ) : filteredCourses.length === 0 ? (
+                <div className="text-center p-12 border border-dashed border-border rounded-2xl text-muted-foreground bg-muted/5 space-y-3">
+                  <p className="text-sm">
+                    No {itemNoun.toLowerCase()}s found matching &ldquo;<span className="font-semibold text-foreground">{searchQuery}</span>&rdquo;.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSearchQuery("")}
+                    className="h-8 px-3 text-xs rounded-xl cursor-pointer"
+                  >
+                    Clear search
+                  </Button>
+                </div>
               ) : (
                 <div className="divide-y divide-border/60 rounded-2xl border border-border overflow-hidden">
-                  {localCourses.map((course) => {
+                  {filteredCourses.map((course) => {
                     const isCourseDragged = draggedCourseId === course.id;
                     const courseId = course.id || "";
                     const isExpanded = expandedCourseIds.has(courseId);

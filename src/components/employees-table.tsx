@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Plus, X, Trash2, Pencil, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { normalizeSearchText } from "@/lib/utils";
 
 interface Employee {
   id: string;
@@ -112,13 +113,13 @@ export function EmployeesTable({ staffList, currentUserRole = "employee" }: Empl
 
   const isAnyPending = isPending || deletePending;
 
-  const filteredStaff = search.trim()
+  const q = normalizeSearchText(search);
+  const filteredStaff = q
     ? staffList.filter((u) => {
-        const q = search.toLowerCase();
         return (
-          (u.username && u.username.toLowerCase().includes(q)) ||
-          (u.name && u.name.toLowerCase().includes(q)) ||
-          (u.email && u.email.toLowerCase().includes(q))
+          (u.username && normalizeSearchText(u.username).includes(q)) ||
+          (u.name && normalizeSearchText(u.name).includes(q)) ||
+          (u.email && normalizeSearchText(u.email).includes(q))
         );
       })
     : staffList;

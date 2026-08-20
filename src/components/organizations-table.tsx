@@ -16,6 +16,7 @@ import Link from "next/link";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Plus, X, Trash2, Pencil, ChevronLeft, ChevronRight, Eye, EyeOff, Search, Building2, Layers } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
+import { normalizeSearchText } from "@/lib/utils";
 
 interface Organization {
   id: string;
@@ -201,12 +202,12 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
   const isAnyPending = isPending || deletePending;
 
   // Filter organizations by search query
-  const filteredOrganizations = search.trim()
+  const q = normalizeSearchText(search);
+  const filteredOrganizations = q
     ? organizationList.filter((o) => {
-        const q = search.toLowerCase();
         return (
-          (o.name && o.name.toLowerCase().includes(q)) ||
-          (o.email && o.email.toLowerCase().includes(q))
+          (o.name && normalizeSearchText(o.name).includes(q)) ||
+          (o.email && normalizeSearchText(o.email).includes(q))
         );
       })
     : organizationList;
@@ -219,13 +220,13 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
     : filteredOrganizations;
 
   // Filter categories by search query
-  const filteredCategories = categorySearch.trim()
+  const catQ = normalizeSearchText(categorySearch);
+  const filteredCategories = catQ
     ? organizationCategoryList.filter((c) => {
-        const q = categorySearch.toLowerCase();
         return (
-          c.name.toLowerCase().includes(q) ||
-          c.id.toLowerCase().includes(q) ||
-          (c.description && c.description.toLowerCase().includes(q))
+          normalizeSearchText(c.name).includes(catQ) ||
+          normalizeSearchText(c.id).includes(catQ) ||
+          (c.description && normalizeSearchText(c.description).includes(catQ))
         );
       })
     : organizationCategoryList;

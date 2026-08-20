@@ -28,7 +28,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, normalizeSearchText } from "@/lib/utils";
 
 interface SidebarProps {
   email?: string | null;
@@ -197,15 +197,14 @@ export function BackofficeSidebar({ email, onSignOut }: SidebarProps) {
   const isCollapsed = state === "collapsed";
   const [searchQuery, setSearchQuery] = useState("");
 
-  // SAP Hybris-style tree elements search filtering
-  const filteredMenu = searchQuery
+  // SAP Hybris-style tree elements search filtering with diacritic insensitivity
+  const q = normalizeSearchText(searchQuery);
+  const filteredMenu = q
     ? menuData
         .map((section) => {
-          const isSectionMatch = section.title
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase());
+          const isSectionMatch = normalizeSearchText(section.title).includes(q);
           const filteredItems = section.items?.filter((item) =>
-            item.label.toLowerCase().includes(searchQuery.toLowerCase())
+            normalizeSearchText(item.label).includes(q)
           );
 
           if (isSectionMatch || (filteredItems && filteredItems.length > 0)) {

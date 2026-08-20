@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SelectMenu, SelectMenuItem } from "./select-menu";
+import { normalizeSearchText } from "@/lib/utils";
 
 export interface CustomSelectOption {
   value: string | number;
@@ -78,22 +79,14 @@ export function CustomSelect({
 
   const selectedOption = formattedOptions.find((opt) => String(opt.value) === activeValue);
 
-  const normalizeStr = (str: string) =>
-    str
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "");
-
   const filteredOptions = useMemo(() => {
-    if (!searchable || !searchQuery.trim()) return formattedOptions;
-    const q = normalizeStr(searchQuery);
+    const q = normalizeSearchText(searchQuery);
+    if (!searchable || !q) return formattedOptions;
     return formattedOptions.filter(
       (opt) =>
         String(opt.value) === "" || // Keep default empty option visible
-        normalizeStr(opt.label).includes(q) ||
-        normalizeStr(String(opt.value)).includes(q)
+        normalizeSearchText(opt.label).includes(q) ||
+        normalizeSearchText(String(opt.value)).includes(q)
     );
   }, [formattedOptions, searchable, searchQuery]);
 

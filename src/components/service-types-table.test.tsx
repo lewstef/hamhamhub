@@ -196,4 +196,42 @@ describe("ServiceTypesTable Component", () => {
       expect(screen.queryByText(/Edit Service Type:/)).toBeNull();
     });
   });
+
+  it("should filter service types with diacritic-insensitive search", () => {
+    const diacriticServiceTypes = [
+      {
+        id: "st-1",
+        name: "Îngrijire și Toaletaj",
+        description: "Servicii de spălare și tuns.",
+        applicableTo: ["dog_grooming"],
+        fields: [],
+      },
+      {
+        id: "st-2",
+        name: "Pensiune Canină",
+        description: "Cazare peste noapte.",
+        applicableTo: ["dog_kennel"],
+        fields: [],
+      },
+    ];
+
+    render(<ServiceTypesTable serviceTypesList={diacriticServiceTypes} />);
+
+    const searchInput = screen.getByPlaceholderText("Search service types...");
+
+    // Search without diacritics
+    fireEvent.change(searchInput, { target: { value: "ingrijire" } });
+    expect(screen.getByText("Îngrijire și Toaletaj")).toBeDefined();
+    expect(screen.queryByText("Pensiune Canină")).toBeNull();
+
+    // Search with diacritics
+    fireEvent.change(searchInput, { target: { value: "îngrijire" } });
+    expect(screen.getByText("Îngrijire și Toaletaj")).toBeDefined();
+    expect(screen.queryByText("Pensiune Canină")).toBeNull();
+
+    // Search description without diacritics
+    fireEvent.change(searchInput, { target: { value: "spalare" } });
+    expect(screen.getByText("Îngrijire și Toaletaj")).toBeDefined();
+    expect(screen.queryByText("Pensiune Canină")).toBeNull();
+  });
 });

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 import { Plus, X, Trash2, Pencil, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { PasswordStrength } from "@/components/password-strength";
+import { normalizeSearchText } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -94,12 +95,12 @@ export function UsersTable({ userList }: UsersTableProps) {
 
   const isAnyPending = isPending || deletePending;
 
-  const filteredUsers = search.trim()
+  const q = normalizeSearchText(search);
+  const filteredUsers = q
     ? userList.filter((u) => {
-        const q = search.toLowerCase();
         return (
-          (u.name && u.name.toLowerCase().includes(q)) ||
-          (u.email && u.email.toLowerCase().includes(q))
+          (u.name && normalizeSearchText(u.name).includes(q)) ||
+          (u.email && normalizeSearchText(u.email).includes(q))
         );
       })
     : userList;

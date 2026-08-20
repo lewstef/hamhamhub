@@ -219,4 +219,25 @@ describe("EmployeesTable Component", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(screen.queryByText("Register New Employee")).toBeNull();
   });
+
+  it("should filter employees with diacritic-insensitive search", () => {
+    const diacriticStaff = [
+      { id: "e-1", name: "Andreea Pătrașcu", username: "andreea_p", email: "andreea@example.com", role: "employee" as const, createdAt: new Date() },
+      { id: "e-2", name: "Radu Ionescu", username: "radu_i", email: "radu@example.com", role: "admin" as const, createdAt: new Date() },
+    ];
+
+    render(<EmployeesTable staffList={diacriticStaff} currentUserRole="admin" />);
+
+    const searchInput = screen.getByPlaceholderText("Search employees...");
+
+    // Searching without diacritics
+    fireEvent.change(searchInput, { target: { value: "patrascu" } });
+    expect(screen.getByText("Andreea Pătrașcu")).toBeDefined();
+    expect(screen.queryByText("Radu Ionescu")).toBeNull();
+
+    // Searching with diacritics
+    fireEvent.change(searchInput, { target: { value: "pătrașcu" } });
+    expect(screen.getByText("Andreea Pătrașcu")).toBeDefined();
+    expect(screen.queryByText("Radu Ionescu")).toBeNull();
+  });
 });

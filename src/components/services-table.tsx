@@ -25,6 +25,7 @@ import {
   GripVertical,
 } from "lucide-react";
 import { getSortedCourses } from "@/config/dog-training";
+import { normalizeSearchText } from "@/lib/utils";
 
 interface FormField {
   name: string;
@@ -291,9 +292,9 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
     await reorderCoursesAction(serviceId, orderedIds);
   };
 
-  // Filter services by category and name query
+  // Filter services by category and name query with diacritic insensitivity
   const filteredServices = services.filter((s) => {
-    const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = normalizeSearchText(s.name).includes(normalizeSearchText(search));
     const matchesCategory = selectedTypeFilter === "all" || s.organizationCategory === selectedTypeFilter;
     return matchesSearch && matchesCategory;
   });

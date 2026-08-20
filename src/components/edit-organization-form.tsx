@@ -15,6 +15,7 @@ import { PasswordStrength } from "@/components/password-strength";
 import { WysiwygEditor } from "./wysiwyg-editor";
 import { ROMANIAN_COUNTIES, getCountyLocalities } from "@/config/romanian-territory";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { normalizeSearchText } from "@/lib/utils";
 import { OrgInfoTab } from "./org-form/org-info-tab";
 import { OrgBillingTab } from "./org-form/org-billing-tab";
 import { OrgSecurityTab } from "./org-form/org-security-tab";
@@ -367,19 +368,19 @@ export function EditOrganizationForm({
   const [localityHighlightIndex, setLocalityHighlightIndex] = useState(0);
 
   const filteredCountries = COUNTRIES.filter((c) =>
-    c.toLowerCase().includes((countrySearch || "").toLowerCase())
+    normalizeSearchText(c).includes(normalizeSearchText(countrySearch))
   );
 
   const filteredBanks = ROMANIAN_BANKS.filter((b) =>
-    b.toLowerCase().includes((bankSearch || "").toLowerCase())
+    normalizeSearchText(b).includes(normalizeSearchText(bankSearch))
   );
 
   const filteredCounties = ROMANIAN_COUNTIES.filter((c) =>
-    c.toLowerCase().includes((countySearch || "").toLowerCase())
+    normalizeSearchText(c).includes(normalizeSearchText(countySearch))
   );
 
   const filteredLocalities = availableLocalities.filter((loc) =>
-    loc.toLowerCase().includes((localitySearch || "").toLowerCase())
+    normalizeSearchText(loc).includes(normalizeSearchText(localitySearch))
   );
 
   const handleCountryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

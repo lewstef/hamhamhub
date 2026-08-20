@@ -345,5 +345,80 @@ describe("DashboardServicesList Component", () => {
     // Edit button should now appear
     expect(screen.getByRole("button", { name: "Edit" })).toBeDefined();
   });
+
+  it("should filter services list based on search query in DashboardServicesList", () => {
+    render(
+      <DashboardServicesList
+        organizationId="org-123"
+        services={[
+          { id: "srv-1", name: "Dog Boarding", description: "Safe overnight stay.", slug: "dog-boarding" },
+          { id: "srv-2", name: "Dog Grooming", description: "Bathing and coat care.", slug: "dog-grooming" },
+          { id: "srv-3", name: "Dog Training", description: "Behavioral commands.", slug: "dog-training" },
+        ]}
+        initialEnabledIds={["srv-1"]}
+      />
+    );
+
+    expect(screen.getByText("Dog Boarding")).toBeDefined();
+    expect(screen.getByText("Dog Grooming")).toBeDefined();
+    expect(screen.getByText("Dog Training")).toBeDefined();
+    expect(screen.getByText("services")).toBeDefined();
+
+    // Type query into search input
+    const searchInput = screen.getByPlaceholderText(/search services by name/i);
+    fireEvent.change(searchInput, { target: { value: "grooming" } });
+
+    expect(screen.getByText("Dog Grooming")).toBeDefined();
+    expect(screen.queryByText("Dog Boarding")).toBeNull();
+    expect(screen.queryByText("Dog Training")).toBeNull();
+
+    // Query with no match
+    fireEvent.change(searchInput, { target: { value: "nonexistent" } });
+    expect(screen.getByText(/No services found matching/i)).toBeDefined();
+    const clearButtons = screen.getAllByRole("button", { name: "Clear search" });
+    expect(clearButtons.length).toBeGreaterThan(0);
+
+    // Clear search
+    fireEvent.click(clearButtons[0]);
+    expect(screen.getByText("Dog Boarding")).toBeDefined();
+    expect(screen.getByText("Dog Grooming")).toBeDefined();
+    expect(screen.getByText("Dog Training")).toBeDefined();
+  });
+
+  it("should match services regardless of diacritics in query or service name/description", () => {
+    render(
+      <DashboardServicesList
+        organizationId="org-123"
+        services={[
+          { id: "srv-1", name: "Dresaj Câini", description: "Școală canină și învățare.", slug: "dog-training" },
+          { id: "srv-2", name: "Pensiune Canină", description: "Găzduire peste noapte.", slug: "dog-boarding" },
+        ]}
+        initialEnabledIds={["srv-1"]}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search services by name/i);
+
+    // Searching "caini" matches "Dresaj Câini"
+    fireEvent.change(searchInput, { target: { value: "caini" } });
+    expect(screen.getByText("Dresaj Câini")).toBeDefined();
+    expect(screen.queryByText("Pensiune Canină")).toBeNull();
+
+    // Searching with diacritic "câini" matches
+    fireEvent.change(searchInput, { target: { value: "câini" } });
+    expect(screen.getByText("Dresaj Câini")).toBeDefined();
+    expect(screen.queryByText("Pensiune Canină")).toBeNull();
+
+    // Searching "gazduire" without diacritics matches description "Găzduire peste noapte."
+    fireEvent.change(searchInput, { target: { value: "gazduire" } });
+    expect(screen.getByText("Pensiune Canină")).toBeDefined();
+    expect(screen.queryByText("Dresaj Câini")).toBeNull();
+
+    // Searching "scoala" matches description "Școală canină"
+    fireEvent.change(searchInput, { target: { value: "scoala" } });
+    expect(screen.getByText("Dresaj Câini")).toBeDefined();
+    expect(screen.queryByText("Pensiune Canină")).toBeNull();
+  });
 });
+
 

@@ -93,9 +93,13 @@ vi.mock("@/components/ui/sidebar", () => ({
   useSidebar: vi.fn(() => ({ state: "expanded" })),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: string[]) => args.filter(Boolean).join(" "),
-}));
+vi.mock("@/lib/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/utils")>();
+  return {
+    ...actual,
+    cn: (...args: string[]) => args.filter(Boolean).join(" "),
+  };
+});
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({
