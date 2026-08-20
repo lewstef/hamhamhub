@@ -12,7 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - Adding comments to complex frontend logic or new components explaining their purpose, state management, and props.
 
 # Course & Service Form Rules
-- **Age Limits Placement**: In all tabbed service modes (`Dog Sport`, `Dog Training`, `Dog Boarding`, `Dog Walking`, `Dog Sitting`), **"Age Limits & Restrictions"** must **only** be rendered on the **"Terms of participation"** tab (Tab 2). It must NEVER be rendered on the "General" tab in tabbed layout modes. It is only rendered in the single-form view for flat/non-tabbed services (e.g., Grooming).
+- **Age Limits Placement**: In tabbed service modes (`Dog Sport`, `Dog Training`, `Dog Boarding`, `Dog Walking`, `Dog Sitting`), **"Age Limits & Restrictions"** (and accepted dog sizes) must **only** be rendered on the **"Terms of participation"** tab (Tab 2). It must NEVER be rendered on the "General" tab in tabbed layout modes. **Dog Grooming** (`dog-grooming`) omits Age Limits and Accepted Dog Sizes entirely.
 
 # Known Issues & Gotchas
 

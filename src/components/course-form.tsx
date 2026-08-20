@@ -58,8 +58,7 @@ export {
  * CourseForm Component
  *
  * Form rendering panel for creating or editing sub-service items (Training Courses, Dog Sports, Boarding, Grooming, Walking, Sitting).
- * Dog Sport, Dog Training, Dog Boarding, Dog Walking, and Dog Sitting services render a clean tabbed layout.
- * Grooming and other services render a responsive two-column layout.
+ * Dog Sport, Dog Training, Dog Boarding, Dog Walking, Dog Sitting, and Dog Grooming services render a clean tabbed layout.
  */
 export function CourseForm(props: CourseFormProps) {
   const {
@@ -339,6 +338,7 @@ export function CourseForm(props: CourseFormProps) {
               isDogTraining={isDogTraining}
               isDogSport={isDogSport}
               isDogSitter={isDogSitter}
+              isGrooming={isGrooming}
               hideAgeLimits={isTabbedLayout}
             />
           )}
@@ -346,23 +346,25 @@ export function CourseForm(props: CourseFormProps) {
           {/* TAB 2: TERMS OF PARTICIPATION */}
           {activeTab === "terms" && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
-                  Age Limits &amp; Prerequisites
-                </h3>
-                <AgeLimitsSection
-                  itemNoun={itemNoun}
-                  ageLimitsEnabled={ageLimitsEnabled}
-                  onAgeLimitsEnabledChange={setAgeLimitsEnabled}
-                  selectedAgeLimits={selectedAgeLimits}
-                  onSelectedAgeLimitsChange={setSelectedAgeLimits}
-                  showDogSizes={isDogWalking || isDogSitter || isBoarding || isDogTraining || isDogSport}
-                  dogSizesEnabled={dogSizesEnabled}
-                  onDogSizesEnabledChange={setDogSizesEnabled}
-                  selectedDogSizes={selectedDogSizes}
-                  onSelectedDogSizesChange={setSelectedDogSizes}
-                />
-              </div>
+              {!isGrooming && (
+                <div className="space-y-5 p-5 rounded-2xl border border-border/80 bg-card shadow-sm">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 mb-3">
+                    Age Limits &amp; Prerequisites
+                  </h3>
+                  <AgeLimitsSection
+                    itemNoun={itemNoun}
+                    ageLimitsEnabled={ageLimitsEnabled}
+                    onAgeLimitsEnabledChange={setAgeLimitsEnabled}
+                    selectedAgeLimits={selectedAgeLimits}
+                    onSelectedAgeLimitsChange={setSelectedAgeLimits}
+                    showDogSizes={isDogWalking || isDogSitter || isBoarding || isDogTraining || isDogSport}
+                    dogSizesEnabled={dogSizesEnabled}
+                    onDogSizesEnabledChange={setDogSizesEnabled}
+                    selectedDogSizes={selectedDogSizes}
+                    onSelectedDogSizesChange={setSelectedDogSizes}
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>{isBoarding ? "Terms" : "Terms of Participation"}</Label>
@@ -418,11 +420,11 @@ export function CourseForm(props: CourseFormProps) {
               <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-5">
                 <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
                   <h3 className="text-base font-bold text-foreground">
-                    {(isDogWalking || isDogSitter) ? "Coverage zones" : "Location & Map Details"}
+                    {(isDogWalking || isDogSitter || isGrooming) ? "Coverage zones" : "Location & Map Details"}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {(isDogWalking || isDogSitter)
-                      ? `Configure specific neighborhoods and coverage zones in your city where ${isDogSitter ? "dog sitting" : "dog walking"} services are provided.`
+                    {(isDogWalking || isDogSitter || isGrooming)
+                      ? `Configure specific neighborhoods and coverage zones in your city where ${isDogSitter ? "dog sitting" : isGrooming ? "dog grooming" : "dog walking"} services are provided.`
                       : "Provide location details, business profile, map links, and parking information for clients."}
                   </p>
                 </div>
@@ -431,6 +433,7 @@ export function CourseForm(props: CourseFormProps) {
                   isBoarding={isBoarding}
                   isDogWalking={isDogWalking}
                   isDogSitter={isDogSitter}
+                  isGrooming={isGrooming}
                   cityName={cityName}
                   cartiereList={cartiereList}
                   selectedCartiere={coverageData.primary}
@@ -440,8 +443,8 @@ export function CourseForm(props: CourseFormProps) {
                   onRemoveSecondaryZone={requestRemoveSecondaryZone}
                   onSecondaryCityChange={handleSecondaryCityChange}
                   onSecondaryCartiereChange={handleSecondaryCartiereChange}
-                  hideDedicatedField={isDogWalking || isDogSitter}
-                  hideParking={isDogWalking || isDogSitter}
+                  hideDedicatedField={isDogWalking || isDogSitter || isGrooming}
+                  hideParking={isDogWalking || isDogSitter || isGrooming}
                   dedicatedField={dedicatedField}
                   onDedicatedFieldChange={setDedicatedField}
                   trainingFieldDescription={trainingFieldDescription}

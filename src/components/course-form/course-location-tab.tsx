@@ -16,6 +16,7 @@ interface CourseLocationTabProps {
   layout: "tabbed" | "flat";
   isDogWalking: boolean;
   isDogSitter?: boolean;
+  isGrooming?: boolean;
   isBoarding: boolean;
   cityName: string;
   cartiereList: string[] | null;
@@ -51,13 +52,14 @@ interface CourseLocationTabProps {
 /**
  * CourseLocationTab Component
  *
- * Renders City / Address fields, Primary & Secondary Cartiere Coverage Zones (Dog Walking & Dog Sitter),
+ * Renders City / Address fields, Primary & Secondary Cartiere Coverage Zones (Dog Walking, Dog Sitter & Dog Grooming),
  * Dedicated Training Field toggle, and Parking options.
  */
 export function CourseLocationTab({
   layout,
   isDogWalking,
   isDogSitter = false,
+  isGrooming = false,
   isBoarding,
   cityName,
   cartiereList,
@@ -89,7 +91,7 @@ export function CourseLocationTab({
   hideDedicatedField = false,
   hideParking = false,
 }: CourseLocationTabProps) {
-  const isCoverageZonesMode = isDogWalking || isDogSitter;
+  const isCoverageZonesMode = isDogWalking || isDogSitter || isGrooming;
   const [isRequestCartierOpen, setIsRequestCartierOpen] = useState(false);
   const [newCartierName, setNewCartierName] = useState("");
   const [newCartierNotes, setNewCartierNotes] = useState("");

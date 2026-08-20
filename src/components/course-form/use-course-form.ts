@@ -141,7 +141,7 @@ export function useCourseForm({
   const isDogTraining = serviceSlug === "dog-training" || itemNoun === "Course";
   const isDogWalking = serviceSlug === "dog-walking" || itemNoun === "Walking service";
   const isDogSitter = serviceSlug === "dog-sitter" || itemNoun === "Sitting service";
-  const isTabbedLayout = isDogSport || isDogTraining || isBoarding || isDogWalking || isDogSitter;
+  const isTabbedLayout = isDogSport || isDogTraining || isBoarding || isDogWalking || isDogSitter || isGrooming;
   const cityName = orgCity || "Cluj-Napoca";
   const cartiereList = getCartiereForCity(cityName);
   const [activeTab, setActiveTab] = useState<CourseActiveTab>("general");

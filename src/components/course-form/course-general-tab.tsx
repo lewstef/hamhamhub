@@ -46,6 +46,7 @@ interface CourseGeneralTabProps {
   isDogTraining?: boolean;
   isDogSport?: boolean;
   isDogSitter?: boolean;
+  isGrooming?: boolean;
   hideAgeLimits?: boolean;
 }
 
@@ -86,6 +87,7 @@ export function CourseGeneralTab({
   isDogTraining = false,
   isDogSport = false,
   isDogSitter = false,
+  isGrooming = false,
   hideAgeLimits = false,
 }: CourseGeneralTabProps) {
   const hideAgeLimitsOnGeneral =
@@ -94,13 +96,18 @@ export function CourseGeneralTab({
     isDogTraining ||
     isDogSport ||
     isDogSitter ||
+    isGrooming ||
     itemNoun === "Dog Sport" ||
     itemNoun === "Boarding service" ||
     itemNoun === "Course" ||
     itemNoun === "Training course" ||
-    itemNoun === "Sitting service";
+    itemNoun === "Sitting service" ||
+    itemNoun === "Grooming service";
 
   const getNamePlaceholder = () => {
+    if (isGrooming || itemNoun === "Grooming service") {
+      return "e.g. Full Grooming & Bath";
+    }
     if (isDogSitter || itemNoun === "Sitting service") {
       return "e.g. In-Home Sitting, Daytime Visit, Overnight Care";
     }
@@ -114,6 +121,9 @@ export function CourseGeneralTab({
   };
 
   const getDetailsPlaceholder = () => {
+    if (isGrooming || itemNoun === "Grooming service") {
+      return "Describe what the grooming service includes (bath, haircut, brush, nail clipping)...";
+    }
     if (isDogSitter || itemNoun === "Sitting service") {
       return "Describe what the sitting service includes (feeding, playtime, supervision, home visits)...";
     }
@@ -319,34 +329,36 @@ export function CourseGeneralTab({
         </div>
       </div>
 
-      <BooleanToggleField
-        label="Certified Dog Trainer"
-        description="Indicate whether this service is conducted by a certified trainer."
-        checked={certifiedTrainer}
-        onChange={onCertifiedTrainerChange}
-      >
-        <div className="space-y-4 pt-1">
-          <div className="space-y-2">
-            <Label htmlFor="certifier-name">Certifier Name</Label>
-            <Input
-              id="certifier-name"
-              type="text"
-              value={certifierName}
-              onChange={(e) => onCertifierNameChange(e.target.value)}
-              placeholder="e.g. ACHR (Asociația Chinologică Română), APDT, KNPV"
-              className="h-10 text-xs rounded-xl"
-            />
+      {!isGrooming && itemNoun !== "Grooming service" && (
+        <BooleanToggleField
+          label="Certified Dog Trainer"
+          description="Indicate whether this service is conducted by a certified trainer."
+          checked={certifiedTrainer}
+          onChange={onCertifiedTrainerChange}
+        >
+          <div className="space-y-4 pt-1">
+            <div className="space-y-2">
+              <Label htmlFor="certifier-name">Certifier Name</Label>
+              <Input
+                id="certifier-name"
+                type="text"
+                value={certifierName}
+                onChange={(e) => onCertifierNameChange(e.target.value)}
+                placeholder="e.g. ACHR (Asociația Chinologică Română), APDT, KNPV"
+                className="h-10 text-xs rounded-xl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Trainer Qualifications &amp; Experience</Label>
+              <WysiwygEditor
+                value={trainerExperienceDescription}
+                onChange={onTrainerExperienceDescriptionChange}
+                placeholder="Describe trainer background, certifications, and dog handling history..."
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Trainer Qualifications &amp; Experience</Label>
-            <WysiwygEditor
-              value={trainerExperienceDescription}
-              onChange={onTrainerExperienceDescriptionChange}
-              placeholder="Describe trainer background, certifications, and dog handling history..."
-            />
-          </div>
-        </div>
-      </BooleanToggleField>
+        </BooleanToggleField>
+      )}
 
       {(isDogSitter || itemNoun === "Sitting service") && (
         <BooleanToggleField

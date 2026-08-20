@@ -1051,7 +1051,14 @@ describe("CourseForm Component", () => {
     expect(screen.queryByText("Facility Attributes")).toBeNull();
     expect(screen.queryByText("Boarding Details")).toBeNull();
 
-    // Verify Grooming billing frequency options
+    // Verify Tab 2 (Terms of participation) does not render Age Limits or Accepted Dog Sizes for Grooming
+    fireEvent.click(screen.getByRole("button", { name: "Terms of participation" }));
+    expect(screen.queryByText("Age Limits & Prerequisites")).toBeNull();
+    expect(screen.queryByText("Age Limits & Restrictions")).toBeNull();
+    expect(screen.queryByText("Accepted Dog Sizes")).toBeNull();
+
+    // Verify Grooming billing frequency options on Pricing tab
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
     const select = screen.getByLabelText("Billing Frequency") as HTMLSelectElement;
     expect(select).toBeDefined();
     expect(screen.getAllByText("Per Grooming service")[0]).toBeDefined();
@@ -1490,7 +1497,7 @@ describe("CourseForm Component", () => {
     expect(coverageJsonStr).toContain("Mănăștur");
   });
 
-  it("should render and submit flat form layout for Dog Grooming service mode", async () => {
+  it("should render and submit tabbed form layout for Dog Grooming service mode", async () => {
     vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
 
     render(
@@ -1505,16 +1512,17 @@ describe("CourseForm Component", () => {
       />
     );
 
-    // Name input in flat layout
+    // Name input on General tab
     fireEvent.change(screen.getByLabelText("Grooming service Name"), {
       target: { value: "Full Bath & Haircut" },
     });
 
-    // Price input
-    const priceInput = screen.getByLabelText("Price Amount (lei)");
+    // Switch to Pricing tab to set price
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+    const priceInput = screen.getByLabelText(/Price Amount/);
     fireEvent.change(priceInput, { target: { value: "120" } });
 
-    // Submit flat form
+    // Submit form
     const submitBtn = screen.getAllByRole("button", { name: "Create Grooming service" })[0];
     await act(async () => {
       fireEvent.click(submitBtn);
@@ -1621,7 +1629,7 @@ describe("CourseForm Component", () => {
     expect(passedFormData.get("price")).toBe("180");
   });
 
-  it("should render grooming service in flat mode and handle cancel and action failure", async () => {
+  it("should render grooming service in tabbed mode and handle cancel and action failure", async () => {
     vi.mocked(createCourseAction).mockResolvedValueOnce({ error: "Course name exists" });
 
     render(
@@ -1636,15 +1644,28 @@ describe("CourseForm Component", () => {
       />
     );
 
+    // Verify all 6 tabs are present for Grooming (General, Terms, Pricing, Schedule, Coverage zones, FAQ)
+    expect(screen.getByRole("button", { name: /^general$/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /terms/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /pricing/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /schedule/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /coverage zones/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^faq$/i })).toBeDefined();
+
     // Cancel button
     const cancelBtn = screen.getAllByRole("button", { name: "Cancel" })[0];
     fireEvent.click(cancelBtn);
     expect(onCancel).toHaveBeenCalled();
 
-    // Fill name and submit to trigger error branch
+    // Fill name on General tab
     fireEvent.change(screen.getByLabelText("Grooming Package Name"), {
       target: { value: "Full Spa & Bath" },
     });
+
+    // Switch to Pricing tab and set price
+    const pricingTabBtn = screen.getByRole("button", { name: /pricing/i });
+    fireEvent.click(pricingTabBtn);
+
     fireEvent.change(screen.getByLabelText("Price Amount (lei)"), {
       target: { value: "150" },
     });
@@ -1754,29 +1775,26 @@ describe("CourseForm Component", () => {
   it("should render flat grooming form and submit successfully", async () => {
     vi.mocked(createCourseAction).mockResolvedValue({ success: true });
 
+    vi.mocked(createCourseAction).mockResolvedValueOnce({ success: true });
     const { container } = render(
       <CourseForm
         organizationId="org-1"
         serviceId="srv-grooming"
         itemNoun="Grooming service"
-        serviceSlug="grooming"
+        serviceSlug="dog-grooming"
         onCancel={onCancel}
         onSubmitSuccess={onSubmitSuccess}
       />
     );
 
-    // Flat form renders directly without tabs
-    expect(screen.queryByRole("tab")).toBeNull();
-
-    // Set name
+    // Set name on General tab
     const nameInput = screen.getByLabelText("Grooming service Name");
     fireEvent.change(nameInput, { target: { value: "Full Grooming & Bath" } });
 
-    // Set price
-    const priceInput = container.querySelector('input[id^="course-price-"]') as HTMLInputElement;
-    if (priceInput) {
-      fireEvent.change(priceInput, { target: { value: "120" } });
-    }
+    // Switch to Pricing tab and set price
+    fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
+    const priceInput = screen.getByLabelText(/Price Amount/);
+    fireEvent.change(priceInput, { target: { value: "120" } });
 
     // Submit form
     const formEl = container.querySelector("form")!;

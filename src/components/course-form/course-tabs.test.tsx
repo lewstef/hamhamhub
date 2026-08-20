@@ -283,6 +283,35 @@ describe("CourseForm Subcomponents Suite", () => {
       fireEvent.click(germanBtn);
       expect(onToggleLanguage).toHaveBeenCalledWith("German");
     });
+
+    it("renders Grooming service in General Tab with proper placeholders and hides certified trainer", () => {
+      render(
+        <CourseGeneralTab
+          name=""
+          onNameChange={vi.fn()}
+          details=""
+          onDetailsChange={vi.fn()}
+          certifiedTrainer={false}
+          onCertifiedTrainerChange={vi.fn()}
+          certifierName=""
+          onCertifierNameChange={vi.fn()}
+          trainerExperienceDescription=""
+          onTrainerExperienceDescriptionChange={vi.fn()}
+          spokenLanguages={["Romanian", "English"]}
+          onToggleLanguage={vi.fn()}
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onToggleAgeLimit={vi.fn()}
+          itemNoun="Grooming service"
+          isGrooming={true}
+        />
+      );
+
+      expect(screen.getByPlaceholderText("e.g. Full Grooming & Bath")).toBeDefined();
+      expect(screen.getByPlaceholderText("Describe what the grooming service includes (bath, haircut, brush, nail clipping)...")).toBeDefined();
+      expect(screen.queryByText("Certified Dog Trainer")).toBeNull();
+    });
   });
 
   describe("CoursePricingTab", () => {
