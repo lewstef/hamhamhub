@@ -248,6 +248,36 @@ export function useCourseForm({
       prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
     );
   };
+
+  const [acceptedDogWeight, setAcceptedDogWeight] = useState<string[]>(() => {
+    if (!initialCourse?.acceptedDogWeight) return [];
+    return initialCourse.acceptedDogWeight.split(",").map((s) => s.trim()).filter(Boolean);
+  });
+
+  const handleToggleWeight = (kg: number | string) => {
+    const kgStr = String(kg);
+    setAcceptedDogWeight((prev) =>
+      prev.includes(kgStr) ? prev.filter((w) => w !== kgStr) : [...prev, kgStr]
+    );
+  };
+
+  const handleSelectAllWeight = () => {
+    setAcceptedDogWeight(Array.from({ length: 100 }, (_, i) => String(i + 1)));
+  };
+
+  const handleClearWeight = () => {
+    setAcceptedDogWeight([]);
+  };
+
+  const handleSetExactWeightRange = (start: number, end: number) => {
+    const clampedMin = Math.max(1, Math.min(100, Math.min(start, end)));
+    const clampedMax = Math.max(1, Math.min(100, Math.max(start, end)));
+    const rangeKgs = Array.from(
+      { length: clampedMax - clampedMin + 1 },
+      (_, i) => String(clampedMin + i)
+    );
+    setAcceptedDogWeight(rangeKgs);
+  };
   const [maxPetsPerVisit, setMaxPetsPerVisit] = useState(initialCourse?.maxPetsPerVisit || 1);
   const [additionalPetPolicy, setAdditionalPetPolicy] = useState(initialCourse?.additionalPetPolicy || "");
   const [playYard, setPlayYard] = useState(initialCourse?.playYard || false);
@@ -643,6 +673,10 @@ export function useCourseForm({
     formData.append("plantWateringDetails", plantWateringDetails);
     formData.append("nonSmoker", String(nonSmoker));
     formData.append("spokenLanguages", selectedLanguages.join(","));
+    if (isGrooming) {
+      const sortedWeights = [...acceptedDogWeight].sort((a, b) => Number(a) - Number(b));
+      formData.append("acceptedDogWeight", sortedWeights.join(","));
+    }
     formData.append("maxPetsPerVisit", String(maxPetsPerVisit));
     formData.append("additionalPetPolicy", additionalPetPolicy);
 
@@ -726,6 +760,10 @@ export function useCourseForm({
       ? initialCourse.spokenLanguages.split(",").map((s) => s.trim()).filter(Boolean)
       : ["Romanian", "English"];
     if (JSON.stringify(selectedLanguages) !== JSON.stringify(initialLanguages)) return true;
+    const initialWeights = initialCourse?.acceptedDogWeight
+      ? initialCourse.acceptedDogWeight.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+    if (JSON.stringify(acceptedDogWeight) !== JSON.stringify(initialWeights)) return true;
     if (maxPetsPerVisit !== (initialCourse?.maxPetsPerVisit || 1)) return true;
     if (additionalPetPolicy !== (initialCourse?.additionalPetPolicy || "")) return true;
     return false;
@@ -764,6 +802,7 @@ export function useCourseForm({
     plantWateringDetails,
     nonSmoker,
     selectedLanguages,
+    acceptedDogWeight,
     maxPetsPerVisit,
     additionalPetPolicy,
     initialCourse,
@@ -874,6 +913,13 @@ export function useCourseForm({
     selectedLanguages,
     setSelectedLanguages,
     handleToggleLanguage,
+    acceptedDogWeight,
+    setAcceptedDogWeight,
+    handleToggleWeight,
+    handleSelectAllWeight,
+    handleClearWeight,
+    handleSetWeightRange: handleSetExactWeightRange,
+    handleSetExactWeightRange,
     maxPetsPerVisit,
     setMaxPetsPerVisit,
     additionalPetPolicy,

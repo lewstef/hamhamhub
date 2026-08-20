@@ -8,6 +8,8 @@ import {
   DOG_SPORT_DISCIPLINES,
   DOG_TRAINING_TOPICS,
   DOG_TRAINING_FORMATS,
+  DOG_GROOMING_WEIGHT_TIERS,
+  formatWeightRanges,
 } from "./course";
 
 describe("Course Types & Coverage Zone Helpers (src/types/course.ts)", () => {
@@ -139,6 +141,41 @@ describe("Course Types & Coverage Zone Helpers (src/types/course.ts)", () => {
         "Board & Train",
         "Online Consultation",
       ]);
+    });
+  });
+
+  describe("DOG_GROOMING_WEIGHT_TIERS & formatWeightRanges", () => {
+    it("contains the standard 5 dog breed presets", () => {
+      const labels = DOG_GROOMING_WEIGHT_TIERS.map((t) => t.label);
+      expect(labels).toEqual([
+        "Mini Breed",
+        "Small Breed",
+        "Medium Breed",
+        "Large Breed",
+        "Giant Breed",
+      ]);
+      expect(DOG_GROOMING_WEIGHT_TIERS[0]).toEqual({
+        id: "mini",
+        label: "Mini Breed",
+        rangeLabel: "1 – 4 kg",
+        start: 1,
+        end: 4,
+      });
+      expect(DOG_GROOMING_WEIGHT_TIERS[4]).toEqual({
+        id: "giant",
+        label: "Giant Breed",
+        rangeLabel: "45 – 100+ kg",
+        start: 45,
+        end: 100,
+      });
+    });
+
+    it("formats weight ranges correctly including 100+ kg", () => {
+      expect(formatWeightRanges([])).toBe("None");
+      expect(formatWeightRanges(["1", "2", "3", "4"])).toBe("1–4 kg");
+      expect(formatWeightRanges(["10", "11", "12"])).toBe("10–12 kg");
+      expect(formatWeightRanges(["45", "46", "100"])).toBe("45–46 kg, 100+ kg");
+      expect(formatWeightRanges(Array.from({ length: 100 }, (_, i) => String(i + 1)))).toBe("All weights (1–100+ kg)");
     });
   });
 });

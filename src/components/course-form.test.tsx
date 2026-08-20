@@ -27,6 +27,13 @@ vi.mock("lucide-react", () => ({
   CheckCircle2: () => <div data-testid="check-circle2" />,
   Search: () => <div data-testid="search" />,
   Check: () => <div data-testid="check" />,
+  CheckCheck: () => <div data-testid="check-check" />,
+  RotateCcw: () => <div data-testid="rotate-ccw" />,
+  Scale: () => <div data-testid="scale" />,
+  Weight: () => <div data-testid="weight" />,
+  Sparkles: () => <div data-testid="sparkles" />,
+  Layers: () => <div data-testid="layers" />,
+  Minus: () => <div data-testid="minus" />,
 }));
 
 vi.mock("@/db", () => ({
@@ -1051,6 +1058,13 @@ describe("CourseForm Component", () => {
     expect(screen.queryByText("Facility Attributes")).toBeNull();
     expect(screen.queryByText("Boarding Details")).toBeNull();
 
+    // Verify Weight section and Killograms on General tab
+    expect(screen.getByText("Weight")).toBeDefined();
+    expect(screen.getByText("Killograms")).toBeDefined();
+    expect(screen.getByText("Minimum Weight")).toBeDefined();
+    expect(screen.getByText("Maximum Weight")).toBeDefined();
+    expect(screen.getByText("Range Slider")).toBeDefined();
+
     // Verify Tab 2 (Terms of participation) does not render Age Limits or Accepted Dog Sizes for Grooming
     fireEvent.click(screen.getByRole("button", { name: "Terms of participation" }));
     expect(screen.queryByText("Age Limits & Prerequisites")).toBeNull();
@@ -1517,6 +1531,9 @@ describe("CourseForm Component", () => {
       target: { value: "Full Bath & Haircut" },
     });
 
+    // Select weight options in Weight section using Mini Breed preset (1–4 kg)
+    fireEvent.click(screen.getByRole("button", { name: /Mini Breed/ }));
+
     // Switch to Pricing tab to set price
     fireEvent.click(screen.getByRole("button", { name: "Pricing" }));
     const priceInput = screen.getByLabelText(/Price Amount/);
@@ -1533,6 +1550,7 @@ describe("CourseForm Component", () => {
     expect(passedFormData.get("name")).toBe("Full Bath & Haircut");
     expect(passedFormData.get("price")).toBe("120");
     expect(passedFormData.get("priceType")).toBe("service");
+    expect(passedFormData.get("acceptedDogWeight")).toBe("1,2,3,4");
   });
 
   it("should update and remove multiple pricing tiers in tabbed mode", async () => {
@@ -1938,12 +1956,12 @@ describe("CourseForm Component", () => {
     expect(nameInput.value).toBe("In home sitting");
 
     // Submit form to trigger error
-    const formEl = container.querySelector("form")!;
+    const submitBtn = screen.getAllByRole("button", { name: "Create Sitting service" })[0];
     await act(async () => {
-      fireEvent.submit(formEl);
+      fireEvent.click(submitBtn);
     });
 
-    expect(screen.getByText("Invalid pricing amount")).toBeDefined();
+    expect(screen.getAllByText("Invalid pricing amount")[0]).toBeDefined();
   });
 
   it("handles Dog Sport discipline quick-presets (e.g. Mantrailing, Search & rescue)", () => {

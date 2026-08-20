@@ -161,6 +161,11 @@ export function CourseForm(props: CourseFormProps) {
     setNonSmoker,
     selectedLanguages,
     handleToggleLanguage,
+    acceptedDogWeight,
+    handleToggleWeight,
+    handleSelectAllWeight,
+    handleClearWeight,
+    handleSetWeightRange,
     maxPetsPerVisit,
     setMaxPetsPerVisit,
     additionalPetPolicy,
@@ -333,6 +338,11 @@ export function CourseForm(props: CourseFormProps) {
               onAgeLimitsEnabledChange={setAgeLimitsEnabled}
               selectedAgeLimits={selectedAgeLimits}
               onToggleAgeLimit={handleToggleAgeLimit}
+              acceptedDogWeight={acceptedDogWeight}
+              onToggleWeight={handleToggleWeight}
+              onSelectAllWeight={handleSelectAllWeight}
+              onClearWeight={handleClearWeight}
+              onSetWeightRange={handleSetWeightRange}
               itemNoun={itemNoun}
               isDogWalking={isDogWalking}
               isDogTraining={isDogTraining}

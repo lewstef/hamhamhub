@@ -377,7 +377,12 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
   - Implemented complete day-by-day scheduling with Mon-Fri/All copy presets, multi-pricing tier options, Romanian cartiere coverage zones (primary + secondary multi-city zones), safe removal modal confirmations, and client-side closure/opening overlap detection.
   - **Dog Training Course Topics & Delivery Formats (Option A Architecture)**: Cleanly separated **Course Topics / Specialization Presets** (`Puppy Socialization`, `Basic Obedience`, `Advanced Obedience`, `Behavior Modification`, `Truffle hunting`, `Show handling`, `Security & Protection` with 1-click name quick-fill) from **Delivery Formats** (`Group Class`, `Private 1-on-1 Session`, `In-Home Training`, `Board & Train`, `Online Consultation`), allowing any topic to be delivered as group, private, or in-home.
   - **Dog Sport Disciplines**: Added **Mantrailing** and **Search & rescue** to the standard official sport disciplines.
-  - **Dog Grooming Service Restructuring**: Aligned **Dog Grooming** (`dog-grooming`) into the standard modular tabbed layout (`General`, `Terms of participation`, `Pricing`, `Schedule`, `Coverage zones`, `FAQ`), matching the **Dog Walking** and **Dog Sitting** architecture without adding new attributes (omitting Age limits and Accepted Dog Sizes).
+  - **Dog Grooming Service Restructuring & Breed Weight Section**: Aligned **Dog Grooming** (`dog-grooming`) into the standard modular tabbed layout (`General`, `Terms of participation`, `Pricing`, `Schedule`, `Coverage zones`, `FAQ`), matching the **Dog Walking** and **Dog Sitting** architecture (omitting Age limits and Accepted Dog Sizes). Added a dedicated **Weight** section on the **General** tab with an interactive Min–Max Range Slider & Stepper supporting 1 to 100+ kg, keyboard-editable numeric inputs with `kg` suffix, quick action buttons (`All Weights`, `Reset`), and standard cynological **Breed Presets**:
+    - **Mini Breed**: `1 kg – 4 kg`
+    - **Small Breed**: `4 kg – 10 kg`
+    - **Medium Breed**: `10 kg – 25 kg`
+    - **Large Breed**: `25 kg – 45 kg`
+    - **Giant Breed**: `45 kg – 100+ kg`
   - **Multi-Service Spoken Languages**: Integrated multi-lingual staff / trainer communication badges via **Spoken Languages** selection (`Romanian`, `English`, `Hungarian`, `German`, `French`, `Italian`, `Spanish`, `Ukrainian`) across **all dog services** (`Dog Sport`, `Dog Training`, `Dog Boarding`, `Dog Walking`, `Dog Sitting`, `Grooming`).
   - **Dog Sitter Specialized Care & Attributes**: In-home sitting customization including **Plant & Garden Watering** with WYSIWYG care instructions, **Non-Smoker Sitter** verification, multi-pet accommodation limits, and emergency veterinary transport protocols.
 - **Idempotent Database Seeding (`src/db/seed.ts`)**:
@@ -402,7 +407,7 @@ npm run build
 ### Running Unit Tests
 Execute the unit test suites to verify server action constraints, security boundaries, component behaviour, and theme integrations:
 ```bash
-# Run all tests (727 tests across 62 test files)
+# Run all tests (740 tests across 62 test files)
 npm run test
 
 # Run with coverage report
@@ -411,7 +416,7 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 
 ### Test Coverage Metrics
 - **Test Suites**: **62 passed (62 total)**
-- **Tests**: **727 passed (727 total)**
+- **Tests**: **740 passed (740 total)**
 - **Type Checking**: **0 TypeScript errors (`npx tsc --noEmit`)**
 - **Production Build**: **0 errors across all 26 App Router routes (`npm run build`)**
 
@@ -421,5 +426,5 @@ npx vitest run --coverage --coverage.provider=v8 --coverage.reporter=text
 | Server actions | `auth`, `initialization`, `employees`, `users`, `organizations` (including `requestNewCartierAction`), `services`, `service-types`, `courses`, `system`, `cartier-request` |
 | Auth & routing | `auth.ts` (authorize logic), `auth.config.ts` (route guards), `proxy.ts` (Next.js 16 auth proxy / middleware) |
 | Components | `backoffice-login-form`, `login-form`, `signup-form`, `backoffice-sidebar`, `dashboard-sidebar`, `theme-provider`, `service-types-table`, `password-strength`, `edit-organization-form` (modular tabs: `org-info-tab`, `org-billing-tab`, `org-security-tab`, `org-subscription-tab`, `org-services-tab`, `org-verification-tab`; modular modals: `org-edit-name-category-modal`, `org-edit-contact-modal`, `org-edit-address-modal`, `org-edit-billing-modal`, `org-edit-password-modal`, `org-edit-description-modal`), `dashboard-services-list`, `services-table`, `course-form` (modular sub-components: `course-general-tab`, `course-pricing-tab`, `course-schedule-tab`, `course-care-tab`, `course-location-tab`, `course-faq-tab`, `course-play-yard-tab`, `age-limits-section`, `trainer-attributes-card`), `dashboard-service-detail`, `wysiwyg-editor`, `custom-select`, `select-menu` (`SelectMenu`, `SelectMenuItem`), `service-type-preview-form`, `smtp-config-form`, `time-picker-select`, `toggle-switch`, `boolean-toggle-field` |
-| Config, Types & utilities | `types/course` (100% coverage), `config/service-types`, `config/dog-training`, `config/romanian-territory`, `config/romanian-cartiere`, `lib/utils`, `lib/email`, `lib/validation`, `lib/validations` (`auth`, `organizations`, `courses`, `employees`, `users`, `system`, `validations.test.ts`), `testing/mock-factories` |
+| Config, Types & utilities | `types/course` (100% coverage with `DOG_GROOMING_WEIGHT_TIERS` & `formatWeightRanges`), `config/service-types`, `config/dog-training`, `config/romanian-territory`, `config/romanian-cartiere`, `lib/utils`, `lib/email`, `lib/validation`, `lib/validations` (`auth`, `organizations`, `courses`, `employees`, `users`, `system`, `validations.test.ts`), `testing/mock-factories` |
 | Hooks | `use-mobile` |

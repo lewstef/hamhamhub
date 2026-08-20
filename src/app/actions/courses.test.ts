@@ -217,6 +217,27 @@ describe("Courses Server Actions", () => {
       expect(result).toEqual({ success: true });
     });
 
+    it("should successfully insert grooming service with acceptedDogWeight", async () => {
+      vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
+      const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
+
+      const formData = new FormData();
+      formData.append("name", "Full Grooming Package");
+      formData.append("price", "150");
+      formData.append("priceType", "service");
+      formData.append("acceptedDogWeight", "5,10,15,20,25");
+
+      const result = await createCourseAction(null, formData);
+      expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
+        name: "Full Grooming Package",
+        price: "150",
+        priceType: "service",
+        acceptedDogWeight: "5,10,15,20,25",
+      }));
+      expect(result).toEqual({ success: true });
+    });
+
     it("should fail schedule time format validation", async () => {
       vi.mocked(auth as any).mockResolvedValueOnce({ user: { id: "org-1", role: "organization" }, expires: "" });
       const formData = new FormData();

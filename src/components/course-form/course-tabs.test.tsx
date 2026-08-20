@@ -284,7 +284,12 @@ describe("CourseForm Subcomponents Suite", () => {
       expect(onToggleLanguage).toHaveBeenCalledWith("German");
     });
 
-    it("renders Grooming service in General Tab with proper placeholders and hides certified trainer", () => {
+    it("renders Grooming service in General Tab with proper placeholders, hides certified trainer, and renders Weight section with Killograms 1 to 50", () => {
+      const onToggleWeight = vi.fn();
+      const onSelectAllWeight = vi.fn();
+      const onClearWeight = vi.fn();
+      const onSetWeightRange = vi.fn();
+
       render(
         <CourseGeneralTab
           name=""
@@ -303,6 +308,11 @@ describe("CourseForm Subcomponents Suite", () => {
           onAgeLimitsEnabledChange={vi.fn()}
           selectedAgeLimits={[]}
           onToggleAgeLimit={vi.fn()}
+          acceptedDogWeight={["5", "10"]}
+          onToggleWeight={onToggleWeight}
+          onSelectAllWeight={onSelectAllWeight}
+          onClearWeight={onClearWeight}
+          onSetWeightRange={onSetWeightRange}
           itemNoun="Grooming service"
           isGrooming={true}
         />
@@ -311,6 +321,51 @@ describe("CourseForm Subcomponents Suite", () => {
       expect(screen.getByPlaceholderText("e.g. Full Grooming & Bath")).toBeDefined();
       expect(screen.getByPlaceholderText("Describe what the grooming service includes (bath, haircut, brush, nail clipping)...")).toBeDefined();
       expect(screen.queryByText("Certified Dog Trainer")).toBeNull();
+
+      // Check Weight section and Killograms
+      expect(screen.getByText("Weight")).toBeDefined();
+      expect(screen.getByText("Killograms")).toBeDefined();
+      expect(screen.getByText("Minimum Weight")).toBeDefined();
+      expect(screen.getByText("Maximum Weight")).toBeDefined();
+      expect(screen.getByText("Range Slider")).toBeDefined();
+      expect(screen.getByText("Quick Breed Presets")).toBeDefined();
+
+      // Keyboard editing on min & max weight numeric inputs
+      const minInput = screen.getByLabelText("Minimum weight (kg)");
+      fireEvent.change(minInput, { target: { value: "4" } });
+      expect(onSetWeightRange).toHaveBeenCalledWith(4, 10);
+
+      const maxInput = screen.getByLabelText("Maximum weight (kg)");
+      fireEvent.change(maxInput, { target: { value: "45" } });
+      expect(onSetWeightRange).toHaveBeenCalledWith(5, 45);
+
+      // Click Decrease / Increase Min weight steppers
+      fireEvent.click(screen.getByRole("button", { name: "Decrease min weight" }));
+      expect(onSetWeightRange).toHaveBeenCalled();
+
+      // Click All Weights
+      fireEvent.click(screen.getAllByRole("button", { name: /All Weights/ })[0]);
+      expect(onSelectAllWeight).toHaveBeenCalled();
+
+      // Click Reset
+      fireEvent.click(screen.getByRole("button", { name: /Reset/ }));
+      expect(onClearWeight).toHaveBeenCalled();
+
+      // Click Quick Breed presets
+      fireEvent.click(screen.getByRole("button", { name: /Mini Breed/ }));
+      expect(onSetWeightRange).toHaveBeenCalledWith(1, 4);
+
+      fireEvent.click(screen.getByRole("button", { name: /Small Breed/ }));
+      expect(onSetWeightRange).toHaveBeenCalledWith(4, 10);
+
+      fireEvent.click(screen.getByRole("button", { name: /Medium Breed/ }));
+      expect(onSetWeightRange).toHaveBeenCalledWith(10, 25);
+
+      fireEvent.click(screen.getByRole("button", { name: /Large Breed/ }));
+      expect(onSetWeightRange).toHaveBeenCalledWith(25, 45);
+
+      fireEvent.click(screen.getByRole("button", { name: /Giant Breed/ }));
+      expect(onSetWeightRange).toHaveBeenCalledWith(45, 100);
     });
   });
 
@@ -1129,6 +1184,81 @@ describe("CourseForm Subcomponents Suite", () => {
 
       expect(screen.getByText("Non-Smoker Sitter")).toBeDefined();
       expect(screen.getByText("Plant & Garden Watering")).toBeDefined();
+    });
+  });
+
+  describe("Grooming Weight Section & Exact Keyboard Inputs", () => {
+    it("renders Grooming Weight section on CourseGeneralTab and allows typing exact values and clicking presets", () => {
+      const onSetWeightRange = vi.fn();
+      const onSelectAllWeight = vi.fn();
+      const onClearWeight = vi.fn();
+
+      render(
+        <CourseGeneralTab
+          name="Grooming Pro"
+          onNameChange={vi.fn()}
+          details="Full grooming"
+          onDetailsChange={vi.fn()}
+          certifiedTrainer={false}
+          onCertifiedTrainerChange={vi.fn()}
+          certifierName=""
+          onCertifierNameChange={vi.fn()}
+          trainerExperienceDescription=""
+          onTrainerExperienceDescriptionChange={vi.fn()}
+          isGrooming={true}
+          itemNoun="Grooming service"
+          acceptedDogWeight={["4", "5", "6", "7", "8", "9", "10"]}
+          onSetWeightRange={onSetWeightRange}
+          onSelectAllWeight={onSelectAllWeight}
+          onClearWeight={onClearWeight}
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onToggleAgeLimit={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText("Weight")).toBeDefined();
+      expect(screen.getAllByText(/4 – 10 kg/).length).toBeGreaterThan(0);
+
+      // Editable inputs
+      const minInput = screen.getByLabelText("Minimum weight (kg)");
+      const maxInput = screen.getByLabelText("Maximum weight (kg)");
+
+      // Type exact value in min input
+      fireEvent.change(minInput, { target: { value: "25" } });
+      expect(onSetWeightRange).toHaveBeenCalledWith(25, 25);
+
+      // Type exact value in max input
+      fireEvent.change(maxInput, { target: { value: "45" } });
+      expect(onSetWeightRange).toHaveBeenCalledWith(4, 45);
+
+      // Blur tests
+      fireEvent.blur(minInput);
+      fireEvent.blur(maxInput);
+
+      // Min weight range slider
+      const minSlider = screen.getByLabelText("Minimum weight slider");
+      fireEvent.change(minSlider, { target: { value: "15" } });
+      expect(onSetWeightRange).toHaveBeenCalledWith(10, 10); // clamped to max or called
+
+      // Quick breed presets
+      const miniPreset = screen.getByRole("button", { name: /Mini Breed/i });
+      fireEvent.click(miniPreset);
+      expect(onSetWeightRange).toHaveBeenCalledWith(1, 4);
+
+      const giantPreset = screen.getByRole("button", { name: /Giant Breed/i });
+      fireEvent.click(giantPreset);
+      expect(onSetWeightRange).toHaveBeenCalledWith(45, 100);
+
+      // Select All and Reset
+      const allWeightsBtn = screen.getByRole("button", { name: /All Weights \(1–100\+ kg\)/i });
+      fireEvent.click(allWeightsBtn);
+      expect(onSelectAllWeight).toHaveBeenCalled();
+
+      const resetBtn = screen.getByRole("button", { name: /Reset/i });
+      fireEvent.click(resetBtn);
+      expect(onClearWeight).toHaveBeenCalled();
     });
   });
 });

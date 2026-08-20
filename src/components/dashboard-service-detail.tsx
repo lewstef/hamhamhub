@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import type { Course } from "@/types/course";
+import { Course, formatWeightRanges } from "@/types/course";
 import { toggleOrganizationServiceAction } from "@/app/actions/organizations";
 import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/courses";
 import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse, Languages, CigaretteOff, Sprout } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse, Languages, CigaretteOff, Sprout, Weight } from "lucide-react";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -618,6 +618,12 @@ export function DashboardServiceDetail({
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/10 text-violet-600 border border-violet-500/20" title={`Accepted Dog Sizes: ${course.acceptedDogSizes.split(",").join(", ")}`}>
                                 <Footprints className="size-2.5" />
                                 Sizes: {course.acceptedDogSizes.split(",").join(", ")}
+                              </span>
+                            )}
+                            {course.acceptedDogWeight && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20" title={`Accepted Dog Weights: ${course.acceptedDogWeight.split(",").map((k) => `${k} kg`).join(", ")}`}>
+                                <Weight className="size-2.5" />
+                                Weight: {formatWeightRanges(course.acceptedDogWeight.split(","))}
                               </span>
                             )}
                             {course.trainingFormat && (

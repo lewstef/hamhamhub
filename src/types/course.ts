@@ -55,6 +55,8 @@ export interface Course {
   acceptedDogSizesEnabled?: boolean | null;
   /** Comma-separated list of accepted dog sizes (e.g. "Small,Medium,Large,Giant") */
   acceptedDogSizes?: string | null;
+  /** Comma-separated list of accepted dog weight kilograms from 1 to 50 (e.g. "1,2,3...50") */
+  acceptedDogWeight?: string | null;
   /** Training Format / Session Type preset (e.g. "Group Class", "Private 1-on-1 Session", "In-Home Training", "Board & Train", "Online Consultation") */
   trainingFormat?: string | null;
   /** Maximum number of dogs allowed in a group training session */
@@ -211,3 +213,52 @@ export const DOG_TRAINING_FORMATS = [
 ] as const;
 
 export type DogTrainingFormat = typeof DOG_TRAINING_FORMATS[number];
+
+/**
+ * Standard list of Dog Grooming weight values in kilograms (1 to 100 kg).
+ */
+export const DOG_GROOMING_WEIGHT_KG = Array.from({ length: 100 }, (_, i) => i + 1);
+
+/**
+ * Standard grouped weight breed presets for Dog Grooming.
+ */
+export const DOG_GROOMING_WEIGHT_TIERS = [
+  { id: "mini", label: "Mini Breed", rangeLabel: "1 – 4 kg", start: 1, end: 4 },
+  { id: "small", label: "Small Breed", rangeLabel: "4 – 10 kg", start: 4, end: 10 },
+  { id: "medium", label: "Medium Breed", rangeLabel: "10 – 25 kg", start: 10, end: 25 },
+  { id: "large", label: "Large Breed", rangeLabel: "25 – 45 kg", start: 25, end: 45 },
+  { id: "giant", label: "Giant Breed", rangeLabel: "45 – 100+ kg", start: 45, end: 100 },
+] as const;
+
+export type DogGroomingWeightTier = typeof DOG_GROOMING_WEIGHT_TIERS[number];
+
+/**
+ * Formats an array of weight strings into a condensed string of ranges (e.g. "1–4 kg, 10–25 kg").
+ */
+export function formatWeightRanges(weights: string[]): string {
+  if (!weights || weights.length === 0) return "None";
+  if (weights.length >= 100) return "All weights (1–100+ kg)";
+  const nums = weights
+    .map(Number)
+    .filter((n) => !isNaN(n))
+    .sort((a, b) => a - b);
+  if (nums.length === 0) return "None";
+
+  const ranges: string[] = [];
+  let start = nums[0];
+  let end = nums[0];
+
+  const formatEndpoint = (val: number) => (val >= 100 ? "100+" : String(val));
+
+  for (let i = 1; i < nums.length; i++) {
+    if (nums[i] === end + 1) {
+      end = nums[i];
+    } else {
+      ranges.push(start === end ? `${formatEndpoint(start)} kg` : `${start}–${formatEndpoint(end)} kg`);
+      start = nums[i];
+      end = nums[i];
+    }
+  }
+  ranges.push(start === end ? `${formatEndpoint(start)} kg` : `${start}–${formatEndpoint(end)} kg`);
+  return ranges.join(", ");
+}

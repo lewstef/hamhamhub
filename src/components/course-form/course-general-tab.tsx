@@ -1,18 +1,29 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { WysiwygEditor } from "@/components/wysiwyg-editor";
 import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
+import { Scale, CheckCheck, RotateCcw, Check, Minus, Plus, Sparkles } from "lucide-react";
 import {
   SPOKEN_LANGUAGES_LIST,
   DOG_SPORT_DISCIPLINES,
   DOG_TRAINING_TOPICS,
   DOG_TRAINING_FORMATS,
+  DOG_GROOMING_WEIGHT_KG,
+  DOG_GROOMING_WEIGHT_TIERS,
+  formatWeightRanges,
 } from "@/types/course";
 
-export { DOG_SPORT_DISCIPLINES, DOG_TRAINING_TOPICS, DOG_TRAINING_FORMATS };
+export {
+  DOG_SPORT_DISCIPLINES,
+  DOG_TRAINING_TOPICS,
+  DOG_TRAINING_FORMATS,
+  DOG_GROOMING_WEIGHT_KG,
+  DOG_GROOMING_WEIGHT_TIERS,
+  formatWeightRanges,
+};
 
 interface CourseGeneralTabProps {
   name: string;
@@ -41,6 +52,11 @@ interface CourseGeneralTabProps {
   onAgeLimitsEnabledChange: (v: boolean) => void;
   selectedAgeLimits: string[];
   onToggleAgeLimit: (v: string) => void;
+  acceptedDogWeight?: string[];
+  onToggleWeight?: (kg: number | string) => void;
+  onSelectAllWeight?: () => void;
+  onClearWeight?: () => void;
+  onSetWeightRange?: (start: number, end: number) => void;
   itemNoun: string;
   isDogWalking?: boolean;
   isDogTraining?: boolean;
@@ -82,6 +98,11 @@ export function CourseGeneralTab({
   onAgeLimitsEnabledChange,
   selectedAgeLimits,
   onToggleAgeLimit,
+  acceptedDogWeight = [],
+  onToggleWeight,
+  onSelectAllWeight,
+  onClearWeight,
+  onSetWeightRange,
   itemNoun,
   isDogWalking = false,
   isDogTraining = false,
@@ -301,6 +322,16 @@ export function CourseGeneralTab({
         />
       </div>
 
+      {/* Weight & Killograms Section for Dog Grooming (Min-Max Range Slider & Stepper) */}
+      {(isGrooming || itemNoun === "Grooming service") && (
+        <GroomingWeightSection
+          acceptedDogWeight={acceptedDogWeight}
+          onSetWeightRange={onSetWeightRange}
+          onSelectAllWeight={onSelectAllWeight}
+          onClearWeight={onClearWeight}
+        />
+      )}
+
       {/* Spoken Languages Selector */}
       <div className="space-y-3 p-4 rounded-xl border border-border/80 bg-muted/20">
         <div className="flex flex-col gap-1">
@@ -427,6 +458,378 @@ export function CourseGeneralTab({
           </div>
         </BooleanToggleField>
       )}
+    </div>
+  );
+}
+
+interface GroomingWeightSectionProps {
+  acceptedDogWeight: string[];
+  onSetWeightRange?: (start: number, end: number) => void;
+  onSelectAllWeight?: () => void;
+  onClearWeight?: () => void;
+}
+
+export function GroomingWeightSection({
+  acceptedDogWeight,
+  onSetWeightRange,
+  onSelectAllWeight,
+  onClearWeight,
+}: GroomingWeightSectionProps) {
+  const weightNumbers = acceptedDogWeight
+    .map(Number)
+    .filter((n) => !isNaN(n) && n >= 1 && n <= 100)
+    .sort((a, b) => a - b);
+
+  const minWeight = weightNumbers.length > 0 ? weightNumbers[0] : 1;
+  const maxWeight = weightNumbers.length > 0 ? weightNumbers[weightNumbers.length - 1] : 100;
+  const isAllSelected = acceptedDogWeight.length >= 100;
+
+  // Local state for exact numeric keyboard editing without jumping cursor
+  const [minInput, setMinInput] = useState(String(minWeight));
+  const [maxInput, setMaxInput] = useState(String(maxWeight));
+
+  useEffect(() => {
+    setMinInput(String(minWeight));
+  }, [minWeight]);
+
+  useEffect(() => {
+    setMaxInput(String(maxWeight));
+  }, [maxWeight]);
+
+  const handleUpdateMin = (val: number) => {
+    const clamped = Math.max(1, Math.min(maxWeight, val));
+    onSetWeightRange?.(clamped, maxWeight);
+  };
+
+  const handleUpdateMax = (val: number) => {
+    const clamped = Math.min(100, Math.max(minWeight, val));
+    onSetWeightRange?.(minWeight, clamped);
+  };
+
+  const handleMinInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setMinInput(raw);
+    if (raw === "") return;
+    const parsed = parseInt(raw, 10);
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 100) {
+      if (parsed > maxWeight) {
+        onSetWeightRange?.(parsed, parsed);
+      } else {
+        onSetWeightRange?.(parsed, maxWeight);
+      }
+    }
+  };
+
+  const handleMinInputBlur = () => {
+    const parsed = parseInt(minInput, 10);
+    if (isNaN(parsed) || parsed < 1) {
+      setMinInput("1");
+      onSetWeightRange?.(1, maxWeight);
+    } else {
+      const clamped = Math.max(1, Math.min(100, parsed));
+      const newMax = Math.max(clamped, maxWeight);
+      setMinInput(String(clamped));
+      onSetWeightRange?.(clamped, newMax);
+    }
+  };
+
+  const handleMaxInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setMaxInput(raw);
+    if (raw === "") return;
+    const parsed = parseInt(raw, 10);
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 100) {
+      if (parsed < minWeight) {
+        onSetWeightRange?.(parsed, parsed);
+      } else {
+        onSetWeightRange?.(minWeight, parsed);
+      }
+    }
+  };
+
+  const handleMaxInputBlur = () => {
+    const parsed = parseInt(maxInput, 10);
+    if (isNaN(parsed) || parsed < 1) {
+      setMaxInput(String(minWeight));
+      onSetWeightRange?.(minWeight, minWeight);
+    } else {
+      const clamped = Math.max(1, Math.min(100, parsed));
+      const newMin = Math.min(minWeight, clamped);
+      setMaxInput(String(clamped));
+      onSetWeightRange?.(newMin, clamped);
+    }
+  };
+
+  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percent = Math.max(0, Math.min(1, clickX / rect.width));
+    const clickedWeight = Math.round(1 + percent * 99);
+    const distToMin = Math.abs(clickedWeight - minWeight);
+    const distToMax = Math.abs(clickedWeight - maxWeight);
+    if (distToMin <= distToMax) {
+      onSetWeightRange?.(clickedWeight, Math.max(clickedWeight, maxWeight));
+    } else {
+      onSetWeightRange?.(Math.min(minWeight, clickedWeight), clickedWeight);
+    }
+  };
+
+  // Percentage for slider track background
+  const minPercent = ((minWeight - 1) / 99) * 100;
+  const maxPercent = ((maxWeight - 1) / 99) * 100;
+
+  return (
+    <div className="space-y-5 p-6 rounded-2xl border border-border/80 bg-card shadow-xs">
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-border/60">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/90 flex items-center gap-1.5">
+              <Scale className="size-4 text-primary" />
+              Weight
+            </h3>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
+              {minWeight} – {maxWeight >= 100 ? "100+ kg" : `${maxWeight} kg`} ({maxWeight - minWeight + 1} kg range)
+            </span>
+          </div>
+          <Label className="text-xs font-semibold text-foreground">Killograms</Label>
+          <p className="text-[11px] text-muted-foreground">
+            Specify the minimum and maximum dog weight accepted for this grooming service (from 1 to 100+ kg).
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={onSelectAllWeight}
+            className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 shadow-xs ${
+              isAllSelected
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary"
+            }`}
+          >
+            <CheckCheck className="size-3.5" />
+            All Weights (1–100+ kg)
+          </button>
+          <button
+            type="button"
+            onClick={onClearWeight}
+            className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-border bg-muted/30 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <RotateCcw className="size-3.5" />
+            Reset
+          </button>
+        </div>
+      </div>
+
+      {/* Stepper Inputs Block (Keyboard-Editable with Suffix) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Min Weight Stepper & Keyboard Input */}
+        <div className="p-4 rounded-xl border border-border/70 bg-muted/20 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-foreground">Minimum Weight</span>
+            <span className="text-[11px] text-muted-foreground font-medium">Editable via keyboard & buttons</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="Decrease min weight"
+              onClick={() => handleUpdateMin(minWeight - 1)}
+              disabled={minWeight <= 1}
+              className="size-10 rounded-xl border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none text-foreground font-bold flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
+            >
+              <Minus className="size-4" />
+            </button>
+            <div className="relative flex-1 flex items-center">
+              <input
+                type="number"
+                id="grooming-min-weight-input"
+                aria-label="Minimum weight (kg)"
+                min={1}
+                max={100}
+                value={minInput}
+                onChange={handleMinInputChange}
+                onBlur={handleMinInputBlur}
+                className="w-full h-10 rounded-xl border border-input bg-background pl-3 pr-8 font-bold text-base text-foreground text-center shadow-xs focus-visible:border-ring focus-visible:ring-2 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <span className="absolute right-3 text-xs text-muted-foreground font-semibold pointer-events-none">
+                kg
+              </span>
+            </div>
+            <button
+              type="button"
+              aria-label="Increase min weight"
+              onClick={() => handleUpdateMin(minWeight + 1)}
+              disabled={minWeight >= maxWeight}
+              className="size-10 rounded-xl border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none text-foreground font-bold flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
+            >
+              <Plus className="size-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Max Weight Stepper & Keyboard Input */}
+        <div className="p-4 rounded-xl border border-border/70 bg-muted/20 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-foreground">Maximum Weight</span>
+            <span className="text-[11px] text-muted-foreground font-medium">Editable via keyboard & buttons</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="Decrease max weight"
+              onClick={() => handleUpdateMax(maxWeight - 1)}
+              disabled={maxWeight <= minWeight}
+              className="size-10 rounded-xl border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none text-foreground font-bold flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
+            >
+              <Minus className="size-4" />
+            </button>
+            <div className="relative flex-1 flex items-center">
+              <input
+                type="number"
+                id="grooming-max-weight-input"
+                aria-label="Maximum weight (kg)"
+                min={1}
+                max={100}
+                value={maxInput}
+                onChange={handleMaxInputChange}
+                onBlur={handleMaxInputBlur}
+                className="w-full h-10 rounded-xl border border-input bg-background pl-3 pr-8 font-bold text-base text-foreground text-center shadow-xs focus-visible:border-ring focus-visible:ring-2 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <span className="absolute right-3 text-xs text-muted-foreground font-semibold pointer-events-none">
+                kg
+              </span>
+            </div>
+            <button
+              type="button"
+              aria-label="Increase max weight"
+              onClick={() => handleUpdateMax(maxWeight + 1)}
+              disabled={maxWeight >= 100}
+              className="size-10 rounded-xl border border-border bg-background hover:bg-muted disabled:opacity-30 disabled:pointer-events-none text-foreground font-bold flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0"
+            >
+              <Plus className="size-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Dual Slider Track */}
+      <div className="space-y-2.5 px-1 py-2">
+        <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+          <span>Range Slider</span>
+          <span className="text-foreground font-semibold">
+            {minWeight} kg — {maxWeight >= 100 ? "100+ kg" : `${maxWeight} kg`}
+          </span>
+        </div>
+
+        <div
+          onClick={handleTrackClick}
+          className="relative h-9 flex items-center cursor-pointer group"
+          title="Click anywhere to jump the nearest marker, or drag min/max sliders"
+        >
+          {/* Background Base Bar */}
+          <div className="absolute left-0 right-0 h-3 rounded-full bg-muted/80 border border-border/50 transition-colors group-hover:bg-muted" />
+          {/* Active Highlighted Interval */}
+          <div
+            className="absolute h-3 rounded-full bg-primary shadow-xs transition-all pointer-events-none"
+            style={{
+              left: `${minPercent}%`,
+              width: `${Math.max(2, maxPercent - minPercent)}%`,
+            }}
+          />
+          {/* Native Min Input Range */}
+          <input
+            type="range"
+            min={1}
+            max={100}
+            value={minWeight}
+            aria-label="Minimum weight slider"
+            onChange={(e) => handleUpdateMin(Number(e.target.value))}
+            className={`absolute w-full h-9 opacity-0 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:cursor-grab [&::-moz-range-thumb]:cursor-grab [&::-webkit-slider-thumb]:size-7 [&::-moz-range-thumb]:size-7 ${
+              minWeight > 80 ? "z-30" : "z-25"
+            }`}
+          />
+          {/* Native Max Input Range */}
+          <input
+            type="range"
+            min={1}
+            max={100}
+            value={maxWeight}
+            aria-label="Maximum weight slider"
+            onChange={(e) => handleUpdateMax(Number(e.target.value))}
+            className={`absolute w-full h-9 opacity-0 pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:cursor-grab [&::-moz-range-thumb]:cursor-grab [&::-webkit-slider-thumb]:size-7 [&::-moz-range-thumb]:size-7 ${
+              minWeight > 80 ? "z-20" : "z-24"
+            }`}
+          />
+
+          {/* Visual Thumb Indicators */}
+          <div
+            className="absolute size-6 rounded-full bg-background border-[2.5px] border-primary shadow-md -translate-x-1/2 pointer-events-none z-15 flex items-center justify-center transition-transform group-hover:scale-105"
+            style={{ left: `${minPercent}%` }}
+          >
+            <div className="size-1.5 rounded-full bg-primary" />
+          </div>
+          <div
+            className="absolute size-6 rounded-full bg-background border-[2.5px] border-primary shadow-md -translate-x-1/2 pointer-events-none z-15 flex items-center justify-center transition-transform group-hover:scale-105"
+            style={{ left: `${maxPercent}%` }}
+          >
+            <div className="size-1.5 rounded-full bg-primary" />
+          </div>
+        </div>
+
+        {/* Tick Markers */}
+        <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground px-0.5">
+          <span>1 kg</span>
+          <span>25 kg</span>
+          <span>50 kg</span>
+          <span>75 kg</span>
+          <span>100+ kg</span>
+        </div>
+      </div>
+
+      {/* Quick Breed Presets */}
+      <div className="space-y-2 pt-2 border-t border-border/50">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+          <Sparkles className="size-3 text-primary" />
+          Quick Breed Presets
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "Mini Breed", rangeLabel: "1 – 4 kg", range: [1, 4] },
+            { label: "Small Breed", rangeLabel: "4 – 10 kg", range: [4, 10] },
+            { label: "Medium Breed", rangeLabel: "10 – 25 kg", range: [10, 25] },
+            { label: "Large Breed", rangeLabel: "25 – 45 kg", range: [25, 45] },
+            { label: "Giant Breed", rangeLabel: "45 – 100+ kg", range: [45, 100] },
+            { label: "All Weights", rangeLabel: "1 – 100+ kg", range: [1, 100] },
+          ].map((preset) => {
+            const isPresetActive =
+              minWeight === preset.range[0] && maxWeight === preset.range[1];
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => onSetWeightRange?.(preset.range[0], preset.range[1])}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isPresetActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs font-bold"
+                    : "bg-muted/40 text-foreground border-border/80 hover:bg-muted hover:border-border"
+                }`}
+              >
+                <span>{preset.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                    isPresetActive
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-background/80 text-muted-foreground"
+                  }`}
+                >
+                  {preset.rangeLabel}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
