@@ -8,10 +8,11 @@ import { BooleanToggleField } from "@/components/ui/boolean-toggle-field";
 import {
   SPOKEN_LANGUAGES_LIST,
   DOG_SPORT_DISCIPLINES,
+  DOG_TRAINING_TOPICS,
   DOG_TRAINING_FORMATS,
 } from "@/types/course";
 
-export { DOG_SPORT_DISCIPLINES, DOG_TRAINING_FORMATS };
+export { DOG_SPORT_DISCIPLINES, DOG_TRAINING_TOPICS, DOG_TRAINING_FORMATS };
 
 interface CourseGeneralTabProps {
   name: string;
@@ -191,11 +192,40 @@ export function CourseGeneralTab({
         </div>
       )}
 
-      {/* Dog Training Format Selector (Group Class, Private 1-on-1, etc.) */}
+      {/* Dog Training Topic / Discipline Presets (Optional quick-fill) */}
+      {(isDogTraining || itemNoun === "Training course" || itemNoun === "Course") && (
+        <div className="space-y-3 p-4 rounded-xl border border-border/80 bg-muted/20">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold text-foreground">Course Topic / Specialization</Label>
+            <span className="text-[11px] text-muted-foreground">Select a standard course topic or customize name below</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {DOG_TRAINING_TOPICS.map((topic) => {
+              const isSelected = name.trim().toLowerCase() === topic.toLowerCase();
+              return (
+                <button
+                  key={topic}
+                  type="button"
+                  onClick={() => onNameChange(topic)}
+                  className={`h-8 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center cursor-pointer ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-card text-muted-foreground border-border hover:border-primary/50 hover:text-foreground hover:bg-muted/30"
+                  }`}
+                >
+                  {topic}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Dog Training Format / Delivery Mode Selector (Group Class, Private 1-on-1, etc.) */}
       {(isDogTraining || itemNoun === "Training course" || itemNoun === "Course") && onTrainingFormatChange && (
         <div className="space-y-3 p-4 rounded-xl border border-border/80 bg-muted/20">
           <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold text-foreground">Training Format / Session Type</Label>
+            <Label className="text-xs font-semibold text-foreground">Training Format / Delivery Mode</Label>
             <span className="text-[11px] text-muted-foreground">Select how training is conducted</span>
           </div>
           <div className="flex flex-wrap gap-2">

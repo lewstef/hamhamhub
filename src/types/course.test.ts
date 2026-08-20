@@ -6,6 +6,7 @@ import {
   CoverageZonesData,
   SPOKEN_LANGUAGES_LIST,
   DOG_SPORT_DISCIPLINES,
+  DOG_TRAINING_TOPICS,
   DOG_TRAINING_FORMATS,
 } from "./course";
 
@@ -117,21 +118,27 @@ describe("Course Types & Coverage Zone Helpers (src/types/course.ts)", () => {
     });
   });
 
+  describe("DOG_TRAINING_TOPICS", () => {
+    it("contains Puppy Socialization, Basic Obedience, Truffle hunting, Show handling, Security & Protection", () => {
+      expect(DOG_TRAINING_TOPICS).toContain("Puppy Socialization");
+      expect(DOG_TRAINING_TOPICS).toContain("Basic Obedience");
+      expect(DOG_TRAINING_TOPICS).toContain("Advanced Obedience");
+      expect(DOG_TRAINING_TOPICS).toContain("Behavior Modification");
+      expect(DOG_TRAINING_TOPICS).toContain("Truffle hunting");
+      expect(DOG_TRAINING_TOPICS).toContain("Show handling");
+      expect(DOG_TRAINING_TOPICS).toContain("Security & Protection");
+    });
+  });
+
   describe("DOG_TRAINING_FORMATS", () => {
-    it("contains Truffle hunting, Show handling, and Security & Protection after In-Home Training", () => {
-      expect(DOG_TRAINING_FORMATS).toContain("In-Home Training");
-      expect(DOG_TRAINING_FORMATS).toContain("Truffle hunting");
-      expect(DOG_TRAINING_FORMATS).toContain("Show handling");
-      expect(DOG_TRAINING_FORMATS).toContain("Security & Protection");
-
-      const inHomeIdx = DOG_TRAINING_FORMATS.indexOf("In-Home Training");
-      const truffleIdx = DOG_TRAINING_FORMATS.indexOf("Truffle hunting");
-      const showIdx = DOG_TRAINING_FORMATS.indexOf("Show handling");
-      const securityIdx = DOG_TRAINING_FORMATS.indexOf("Security & Protection");
-
-      expect(truffleIdx).toBe(inHomeIdx + 1);
-      expect(showIdx).toBe(inHomeIdx + 2);
-      expect(securityIdx).toBe(inHomeIdx + 3);
+    it("contains delivery modes: Group Class, Private 1-on-1 Session, In-Home Training, Board & Train, Online Consultation", () => {
+      expect(DOG_TRAINING_FORMATS).toEqual([
+        "Group Class",
+        "Private 1-on-1 Session",
+        "In-Home Training",
+        "Board & Train",
+        "Online Consultation",
+      ]);
     });
   });
 });

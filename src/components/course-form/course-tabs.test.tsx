@@ -129,6 +129,53 @@ describe("CourseForm Subcomponents Suite", () => {
       expect(onNameChange).toHaveBeenCalledWith("Search & rescue");
     });
 
+    it("renders Dog Training topic presets and delivery format modes", () => {
+      const onNameChange = vi.fn();
+      const onTrainingFormatChange = vi.fn();
+
+      render(
+        <CourseGeneralTab
+          name=""
+          onNameChange={onNameChange}
+          details=""
+          onDetailsChange={vi.fn()}
+          certifiedTrainer={false}
+          onCertifiedTrainerChange={vi.fn()}
+          certifierName=""
+          onCertifierNameChange={vi.fn()}
+          trainerExperienceDescription=""
+          onTrainerExperienceDescriptionChange={vi.fn()}
+          trainingFormat="Group Class"
+          onTrainingFormatChange={onTrainingFormatChange}
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onToggleAgeLimit={vi.fn()}
+          itemNoun="Training course"
+          isDogWalking={false}
+          isDogTraining={true}
+          isDogSport={false}
+          isDogSitter={false}
+        />
+      );
+
+      expect(screen.getByText("Course Topic / Specialization")).toBeDefined();
+      expect(screen.getByRole("button", { name: "Puppy Socialization" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Truffle hunting" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Show handling" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Security & Protection" })).toBeDefined();
+
+      fireEvent.click(screen.getByRole("button", { name: "Truffle hunting" }));
+      expect(onNameChange).toHaveBeenCalledWith("Truffle hunting");
+
+      expect(screen.getByText("Training Format / Delivery Mode")).toBeDefined();
+      expect(screen.getByRole("button", { name: "Group Class" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Private 1-on-1 Session" })).toBeDefined();
+
+      fireEvent.click(screen.getByRole("button", { name: "Private 1-on-1 Session" }));
+      expect(onTrainingFormatChange).toHaveBeenCalledWith("Private 1-on-1 Session");
+    });
+
     it("renders Sitting Type presets for sitting service", () => {
       const onNameChange = vi.fn();
 

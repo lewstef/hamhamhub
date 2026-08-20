@@ -240,14 +240,23 @@ describe("CourseForm Component", () => {
     // On General tab, Age Limits & Restrictions should be omitted
     expect(screen.queryByText("Age Limits & Restrictions")).toBeNull();
 
-    // Verify Training Format selector is present on General tab
-    expect(screen.getByText("Training Format / Session Type")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Group Class" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Private 1-on-1 Session" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "In-Home Training" })).toBeDefined();
+    // Verify Course Topic presets are present on General tab
+    expect(screen.getByText("Course Topic / Specialization")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Puppy Socialization" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Basic Obedience" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Truffle hunting" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Show handling" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Security & Protection" })).toBeDefined();
+
+    // Click Truffle hunting preset and verify Course Name is auto-populated
+    fireEvent.click(screen.getByRole("button", { name: "Truffle hunting" }));
+    expect((screen.getByLabelText("Course Name") as HTMLInputElement).value).toBe("Truffle hunting");
+
+    // Verify Training Format / Delivery Mode selector is present on General tab
+    expect(screen.getByText("Training Format / Delivery Mode")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Group Class" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Private 1-on-1 Session" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "In-Home Training" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Board & Train" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Online Consultation" })).toBeDefined();
 
@@ -1917,6 +1926,67 @@ describe("CourseForm Component", () => {
     });
 
     expect(screen.getByText("Invalid pricing amount")).toBeDefined();
+  });
+
+  it("handles Dog Sport discipline quick-presets (e.g. Mantrailing, Search & rescue)", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-sport"
+        itemNoun="Dog Sport"
+        serviceSlug="sport-dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const mantrailingBtn = screen.getByRole("button", { name: "Mantrailing" });
+    fireEvent.click(mantrailingBtn);
+    const nameInput = screen.getByLabelText("Dog Sport Name") as HTMLInputElement;
+    expect(nameInput.value).toBe("Mantrailing");
+
+    const searchRescueBtn = screen.getByRole("button", { name: "Search & rescue" });
+    fireEvent.click(searchRescueBtn);
+    expect(nameInput.value).toBe("Search & rescue");
+  });
+
+  it("handles Dog Training topic presets and delivery format selection and submits formData", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-training"
+        itemNoun="Training course"
+        serviceSlug="dog-training"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Click Show handling preset
+    fireEvent.click(screen.getByRole("button", { name: "Show handling" }));
+    const nameInput = screen.getByLabelText("Training course Name") as HTMLInputElement;
+    expect(nameInput.value).toBe("Show handling");
+
+    // Select Private 1-on-1 Session format
+    fireEvent.click(screen.getByRole("button", { name: "Private 1-on-1 Session" }));
+
+    // Toggle Spoken Languages
+    const hungarianBtn = screen.getByRole("button", { name: /Hungarian/i });
+    fireEvent.click(hungarianBtn);
+
+    // Submit
+    const submitBtn = screen.getAllByRole("button", { name: "Create Training course" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    expect(passedFormData.get("name")).toBe("Show handling");
+    expect(passedFormData.get("trainingFormat")).toBe("Private 1-on-1 Session");
+    expect(passedFormData.get("spokenLanguages")).toContain("Hungarian");
   });
 });
 

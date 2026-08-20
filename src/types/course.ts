@@ -185,15 +185,27 @@ export const DOG_SPORT_DISCIPLINES = [
 export type DogSportDiscipline = typeof DOG_SPORT_DISCIPLINES[number];
 
 /**
- * Standard list of Dog Training Formats / Session Types.
+ * Standard list of Dog Training Curriculum / Course Topic Presets.
+ */
+export const DOG_TRAINING_TOPICS = [
+  "Puppy Socialization",
+  "Basic Obedience",
+  "Advanced Obedience",
+  "Behavior Modification",
+  "Truffle hunting",
+  "Show handling",
+  "Security & Protection",
+] as const;
+
+export type DogTrainingTopic = typeof DOG_TRAINING_TOPICS[number];
+
+/**
+ * Standard list of Dog Training Formats / Delivery Modes.
  */
 export const DOG_TRAINING_FORMATS = [
   "Group Class",
   "Private 1-on-1 Session",
   "In-Home Training",
-  "Truffle hunting",
-  "Show handling",
-  "Security & Protection",
   "Board & Train",
   "Online Consultation",
 ] as const;
