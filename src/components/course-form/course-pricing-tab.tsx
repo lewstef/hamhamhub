@@ -106,7 +106,7 @@ export function CoursePricingTab({
           <h3 className="text-base font-bold text-foreground">Pricing Structure</h3>
           <p className="text-xs text-muted-foreground">
             Configure one or more pricing options (e.g. per course, per month, per session) for this{" "}
-            {itemNoun.toLowerCase()}.
+            {(itemNoun || "course").toLowerCase()}.
           </p>
         </div>
       )}

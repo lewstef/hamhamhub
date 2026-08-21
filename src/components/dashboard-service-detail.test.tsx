@@ -57,6 +57,10 @@ vi.mock("lucide-react", () => ({
   Sprout: () => <div data-testid="sprout" />,
   Weight: () => <div data-testid="weight" />,
   Search: () => <div data-testid="search" />,
+  Building: () => <div data-testid="building" />,
+  Truck: () => <div data-testid="truck" />,
+  Zap: () => <div data-testid="zap" />,
+  Droplets: () => <div data-testid="droplets" />,
 }));
 
 vi.mock("@/app/actions/organizations", () => ({
@@ -1276,6 +1280,65 @@ describe("DashboardServiceDetail Component", () => {
     fireEvent.change(searchInput, { target: { value: "sarituri" } });
     expect(screen.getByText("Agility Avansat")).toBeDefined();
     expect(screen.queryByText("Dresaj Cățeluși Începători")).toBeNull();
+  });
+
+  it("should render Dog Grooming provider mode badges and mobile van technical specifications", () => {
+    const groomingService = {
+      id: "srv-groom",
+      name: "Dog Grooming",
+      description: "Professional dog grooming and spa",
+      icon: "Scissors",
+      isCustom: false,
+    };
+
+    render(
+      <DashboardServiceDetail
+        organizationId="org-123"
+        service={groomingService}
+        initialIsEnabled={true}
+        slug="dog-grooming"
+        courses={[
+          createMockCourse({
+            id: "crs-groom-1",
+            name: "Salon Full Cut & Wash",
+            groomingLocationType: "salon",
+            parking: true,
+          }),
+          createMockCourse({
+            id: "crs-groom-2",
+            name: "Mobile Spa Van Service",
+            groomingLocationType: "mobile_van",
+            mobileVanAutonomousPower: true,
+            mobileVanAutonomousWater: true,
+            mobileVanSpaceRequirement: "6m driveway",
+            mobileVanTravelFeePolicy: "Free in Cluj",
+          }),
+          createMockCourse({
+            id: "crs-groom-3",
+            name: "Hybrid Salon & Van Service",
+            groomingLocationType: "both",
+            mobileVanNeedsPowerPlug: true,
+            mobileVanNeedsWaterHookup: true,
+          }),
+        ]}
+      />
+    );
+
+    // Expand all items to show badges
+    const expandButtons = screen.getAllByRole("button").filter((btn) => btn.querySelector("[data-testid='chevron-down']") || btn.querySelector("[data-testid='chevron-up']"));
+    expandButtons.forEach((btn) => fireEvent.click(btn));
+
+    // Verify Provider Mode badges
+    expect(screen.getByText("Fixed Salon")).toBeDefined();
+    expect(screen.getByText("Mobile Grooming Van")).toBeDefined();
+    expect(screen.getByText("Salon & Mobile Van")).toBeDefined();
+
+    // Verify Mobile Van Technical Specs badges
+    expect(screen.getByText("Self-Powered Van")).toBeDefined();
+    expect(screen.getByText("Autonomous Water")).toBeDefined();
+    expect(screen.getByText("Needs 220V Outlet")).toBeDefined();
+    expect(screen.getByText("Needs Water Tap")).toBeDefined();
+    expect(screen.getByText("Van Space: 6m driveway")).toBeDefined();
   });
 });
 

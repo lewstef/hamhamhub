@@ -129,7 +129,7 @@ export async function getOrganizationData(id: string) {
       .orderBy(services.sortOrder, services.createdAt);
 
     servicesList = rawServices.map((s) => {
-      const fallbackSlug = s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+      const fallbackSlug = (s.name || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
       return {
         ...s,
         slug: s.slug ? s.slug.replace(/_/g, "-") : fallbackSlug,

@@ -97,7 +97,7 @@ function SidebarProvider({
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
-        event.key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT.toLowerCase() &&
+        event.key?.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT?.toLowerCase() &&
         (event.metaKey || event.ctrlKey)
       ) {
         // Do not toggle sidebar if user is typing in an editable field or WYSIWYG area

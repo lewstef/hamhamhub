@@ -109,7 +109,7 @@ export function ServiceTypePreviewForm({ serviceType }: ServiceTypePreviewFormPr
                       id={field.name}
                       name={field.name}
                       required={field.required}
-                      placeholder={`Select ${field.label.toLowerCase()}...`}
+                      placeholder={`Select ${(field.label || "").toLowerCase()}...`}
                       onChange={(val) => handleChange(field.name, val)}
                       value={String(formData[field.name] || "")}
                       options={field.options || []}

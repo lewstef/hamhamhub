@@ -77,6 +77,20 @@ export interface Course {
   socializationPolicy?: string | null;
   /** Primary & Secondary coverage zones serialized JSON */
   coverageZones?: string | null;
+  /** Dog Grooming Service Location Mode: 'salon' (fixed salon), 'mobile_van' (mobile grooming van), or 'both' */
+  groomingLocationType?: "salon" | "mobile_van" | "both" | string | null;
+  /** Mobile Grooming Van: whether the unit operates autonomously on battery/generator/solar power */
+  mobileVanAutonomousPower?: boolean | null;
+  /** Mobile Grooming Van: whether the unit has an onboard fresh & grey water tank */
+  mobileVanAutonomousWater?: boolean | null;
+  /** Mobile Grooming Van: whether standard 220V power plug from client is required */
+  mobileVanNeedsPowerPlug?: boolean | null;
+  /** Mobile Grooming Van: whether garden tap/water hookup from client is required */
+  mobileVanNeedsWaterHookup?: boolean | null;
+  /** Mobile Grooming Van: minimum driveway / street parking space required for the van */
+  mobileVanSpaceRequirement?: string | null;
+  /** Mobile Grooming Van: travel fee notes or zone surcharge policies */
+  mobileVanTravelFeePolicy?: string | null;
   /** FAQs serialized JSON */
   faq?: string | null;
 }

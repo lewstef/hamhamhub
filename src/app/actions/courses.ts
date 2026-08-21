@@ -69,6 +69,13 @@ interface ParsedCourseData {
   poolDetails: string;
   socializationPolicy: string;
   coverageZones: string | null;
+  groomingLocationType: string | null;
+  mobileVanAutonomousPower: boolean;
+  mobileVanAutonomousWater: boolean;
+  mobileVanNeedsPowerPlug: boolean;
+  mobileVanNeedsWaterHookup: boolean;
+  mobileVanSpaceRequirement: string;
+  mobileVanTravelFeePolicy: string;
   faq: string | null;
 }
 
@@ -143,6 +150,13 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const poolDetails = (formData.get("poolDetails") as string) || "";
   const socializationPolicy = (formData.get("socializationPolicy") as string) || "";
   const coverageZones = (formData.get("coverageZones") as string) || null;
+  const groomingLocationType = (formData.get("groomingLocationType") as string) || null;
+  const mobileVanAutonomousPower = formData.get("mobileVanAutonomousPower") === "true";
+  const mobileVanAutonomousWater = formData.get("mobileVanAutonomousWater") === "true";
+  const mobileVanNeedsPowerPlug = formData.get("mobileVanNeedsPowerPlug") === "true";
+  const mobileVanNeedsWaterHookup = formData.get("mobileVanNeedsWaterHookup") === "true";
+  const mobileVanSpaceRequirement = (formData.get("mobileVanSpaceRequirement") as string) || "";
+  const mobileVanTravelFeePolicy = (formData.get("mobileVanTravelFeePolicy") as string) || "";
   const faq = (formData.get("faq") as string) || null;
 
   if (price) {
@@ -232,7 +246,11 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
       schedule, ageLimitsEnabled, ageLimits, acceptedDogSizesEnabled, acceptedDogSizes, acceptedDogWeight,
       trainingFormat, maxDogsPerGroup, indoorFacility, indoorFacilityDescription,
       playYard, playYardDetails, pool, poolDetails, socializationPolicy,
-      coverageZones, faq,
+      coverageZones, groomingLocationType,
+      mobileVanAutonomousPower, mobileVanAutonomousWater,
+      mobileVanNeedsPowerPlug, mobileVanNeedsWaterHookup,
+      mobileVanSpaceRequirement, mobileVanTravelFeePolicy,
+      faq,
     },
   };
 }
@@ -292,6 +310,8 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
   }
 
   try {
+    const hasPhysicalVenue = d.dedicatedField || d.groomingLocationType === "salon" || d.groomingLocationType === "both";
+
     await db.insert(courses).values({
       organizationId,
       serviceId: d.serviceId,
@@ -304,9 +324,9 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       veterinaryTrainingDetails: d.veterinaryTraining ? d.veterinaryTrainingDetails : null,
       dedicatedField: d.dedicatedField,
       trainingFieldDescription: d.dedicatedField ? d.trainingFieldDescription : null,
-      trainingFieldAddress: d.dedicatedField ? d.trainingFieldAddress : null,
-      trainingFieldGoogleBusinessProfile: d.dedicatedField ? d.trainingFieldGoogleBusinessProfile : null,
-      trainingFieldGoogleMapsLink: d.dedicatedField ? d.trainingFieldGoogleMapsLink : null,
+      trainingFieldAddress: hasPhysicalVenue ? (d.trainingFieldAddress || null) : null,
+      trainingFieldGoogleBusinessProfile: hasPhysicalVenue ? (d.trainingFieldGoogleBusinessProfile || null) : null,
+      trainingFieldGoogleMapsLink: hasPhysicalVenue ? (d.trainingFieldGoogleMapsLink || null) : null,
       parking: d.parking,
       parkingDescription: d.parking ? d.parkingDescription : null,
       details: d.details,
@@ -352,6 +372,13 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       poolDetails: d.pool ? d.poolDetails : null,
       socializationPolicy: d.socializationPolicy || null,
       coverageZones: d.coverageZones,
+      groomingLocationType: d.groomingLocationType,
+      mobileVanAutonomousPower: d.mobileVanAutonomousPower,
+      mobileVanAutonomousWater: d.mobileVanAutonomousWater,
+      mobileVanNeedsPowerPlug: d.mobileVanNeedsPowerPlug,
+      mobileVanNeedsWaterHookup: d.mobileVanNeedsWaterHookup,
+      mobileVanSpaceRequirement: d.mobileVanSpaceRequirement || null,
+      mobileVanTravelFeePolicy: d.mobileVanTravelFeePolicy || null,
       faq: d.faq,
     });
 
@@ -412,6 +439,8 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
       return { error: "Unauthorized course modification" };
     }
 
+    const hasPhysicalVenue = d.dedicatedField || d.groomingLocationType === "salon" || d.groomingLocationType === "both";
+
     await db
       .update(courses)
       .set({
@@ -425,9 +454,9 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         veterinaryTrainingDetails: d.veterinaryTraining ? d.veterinaryTrainingDetails : null,
         dedicatedField: d.dedicatedField,
         trainingFieldDescription: d.dedicatedField ? d.trainingFieldDescription : null,
-        trainingFieldAddress: d.dedicatedField ? d.trainingFieldAddress : null,
-        trainingFieldGoogleBusinessProfile: d.dedicatedField ? d.trainingFieldGoogleBusinessProfile : null,
-        trainingFieldGoogleMapsLink: d.dedicatedField ? d.trainingFieldGoogleMapsLink : null,
+        trainingFieldAddress: hasPhysicalVenue ? (d.trainingFieldAddress || null) : null,
+        trainingFieldGoogleBusinessProfile: hasPhysicalVenue ? (d.trainingFieldGoogleBusinessProfile || null) : null,
+        trainingFieldGoogleMapsLink: hasPhysicalVenue ? (d.trainingFieldGoogleMapsLink || null) : null,
         parking: d.parking,
         parkingDescription: d.parking ? d.parkingDescription : null,
         details: d.details,
@@ -473,6 +502,13 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         poolDetails: d.pool ? d.poolDetails : null,
         socializationPolicy: d.socializationPolicy || null,
         coverageZones: d.coverageZones,
+        groomingLocationType: d.groomingLocationType,
+        mobileVanAutonomousPower: d.mobileVanAutonomousPower,
+        mobileVanAutonomousWater: d.mobileVanAutonomousWater,
+        mobileVanNeedsPowerPlug: d.mobileVanNeedsPowerPlug,
+        mobileVanNeedsWaterHookup: d.mobileVanNeedsWaterHookup,
+        mobileVanSpaceRequirement: d.mobileVanSpaceRequirement || null,
+        mobileVanTravelFeePolicy: d.mobileVanTravelFeePolicy || null,
         faq: d.faq,
       })
       .where(eq(courses.id, courseId));

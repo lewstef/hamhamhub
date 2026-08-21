@@ -37,7 +37,7 @@ export function TrainerAttributesCard({
     <>
       <BooleanToggleField
         label="Certified Dog Trainer"
-        description={`Enable if this ${itemNoun.toLowerCase()} is coached by an officially certified trainer.`}
+        description={`Enable if this ${(itemNoun || "course").toLowerCase()} is coached by an officially certified trainer.`}
         checked={certifiedTrainer}
         onChange={onCertifiedTrainerChange}
       >

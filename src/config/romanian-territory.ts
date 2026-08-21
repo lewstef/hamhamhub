@@ -106,7 +106,8 @@ export function getCountyLocalities(countyName?: string | null): string[] {
   return key ? ROMANIAN_LOCALITIES_BY_COUNTY[key] : [];
 }
 
-function normalizeString(str: string): string {
+function normalizeString(str?: string | null): string {
+  if (!str) return "";
   return str
     .toLowerCase()
     .normalize("NFD")

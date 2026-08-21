@@ -34,6 +34,11 @@ vi.mock("lucide-react", () => ({
   Sparkles: () => <div data-testid="sparkles" />,
   Layers: () => <div data-testid="layers" />,
   Minus: () => <div data-testid="minus" />,
+  Building: () => <div data-testid="building" />,
+  Truck: () => <div data-testid="truck" />,
+  Zap: () => <div data-testid="zap" />,
+  Droplets: () => <div data-testid="droplets" />,
+  Car: () => <div data-testid="car" />,
 }));
 
 vi.mock("@/db", () => ({

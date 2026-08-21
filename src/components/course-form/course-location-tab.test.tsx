@@ -31,6 +31,12 @@ vi.mock("lucide-react", () => ({
   ChevronDown: () => <div data-testid="chevron-down" />,
   Search: () => <div data-testid="search" />,
   Check: () => <div data-testid="check" />,
+  Building: () => <div data-testid="building" />,
+  Truck: () => <div data-testid="truck" />,
+  Zap: () => <div data-testid="zap" />,
+  Droplets: () => <div data-testid="droplets" />,
+  Car: () => <div data-testid="car" />,
+  FileText: () => <div data-testid="file-text" />,
 }));
 
 describe("CourseLocationTab Component", () => {
@@ -280,8 +286,8 @@ describe("CourseLocationTab Component", () => {
     );
 
     // Click open request cartier
-    fireEvent.click(screen.getByText("+ Request missing neighborhood in Timisoara"));
-    expect(screen.getByText("Request new Coverage zone (Cartier)")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: /Request new Coverage zone \(Cartier\)/i }));
+    expect(screen.getAllByText("Request new Coverage zone (Cartier)").length).toBeGreaterThan(0);
 
     // Type new cartier name and notes
     fireEvent.change(screen.getByPlaceholderText("e.g. Mănăștur Nord, Borhanci Est"), {
@@ -310,7 +316,7 @@ describe("CourseLocationTab Component", () => {
 
     // Reopen modal if needed
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    fireEvent.click(screen.getByText("+ Request missing neighborhood in Timisoara"));
+    fireEvent.click(screen.getByRole("button", { name: /Request new Coverage zone \(Cartier\)/i }));
 
     fireEvent.change(screen.getByPlaceholderText("e.g. Mănăștur Nord, Borhanci Est"), {
       target: { value: "Unknown Area" },
@@ -376,5 +382,132 @@ describe("CourseLocationTab Component", () => {
     const removeBtns = screen.getAllByRole("button", { name: "Remove Zone" });
     fireEvent.click(removeBtns[0]);
     expect(onRemoveSecondaryZone).toHaveBeenCalledWith(0);
+  });
+
+  it("handles Dog Grooming location provider modes (salon, mobile_van, both) and mobile van specs", () => {
+    const onGroomingLocationTypeChange = vi.fn();
+    const onMobileVanAutonomousPowerChange = vi.fn();
+    const onMobileVanAutonomousWaterChange = vi.fn();
+    const onMobileVanNeedsPowerPlugChange = vi.fn();
+    const onMobileVanNeedsWaterHookupChange = vi.fn();
+    const onMobileVanSpaceRequirementChange = vi.fn();
+    const onMobileVanTravelFeePolicyChange = vi.fn();
+
+    const { rerender } = render(
+      <CourseLocationTab
+        layout="tabbed"
+        isDogWalking={false}
+        isDogSitter={false}
+        isGrooming={true}
+        isBoarding={false}
+        cityName="Cluj-Napoca"
+        cartiereList={["Centru", "Manastur"]}
+        selectedCartiere={["Centru"]}
+        onSelectedCartiereChange={vi.fn()}
+        secondaryZones={[]}
+        trainingFieldAddress="Str. Memorandumului 15"
+        onTrainingFieldAddressChange={vi.fn()}
+        trainingFieldGoogleBusinessProfile=""
+        onGbpChange={vi.fn()}
+        trainingFieldGoogleMapsLink=""
+        onMapsChange={vi.fn()}
+        dedicatedField={false}
+        onDedicatedFieldChange={vi.fn()}
+        trainingFieldDescription=""
+        onTrainingFieldDescriptionChange={vi.fn()}
+        parking={true}
+        onParkingChange={vi.fn()}
+        parkingDescription="Free salon parking"
+        onParkingDescriptionChange={vi.fn()}
+        groomingLocationType="salon"
+        onGroomingLocationTypeChange={onGroomingLocationTypeChange}
+        mobileVanAutonomousPower={false}
+        onMobileVanAutonomousPowerChange={onMobileVanAutonomousPowerChange}
+        mobileVanAutonomousWater={false}
+        onMobileVanAutonomousWaterChange={onMobileVanAutonomousWaterChange}
+        mobileVanNeedsPowerPlug={false}
+        onMobileVanNeedsPowerPlugChange={onMobileVanNeedsPowerPlugChange}
+        mobileVanNeedsWaterHookup={false}
+        onMobileVanNeedsWaterHookupChange={onMobileVanNeedsWaterHookupChange}
+        mobileVanSpaceRequirement=""
+        onMobileVanSpaceRequirementChange={onMobileVanSpaceRequirementChange}
+        mobileVanTravelFeePolicy=""
+        onMobileVanTravelFeePolicyChange={onMobileVanTravelFeePolicyChange}
+      />
+    );
+
+    // In 'salon' mode: Provider mode selector and Salon address are rendered, but van specs and coverage zones are hidden
+    expect(screen.getByText("Grooming Service Provider Mode")).toBeDefined();
+    expect(screen.getByText("Physical Salon Location & Address")).toBeDefined();
+    expect(screen.getByDisplayValue("Str. Memorandumului 15")).toBeDefined();
+    expect(screen.queryByText("Mobile Van Specifications & Client Utility Requirements")).toBeNull();
+    expect(screen.queryByText("Mobile Van Coverage Zones")).toBeNull();
+
+    // Click 'Mobile Grooming Van' mode
+    const mobileVanButton = screen.getByRole("button", { name: /Mobile Grooming Van/i });
+    fireEvent.click(mobileVanButton);
+    expect(onGroomingLocationTypeChange).toHaveBeenCalledWith("mobile_van");
+
+    // Rerender in 'mobile_van' mode
+    rerender(
+      <CourseLocationTab
+        layout="tabbed"
+        isDogWalking={false}
+        isDogSitter={false}
+        isGrooming={true}
+        isBoarding={false}
+        cityName="Cluj-Napoca"
+        cartiereList={["Centru", "Manastur"]}
+        selectedCartiere={["Centru"]}
+        onSelectedCartiereChange={vi.fn()}
+        secondaryZones={[]}
+        trainingFieldAddress=""
+        onTrainingFieldAddressChange={vi.fn()}
+        trainingFieldGoogleBusinessProfile=""
+        onGbpChange={vi.fn()}
+        trainingFieldGoogleMapsLink=""
+        onMapsChange={vi.fn()}
+        dedicatedField={false}
+        onDedicatedFieldChange={vi.fn()}
+        trainingFieldDescription=""
+        onTrainingFieldDescriptionChange={vi.fn()}
+        parking={false}
+        onParkingChange={vi.fn()}
+        parkingDescription=""
+        onParkingDescriptionChange={vi.fn()}
+        groomingLocationType="mobile_van"
+        onGroomingLocationTypeChange={onGroomingLocationTypeChange}
+        mobileVanAutonomousPower={true}
+        onMobileVanAutonomousPowerChange={onMobileVanAutonomousPowerChange}
+        mobileVanAutonomousWater={true}
+        onMobileVanAutonomousWaterChange={onMobileVanAutonomousWaterChange}
+        mobileVanNeedsPowerPlug={false}
+        onMobileVanNeedsPowerPlugChange={onMobileVanNeedsPowerPlugChange}
+        mobileVanNeedsWaterHookup={false}
+        onMobileVanNeedsWaterHookupChange={onMobileVanNeedsWaterHookupChange}
+        mobileVanSpaceRequirement="6m driveway"
+        onMobileVanSpaceRequirementChange={onMobileVanSpaceRequirementChange}
+        mobileVanTravelFeePolicy="Free in Cluj"
+        onMobileVanTravelFeePolicyChange={onMobileVanTravelFeePolicyChange}
+      />
+    );
+
+    // Salon address should now be hidden, but Coverage Zones and Van Specs should be visible
+    expect(screen.queryByText("Physical Salon Location & Address")).toBeNull();
+    expect(screen.getByText("Mobile Van Coverage Zones")).toBeDefined();
+    expect(screen.getByText("Mobile Van Specifications & Client Utility Requirements")).toBeDefined();
+    expect(screen.getByDisplayValue("6m driveway")).toBeDefined();
+    expect(screen.getByDisplayValue("Free in Cluj")).toBeDefined();
+
+    // Toggle space requirement and travel policy inputs
+    fireEvent.change(screen.getByDisplayValue("6m driveway"), {
+      target: { value: "7m street curb" },
+    });
+    expect(onMobileVanSpaceRequirementChange).toHaveBeenCalledWith("7m street curb");
+
+    fireEvent.change(screen.getByDisplayValue("Free in Cluj"), {
+      target: { value: "2 lei/km outside Cluj" },
+    });
+    expect(onMobileVanTravelFeePolicyChange).toHaveBeenCalledWith("2 lei/km outside Cluj");
   });
 });

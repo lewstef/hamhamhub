@@ -64,7 +64,7 @@ export function OrgServicesTab({
 
               return (
                 <div key={s.id} className="flex flex-col">
-                  <div className="flex items-center justify-between p-6 hover:bg-muted/10 transition-colors">
+                  <div className="flex items-center justify-between p-6 hover:bg-muted dark:hover:bg-muted/70 transition-colors">
                     <div className="flex flex-col gap-1.5 max-w-[80%]">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-foreground">{s.name}</span>
@@ -141,7 +141,7 @@ export function OrgServicesTab({
                             const isSubLoading = togglingCourseId === sub.id && isPending;
 
                             return (
-                              <div key={sub.id} className="flex items-center justify-between p-4 hover:bg-muted/10 transition-colors">
+                              <div key={sub.id} className="flex items-center justify-between p-4 hover:bg-muted dark:hover:bg-muted/70 transition-colors">
                                 <span className="text-sm font-semibold text-foreground/90">
                                   {sub.label}
                                 </span>

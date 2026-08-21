@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { auth } from "@/auth";
@@ -79,9 +78,8 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <Script
+        <script
           id="theme-initializer"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

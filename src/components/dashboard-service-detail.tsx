@@ -7,7 +7,7 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse, Languages, CigaretteOff, Sprout, Weight, Search } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse, Languages, CigaretteOff, Sprout, Weight, Search, Building, Truck, Zap, Droplets } from "lucide-react";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -239,6 +239,9 @@ export function DashboardServiceDetail({
         match(course.emergencyVetTransportDetails) ||
         match(course.additionalPetPolicy) ||
         match(course.coverageZones) ||
+        match(course.groomingLocationType) ||
+        match(course.mobileVanSpaceRequirement) ||
+        match(course.mobileVanTravelFeePolicy) ||
         match(course.faq)
       );
     });
@@ -441,7 +444,7 @@ export function DashboardServiceDetail({
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
                     <Input
                       type="text"
-                      placeholder={`Search ${itemNoun.toLowerCase()}s by name, details, topic, discipline...`}
+                      placeholder={`Search ${(itemNoun || "item").toLowerCase()}s by name, details, topic, discipline...`}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9 pr-8 h-9 text-xs rounded-xl border-input bg-background/80 focus-visible:bg-background"
@@ -465,19 +468,19 @@ export function DashboardServiceDetail({
                     <span className="font-semibold text-foreground">
                       {localCourses.length}
                     </span>
-                    <span>{itemNoun.toLowerCase()}{localCourses.length === 1 ? "" : "s"}</span>
+                    <span>{(itemNoun || "item").toLowerCase()}{localCourses.length === 1 ? "" : "s"}</span>
                   </div>
                 </div>
               )}
 
               {localCourses.length === 0 ? (
                 <div className="text-center p-12 border border-dashed border-border rounded-2xl text-muted-foreground bg-muted/5">
-                  No {itemNoun.toLowerCase()}s created yet. Click "Add {itemNoun}" above to add your first {itemNoun.toLowerCase()}.
+                  No {(itemNoun || "item").toLowerCase()}s created yet. Click "Add {itemNoun || "Item"}" above to add your first {(itemNoun || "item").toLowerCase()}.
                 </div>
               ) : filteredCourses.length === 0 ? (
                 <div className="text-center p-12 border border-dashed border-border rounded-2xl text-muted-foreground bg-muted/5 space-y-3">
                   <p className="text-sm">
-                    No {itemNoun.toLowerCase()}s found matching &ldquo;<span className="font-semibold text-foreground">{searchQuery}</span>&rdquo;.
+                    No {(itemNoun || "item").toLowerCase()}s found matching &ldquo;<span className="font-semibold text-foreground">{searchQuery}</span>&rdquo;.
                   </p>
                   <Button
                     variant="outline"
@@ -511,7 +514,7 @@ export function DashboardServiceDetail({
                         {/* Header Row */}
                         <div
                           onClick={() => courseId && toggleExpandCourse(courseId)}
-                          className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted/5 transition-colors cursor-pointer select-none"
+                          className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-muted dark:hover:bg-muted/70 transition-colors cursor-pointer select-none"
                         >
                           {/* Left: Drag handle + Name + Chevron */}
                           <div className="flex items-center gap-2.5 min-w-0">
@@ -744,6 +747,55 @@ export function DashboardServiceDetail({
                                 Swimming Pool
                               </span>
                             )}
+                            {course.groomingLocationType === "salon" && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                <Building className="size-2.5" />
+                                Fixed Salon
+                              </span>
+                            )}
+                            {course.groomingLocationType === "mobile_van" && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                <Truck className="size-2.5" />
+                                Mobile Grooming Van
+                              </span>
+                            )}
+                            {course.groomingLocationType === "both" && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                <Building className="size-2.5" />
+                                <Truck className="size-2.5" />
+                                Salon &amp; Mobile Van
+                              </span>
+                            )}
+                            {course.mobileVanAutonomousPower && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                <Zap className="size-2.5" />
+                                Self-Powered Van
+                              </span>
+                            )}
+                            {course.mobileVanNeedsPowerPlug && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                <Zap className="size-2.5" />
+                                Needs 220V Outlet
+                              </span>
+                            )}
+                            {course.mobileVanAutonomousWater && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-600 border border-cyan-500/20">
+                                <Droplets className="size-2.5" />
+                                Autonomous Water
+                              </span>
+                            )}
+                            {course.mobileVanNeedsWaterHookup && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-600 border border-teal-500/20">
+                                <Droplets className="size-2.5" />
+                                Needs Water Tap
+                              </span>
+                            )}
+                            {course.mobileVanSpaceRequirement && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-600 border border-slate-500/20" title={course.mobileVanSpaceRequirement}>
+                                <Car className="size-2.5" />
+                                Van Space: {course.mobileVanSpaceRequirement}
+                              </span>
+                            )}
                             {parseClosedPeriods(course.schedule).map((period, idx) => (
                               <span
                                 key={idx}
@@ -765,7 +817,7 @@ export function DashboardServiceDetail({
                               </span>
                             ))}
                             {course.price &&
-                              parseCoursePricings(course.price, course.priceType, itemNoun.toLowerCase()).map((pTier, pIdx) => {
+                              parseCoursePricings(course.price, course.priceType, (itemNoun || "course").toLowerCase()).map((pTier, pIdx) => {
                                 if (!pTier.amount) return null;
                                 const rawType = pTier.type || "";
                                 const typeLabel = rawType === "half_day"
@@ -780,7 +832,7 @@ export function DashboardServiceDetail({
                                   ? "addl dog"
                                   : ["1h", "2h", "3h", "4h", "5h", "6h", "7h", "8h", "9h", "10h", "11h", "12h", "month", "night", "day", "service", "session", "hour", "course", "walk"].includes(rawType)
                                   ? rawType
-                                  : itemNoun.toLowerCase();
+                                  : (itemNoun || "course").toLowerCase();
                                 const displayText = pTier.label
                                   ? `${pTier.label}: ${pTier.amount} lei / ${typeLabel}`
                                   : `${pTier.amount} lei / ${typeLabel}`;
@@ -820,9 +872,9 @@ export function DashboardServiceDetail({
               <X className="size-4" />
             </button>
             <CardHeader className="px-6 pt-6 pb-4 border-b border-border">
-              <CardTitle className="text-lg font-bold">Delete {itemNoun}</CardTitle>
+              <CardTitle className="text-lg font-bold">Delete {itemNoun || "Item"}</CardTitle>
               <CardDescription className="text-xs mt-1">
-                Are you sure you want to delete this {itemNoun.toLowerCase()}? This action cannot be undone.
+                Are you sure you want to delete this {(itemNoun || "item").toLowerCase()}? This action cannot be undone.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-4">

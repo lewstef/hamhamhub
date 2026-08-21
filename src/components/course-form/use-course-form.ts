@@ -238,6 +238,29 @@ export function useCourseForm({
   const [plantWatering, setPlantWatering] = useState(initialCourse?.plantWatering || false);
   const [plantWateringDetails, setPlantWateringDetails] = useState(initialCourse?.plantWateringDetails || "");
   const [nonSmoker, setNonSmoker] = useState(initialCourse?.nonSmoker || false);
+  const [groomingLocationType, setGroomingLocationType] = useState<"salon" | "mobile_van" | "both">(() => {
+    const val = initialCourse?.groomingLocationType;
+    if (val === "mobile_van" || val === "both" || val === "salon") return val;
+    return "salon";
+  });
+  const [mobileVanAutonomousPower, setMobileVanAutonomousPower] = useState(
+    initialCourse?.mobileVanAutonomousPower || false
+  );
+  const [mobileVanAutonomousWater, setMobileVanAutonomousWater] = useState(
+    initialCourse?.mobileVanAutonomousWater || false
+  );
+  const [mobileVanNeedsPowerPlug, setMobileVanNeedsPowerPlug] = useState(
+    initialCourse?.mobileVanNeedsPowerPlug || false
+  );
+  const [mobileVanNeedsWaterHookup, setMobileVanNeedsWaterHookup] = useState(
+    initialCourse?.mobileVanNeedsWaterHookup || false
+  );
+  const [mobileVanSpaceRequirement, setMobileVanSpaceRequirement] = useState(
+    initialCourse?.mobileVanSpaceRequirement || ""
+  );
+  const [mobileVanTravelFeePolicy, setMobileVanTravelFeePolicy] = useState(
+    initialCourse?.mobileVanTravelFeePolicy || ""
+  );
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(() => {
     if (!initialCourse?.spokenLanguages) return ["Romanian", "English"];
     return initialCourse.spokenLanguages.split(",").map((s) => s.trim()).filter(Boolean);
@@ -702,8 +725,18 @@ export function useCourseForm({
       formData.append("schedule", JSON.stringify(weeklySchedule));
     }
 
-    if (isDogWalking || isDogSitter) {
+    if (isDogWalking || isDogSitter || isGrooming) {
       formData.append("coverageZones", serializeCoverageZones(coverageData));
+    }
+
+    if (isGrooming) {
+      formData.append("groomingLocationType", groomingLocationType);
+      formData.append("mobileVanAutonomousPower", String(mobileVanAutonomousPower));
+      formData.append("mobileVanAutonomousWater", String(mobileVanAutonomousWater));
+      formData.append("mobileVanNeedsPowerPlug", String(mobileVanNeedsPowerPlug));
+      formData.append("mobileVanNeedsWaterHookup", String(mobileVanNeedsWaterHookup));
+      formData.append("mobileVanSpaceRequirement", mobileVanSpaceRequirement);
+      formData.append("mobileVanTravelFeePolicy", mobileVanTravelFeePolicy);
     }
 
     if (faqs.length > 0) {
@@ -716,7 +749,7 @@ export function useCourseForm({
       if ("success" in res && res.success) {
         onSubmitSuccess();
       } else {
-        setError("error" in res ? res.error : `An error occurred while saving the ${itemNoun.toLowerCase()}.`);
+        setError("error" in res ? res.error : `An error occurred while saving the ${(itemNoun || "course").toLowerCase()}.`);
       }
     });
   };
@@ -764,6 +797,13 @@ export function useCourseForm({
       ? initialCourse.acceptedDogWeight.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
     if (JSON.stringify(acceptedDogWeight) !== JSON.stringify(initialWeights)) return true;
+    if (groomingLocationType !== ((initialCourse?.groomingLocationType as "salon" | "mobile_van" | "both") || "salon")) return true;
+    if (mobileVanAutonomousPower !== (initialCourse?.mobileVanAutonomousPower || false)) return true;
+    if (mobileVanAutonomousWater !== (initialCourse?.mobileVanAutonomousWater || false)) return true;
+    if (mobileVanNeedsPowerPlug !== (initialCourse?.mobileVanNeedsPowerPlug || false)) return true;
+    if (mobileVanNeedsWaterHookup !== (initialCourse?.mobileVanNeedsWaterHookup || false)) return true;
+    if (mobileVanSpaceRequirement !== (initialCourse?.mobileVanSpaceRequirement || "")) return true;
+    if (mobileVanTravelFeePolicy !== (initialCourse?.mobileVanTravelFeePolicy || "")) return true;
     if (maxPetsPerVisit !== (initialCourse?.maxPetsPerVisit || 1)) return true;
     if (additionalPetPolicy !== (initialCourse?.additionalPetPolicy || "")) return true;
     return false;
@@ -801,6 +841,13 @@ export function useCourseForm({
     plantWatering,
     plantWateringDetails,
     nonSmoker,
+    groomingLocationType,
+    mobileVanAutonomousPower,
+    mobileVanAutonomousWater,
+    mobileVanNeedsPowerPlug,
+    mobileVanNeedsWaterHookup,
+    mobileVanSpaceRequirement,
+    mobileVanTravelFeePolicy,
     selectedLanguages,
     acceptedDogWeight,
     maxPetsPerVisit,
@@ -968,6 +1015,20 @@ export function useCourseForm({
     handleSecondaryCityChange,
     handleSecondaryCartiereChange,
     requestRemoveSecondaryZone,
+    groomingLocationType,
+    setGroomingLocationType,
+    mobileVanAutonomousPower,
+    setMobileVanAutonomousPower,
+    mobileVanAutonomousWater,
+    setMobileVanAutonomousWater,
+    mobileVanNeedsPowerPlug,
+    setMobileVanNeedsPowerPlug,
+    mobileVanNeedsWaterHookup,
+    setMobileVanNeedsWaterHookup,
+    mobileVanSpaceRequirement,
+    setMobileVanSpaceRequirement,
+    mobileVanTravelFeePolicy,
+    setMobileVanTravelFeePolicy,
     faqs,
     handleAddFaq,
     handleUpdateFaq,

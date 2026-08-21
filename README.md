@@ -89,7 +89,13 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Added **Email** row to the Information tab page, linking to the pre-existing email edit modal.
   - Renamed **"Phone number"** row and input labels to **"Phone"**.
   - Added a new rich-text **Description** field (persisted under `description` in database schema) edited using the pre-existing custom `WysiwygEditor` inside a new dedicated edit modal popup. Renders a plain-text preview on the card view.
-  - **End-Area Chevron Edit Controls & Clickable External Links**: Replaced whole-row button triggers across `/backoffice/organizations/*` and `/dashboard/account/*` cards with dedicated end-area chevron edit buttons. Field labels and values remain clean and non-interactive for clicking except for Email (renders `mailto:` link opening in a new tab), Phone numbers (renders `tel:` link opening in a new tab), and Website / Social profile URLs (renders `https://` link opening in a new tab). Also updated the main Organizations Directory table (`OrganizationsTable`) email column to render clickable `mailto:` links opening in a new tab.
+- **Dog Grooming Dog Weight Range Keyboard Editing Fix**:
+  - Resolved an issue in `GroomingWeightSection` (`src/components/course-form/course-general-tab.tsx`) where typing intermediate numbers in the Maximum Weight field unintentionally collapsed the range and reset the Minimum Weight value to `1`.
+  - Input keystrokes now preserve the user's configured Minimum Weight independently until confirmed/blurred.
+- **Enhanced Service Row Hover Highlights**:
+  - Strengthened hover state contrast (`hover:bg-muted dark:hover:bg-muted/70`) across all service rows and configured course sub-items (`dashboard-service-detail.tsx`, `dashboard-services-list.tsx`, `org-services-tab.tsx`, and `services-table.tsx`) to provide unmistakable visual feedback when aiming for Edit and Delete action buttons.
+- **Platform-wide String Null-Safety Safeguards**:
+  - Added robust fallback guards (`(val || "").toLowerCase()`) across components, tables, and server page slug resolvers to completely prevent uncaught TypeError exceptions on undefined or uninitialized values.
 - **Organization Category Verification Tab & Workflow**:
   - Added a dedicated **"Verification"** tab (`/dashboard/account/verification` and `/backoffice/organizations/verification/[id]`) for requesting and managing official category trust verification.
   - Explains the 3-step verification process: Legal & Credentials Check, Facility & Safety Audit, and Verified Provider Badge allocation.
@@ -383,6 +389,17 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
     - **Medium Breed**: `10 kg – 25 kg`
     - **Large Breed**: `25 kg – 45 kg`
     - **Giant Breed**: `45 kg – 100+ kg`
+  - **Dog Grooming Dual Business Model Support (Fixed Salon vs Mobile Grooming Van vs Both)**: On the **Coverage zones** tab of Dog Grooming, providers can configure their exact delivery model:
+    - **Fixed Salon (`salon`)**: For stationary salons/parlors. Renders physical street address, Google Business Profile, Google Maps link, and dedicated customer parking with WYSIWYG details.
+    - **Mobile Grooming Van (`mobile_van`)**: For mobile groomers traveling directly to the client's home. Renders Primary City Cartiere neighborhood selector, custom Cartier request modal, Secondary Coverage Zones (adjacent cities), and **Mobile Van Technical Specifications & Requirements**:
+      - **Self-Sufficient Power**: Onboard generator, battery system, or solar power.
+      - **220V Power Hookup**: Requires standard residential electric outlet from client.
+      - **Self-Sufficient Water**: Onboard fresh & grey water tanks.
+      - **Water Tap / Hose Hookup**: Requires outdoor garden tap connection from client.
+      - **Van Parking Space Requirement**: Minimum driveway / street curb clearance (e.g. 6-7 meters).
+      - **Travel Fee & Surcharge Policy**: Zone fees or mileage rates beyond primary city borders.
+    - **Both / Hybrid (`both`)**: For businesses operating a physical salon AND a mobile grooming van fleet. Renders both the salon address/parking card and the mobile van coverage/technical specs cards.
+    - **Visual Badges on Dashboard**: Displays real-time status badges on the service detail list (`Fixed Salon`, `Mobile Grooming Van`, `Salon & Mobile Van`, `Self-Powered Van`, `Needs 220V Outlet`, `Autonomous Water`, `Needs Water Tap`, `Van Space`).
   - **Multi-Service Spoken Languages**: Integrated multi-lingual staff / trainer communication badges via **Spoken Languages** selection (`Romanian`, `English`, `Hungarian`, `German`, `French`, `Italian`, `Spanish`, `Ukrainian`) across **all dog services** (`Dog Sport`, `Dog Training`, `Dog Boarding`, `Dog Walking`, `Dog Sitting`, `Grooming`).
   - **Dog Sitter Specialized Care & Attributes**: In-home sitting customization including **Plant & Garden Watering** with WYSIWYG care instructions, **Non-Smoker Sitter** verification, multi-pet accommodation limits, and emergency veterinary transport protocols.
   - **Platform-Wide Diacritic-Insensitive Search**: Integrated unified diacritic normalization across **all search inputs and filters in the platform** via `normalizeSearchText` in `src/lib/utils.ts` (converting `ă`, `â` -> `a`, `î` -> `i`, `ș`, `ş` -> `s`, `ț`, `ţ` -> `t`, `é` -> `e`, `ü` -> `u`, etc.). Applied across:

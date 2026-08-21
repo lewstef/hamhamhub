@@ -69,7 +69,7 @@ export default async function BackofficeOrganizationServicePage({ params }: Page
     .where(eq(services.organizationCategory, organization.organizationCategory || ""));
 
   const service = allCatServices.find((s) => {
-    const sSlug = s.serviceTypeId ? s.serviceTypeId.replace(/_/g, "-") : s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+    const sSlug = s.serviceTypeId ? s.serviceTypeId.replace(/_/g, "-") : (s.name || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
     return sSlug === slug || s.serviceTypeId === dbId || s.id === slug;
   });
 

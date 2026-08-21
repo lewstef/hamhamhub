@@ -173,7 +173,7 @@ export function CourseGeneralTab({
               "Daytime visit with walk",
               "Overnight stay",
             ].map((preset) => {
-              const isSelected = name.trim().toLowerCase() === preset.toLowerCase();
+              const isSelected = (name || "").trim().toLowerCase() === (preset || "").toLowerCase();
               return (
                 <button
                   key={preset}
@@ -203,7 +203,7 @@ export function CourseGeneralTab({
           </div>
           <div className="flex flex-wrap gap-2">
             {DOG_SPORT_DISCIPLINES.map((discipline) => {
-              const isSelected = name.trim().toLowerCase() === discipline.toLowerCase();
+              const isSelected = (name || "").trim().toLowerCase() === (discipline || "").toLowerCase();
               return (
                 <button
                   key={discipline}
@@ -232,7 +232,7 @@ export function CourseGeneralTab({
           </div>
           <div className="flex flex-wrap gap-2">
             {DOG_TRAINING_TOPICS.map((topic) => {
-              const isSelected = name.trim().toLowerCase() === topic.toLowerCase();
+              const isSelected = (name || "").trim().toLowerCase() === (topic || "").toLowerCase();
               return (
                 <button
                   key={topic}
@@ -527,9 +527,9 @@ export function GroomingWeightSection({
       onSetWeightRange?.(1, maxWeight);
     } else {
       const clamped = Math.max(1, Math.min(100, parsed));
-      const newMax = Math.max(clamped, maxWeight);
-      setMinInput(String(clamped));
-      onSetWeightRange?.(clamped, newMax);
+      const targetMin = Math.min(clamped, maxWeight);
+      setMinInput(String(targetMin));
+      onSetWeightRange?.(targetMin, maxWeight);
     }
   };
 
@@ -539,9 +539,7 @@ export function GroomingWeightSection({
     if (raw === "") return;
     const parsed = parseInt(raw, 10);
     if (!isNaN(parsed) && parsed >= 1 && parsed <= 100) {
-      if (parsed < minWeight) {
-        onSetWeightRange?.(parsed, parsed);
-      } else {
+      if (parsed >= minWeight) {
         onSetWeightRange?.(minWeight, parsed);
       }
     }
@@ -550,13 +548,13 @@ export function GroomingWeightSection({
   const handleMaxInputBlur = () => {
     const parsed = parseInt(maxInput, 10);
     if (isNaN(parsed) || parsed < 1) {
-      setMaxInput(String(minWeight));
-      onSetWeightRange?.(minWeight, minWeight);
+      setMaxInput(String(Math.max(minWeight, 100)));
+      onSetWeightRange?.(minWeight, 100);
     } else {
       const clamped = Math.max(1, Math.min(100, parsed));
-      const newMin = Math.min(minWeight, clamped);
-      setMaxInput(String(clamped));
-      onSetWeightRange?.(newMin, clamped);
+      const targetMax = Math.max(clamped, minWeight);
+      setMaxInput(String(targetMax));
+      onSetWeightRange?.(minWeight, targetMax);
     }
   };
 

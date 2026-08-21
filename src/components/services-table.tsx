@@ -65,8 +65,8 @@ interface ServicesTableProps {
 
 
 
-const getServiceDetails = (name: string) => {
-  const normalized = name.toLowerCase();
+const getServiceDetails = (name?: string | null) => {
+  const normalized = (name || "").toLowerCase();
   if (normalized.includes("grooming")) {
     return {
       description: "Full grooming, bathing, hair trimming, nail clipping, and hygienic care.",
@@ -140,7 +140,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
   const coursesMap = useMemo(() => {
     const nextMap: Record<string, ReturnType<typeof getSortedCourses>> = {};
     for (const s of services) {
-      if (s.name.toLowerCase() === "dog training") {
+      if ((s.name || "").toLowerCase() === "dog training") {
         nextMap[s.id] = coursesMapOverrides[s.id] ?? getSortedCourses(s.coursesOrder);
       }
     }
@@ -398,7 +398,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                   <div className="divide-y divide-border/60">
                     {categoryServices.map((s) => {
                       const details = getServiceDetails(s.name);
-                      const isDogTraining = s.name.toLowerCase() === "dog training";
+                      const isDogTraining = (s.name || "").toLowerCase() === "dog training";
                       const isServiceDragged = draggedServiceId === s.id;
 
                       return (
@@ -412,7 +412,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                           onDragOver={(e) => handleServiceDragOver(e, s.id, category.id)}
                           onDragEnd={handleServiceDragEnd}
                         >
-                          <div className="py-3 flex items-start justify-between group/item hover:bg-muted/20 px-3 rounded-xl transition-all">
+                          <div className="py-3 flex items-start justify-between group/item hover:bg-muted dark:hover:bg-muted/70 px-3 rounded-xl transition-all">
                             <div className="flex gap-3.5 items-start min-w-0 flex-1">
                               {/* Drag Handle */}
                               <div
@@ -455,7 +455,7 @@ export function ServicesTable({ serviceList, organizationCategoryList, serviceTy
                                   return (
                                     <div
                                       key={sub.id}
-                                      className={`flex items-center justify-between p-3 pl-4 hover:bg-muted/10 transition-all duration-150 ${
+                                      className={`flex items-center justify-between p-3 pl-4 hover:bg-muted dark:hover:bg-muted/70 transition-all duration-150 ${
                                         isSubDragged ? "opacity-40 bg-muted/20 border-dashed border-2 border-primary/20 scale-[0.99]" : ""
                                       }`}
                                       draggable={true}

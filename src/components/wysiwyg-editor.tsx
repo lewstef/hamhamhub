@@ -52,7 +52,7 @@ export function WysiwygEditor({ value, onChange, placeholder = "Start typing..."
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.ctrlKey || e.metaKey) {
-      const key = e.key.toLowerCase();
+      const key = e.key?.toLowerCase();
       if (key === "b") {
         e.preventDefault();
         e.stopPropagation();

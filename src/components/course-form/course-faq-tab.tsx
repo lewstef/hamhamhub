@@ -101,7 +101,7 @@ export function CourseFaqTab({
         <div className="flex flex-col gap-1">
           <Label className="text-sm font-bold">Frequently Asked Questions (FAQ)</Label>
           <p className="text-xs text-muted-foreground">
-            Add Q&amp;A pairs for clients regarding this {itemNoun.toLowerCase()}.
+            Add Q&amp;A pairs for clients regarding this {(itemNoun || "course").toLowerCase()}.
           </p>
         </div>
         {faqItems}
@@ -116,7 +116,7 @@ export function CourseFaqTab({
           <h3 className="text-base font-bold text-foreground">Frequently Asked Questions (FAQ)</h3>
           <p className="text-xs text-muted-foreground">
             Add Q&amp;A pairs for clients regarding rules, gear requirements, and participation for this{" "}
-            {itemNoun.toLowerCase()}.
+            {(itemNoun || "course").toLowerCase()}.
           </p>
         </div>
         {faqItems}

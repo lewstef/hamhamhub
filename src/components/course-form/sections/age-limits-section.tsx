@@ -52,7 +52,7 @@ export function AgeLimitsSection({
     <div className="space-y-4">
       <BooleanToggleField
         label="Age Limits & Restrictions"
-        description={`Enable if this ${itemNoun.toLowerCase()} has specific age limits/requirements.`}
+        description={`Enable if this ${(itemNoun || "service").toLowerCase()} has specific age limits/requirements.`}
         checked={ageLimitsEnabled}
         onChange={onAgeLimitsEnabledChange}
       >
@@ -91,7 +91,7 @@ export function AgeLimitsSection({
           <div className="h-px bg-border/60" />
           <BooleanToggleField
             label="Accepted Dog Sizes"
-            description={`Enable if this ${itemNoun.toLowerCase()} has specific dog size requirements (Small, Medium, Large, Giant).`}
+            description={`Enable if this ${(itemNoun || "service").toLowerCase()} has specific dog size requirements (Small, Medium, Large, Giant).`}
             checked={dogSizesEnabled}
             onChange={onDogSizesEnabledChange || (() => {})}
           >

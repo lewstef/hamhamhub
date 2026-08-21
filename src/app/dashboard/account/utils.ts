@@ -112,7 +112,7 @@ export async function getDashboardAccountData() {
       .orderBy(services.sortOrder, services.createdAt)
       .then((rows) =>
         rows.map((r) => {
-          const fallbackSlug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+          const fallbackSlug = (r.name || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
           return {
             id: r.id,
             name: r.name,

@@ -206,6 +206,20 @@ export function CourseForm(props: CourseFormProps) {
     handleSecondaryCityChange,
     handleSecondaryCartiereChange,
     requestRemoveSecondaryZone,
+    groomingLocationType,
+    setGroomingLocationType,
+    mobileVanAutonomousPower,
+    setMobileVanAutonomousPower,
+    mobileVanAutonomousWater,
+    setMobileVanAutonomousWater,
+    mobileVanNeedsPowerPlug,
+    setMobileVanNeedsPowerPlug,
+    mobileVanNeedsWaterHookup,
+    setMobileVanNeedsWaterHookup,
+    mobileVanSpaceRequirement,
+    setMobileVanSpaceRequirement,
+    mobileVanTravelFeePolicy,
+    setMobileVanTravelFeePolicy,
     faqs,
     handleAddFaq,
     handleUpdateFaq,
@@ -237,7 +251,7 @@ export function CourseForm(props: CourseFormProps) {
               {isEdit ? `Edit ${itemNoun}: ${initialCourse?.name}` : `Create New ${itemNoun}`}
             </h2>
             <p className="text-xs text-muted-foreground">
-              Configure the specific {itemNoun.toLowerCase()} details, pricing structure, and facilities.
+              Configure the specific {(itemNoun || "course").toLowerCase()} details, pricing structure, and facilities.
             </p>
           </div>
         </div>
@@ -430,11 +444,13 @@ export function CourseForm(props: CourseFormProps) {
               <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-sm space-y-5">
                 <div className="flex flex-col gap-1 border-b border-border/60 pb-3">
                   <h3 className="text-base font-bold text-foreground">
-                    {(isDogWalking || isDogSitter || isGrooming) ? "Coverage zones" : "Location & Map Details"}
+                    {(isDogWalking || isDogSitter) ? "Coverage zones" : isGrooming ? "Location & Coverage" : "Location & Map Details"}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {(isDogWalking || isDogSitter || isGrooming)
-                      ? `Configure specific neighborhoods and coverage zones in your city where ${isDogSitter ? "dog sitting" : isGrooming ? "dog grooming" : "dog walking"} services are provided.`
+                    {isGrooming
+                      ? "Configure your grooming salon address or mobile van coverage zones and equipment specs."
+                      : (isDogWalking || isDogSitter)
+                      ? `Configure specific neighborhoods and coverage zones in your city where ${isDogSitter ? "dog sitting" : "dog walking"} services are provided.`
                       : "Provide location details, business profile, map links, and parking information for clients."}
                   </p>
                 </div>
@@ -454,7 +470,7 @@ export function CourseForm(props: CourseFormProps) {
                   onSecondaryCityChange={handleSecondaryCityChange}
                   onSecondaryCartiereChange={handleSecondaryCartiereChange}
                   hideDedicatedField={isDogWalking || isDogSitter || isGrooming}
-                  hideParking={isDogWalking || isDogSitter || isGrooming}
+                  hideParking={isDogWalking || isDogSitter}
                   dedicatedField={dedicatedField}
                   onDedicatedFieldChange={setDedicatedField}
                   trainingFieldDescription={trainingFieldDescription}
@@ -473,6 +489,20 @@ export function CourseForm(props: CourseFormProps) {
                   onParkingChange={setParking}
                   parkingDescription={parkingDescription}
                   onParkingDescriptionChange={setParkingDescription}
+                  groomingLocationType={groomingLocationType}
+                  onGroomingLocationTypeChange={setGroomingLocationType}
+                  mobileVanAutonomousPower={mobileVanAutonomousPower}
+                  onMobileVanAutonomousPowerChange={setMobileVanAutonomousPower}
+                  mobileVanAutonomousWater={mobileVanAutonomousWater}
+                  onMobileVanAutonomousWaterChange={setMobileVanAutonomousWater}
+                  mobileVanNeedsPowerPlug={mobileVanNeedsPowerPlug}
+                  onMobileVanNeedsPowerPlugChange={setMobileVanNeedsPowerPlug}
+                  mobileVanNeedsWaterHookup={mobileVanNeedsWaterHookup}
+                  onMobileVanNeedsWaterHookupChange={setMobileVanNeedsWaterHookup}
+                  mobileVanSpaceRequirement={mobileVanSpaceRequirement}
+                  onMobileVanSpaceRequirementChange={setMobileVanSpaceRequirement}
+                  mobileVanTravelFeePolicy={mobileVanTravelFeePolicy}
+                  onMobileVanTravelFeePolicyChange={setMobileVanTravelFeePolicy}
                 />
               </div>
             </div>
@@ -601,7 +631,7 @@ export function CourseForm(props: CourseFormProps) {
                     "Daytime visit with walk",
                     "Overnight stay",
                   ].map((preset) => {
-                    const isSelected = name.trim().toLowerCase() === preset.toLowerCase();
+                    const isSelected = (name || "").trim().toLowerCase() === (preset || "").toLowerCase();
                     return (
                       <button
                         key={preset}
