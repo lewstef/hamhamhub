@@ -7,7 +7,7 @@ import { deleteCourseAction, reorderOrgCoursesAction } from "@/app/actions/cours
 import { CourseForm, parseCoursePricings, parseClosedPeriods, parseSpecialOpenings } from "@/components/course-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse, Languages, CigaretteOff, Sprout, Weight, Search, Building, Truck, Zap, Droplets } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, Plus, Edit2, Trash2, Award, MapPin, Car, X, GripVertical, Pill, Footprints, Camera, Utensils, ChevronDown, ChevronUp, Users, Video, CalendarX, CalendarCheck, ShieldCheck, HeartPulse, Trees, Waves, GraduationCap, Warehouse, Languages, CigaretteOff, Sprout, Weight, Search, Building, Truck, Zap, Droplets, FileText } from "lucide-react";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -242,6 +242,7 @@ export function DashboardServiceDetail({
         match(course.groomingLocationType) ||
         match(course.mobileVanSpaceRequirement) ||
         match(course.mobileVanTravelFeePolicy) ||
+        match(course.observationsAndDisclaimers) ||
         match(course.faq)
       );
     });
@@ -794,6 +795,15 @@ export function DashboardServiceDetail({
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-600 border border-slate-500/20" title={course.mobileVanSpaceRequirement}>
                                 <Car className="size-2.5" />
                                 Van Space: {course.mobileVanSpaceRequirement}
+                              </span>
+                            )}
+                            {course.observationsAndDisclaimers && (
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20"
+                                title={course.observationsAndDisclaimers.replace(/<[^>]*>/g, "").trim()}
+                              >
+                                <FileText className="size-2.5" />
+                                Observations &amp; Disclaimers
                               </span>
                             )}
                             {parseClosedPeriods(course.schedule).map((period, idx) => (

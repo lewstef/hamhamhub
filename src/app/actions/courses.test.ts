@@ -659,5 +659,50 @@ describe("Courses Server Actions", () => {
         error: "Check-out time cannot be before or equal to check-in time for Monday.",
       });
     });
+
+    it("should handle observationsAndDisclaimers for dog grooming services in create and update actions", async () => {
+      vi.mocked(auth as any).mockResolvedValue({ user: { id: "org-1", role: "organization" }, expires: "" });
+
+      const mockValues = vi.fn().mockResolvedValueOnce({ count: 1 });
+      vi.mocked(db.insert).mockReturnValueOnce({ values: mockValues } as any);
+
+      const createForm = new FormData();
+      createForm.append("name", "Full Grooming Session");
+      createForm.append("price", "180");
+      createForm.append("observationsAndDisclaimers", "<p>Matted coat extra fee applies.</p>");
+
+      const createRes = await createCourseAction(null, createForm);
+      expect(createRes).toEqual({ success: true });
+      expect(mockValues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Full Grooming Session",
+          price: "180",
+          observationsAndDisclaimers: "<p>Matted coat extra fee applies.</p>",
+        })
+      );
+
+      const mockLimit = vi.fn().mockResolvedValueOnce([{ organizationId: "org-1" }]);
+      const mockWhereSelect = vi.fn().mockReturnValue({ limit: mockLimit });
+      const mockFrom = vi.fn().mockReturnValue({ where: mockWhereSelect });
+      vi.mocked(db.select).mockReturnValueOnce({ from: mockFrom } as any);
+
+      const mockWhereUpdate = vi.fn().mockResolvedValueOnce({ count: 1 });
+      const mockSet = vi.fn().mockReturnValue({ where: mockWhereUpdate });
+      vi.mocked(db.update).mockReturnValueOnce({ set: mockSet } as any);
+
+      const updateForm = new FormData();
+      updateForm.append("id", "grooming-123");
+      updateForm.append("name", "Full Grooming Session Updated");
+      updateForm.append("observationsAndDisclaimers", "<p>Special flea shampoo disclaimer.</p>");
+
+      const updateRes = await updateCourseAction(null, updateForm);
+      expect(updateRes).toEqual({ success: true });
+      expect(mockSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Full Grooming Session Updated",
+          observationsAndDisclaimers: "<p>Special flea shampoo disclaimer.</p>",
+        })
+      );
+    });
   });
 });

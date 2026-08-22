@@ -30,6 +30,8 @@ interface CourseGeneralTabProps {
   onNameChange: (v: string) => void;
   details: string;
   onDetailsChange: (v: string) => void;
+  observationsAndDisclaimers?: string;
+  onObservationsAndDisclaimersChange?: (v: string) => void;
   certifiedTrainer: boolean;
   onCertifiedTrainerChange: (v: boolean) => void;
   certifierName: string;
@@ -76,6 +78,8 @@ export function CourseGeneralTab({
   onNameChange,
   details,
   onDetailsChange,
+  observationsAndDisclaimers = "",
+  onObservationsAndDisclaimersChange,
   certifiedTrainer,
   onCertifiedTrainerChange,
   certifierName,
@@ -321,6 +325,18 @@ export function CourseGeneralTab({
           placeholder={getDetailsPlaceholder()}
         />
       </div>
+
+      {/* Observations and disclaimers for Dog Grooming */}
+      {(isGrooming || itemNoun === "Grooming service") && (
+        <div className="space-y-2">
+          <Label>Observations and disclaimers</Label>
+          <WysiwygEditor
+            value={observationsAndDisclaimers}
+            onChange={(val) => onObservationsAndDisclaimersChange?.(val)}
+            placeholder="Add observations, health & coat condition notices, handling requirements, or disclaimers for this grooming service..."
+          />
+        </div>
+      )}
 
       {/* Weight & Killograms Section for Dog Grooming (Min-Max Range Slider & Stepper) */}
       {(isGrooming || itemNoun === "Grooming service") && (

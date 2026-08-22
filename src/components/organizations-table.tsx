@@ -577,9 +577,9 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
           </Card>
 
           {/* Delete Category Error Message */}
-          {(deleteCategoryState as any)?.error && (
+          {deleteCategoryState?.error && (
             <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-              {(deleteCategoryState as any).error}
+              {deleteCategoryState.error}
             </div>
           )}
 
@@ -792,9 +792,9 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
             </CardHeader>
             <form ref={categoryFormRef} action={(formData) => { setCategorySubmitted(true); categoryFormAction(formData); }}>
               <CardContent className="p-6 space-y-4">
-                {categorySubmitted && (categoryState as any)?.error && (
+                {categorySubmitted && categoryState?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {(categoryState as any).error}
+                    {categoryState.error}
                   </div>
                 )}
                 <div className="space-y-4">
@@ -858,15 +858,15 @@ export function OrganizationsTable({ organizationList, organizationCategoryList 
             <CardHeader className="px-6 pt-6 pb-4 border-b border-border/60">
               <CardTitle className="text-lg font-bold text-foreground">Edit Category</CardTitle>
               <CardDescription className="text-xs mt-1 text-muted-foreground">
-                Update name and description details for category "{editCategoryTarget.id}".
+                Update name and description details for category &quot;{editCategoryTarget.id}&quot;.
               </CardDescription>
             </CardHeader>
             <form ref={editCategoryFormRef} action={(formData) => { setEditCategorySubmitted(true); editCategoryFormAction(formData); }}>
               <input type="hidden" name="id" value={editCategoryTarget.id} />
               <CardContent className="p-6 space-y-4">
-                {editCategorySubmitted && (editCategoryState as any)?.error && (
+                {editCategorySubmitted && editCategoryState?.error && (
                   <div className="p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-                    {(editCategoryState as any).error}
+                    {editCategoryState.error}
                   </div>
                 )}
                 <div className="space-y-4">

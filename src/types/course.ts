@@ -91,6 +91,8 @@ export interface Course {
   mobileVanSpaceRequirement?: string | null;
   /** Mobile Grooming Van: travel fee notes or zone surcharge policies */
   mobileVanTravelFeePolicy?: string | null;
+  /** Dog Grooming: rich text observations, health notices, and disclaimers */
+  observationsAndDisclaimers?: string | null;
   /** FAQs serialized JSON */
   faq?: string | null;
 }

@@ -76,6 +76,7 @@ interface ParsedCourseData {
   mobileVanNeedsWaterHookup: boolean;
   mobileVanSpaceRequirement: string;
   mobileVanTravelFeePolicy: string;
+  observationsAndDisclaimers: string;
   faq: string | null;
 }
 
@@ -157,6 +158,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
   const mobileVanNeedsWaterHookup = formData.get("mobileVanNeedsWaterHookup") === "true";
   const mobileVanSpaceRequirement = (formData.get("mobileVanSpaceRequirement") as string) || "";
   const mobileVanTravelFeePolicy = (formData.get("mobileVanTravelFeePolicy") as string) || "";
+  const observationsAndDisclaimers = (formData.get("observationsAndDisclaimers") as string) || "";
   const faq = (formData.get("faq") as string) || null;
 
   if (price) {
@@ -250,6 +252,7 @@ function parseCourseFormData(formData: FormData): { data: ParsedCourseData } | {
       mobileVanAutonomousPower, mobileVanAutonomousWater,
       mobileVanNeedsPowerPlug, mobileVanNeedsWaterHookup,
       mobileVanSpaceRequirement, mobileVanTravelFeePolicy,
+      observationsAndDisclaimers,
       faq,
     },
   };
@@ -272,11 +275,11 @@ function revalidateCourseServicePaths() {
 }
 
 /**
- * Creates a new offering (Course, Dog Sport, or Boarding Service) associated with the organization.
+ * Creates a new course offering (Training Course, Dog Sport, Boarding Service, or Grooming Service).
  *
- * @param prevState - Unused state placeholder
+ * @param prevState - Unused state placeholder (satisfies useActionState signature if needed)
  * @param formData - The course/boarding form data (see {@link parseCourseFormData} for accepted fields)
- * @returns `{ success: true }` on successful creation
+ * @returns `{ success: true }` on successful insertion
  * @returns `{ error: string }` if name is missing, unauthorized access, or DB failure
  * @sideEffect Revalidates /dashboard/services/* and matching backoffice paths
  */
@@ -379,6 +382,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
       mobileVanNeedsWaterHookup: d.mobileVanNeedsWaterHookup,
       mobileVanSpaceRequirement: d.mobileVanSpaceRequirement || null,
       mobileVanTravelFeePolicy: d.mobileVanTravelFeePolicy || null,
+      observationsAndDisclaimers: d.observationsAndDisclaimers || null,
       faq: d.faq,
     });
 
@@ -391,7 +395,7 @@ export async function createCourseAction(prevState: unknown, formData: FormData)
 }
 
 /**
- * Updates an existing offering (Course, Dog Sport, or Boarding Service).
+ * Updates an existing offering (Course, Dog Sport, Boarding Service, or Grooming Service).
  *
  * @param prevState - Unused state placeholder
  * @param formData - The course/boarding form data (see {@link parseCourseFormData} for accepted fields).
@@ -509,6 +513,7 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
         mobileVanNeedsWaterHookup: d.mobileVanNeedsWaterHookup,
         mobileVanSpaceRequirement: d.mobileVanSpaceRequirement || null,
         mobileVanTravelFeePolicy: d.mobileVanTravelFeePolicy || null,
+        observationsAndDisclaimers: d.observationsAndDisclaimers || null,
         faq: d.faq,
       })
       .where(eq(courses.id, courseId));
@@ -522,10 +527,13 @@ export async function updateCourseAction(prevState: unknown, formData: FormData)
 }
 
 /**
- * Deletes a course.
+ * Permanently removes a course/service offering from the database.
  *
- * @param courseId - The course ID to delete
- * @returns `{ success: true }` or `{ error: string }`
+ * @param {string} courseId - The unique UUID identifier of the course to delete.
+ * @returns {Promise<{ success?: boolean; error?: string }>} Resolves with `{ success: true }` or `{ error: string }`.
+ * @sideEffect Deletes record from `courses` table in the database.
+ * @sideEffect Revalidates cache paths for all dashboard and backoffice service routes.
+ * @security Guarded by session verification; organizations may only delete their own courses, while backoffice admins/employees can delete any course.
  */
 export async function deleteCourseAction(courseId: string) {
   const session = await auth();
@@ -575,10 +583,13 @@ export async function deleteCourseAction(courseId: string) {
 }
 
 /**
- * Reorders courses for an organization.
+ * Updates the custom sort order index (`sortOrder`) for an organization's courses.
  *
- * @param orderedCourseIds - List of course IDs in their new order
- * @returns `{ success: true }` or `{ error: string }`
+ * @param {string[]} orderedCourseIds - List of course database UUIDs arranged in the desired 0-indexed display sequence.
+ * @returns {Promise<{ success?: boolean; error?: string }>} Resolves with `{ success: true }` or `{ error: string }`.
+ * @sideEffect Updates `courses.sortOrder` for each ID in the sequence.
+ * @sideEffect Revalidates cache paths for all dashboard and backoffice service routes.
+ * @security Guarded by session verification; organizations are scoped to modify only courses they own.
  */
 export async function reorderOrgCoursesAction(orderedCourseIds: string[]) {
   const session = await auth();

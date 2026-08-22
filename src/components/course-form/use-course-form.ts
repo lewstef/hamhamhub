@@ -194,6 +194,9 @@ export function useCourseForm({
   const [parking, setParking] = useState(initialCourse?.parking || false);
   const [parkingDescription, setParkingDescription] = useState(initialCourse?.parkingDescription || "");
   const [details, setDetails] = useState(initialCourse?.details || "");
+  const [observationsAndDisclaimers, setObservationsAndDisclaimers] = useState(
+    initialCourse?.observationsAndDisclaimers || ""
+  );
   const [termsOfParticipation, setTermsOfParticipation] = useState(initialCourse?.termsOfParticipation || "");
 
   const defaultPriceType = isBoarding
@@ -699,6 +702,7 @@ export function useCourseForm({
     if (isGrooming) {
       const sortedWeights = [...acceptedDogWeight].sort((a, b) => Number(a) - Number(b));
       formData.append("acceptedDogWeight", sortedWeights.join(","));
+      formData.append("observationsAndDisclaimers", observationsAndDisclaimers);
     }
     formData.append("maxPetsPerVisit", String(maxPetsPerVisit));
     formData.append("additionalPetPolicy", additionalPetPolicy);
@@ -757,6 +761,7 @@ export function useCourseForm({
   const isDirty = useMemo(() => {
     if (name !== (initialCourse?.name || "")) return true;
     if (details !== (initialCourse?.details || "")) return true;
+    if (observationsAndDisclaimers !== (initialCourse?.observationsAndDisclaimers || "")) return true;
     if (termsOfParticipation !== (initialCourse?.termsOfParticipation || "")) return true;
     if (certifiedTrainer !== (initialCourse?.certifiedTrainer || false)) return true;
     if (certifierName !== (initialCourse?.certifierName || "")) return true;
@@ -810,6 +815,7 @@ export function useCourseForm({
   }, [
     name,
     details,
+    observationsAndDisclaimers,
     termsOfParticipation,
     certifiedTrainer,
     certifierName,
@@ -918,6 +924,8 @@ export function useCourseForm({
     setParkingDescription,
     details,
     setDetails,
+    observationsAndDisclaimers,
+    setObservationsAndDisclaimers,
     termsOfParticipation,
     setTermsOfParticipation,
     pricings,

@@ -140,6 +140,7 @@ export const courses = pgTable("courses", {
   mobileVanNeedsWaterHookup: boolean("mobile_van_needs_water_hookup").default(false).notNull(),
   mobileVanSpaceRequirement: text("mobile_van_space_requirement"),
   mobileVanTravelFeePolicy: text("mobile_van_travel_fee_policy"),
+  observationsAndDisclaimers: text("observations_and_disclaimers"),
   faq: text("faq"),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

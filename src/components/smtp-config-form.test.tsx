@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import React, { useActionState } from "react";
+import React from "react";
 import { SmtpConfigForm } from "./smtp-config-form";
 import { updateSmtpConfigAction, sendTestEmailAction } from "@/app/actions/system";
 
@@ -10,8 +10,8 @@ vi.mock("@/app/actions/system", () => ({
   sendTestEmailAction: vi.fn(),
 }));
 
-let mockSaveState: any = null;
-let mockTestState: any = null;
+let mockSaveState: { success?: boolean; error?: string } | null = null;
+let mockTestState: { success?: boolean; error?: string } | null = null;
 const mockSaveAction = vi.fn();
 const mockTestAction = vi.fn();
 
@@ -19,7 +19,7 @@ vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
   return {
     ...actual,
-    useActionState: (action: any, initialState: any) => {
+    useActionState: (action: unknown, initialState: unknown) => {
       if (action === updateSmtpConfigAction) {
         return [mockSaveState || initialState, mockSaveAction, false];
       }

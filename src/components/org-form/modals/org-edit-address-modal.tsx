@@ -101,7 +101,7 @@ export function OrgEditAddressModal({
           </div>
           <div className="flex flex-col">
             <CardTitle className="text-base font-semibold">Edit Address Details</CardTitle>
-            <CardDescription className="text-xs">Update your organization's physical billing coordinates.</CardDescription>
+            <CardDescription className="text-xs">Update your organization&apos;s physical billing coordinates.</CardDescription>
           </div>
         </CardHeader>
         <form action={personalAction}>

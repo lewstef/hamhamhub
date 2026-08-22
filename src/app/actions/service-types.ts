@@ -18,7 +18,7 @@ import { revalidatePath } from "next/cache";
  * @returns Array of `ServiceType` objects (id, name, description, applicableTo, fields)
  */
 export async function getServiceTypesAction(): Promise<ServiceType[]> {
-  let dbList: any[] = [];
+  let dbList: { id: string; name: string; description: string }[] = [];
   try {
     const fetched = await db.select().from(serviceTypes);
     if (Array.isArray(fetched)) {

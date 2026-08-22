@@ -89,6 +89,10 @@ Authentication separation is managed in `src/auth.ts` and `src/auth.config.ts`:
   - Added **Email** row to the Information tab page, linking to the pre-existing email edit modal.
   - Renamed **"Phone number"** row and input labels to **"Phone"**.
   - Added a new rich-text **Description** field (persisted under `description` in database schema) edited using the pre-existing custom `WysiwygEditor` inside a new dedicated edit modal popup. Renders a plain-text preview on the card view.
+- **Dog Grooming Observations and Disclaimers WYSIWYG Editor**:
+  - Added dedicated **"Observations and disclaimers"** rich-text WYSIWYG section directly under the Service Details in `CourseGeneralTab` (`src/components/course-form/course-general-tab.tsx`) and `CourseForm` (`src/components/course-form.tsx`) for **Dog Grooming** (`isGrooming` / `itemNoun === "Grooming service"`).
+  - Persisted in the database schema under `observations_and_disclaimers` on the `courses` table and typed as `observationsAndDisclaimers?: string | null` on `Course`.
+  - Integrated with `createCourseAction` and `updateCourseAction` server actions with full JSDoc documentation, `useCourseForm` dirty checking, and search filter matching with a dynamic `Observations & Disclaimers` badge on `DashboardServiceDetail`.
 - **Dog Grooming Dog Weight Range Keyboard Editing Fix**:
   - Resolved an issue in `GroomingWeightSection` (`src/components/course-form/course-general-tab.tsx`) where typing intermediate numbers in the Maximum Weight field unintentionally collapsed the range and reset the Minimum Weight value to `1`.
   - Input keystrokes now preserve the user's configured Minimum Weight independently until confirmed/blurred.
@@ -366,11 +370,58 @@ All server actions in `src/app/actions/` are documented with JSDoc comments dire
 | `actions/initialization.ts` | `createAdminAction` |
 | `actions/employees.ts` | `createEmployeeAction`, `updateEmployeeAction`, `changeEmployeePasswordAction`, `deleteEmployeeAction` |
 | `actions/users.ts` | `createUserAction`, `updateUserAction`, `changeUserPasswordAction`, `deleteUserAction` |
-| `actions/organizations.ts` | `getOrganizationCategories`, `createOrganizationCategoryAction`, `updateOrganizationCategoryAction`, `deleteOrganizationCategoryAction`, `createOrganizationAction`, `updateOrganizationAction`, `changeOrganizationPasswordAction`, `deleteOrganizationAction`, `toggleOrganizationServiceAction`, `toggleOrganizationCourseAction`, `requestNewCartierAction` |
+| `actions/organizations.ts` | `getOrganizationCategories`, `createOrganizationCategoryAction`, `updateOrganizationCategoryAction`, `deleteOrganizationCategoryAction`, `createOrganizationAction`, `updateOrganizationAction`, `changeOrganizationPasswordAction`, `deleteOrganizationAction`, `toggleOrganizationServiceAction`, `toggleOrganizationCourseAction`, `requestNewCartierAction`, `requestOrganizationVerificationAction`, `updateOrganizationVerificationStatusAction` |
 | `actions/services.ts` | `createServiceAction`, `deleteServiceAction`, `reorderServicesAction`, `reorderCoursesAction` |
 | `actions/service-types.ts` | `getServiceTypesAction`, `updateServiceTypeAction` |
 | `actions/courses.ts` | `createCourseAction`, `updateCourseAction`, `deleteCourseAction`, `reorderOrgCoursesAction` |
 | `actions/system.ts` | `updateSmtpConfigAction`, `sendTestEmailAction` |
+
+---
+
+### G. Organization Category Verification Subsystem
+
+#### Functional Overview
+- **Category Trust Verification**: Organizations can request official cynological accreditation verification for their selected category (e.g. Dog School, Dog Kennel, Pet Sitting, Veterinary Clinic, Grooming Salon).
+- **Three-Pillar Process**:
+  1. *Legal & Credentials Audit*: Verification of business registration (CUI/CIF, Trade Register) and specialized cynological or veterinary certifications.
+  2. *Facility & Safety Audit*: Verification of physical premises, safety fencing, hygienic standards, and liability precautions.
+  3. *Verified Provider Badge*: Grants an official verification badge on directory profiles to build pet owner trust.
+- **Verification Management Workflow**:
+  - *Applicant Submission*: From `/dashboard/account/verification`, organization managers enter optional qualification notes and trigger `requestOrganizationVerificationAction`. The organization's `verificationStatus` updates to `pending`, and an HTML summary notification is automatically dispatched to moderation staff (`stefan.wrabeli@gmail.com`).
+  - *Staff Moderation*: Backoffice administrators and staff inspect pending applications at `/backoffice/organizations/verification/[id]`, review submitted notes and contact data, and can approve (`verified`), reject (`unverified`), or revert status via `updateOrganizationVerificationStatusAction`.
+
+#### Technical Architecture
+- **Database Schema (`src/db/schema.ts`)**: `users` table tracks `verificationStatus` (`unverified` | `pending` | `verified`), `verificationRequestedAt` (timestamp), and `verificationNotes` (text).
+- **Server Actions (`src/app/actions/organizations.ts`)**:
+  - `requestOrganizationVerificationAction(organizationId, notes)`: Validates active session permissions, updates status, and dispatches notification email.
+  - `updateOrganizationVerificationStatusAction(organizationId, status)`: Enforces admin/employee authorization guard before updating status.
+
+---
+
+### H. System SMTP Configuration Subsystem
+
+#### Functional Overview
+- **Centralized Email Transport**: All platform notifications (security password reset warnings, missing cartier requests, organization verification notifications) leverage a centralized Node.js Nodemailer transport (`src/lib/email.ts`).
+- **Dynamic Backoffice Configuration (`/backoffice/settings/smtp`)**:
+  - Administrative personnel can configure and test custom SMTP relays directly in the UI (`SmtpConfigForm`).
+  - Supported parameters: SMTP Host, Port (`587`, `465`, `25`), Security Protocol (`None`, `SSL`, `TLS`, `STARTTLS`), Optional Username & Password, Sender Name, and Sender Email.
+  - **Password Masking & Preservation**: Allows updating host/port/sender details without re-entering the secret password.
+  - **Live Verification Test Tool**: Interactive modal allows admins to enter a test recipient email and dispatch an instantaneous verification message to validate credentials before saving.
+
+#### Technical Architecture
+- **Storage Layer (`src/db/schema.ts`)**: Serialized JSON payload stored in `systemSettings` under key `"smtp_config"`.
+- **Server Actions (`src/app/actions/system.ts`)**: `updateSmtpConfigAction` and `sendTestEmailAction` strictly guarded by session admin role verification (`session.user.role === "admin"`).
+- **Email Transport (`src/lib/email.ts`)**: Dynamic resolver that reads database settings or falls back to system environment variables.
+
+---
+
+### I. Romanian Territory & Neighborhood/Cartier Subsystem
+
+#### Functional Overview
+- **Complete Romanian Territorial Coverage**: Maps all 42 Romanian Counties to their constituent cities, towns, and communes (`src/config/romanian-territory.ts`).
+- **Multi-Zone Neighborhood Selection (Cartiere)**: Maps top 101 Romanian cities and 707+ neighborhoods (`src/config/romanian-cartiere.ts`).
+- **Interactive Dependent Dropdowns**: Automatically dynamically filters localities on county selection and shifts focus instantly.
+- **Custom Cartier Request Workflow**: Allows service providers to submit unlisted neighborhoods directly from location configurators via `requestNewCartierAction`, notifying administrators via automated email.
 
 ---
 

@@ -121,6 +121,8 @@ export function CourseForm(props: CourseFormProps) {
     setParkingDescription,
     details,
     setDetails,
+    observationsAndDisclaimers,
+    setObservationsAndDisclaimers,
     termsOfParticipation,
     setTermsOfParticipation,
     pricings,
@@ -330,6 +332,8 @@ export function CourseForm(props: CourseFormProps) {
               onNameChange={setName}
               details={details}
               onDetailsChange={setDetails}
+              observationsAndDisclaimers={observationsAndDisclaimers}
+              onObservationsAndDisclaimersChange={setObservationsAndDisclaimers}
               certifiedTrainer={certifiedTrainer}
               onCertifiedTrainerChange={setCertifiedTrainer}
               certifierName={certifierName}
@@ -843,6 +847,18 @@ export function CourseForm(props: CourseFormProps) {
                 placeholder="What does the program include? Explain schedules, details..."
               />
             </div>
+
+            {/* Observations and disclaimers (Grooming only - flat mode) */}
+            {(isGrooming || itemNoun === "Grooming service") && (
+              <div className="space-y-2">
+                <Label>Observations and disclaimers</Label>
+                <WysiwygEditor
+                  value={observationsAndDisclaimers}
+                  onChange={setObservationsAndDisclaimers}
+                  placeholder="Add observations, health & coat condition notices, handling requirements, or disclaimers for this grooming service..."
+                />
+              </div>
+            )}
 
             {/* Spoken Languages Selector (flat mode) */}
             <div className="space-y-3 p-4 rounded-xl border border-border/80 bg-muted/20">

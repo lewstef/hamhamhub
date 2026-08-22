@@ -28,37 +28,37 @@ import type { SecondaryCoverageZone } from "@/types/course";
 
 interface CourseLocationTabProps {
   layout: "tabbed" | "flat";
-  isDogWalking: boolean;
+  isDogWalking?: boolean;
   isDogSitter?: boolean;
   isGrooming?: boolean;
-  isBoarding: boolean;
-  cityName: string;
-  cartiereList: string[] | null;
-  selectedCartiere: string[];
-  onSelectedCartiereChange: (c: string[]) => void;
-  secondaryZones: SecondaryCoverageZone[];
+  isBoarding?: boolean;
+  cityName?: string;
+  cartiereList?: string[] | null;
+  selectedCartiere?: string[];
+  onSelectedCartiereChange?: (c: string[]) => void;
+  secondaryZones?: SecondaryCoverageZone[];
   onAddSecondaryZone?: () => void;
   onRemoveSecondaryZone?: (idx: number) => void;
   onSecondaryCityChange?: (idx: number, city: string) => void;
   onSecondaryCartiereChange?: (idx: number, cartiere: string[]) => void;
-  trainingFieldAddress: string;
-  onTrainingFieldAddressChange: (v: string) => void;
-  trainingFieldGoogleBusinessProfile: string;
-  onGbpChange: (v: string) => void;
-  trainingFieldGoogleMapsLink: string;
-  onMapsChange: (v: string) => void;
-  dedicatedField: boolean;
-  onDedicatedFieldChange: (v: boolean) => void;
-  trainingFieldDescription: string;
-  onTrainingFieldDescriptionChange: (v: string) => void;
+  trainingFieldAddress?: string;
+  onTrainingFieldAddressChange?: (v: string) => void;
+  trainingFieldGoogleBusinessProfile?: string;
+  onGbpChange?: (v: string) => void;
+  trainingFieldGoogleMapsLink?: string;
+  onMapsChange?: (v: string) => void;
+  dedicatedField?: boolean;
+  onDedicatedFieldChange?: (v: boolean) => void;
+  trainingFieldDescription?: string;
+  onTrainingFieldDescriptionChange?: (v: string) => void;
   indoorFacility?: boolean;
   onIndoorFacilityChange?: (v: boolean) => void;
   indoorFacilityDescription?: string;
   onIndoorFacilityDescriptionChange?: (v: string) => void;
-  parking: boolean;
-  onParkingChange: (v: boolean) => void;
-  parkingDescription: string;
-  onParkingDescriptionChange: (v: string) => void;
+  parking?: boolean;
+  onParkingChange?: (v: boolean) => void;
+  parkingDescription?: string;
+  onParkingDescriptionChange?: (v: string) => void;
   hideDedicatedField?: boolean;
   hideParking?: boolean;
   groomingLocationType?: "salon" | "mobile_van" | "both" | string;
@@ -85,37 +85,37 @@ interface CourseLocationTabProps {
  */
 export function CourseLocationTab({
   layout,
-  isDogWalking,
+  isDogWalking = false,
   isDogSitter = false,
   isGrooming = false,
-  isBoarding,
-  cityName,
-  cartiereList,
-  selectedCartiere,
-  onSelectedCartiereChange,
-  secondaryZones,
+  isBoarding = false,
+  cityName = "",
+  cartiereList = null,
+  selectedCartiere = [],
+  onSelectedCartiereChange = () => {},
+  secondaryZones = [],
   onAddSecondaryZone,
   onRemoveSecondaryZone,
   onSecondaryCityChange,
   onSecondaryCartiereChange,
-  trainingFieldAddress,
-  onTrainingFieldAddressChange,
-  trainingFieldGoogleBusinessProfile,
-  onGbpChange,
-  trainingFieldGoogleMapsLink,
-  onMapsChange,
-  dedicatedField,
-  onDedicatedFieldChange,
-  trainingFieldDescription,
-  onTrainingFieldDescriptionChange,
+  trainingFieldAddress = "",
+  onTrainingFieldAddressChange = () => {},
+  trainingFieldGoogleBusinessProfile = "",
+  onGbpChange = () => {},
+  trainingFieldGoogleMapsLink = "",
+  onMapsChange = () => {},
+  dedicatedField = false,
+  onDedicatedFieldChange = () => {},
+  trainingFieldDescription = "",
+  onTrainingFieldDescriptionChange = () => {},
   indoorFacility = false,
   onIndoorFacilityChange,
   indoorFacilityDescription = "",
   onIndoorFacilityDescriptionChange,
-  parking,
-  onParkingChange,
-  parkingDescription,
-  onParkingDescriptionChange,
+  parking = false,
+  onParkingChange = () => {},
+  parkingDescription = "",
+  onParkingDescriptionChange = () => {},
   hideDedicatedField = false,
   hideParking = false,
   groomingLocationType = "salon",

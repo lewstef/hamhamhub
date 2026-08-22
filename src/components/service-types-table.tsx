@@ -176,7 +176,7 @@ export function ServiceTypesTable({ serviceTypesList }: ServiceTypesTableProps) 
             <CardHeader className="px-6 pt-6 pb-4 border-b border-border/60">
               <CardTitle className="text-lg font-bold">Edit Service Type</CardTitle>
               <CardDescription className="text-xs mt-1">
-                Modify name and description for service type "{editTarget.id}".
+                Modify name and description for service type &quot;{editTarget.id}&quot;.
               </CardDescription>
             </CardHeader>
             <form ref={editFormRef} action={(formData) => { setEditSubmitted(true); editFormAction(formData); }}>

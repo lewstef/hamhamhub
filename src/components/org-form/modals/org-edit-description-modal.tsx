@@ -54,7 +54,7 @@ export function OrgEditDescriptionModal({
           </div>
           <div className="flex flex-col">
             <CardTitle className="text-base font-semibold">Edit Description</CardTitle>
-            <CardDescription className="text-xs">Update your organization's public rich-text profile description.</CardDescription>
+            <CardDescription className="text-xs">Update your organization&apos;s public rich-text profile description.</CardDescription>
           </div>
         </CardHeader>
         <form action={personalAction}>

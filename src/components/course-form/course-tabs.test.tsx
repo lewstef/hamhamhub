@@ -367,6 +367,38 @@ describe("CourseForm Subcomponents Suite", () => {
       fireEvent.click(screen.getByRole("button", { name: /Giant Breed/ }));
       expect(onSetWeightRange).toHaveBeenCalledWith(45, 100);
     });
+
+    it("renders Observations and Disclaimers rich-text editor for Grooming and triggers callback", () => {
+      const onObservationsChange = vi.fn();
+
+      render(
+        <CourseGeneralTab
+          name="Deluxe Grooming"
+          onNameChange={vi.fn()}
+          details="Full groom"
+          onDetailsChange={vi.fn()}
+          certifiedTrainer={false}
+          onCertifiedTrainerChange={vi.fn()}
+          certifierName=""
+          onCertifierNameChange={vi.fn()}
+          trainerExperienceDescription=""
+          onTrainerExperienceDescriptionChange={vi.fn()}
+          observationsAndDisclaimers="Please bring up-to-date vaccine records."
+          onObservationsAndDisclaimersChange={onObservationsChange}
+          ageLimitsEnabled={false}
+          onAgeLimitsEnabledChange={vi.fn()}
+          selectedAgeLimits={[]}
+          onToggleAgeLimit={vi.fn()}
+          itemNoun="Grooming service"
+          isGrooming={true}
+        />
+      );
+
+      expect(screen.getByText("Observations and disclaimers")).toBeDefined();
+      const wysiwyg = screen.getAllByTestId("wysiwyg-mock")[1];
+      fireEvent.change(wysiwyg, { target: { value: "Matting fees apply" } });
+      expect(onObservationsChange).toHaveBeenCalledWith("Matting fees apply");
+    });
   });
 
   describe("CoursePricingTab", () => {
@@ -1219,6 +1251,7 @@ describe("CourseForm Subcomponents Suite", () => {
       );
 
       expect(screen.getByText("Weight")).toBeDefined();
+      expect(screen.getByText("Observations and disclaimers")).toBeDefined();
       expect(screen.getAllByText(/4 – 10 kg/).length).toBeGreaterThan(0);
 
       // Editable inputs

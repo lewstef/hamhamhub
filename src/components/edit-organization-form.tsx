@@ -527,30 +527,6 @@ export function EditOrganizationForm({
       })
     : "-";
 
-  // Sync personalState error & auto-close Personal Info modals on success
-  useEffect(() => {
-    if (personalState?.error) {
-      setPersonalError(personalState.error);
-    } else if (personalState?.success) {
-      setPersonalError(null);
-      setShowNameModal(false);
-      setShowCategoryModal(false);
-      setShowAddressModal(false);
-      setShowPhoneModal(false);
-      setShowWebsiteModal(false);
-      setShowFacebookModal(false);
-      setShowInstagramModal(false);
-      setShowTikTokModal(false);
-      setShowLinkedinModal(false);
-      setShowSocialModal(false);
-      setShowBillingModal(false);
-      setShowPrimaryContactModal(false);
-      setShowSecondaryContactModal(false);
-      setShowDescriptionModal(false);
-      router.refresh();
-    }
-  }, [personalState, router]);
-
   // Sync enabledServices and enabledCourses state if organization details change
   useEffect(() => {
     setEnabledServiceIds(
@@ -582,40 +558,19 @@ export function EditOrganizationForm({
     setEditLocality(organization.addressCity || "");
   }, [organization.addressState, organization.addressCity]);
 
+  // Auto-close Personal Info modals on success
   useEffect(() => {
-    setEditDescription(organization.description || "");
-  }, [organization.description]);
-
-  useEffect(() => {
-    setCountryHighlightIndex(0);
-  }, [countrySearch]);
-
-  useEffect(() => {
-    setBankHighlightIndex(0);
-  }, [bankSearch]);
-
-  useEffect(() => {
-    setCountyHighlightIndex(0);
-  }, [countySearch]);
-
-  useEffect(() => {
-    setLocalityHighlightIndex(0);
-  }, [localitySearch]);
-
-  // Sync accountState error & auto-close Account modals on success
-  useEffect(() => {
-    if (accountState?.error) {
-      setAccountError(accountState.error);
-    } else if (accountState?.success) {
-      setAccountError(null);
-      setShowEmailModal(false);
-      setShowRecoveryEmailModal(false);
-      setShowPasswordModal(false);
-      setPasswordVal("");
-      setConfirmPasswordVal("");
+    if (personalState?.success) {
       router.refresh();
     }
-  }, [accountState, router]);
+  }, [personalState?.success, router]);
+
+  // Auto-close Account modals on success
+  useEffect(() => {
+    if (accountState?.success) {
+      router.refresh();
+    }
+  }, [accountState?.success, router]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -737,7 +692,7 @@ export function EditOrganizationForm({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setLocalActiveTab(tab.id as any)}
+                onClick={() => setLocalActiveTab(tab.id as typeof localActiveTab)}
                 className={className}
               >
                 {tab.label}
@@ -839,7 +794,7 @@ export function EditOrganizationForm({
         organization={organization}
         organizationCategoryList={organizationCategoryList}
         personalAction={personalAction}
-        personalError={personalError}
+        personalError={personalError || (personalState?.error ?? null)}
         isPending={isPending}
       />
 
@@ -850,7 +805,7 @@ export function EditOrganizationForm({
         onCloseAllModals={closeAllModals}
         organization={organization}
         personalAction={personalAction}
-        personalError={personalError}
+        personalError={personalError || (personalState?.error ?? null)}
         isPending={isPending}
         countyDropdownRef={countyDropdownRef}
         editCounty={editCounty}
@@ -895,7 +850,7 @@ export function EditOrganizationForm({
         onCloseAllModals={closeAllModals}
         organization={organization}
         personalAction={personalAction}
-        personalError={personalError}
+        personalError={personalError || (personalState?.error ?? null)}
         isPending={isPending}
         phonePlaceholder={phonePlaceholder}
         phonePatternInfo={phonePatternInfo}
@@ -913,7 +868,7 @@ export function EditOrganizationForm({
         onCloseAllModals={closeAllModals}
         organization={organization}
         personalAction={personalAction}
-        personalError={personalError}
+        personalError={personalError || (personalState?.error ?? null)}
         isPending={isPending}
         bankDropdownRef={bankDropdownRef}
         editBank={editBank}
@@ -939,7 +894,7 @@ export function EditOrganizationForm({
         onCloseAllModals={closeAllModals}
         organization={organization}
         accountAction={accountAction}
-        accountError={accountError}
+        accountError={accountError || (accountState?.error ?? null)}
         isPending={isPending}
         isDashboard={isDashboard}
       />
@@ -951,7 +906,7 @@ export function EditOrganizationForm({
         onCloseAllModals={closeAllModals}
         organization={organization}
         personalAction={personalAction}
-        personalError={personalError}
+        personalError={personalError || (personalState?.error ?? null)}
         isPending={isPending}
         editDescription={editDescription}
         setEditDescription={setEditDescription}

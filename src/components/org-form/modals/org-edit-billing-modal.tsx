@@ -279,7 +279,7 @@ export function OrgEditBillingModal({
               </div>
               <div className="flex flex-col">
                 <CardTitle className="text-base font-semibold">Edit Primary Contact</CardTitle>
-                <CardDescription className="text-xs">Update your organization's primary contact details.</CardDescription>
+                <CardDescription className="text-xs">Update your organization&apos;s primary contact details.</CardDescription>
               </div>
             </CardHeader>
             <form action={personalAction}>
@@ -373,7 +373,7 @@ export function OrgEditBillingModal({
               </div>
               <div className="flex flex-col">
                 <CardTitle className="text-base font-semibold">Edit Secondary Contact</CardTitle>
-                <CardDescription className="text-xs">Update your organization's secondary contact details (optional).</CardDescription>
+                <CardDescription className="text-xs">Update your organization&apos;s secondary contact details (optional).</CardDescription>
               </div>
             </CardHeader>
             <form action={personalAction}>

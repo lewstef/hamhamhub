@@ -10,8 +10,13 @@ import { isValidEmail } from "@/lib/validation";
 import { signUpSchema, loginSchema, updateUserThemeSchema } from "@/lib/validations/auth";
 
 /**
- * Registers a new user or staff account.
- * Uses Zod `signUpSchema` for structured input validation.
+ * Registers a new customer ("user") account using Bcrypt password hashing.
+ * Validates inputs against `signUpSchema` and blocks public registration for staff roles.
+ *
+ * @param {unknown} prevState - Previous form/action state (unused).
+ * @param {FormData} formData - Form payload containing `name`, `email`, `password`, and optional `roleType`.
+ * @returns {Promise<{ success?: boolean; error?: string }>} Resolves with `{ success: true }` on creation, or `{ error: string }`.
+ * @sideEffect Inserts new record into `users` table with hashed password and role='user'.
  */
 export async function signUpAction(prevState: unknown, formData: FormData) {
   const roleType = formData.get("roleType") as string; // "user" or "staff"
@@ -80,8 +85,13 @@ export async function signUpAction(prevState: unknown, formData: FormData) {
 }
 
 /**
- * Authenticates a user or staff member via NextAuth Credentials provider.
- * Uses Zod `loginSchema` for structured input validation.
+ * Authenticates a customer or staff user via Auth.js Credentials provider.
+ * Validates inputs against `loginSchema` and executes Next.js server redirection on success.
+ *
+ * @param {unknown} prevState - Previous form/action state (unused).
+ * @param {FormData} formData - Form payload containing `identifier` (username or email), `password`, and `loginType` ("user" | "staff").
+ * @returns {Promise<{ error?: string } | never>} Redirects to target portal (`/dashboard` or `/backoffice`) on success, or returns `{ error: string }`.
+ * @sideEffect Creates user session cookie and triggers URL redirection.
  */
 export async function loginAction(prevState: unknown, formData: FormData) {
   const identifier = formData.get("identifier") as string; // Email or Username
@@ -144,8 +154,12 @@ export async function loginAction(prevState: unknown, formData: FormData) {
 }
 
 /**
- * Persists the authenticated user's preferred UI theme to the database.
- * Uses Zod `updateUserThemeSchema` for structured validation.
+ * Persists the authenticated user's preferred UI theme ('light' | 'dark') in the database.
+ *
+ * @param {"light" | "dark"} theme - Target color scheme preference.
+ * @returns {Promise<{ success?: boolean; error?: string }>} Resolves with `{ success: true }` or `{ error: string }`.
+ * @sideEffect Updates `users.theme` record in the database.
+ * @security Guarded by active session check.
  */
 export async function updateUserThemeAction(theme: "light" | "dark") {
   const session = await auth();

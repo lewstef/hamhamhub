@@ -2029,6 +2029,127 @@ describe("CourseForm Component", () => {
     expect(passedFormData.get("trainingFormat")).toBe("Private 1-on-1 Session");
     expect(passedFormData.get("spokenLanguages")).toContain("Hungarian");
   });
+
+  it("displays server error message when createCourseAction fails", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ error: "Course name already exists" });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const nameInput = screen.getByLabelText("Course Name") as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: "Duplicate Course" } });
+
+    const submitBtn = screen.getAllByRole("button", { name: "Create Course" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(screen.getByText("Course name already exists")).toBeDefined();
+    expect(onSubmitSuccess).not.toHaveBeenCalled();
+  });
+
+  it("handles back/cancel navigation with unsaved changes confirmation", () => {
+    const originalConfirm = window.confirm;
+    window.confirm = vi.fn().mockReturnValue(true);
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-training"
+        itemNoun="Course"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const nameInput = screen.getByLabelText("Course Name") as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: "Modified Name" } });
+
+    const cancelBtn = screen.getByText("Back to Courses List");
+    fireEvent.click(cancelBtn);
+
+    expect(window.confirm).toHaveBeenCalledWith("You have unsaved changes. Are you sure you want to leave?");
+    expect(onCancel).toHaveBeenCalled();
+    window.confirm = originalConfirm;
+  });
+
+  it("switches across all tabs in tabbed layout", () => {
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-boarding"
+        itemNoun="Boarding service"
+        serviceSlug="dog-boarding"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    // Terms tab
+    const termsTabBtn = screen.getByRole("button", { name: "Terms" });
+    fireEvent.click(termsTabBtn);
+    expect(screen.getByText("Age Limits & Prerequisites")).toBeDefined();
+
+    // Pricing tab
+    const pricingTabBtn = screen.getByRole("button", { name: "Pricing" });
+    fireEvent.click(pricingTabBtn);
+    expect(screen.getByText("Price Amount (lei)")).toBeDefined();
+
+    // Schedule tab
+    const scheduleTabBtn = screen.getByRole("button", { name: "Schedule" });
+    fireEvent.click(scheduleTabBtn);
+    expect(screen.getByText(/Operating Schedule/i)).toBeDefined();
+
+    // Care & facilities tab
+    const careTabBtn = screen.getByRole("button", { name: "Care & facilities" });
+    fireEvent.click(careTabBtn);
+    expect(screen.getByText(/Daily Walks/i)).toBeDefined();
+
+    // Play yard tab
+    const playYardTabBtn = screen.getByRole("button", { name: "Play yard & socialization" });
+    fireEvent.click(playYardTabBtn);
+    expect(screen.getByText("Play Yard & Socialization Areas")).toBeDefined();
+
+    // FAQ tab
+    const faqTabBtn = screen.getByRole("button", { name: "FAQ" });
+    fireEvent.click(faqTabBtn);
+    expect(screen.getByText(/Frequently Asked Questions/i)).toBeDefined();
+  });
+
+  it("submits Dog Grooming course with Observations & Disclaimers and mobile van settings", async () => {
+    vi.mocked(createCourseAction).mockResolvedValue({ success: true });
+
+    render(
+      <CourseForm
+        organizationId="org-1"
+        serviceId="srv-grooming"
+        itemNoun="Grooming service"
+        serviceSlug="dog-grooming"
+        onCancel={onCancel}
+        onSubmitSuccess={onSubmitSuccess}
+      />
+    );
+
+    const nameInput = screen.getByLabelText("Grooming service Name") as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: "Luxury Wash & Style" } });
+
+    // Submit
+    const submitBtn = screen.getAllByRole("button", { name: "Create Grooming service" })[0];
+    await act(async () => {
+      fireEvent.click(submitBtn);
+    });
+
+    expect(createCourseAction).toHaveBeenCalled();
+    const passedFormData = vi.mocked(createCourseAction).mock.calls[0][1];
+    expect(passedFormData.get("name")).toBe("Luxury Wash & Style");
+  });
 });
 
 

@@ -510,4 +510,98 @@ describe("CourseLocationTab Component", () => {
     });
     expect(onMobileVanTravelFeePolicyChange).toHaveBeenCalledWith("2 lei/km outside Cluj");
   });
+
+  it("handles Cartier request submission failure gracefully", async () => {
+    vi.mocked(requestNewCartierAction).mockResolvedValueOnce({
+      error: "Server timeout",
+    });
+
+    render(
+      <CourseLocationTab
+        layout="tabbed"
+        isDogWalking={true}
+        cityName="Cluj-Napoca"
+        cartiereList={["Centru", "Mănăștur"]}
+        selectedCartiere={[]}
+        onSelectedCartiereChange={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByText(/Request new Coverage zone/i));
+    const cartierInput = screen.getByPlaceholderText(/Mănăștur Nord, Borhanci Est/i);
+    fireEvent.change(cartierInput, { target: { value: "Nou Cartier" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /Submit Request/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Server timeout")).toBeDefined();
+    });
+  });
+
+  it("handles toggling cartiere items in dog walking mode", () => {
+    const onSelectedCartiereChange = vi.fn();
+    render(
+      <CourseLocationTab
+        layout="tabbed"
+        isDogWalking={true}
+        cityName="Cluj-Napoca"
+        cartiereList={["Centru", "Mănăștur", "Gheorgheni"]}
+        selectedCartiere={["Centru"]}
+        onSelectedCartiereChange={onSelectedCartiereChange}
+      />
+    );
+
+    // Toggle unselected cartier (Mănăștur)
+    const manasturBtn = screen.getByRole("button", { name: "Mănăștur" });
+    fireEvent.click(manasturBtn);
+    expect(onSelectedCartiereChange).toHaveBeenCalledWith(["Centru", "Mănăștur"]);
+
+    // Toggle already selected cartier (Centru)
+    const centruBtn = screen.getByRole("button", { name: "Centru" });
+    fireEvent.click(centruBtn);
+    expect(onSelectedCartiereChange).toHaveBeenCalledWith([]);
+  });
+
+  it("renders both salon and van sections in grooming both mode", () => {
+    render(
+      <CourseLocationTab
+        layout="tabbed"
+        isGrooming={true}
+        cityName="Cluj-Napoca"
+        cartiereList={["Centru"]}
+        selectedCartiere={["Centru"]}
+        onSelectedCartiereChange={vi.fn()}
+        groomingLocationType="both"
+      />
+    );
+
+    expect(screen.getByText("Physical Salon Location & Address")).toBeDefined();
+    expect(screen.getByText("Mobile Van Coverage Zones")).toBeDefined();
+    expect(screen.getByText("Mobile Van Specifications & Client Utility Requirements")).toBeDefined();
+  });
+
+  it("handles removing secondary zones", () => {
+    const onRemoveSecondaryZone = vi.fn();
+    render(
+      <CourseLocationTab
+        layout="tabbed"
+        isDogWalking={true}
+        cityName="Cluj-Napoca"
+        cartiereList={["Centru"]}
+        selectedCartiere={["Centru"]}
+        onSelectedCartiereChange={vi.fn()}
+        secondaryZones={[
+          { city: "Florești", cartiere: ["Centru"] },
+          { city: "Baciu", cartiere: [] },
+        ]}
+        onRemoveSecondaryZone={onRemoveSecondaryZone}
+      />
+    );
+
+    const removeButtons = screen.getAllByRole("button", { name: /Remove Zone/i });
+    expect(removeButtons.length).toBe(2);
+
+    fireEvent.click(removeButtons[0]);
+    expect(onRemoveSecondaryZone).toHaveBeenCalledWith(0);
+  });
 });

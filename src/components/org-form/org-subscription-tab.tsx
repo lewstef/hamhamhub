@@ -11,10 +11,7 @@ import {
   Download,
   ShieldCheck,
   Zap,
-  Calendar,
-  AlertCircle,
   Clock,
-  ChevronRight,
   Receipt,
   Check,
   Star,
@@ -130,7 +127,7 @@ const MOCK_INVOICES: MockInvoice[] = [
  * Renders the organization subscription details, active plan status, feature limits,
  * tier upgrade cards, and invoice history table.
  */
-export function OrgSubscriptionTab({ organization }: OrgSubscriptionTabProps) {
+export function OrgSubscriptionTab({ organization: _organization }: OrgSubscriptionTabProps) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annually">("monthly");
   const [currentPlanId, setCurrentPlanId] = useState<string>("pro");
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<string | null>(null);

@@ -102,6 +102,13 @@ export async function deleteServiceAction(prevState: unknown, formData: FormData
   }
 }
 
+/**
+ * Persists the custom display order (sortOrder) for a list of service registrations.
+ *
+ * @param {string[]} orderedServiceIds - Array of service database IDs in their desired 0-indexed display sequence.
+ * @returns {Promise<{ success: true } | { error: string }>} Resolves with success indicator or error message on database failure.
+ * @sideEffect Revalidates cache paths: `/backoffice/services`, `/dashboard/services`, `/dashboard/account`, `/dashboard`.
+ */
 export async function reorderServicesAction(orderedServiceIds: string[]) {
   try {
     for (let i = 0; i < orderedServiceIds.length; i++) {
@@ -121,6 +128,14 @@ export async function reorderServicesAction(orderedServiceIds: string[]) {
   }
 }
 
+/**
+ * Persists the comma-separated course display ordering for a specific service registration.
+ *
+ * @param {string} serviceId - The unique database ID of the target service.
+ * @param {string[]} orderedCourses - Array of course names or IDs in their desired order.
+ * @returns {Promise<{ success: true } | { error: string }>} Resolves with success indicator or error message on database failure.
+ * @sideEffect Revalidates cache paths: `/backoffice/services`, `/dashboard/services`, `/dashboard/account`, `/dashboard`.
+ */
 export async function reorderCoursesAction(serviceId: string, orderedCourses: string[]) {
   try {
     await db
